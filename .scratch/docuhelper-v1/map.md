@@ -19,6 +19,7 @@ A build-ready spec at `docs/spec.md` (plus ADRs for hard calls) for v1: a user c
 
 <!-- one line per closed ticket: [title](issues/NN-slug.md) — gist -->
 
+- [PDF extraction options and cost](issues/01-pdf-extraction-options.md) — Classic OCR can't read Dutch handwriting, so vision models or Mistral OCR 4 it is. Cost is negligible either way; handwriting accuracy and confidence decide. Candidates: Gemini Flash, Claude Sonnet, Mistral OCR plus a text model, all routed through the EU.
 - [TypeSafe/Jev capabilities and fit](issues/02-typesafe-jev-capabilities.md) — Jev is text-only and never writes values. Use it for per-Field checks, confidence, escalation and Form selection, not for extraction or handwriting. It is cheap, but in early access and US-hosted.
 
 ## Not yet specified
