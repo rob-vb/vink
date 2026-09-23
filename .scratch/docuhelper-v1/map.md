@@ -19,6 +19,8 @@ A build-ready spec at `docs/spec.md` (plus ADRs for hard calls) for v1: a user c
 
 <!-- one line per closed ticket: [title](issues/NN-slug.md) — gist -->
 
+- [TypeSafe/Jev capabilities and fit](issues/02-typesafe-jev-capabilities.md) — Jev is text-only and never writes values. Use it for per-Field checks, confidence, escalation and Form selection, not for extraction or handwriting. It is cheap, but in early access and US-hosted.
+
 ## Not yet specified
 
 - Automatic Document-type detection (choosing the Form for the user) — likely a Jev judgment once the pipeline is known.
