@@ -1,9 +1,15 @@
 "use client";
 
-import { ChevronRight } from "lucide-react";
+import { useMutation } from "convex/react";
+import { ConvexError } from "convex/values";
+import { ChevronRight, RotateCcw } from "lucide-react";
+import { toast } from "sonner";
 import type { ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { api } from "@/convex/_generated/api";
+import type { Id } from "@/convex/_generated/dataModel";
 import { cn } from "cn";
 
 export type DeliveryView = {
@@ -12,6 +18,7 @@ export type DeliveryView = {
   state: "pending" | "retrying" | "delivered" | "failed";
   failureReason: string | null;
   nextAttemptAt: number | null;
+  canResend: boolean;
   attempts: Array<{ at: number; status: number | null; body: string | null; error: string | null }>;
 };
 
@@ -101,5 +108,31 @@ export function DeliveryRow({
         )}
       </CollapsibleContent>
     </Collapsible>
+  );
+}
+
+/** "Send again" for a failed Delivery: Admin only, same deliveryId, current configuration. */
+export function ResendButton({
+  organisationSlug,
+  delivery,
+}: {
+  organisationSlug: string;
+  delivery: DeliveryView;
+}) {
+  const resend = useMutation(api.deliveries.resend);
+  if (!delivery.canResend) return null;
+  return (
+    <Button
+      variant="outline"
+      size="xs"
+      onClick={() =>
+        resend({ organisationSlug, id: delivery.id as Id<"deliveries"> }).catch((error) =>
+          toast.error(error instanceof ConvexError ? String(error.data) : "That didn't work. Try again."),
+        )
+      }
+    >
+      <RotateCcw />
+      Send again
+    </Button>
   );
 }

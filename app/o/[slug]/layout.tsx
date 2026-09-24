@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Logo } from "@/components/logo";
 import { getOrganisation } from "./organisation";
 import { OrganisationSwitcher } from "./organisation-switcher";
+import { Notifications } from "./notifications";
 import { UserMenu } from "./user-menu";
 
 export default async function OrganisationLayout({
@@ -51,7 +52,10 @@ export default async function OrganisationLayout({
             </>
           )}
         </nav>
-        <UserMenu />
+        <div className="flex items-center gap-1">
+          {organisation.role === "admin" && <Notifications organisationSlug={slug} />}
+          <UserMenu />
+        </div>
       </header>
       {children}
     </div>

@@ -4,6 +4,7 @@ import { ConvexError, v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { internalQuery, type QueryCtx } from "./_generated/server";
+import { failOpenDeliveries } from "./deliveries";
 import { documentPayload } from "./lib/documentPayload";
 import { orgAction, orgMutation, orgQuery } from "./lib/functions";
 import { http, HttpFailure } from "./lib/http";
@@ -156,6 +157,7 @@ export const remove = orgMutation({
       .withIndex("by_integrationId", (q) => q.eq("integrationId", integrationId))
       .take(200);
     for (const link of links) await ctx.db.delete(link._id);
+    await failOpenDeliveries(ctx, integrationId);
     await ctx.db.delete(integrationId);
   },
 });
@@ -190,7 +192,9 @@ export const detach = orgMutation({
   handler: async (ctx, { integrationId, formId }) => {
     await ownIntegration(ctx, ctx.organisationId, integrationId);
     const link = await linkOf(ctx, integrationId, formId);
-    if (link !== null) await ctx.db.delete(link._id);
+    if (link === null) return;
+    await ctx.db.delete(link._id);
+    await failOpenDeliveries(ctx, integrationId, formId);
   },
 });
 

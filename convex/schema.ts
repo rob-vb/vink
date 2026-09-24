@@ -292,9 +292,23 @@ export default defineSchema({
       }),
     ),
     nextAttemptAt: v.optional(v.number()),
+    // Where the current attempt-series starts in `attempts`; a re-send starts a new one.
+    seriesStart: v.optional(v.number()),
+    // Failed because its Integration was detached or deleted: never re-sent.
+    integrationRemoved: v.optional(v.boolean()),
   })
     .index("by_documentId", ["documentId"])
     .index("by_integrationId", ["integrationId"]),
+
+  // In-app notifications for an Organisation's Admins, e.g. a failed Delivery.
+  notifications: defineTable({
+    organisationId: v.id("organisations"),
+    text: v.string(),
+    documentId: v.optional(v.id("documents")),
+    at: v.number(),
+    // The Admins who have seen it.
+    readBy: v.array(v.string()),
+  }).index("by_organisationId", ["organisationId"]),
 
   // A Document's history: who did what, and when.
   documentEvents: defineTable({

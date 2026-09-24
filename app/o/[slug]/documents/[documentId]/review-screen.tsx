@@ -16,7 +16,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { DeliveryRow } from "@/components/deliveries/delivery-log";
+import { DeliveryRow, ResendButton } from "@/components/deliveries/delivery-log";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -410,7 +410,14 @@ export function ReviewScreen({
                 Deliveries
               </h2>
               {document.deliveries.map((delivery) => (
-                <DeliveryRow key={delivery.id} delivery={delivery} title={delivery.integrationName} />
+                <DeliveryRow
+                  key={delivery.id}
+                  delivery={delivery}
+                  title={delivery.integrationName}
+                  actions={
+                    isAdmin && <ResendButton organisationSlug={organisationSlug} delivery={delivery} />
+                  }
+                />
               ))}
             </section>
           )}

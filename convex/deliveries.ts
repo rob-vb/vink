@@ -12,8 +12,9 @@ import {
   type QueryCtx,
 } from "./_generated/server";
 import { endpointOf, sendSigned } from "./integrations";
+import { MAX_ATTEMPTS, nextAttemptAt } from "./lib/backoff";
 import { documentPayload } from "./lib/documentPayload";
-import { orgQuery } from "./lib/functions";
+import { orgMutation, orgQuery } from "./lib/functions";
 import { envelopeOf } from "./lib/payload";
 
 // What the attempt log keeps of a response body.
@@ -126,16 +127,91 @@ export const recordAttempt = internalMutation({
     const outcome = outcomeOf(attempt.status, retryAfter, attempt.error);
     if (outcome.kind === "delivered") {
       await ctx.db.patch(id, { attempts, state: "delivered", nextAttemptAt: undefined });
-    } else {
+      return;
+    }
+    const inSeries = attempts.length - (delivery.seriesStart ?? 0);
+    const next =
+      outcome.kind === "retry" ? nextAttemptAt(inSeries, outcome.retryAfter, attempt.at) : null;
+    if (outcome.kind === "retry" && next !== null) {
       await ctx.db.patch(id, {
         attempts,
-        state: "failed",
+        state: "retrying",
         failureReason: outcome.reason,
-        nextAttemptAt: undefined,
+        nextAttemptAt: next,
       });
+      await ctx.scheduler.runAt(next, internal.deliveries.attempt, { id });
+      return;
     }
+    const reason =
+      outcome.kind === "retry"
+        ? `Gave up after ${MAX_ATTEMPTS} attempts: ${outcome.reason.replace(/^The/, "the")}`
+        : outcome.reason;
+    await ctx.db.patch(id, { attempts, state: "failed", failureReason: reason, nextAttemptAt: undefined });
+    await notifyFailed(ctx, delivery);
   },
 });
+
+async function notifyFailed(ctx: MutationCtx, delivery: Doc<"deliveries">) {
+  const document = await ctx.db.get(delivery.documentId);
+  await ctx.db.insert("notifications", {
+    organisationId: delivery.organisationId,
+    text: `${document?.filename ?? "A Document"} couldn't be delivered to ${delivery.integrationName}`,
+    documentId: delivery.documentId,
+    at: Date.now(),
+    readBy: [],
+  });
+}
+
+/** Sends a failed Delivery again: a new attempt-series, same `deliveryId`, current configuration. */
+export const resend = orgMutation({
+  role: "admin",
+  args: { id: v.id("deliveries") },
+  handler: async (ctx, { id }) => {
+    const delivery = await ctx.db.get(id);
+    if (delivery === null || delivery.organisationId !== ctx.organisationId) {
+      throw new ConvexError("Delivery not found");
+    }
+    if (delivery.integrationRemoved) {
+      throw new ConvexError("Integration removed: this Delivery can't be sent again");
+    }
+    if (delivery.state !== "failed") throw new ConvexError("Only a failed Delivery can be sent again");
+    if (delivery.envelope === undefined) throw new ConvexError("This Document's data was deleted");
+    await ctx.db.patch(id, {
+      state: "pending",
+      failureReason: undefined,
+      seriesStart: delivery.attempts.length,
+    });
+    await ctx.scheduler.runAfter(0, internal.deliveries.attempt, { id });
+  },
+});
+
+/**
+ * Fails an Integration's open Deliveries with "Integration removed" (all of
+ * them, or only those of one Form's Documents when it is detached from it).
+ */
+export async function failOpenDeliveries(
+  ctx: MutationCtx,
+  integrationId: Id<"integrations">,
+  formId?: Id<"forms">,
+) {
+  const deliveries = await ctx.db
+    .query("deliveries")
+    .withIndex("by_integrationId", (q) => q.eq("integrationId", integrationId))
+    .take(1000);
+  for (const delivery of deliveries) {
+    if (delivery.state !== "pending" && delivery.state !== "retrying") continue;
+    if (formId !== undefined) {
+      const document = await ctx.db.get(delivery.documentId);
+      if (document?.formId !== formId) continue;
+    }
+    await ctx.db.patch(delivery._id, {
+      state: "failed",
+      failureReason: "Integration removed",
+      integrationRemoved: true,
+      nextAttemptAt: undefined,
+    });
+  }
+}
 
 function viewOf(delivery: Doc<"deliveries">) {
   return {
@@ -145,6 +221,7 @@ function viewOf(delivery: Doc<"deliveries">) {
     state: delivery.state,
     failureReason: delivery.failureReason ?? null,
     nextAttemptAt: delivery.nextAttemptAt ?? null,
+    canResend: delivery.state === "failed" && !delivery.integrationRemoved && delivery.envelope !== undefined,
     attempts: delivery.attempts,
   };
 }

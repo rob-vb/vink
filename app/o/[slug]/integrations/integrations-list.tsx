@@ -17,7 +17,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { DeliveryRow } from "@/components/deliveries/delivery-log";
+import { DeliveryRow, ResendButton } from "@/components/deliveries/delivery-log";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -110,6 +110,7 @@ function RecentDeliveries({
               {delivery.document.filename}
             </Link>
           }
+          actions={<ResendButton organisationSlug={organisationSlug} delivery={delivery} />}
         />
       ))}
     </div>
