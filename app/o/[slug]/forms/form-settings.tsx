@@ -85,8 +85,9 @@ export function FormSettings({
             <FieldContent>
               <FieldLabel htmlFor="auto-send">Auto-Send</FieldLabel>
               <FieldDescription>
-                Approve and send a Document by itself when nothing on it needs review
-                and Jev has verified it.
+                Approve and send a Document by itself right after it is read, when nothing
+                on it needs review, Jev has verified it, it fits this Form and nobody has
+                changed it. Applies to Documents read from now on.
               </FieldDescription>
             </FieldContent>
           </Field>

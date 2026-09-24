@@ -184,6 +184,11 @@ export function DocumentList({
                       >
                         {document.filename}
                       </Link>
+                      {document.approvalMode === "auto" && (
+                        <Badge variant="outline" className="mt-0.5">
+                          Auto-Send
+                        </Badge>
+                      )}
                       <p className="truncate text-muted-foreground sm:hidden">
                         {document.formName}
                       </p>

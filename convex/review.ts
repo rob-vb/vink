@@ -13,7 +13,7 @@ import { liveEntries, needsReviewCount } from "./lib/reviewState";
 import { fieldValue as fieldValueType } from "./schema";
 
 /** How many Field Values and List Fields of a Document still wait for a user. */
-async function openReviews(ctx: QueryCtx, documentId: Id<"documents">) {
+export async function openReviews(ctx: QueryCtx, documentId: Id<"documents">) {
   const fieldValues = await ctx.db
     .query("fieldValues")
     .withIndex("by_documentId", (q) => q.eq("documentId", documentId))

@@ -6,8 +6,10 @@ import { components, internal } from "./_generated/api";
 import type { DataModel, Id } from "./_generated/dataModel";
 import { internalMutation, internalQuery, type MutationCtx } from "./_generated/server";
 import { confidenceOf, reviewReasonsOf } from "./lib/confidence";
+import { createDeliveries } from "./deliveries";
 import { moveTo } from "./lib/documentStates";
 import { orgMutation } from "./lib/functions";
+import { openReviews } from "./review";
 import type { FlatField, ListField } from "./lib/pipeline";
 
 const extractionPool = new Workpool(components.extractionPool, {
@@ -204,14 +206,36 @@ export const finish = internalMutation({
       });
     }
     await ctx.db.patch(documentId, { jevVerified, doesNotFit, reviewThreshold });
+    const docuhelper = { by: "docuhelper", byEmail: "DocuHelper", at: Date.now() };
     await ctx.db.insert("documentEvents", {
       organisationId: document.organisationId,
       documentId,
       event: "extracted",
-      by: "docuhelper",
-      byEmail: "DocuHelper",
-      at: Date.now(),
+      ...docuhelper,
     });
-    await moveTo(ctx, document, "needs_review");
+
+    // Auto-Send is evaluated here, once, right after the Extraction succeeds.
+    const form = (await ctx.db.get(document.formId))!;
+    const clean =
+      form.autoSend &&
+      jevVerified &&
+      !doesNotFit &&
+      !document.userTouched &&
+      (await openReviews(ctx, documentId)) === 0;
+    if (!clean) {
+      await moveTo(ctx, document, "needs_review");
+      return;
+    }
+    const approval = { mode: "auto" as const, by: null, byEmail: null, at: docuhelper.at };
+    await ctx.db.patch(documentId, { approval });
+    await moveTo(ctx, document, "approved");
+    await ctx.db.insert("documentEvents", {
+      organisationId: document.organisationId,
+      documentId,
+      event: "approved",
+      detail: "Auto-Send",
+      ...docuhelper,
+    });
+    await createDeliveries(ctx, { ...document, approval });
   },
 });

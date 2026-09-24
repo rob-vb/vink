@@ -313,6 +313,7 @@ export const list = orgQuery({
             uploadedBy: document.uploaderEmail,
             uploadedAt: document._creationTime,
             rejection: rejectionOf(document),
+            approvalMode: document.approval?.mode ?? null,
           };
         }),
       ),
