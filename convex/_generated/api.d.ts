@@ -34,6 +34,7 @@ import type * as lib_verifier from "../lib/verifier.js";
 import type * as memberships from "../memberships.js";
 import type * as onboarding from "../onboarding.js";
 import type * as organisations from "../organisations.js";
+import type * as rejection from "../rejection.js";
 import type * as review from "../review.js";
 
 import type {
@@ -69,6 +70,7 @@ declare const fullApi: ApiFromModules<{
   memberships: typeof memberships;
   onboarding: typeof onboarding;
   organisations: typeof organisations;
+  rejection: typeof rejection;
   review: typeof review;
 }>;
 

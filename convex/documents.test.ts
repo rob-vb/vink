@@ -191,6 +191,7 @@ test("the Document list counts Documents per state, within the Organisation only
     needs_review: 0,
     approved: 0,
     extraction_failed: 0,
+    rejected: 0,
   });
   expect(acme.documents.map((d) => d.filename)).toEqual(["two.pdf", "one.pdf"]);
 
@@ -199,7 +200,7 @@ test("the Document list counts Documents per state, within the Organisation only
     state: "extracting",
   });
   expect(bobs).toEqual({
-    counts: { extracting: 0, needs_review: 0, approved: 0, extraction_failed: 0 },
+    counts: { extracting: 0, needs_review: 0, approved: 0, extraction_failed: 0, rejected: 0 },
     documents: [],
   });
   await expect(

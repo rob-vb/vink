@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery } from "convex/react";
 import { ConvexError } from "convex/values";
-import { ArrowLeft, CircleAlert, CircleCheck, RotateCcw, ShieldAlert } from "lucide-react";
+import { ArrowLeft, Ban, CircleAlert, CircleCheck, RotateCcw, ShieldAlert } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -19,6 +19,7 @@ import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { FieldRow } from "./field-row";
 import { ListGroup } from "./list-group";
+import { DeleteButton, RejectButton, ReopenButton } from "./rejection-actions";
 
 // pdf.js needs the browser.
 const PdfPane = dynamic(() => import("./pdf-pane"), {
@@ -40,6 +41,9 @@ const eventLabels = {
   extracted: "Extracted",
   extraction_failed: "Extraction failed",
   extraction_retried: "Extraction started again",
+  rejected: "Rejected",
+  reopened: "Reopened",
+  deleted: "Deleted",
   corrected: "Corrected",
   entry_added: "Entry added",
   entry_removed: "Entry removed",
@@ -58,9 +62,11 @@ const when = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle
 export function ReviewScreen({
   organisationSlug,
   documentId,
+  isAdmin,
 }: {
   organisationSlug: string;
   documentId: Id<"documents">;
+  isAdmin: boolean;
 }) {
   const router = useRouter();
   const document = useQuery(api.documents.get, { organisationSlug, documentId });
@@ -74,9 +80,11 @@ export function ReviewScreen({
   const [filter, setFilter] = useState<"all" | "needs_review">("all");
   const [approving, setApproving] = useState(false);
 
+  const dataDeleted = document?.dataDeleted;
   useEffect(() => {
+    if (dataDeleted !== false) return;
     pdfUrl({ organisationSlug, documentId }).then(setUrl, () => setUrlFailed(true));
-  }, [pdfUrl, organisationSlug, documentId]);
+  }, [pdfUrl, organisationSlug, documentId, dataDeleted]);
 
   if (document === undefined) {
     return (
@@ -160,7 +168,45 @@ export function ReviewScreen({
             {document.reviewThreshold !== null && <> · Review Threshold {threshold.toFixed(2)}</>}
           </p>
         </div>
+        {(reviewing || document.state === "extraction_failed") && (
+          <RejectButton
+            organisationSlug={organisationSlug}
+            documentId={documentId}
+            filename={document.filename}
+          />
+        )}
       </div>
+
+      {document.rejection && (
+        <Alert>
+          <Ban />
+          <AlertTitle>
+            {document.state === "deleted" ? "Rejected and deleted" : "Rejected"}
+          </AlertTitle>
+          <AlertDescription>
+            <p>
+              By {document.rejection.by}, {when.format(document.rejection.at)}
+              {document.rejection.reason ? <>: &ldquo;{document.rejection.reason}&rdquo;</> : "."}
+            </p>
+            {document.state === "deleted" ? (
+              <p>Its PDF and data are gone; only this record and its history are kept.</p>
+            ) : (
+              <div className="mt-2 flex flex-wrap gap-2">
+                {!document.dataDeleted && (
+                  <ReopenButton organisationSlug={organisationSlug} documentId={documentId} />
+                )}
+                {isAdmin && (
+                  <DeleteButton
+                    organisationSlug={organisationSlug}
+                    documentId={documentId}
+                    filename={document.filename}
+                  />
+                )}
+              </div>
+            )}
+          </AlertDescription>
+        </Alert>
+      )}
 
       {document.state === "extraction_failed" && (
         <Alert variant="destructive">
@@ -173,7 +219,9 @@ export function ReviewScreen({
               again.
             </p>
             {document.extractionError && (
-              <p className="font-mono text-xs break-all opacity-80">{document.extractionError}</p>
+              <p className="line-clamp-2 font-mono text-xs break-all opacity-80">
+                {document.extractionError}
+              </p>
             )}
             <Button
               size="sm"
@@ -206,7 +254,11 @@ export function ReviewScreen({
 
       <div className="grid flex-1 items-start gap-4 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
         <div className="h-[55vh] lg:sticky lg:top-4 lg:h-[calc(100vh-7rem)]">
-          {url ? (
+          {document.dataDeleted ? (
+            <div className="flex h-full items-center justify-center rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+              The PDF was deleted.
+            </div>
+          ) : url ? (
             <PdfPane url={url} pageCount={document.pageCount} page={page} onPageChange={setPage} />
           ) : urlFailed ? (
             <div className="flex h-full items-center justify-center rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">

@@ -10,7 +10,13 @@ export default async function DocumentPage({
 }: PageProps<"/o/[slug]/documents/[documentId]">) {
   const { slug, documentId } = await params;
   // Checks the Membership before anything renders.
-  await getOrganisation(slug);
+  const organisation = await getOrganisation(slug);
 
-  return <ReviewScreen organisationSlug={slug} documentId={documentId as Id<"documents">} />;
+  return (
+    <ReviewScreen
+      organisationSlug={slug}
+      documentId={documentId as Id<"documents">}
+      isAdmin={organisation.role === "admin"}
+    />
+  );
 }

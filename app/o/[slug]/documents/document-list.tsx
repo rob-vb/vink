@@ -16,7 +16,9 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
+import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
 import {
   Table,
   TableBody,
@@ -34,9 +36,12 @@ const tabs = [
   { state: "needs_review", label: "Needs Review", empty: "Nothing is waiting for review." },
   { state: "approved", label: "Approved", empty: "No Documents have been approved yet." },
   { state: "extraction_failed", label: "Failed", empty: "No Extractions have failed." },
+  { state: "rejected", label: "Rejected", empty: "No Documents have been rejected." },
 ] as const;
 
 type State = (typeof tabs)[number]["state"];
+
+const rejectedAt = new Intl.DateTimeFormat(undefined, { dateStyle: "medium" });
 
 const uploadedAt = new Intl.DateTimeFormat(undefined, {
   dateStyle: "medium",
@@ -53,6 +58,7 @@ export function DocumentList({
   isAdmin: boolean;
 }) {
   const [state, setState] = useState<State>("extracting");
+  const [showRejected, setShowRejected] = useState(false);
   const forms = useQuery(api.forms.list, { organisationSlug });
   const list = useQuery(api.documents.list, { organisationSlug, state });
   const retry = useMutation(api.extraction.retry);
@@ -112,7 +118,7 @@ export function DocumentList({
       <Tabs value={state} onValueChange={(value) => setState(value as State)}>
         <div className="-mx-4 overflow-x-auto px-4 md:mx-0 md:px-0">
           <TabsList variant="line">
-            {tabs.map((t) => (
+            {tabs.filter((t) => showRejected || t.state !== "rejected").map((t) => (
               <TabsTrigger key={t.state} value={t.state}>
                 {t.label}
                 <Badge variant="secondary" className="tabular-nums">
@@ -123,6 +129,19 @@ export function DocumentList({
           </TabsList>
         </div>
       </Tabs>
+      <div className="mt-3 flex items-center gap-2">
+        <Switch
+          id="show-rejected"
+          checked={showRejected}
+          onCheckedChange={(checked) => {
+            setShowRejected(checked);
+            if (!checked && state === "rejected") setState("extracting");
+          }}
+        />
+        <Label htmlFor="show-rejected" className="text-sm text-muted-foreground">
+          Show rejected
+        </Label>
+      </div>
 
       <div className="mt-4">
         {list === undefined ? (
@@ -168,6 +187,13 @@ export function DocumentList({
                       <p className="truncate text-muted-foreground sm:hidden">
                         {document.formName}
                       </p>
+                      {document.rejection && (
+                        <p className="truncate text-xs text-muted-foreground">
+                          {document.state === "deleted" ? "Deleted · " : ""}Rejected by{" "}
+                          {document.rejection.by}, {rejectedAt.format(document.rejection.at)}
+                          {document.rejection.reason && <>: {document.rejection.reason}</>}
+                        </p>
+                      )}
                     </TableCell>
                     <TableCell className="hidden sm:table-cell">
                       {document.formName}{" "}

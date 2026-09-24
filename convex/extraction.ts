@@ -36,7 +36,8 @@ export const completed = extractionPool.defineOnComplete<DataModel, typeof compl
     const document = await ctx.db.get(documentId);
     if (document === null || document.state !== "extracting") return;
     await ctx.db.patch(documentId, {
-      extractionError: result.kind === "failed" ? result.error : "canceled",
+      // Enough to diagnose; a full stack trace means nothing to a user.
+      extractionError: result.kind === "failed" ? result.error.slice(0, 300) : "canceled",
     });
     await moveTo(ctx, document, "extraction_failed");
     await ctx.db.insert("documentEvents", {

@@ -117,6 +117,11 @@ async function getDocument(
   return document;
 }
 
+function rejectionOf(document: Doc<"documents">) {
+  const { rejection } = document;
+  return rejection ? { by: rejection.byEmail, at: rejection.at, reason: rejection.reason } : null;
+}
+
 /** What a user sees of one Field Value. */
 function viewOf(field: FlatField, fieldValue: Doc<"fieldValues">) {
   const { review } = fieldValue;
@@ -184,6 +189,8 @@ export const get = orgQuery({
       reviewThreshold: document.reviewThreshold ?? null,
       userTouched: document.userTouched ?? false,
       extractionError: document.extractionError ?? null,
+      rejection: rejectionOf(document),
+      dataDeleted: document.dataDeletedAt !== undefined,
       approval: document.approval
         ? { mode: document.approval.mode, by: document.approval.byEmail, at: document.approval.at }
         : null,
@@ -243,24 +250,41 @@ export const pdfUrl = orgMutation({
   args: { documentId: v.id("documents") },
   handler: async (ctx, { documentId }) => {
     const document = await getDocument(ctx, ctx.organisationId, documentId);
+    if (document.dataDeletedAt !== undefined) throw new ConvexError("The PDF was deleted");
     return await pdfStore.viewUrl(document.key, PDF_URL_SECONDS);
   },
 });
 
-// The states with a tab in the Document list.
-const listedStates = ["extracting", "needs_review", "approved", "extraction_failed"] as const;
+// The states with a tab in the Document list; Rejected is behind a filter.
+const listedStates = [
+  "extracting",
+  "needs_review",
+  "approved",
+  "extraction_failed",
+  "rejected",
+] as const;
 
-/** The Documents in one state, newest first. */
+/**
+ * The Documents in one state, newest first. The Rejected list also holds the
+ * Documents deleted after rejection, which keep their metadata.
+ */
 export const list = orgQuery({
   args: { state: documentState },
   handler: async (ctx, { state }) => {
-    const documents = await ctx.db
-      .query("documents")
-      .withIndex("by_organisationId_and_state", (q) =>
-        q.eq("organisationId", ctx.organisationId).eq("state", state),
-      )
-      .order("desc")
-      .take(200);
+    const inState = (s: typeof state) =>
+      ctx.db
+        .query("documents")
+        .withIndex("by_organisationId_and_state", (q) =>
+          q.eq("organisationId", ctx.organisationId).eq("state", s),
+        )
+        .order("desc")
+        .take(200);
+    const documents =
+      state === "rejected"
+        ? [...(await inState("rejected")), ...(await inState("deleted"))].sort(
+            (a, b) => b._creationTime - a._creationTime,
+          )
+        : await inState(state);
     const counters = await ctx.db
       .query("documentCounts")
       .withIndex("by_organisationId_and_state", (q) =>
@@ -284,6 +308,7 @@ export const list = orgQuery({
             formVersion: document.formVersion,
             uploadedBy: document.uploaderEmail,
             uploadedAt: document._creationTime,
+            rejection: rejectionOf(document),
           };
         }),
       ),

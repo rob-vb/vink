@@ -146,6 +146,18 @@ export default defineSchema({
     // Form's Review Threshold at that moment, which its Field Values keep.
     jevVerified: v.optional(v.boolean()),
     reviewThreshold: v.optional(v.number()),
+    // Who ruled it unusable, and the state Reopen returns it to.
+    rejection: v.optional(
+      v.object({
+        by: v.string(),
+        byEmail: v.string(),
+        at: v.number(),
+        reason: v.union(v.string(), v.null()),
+        priorState: v.union(v.literal("needs_review"), v.literal("extraction_failed")),
+      }),
+    ),
+    // When its PDF, Reading and Field Values were deleted; only metadata is left.
+    dataDeletedAt: v.optional(v.number()),
     // Why the last Extraction failed, after all its attempts.
     extractionError: v.optional(v.string()),
     // Set by a user's correction (and later Change Form or Reopen): rules out Auto-Send.
@@ -245,6 +257,9 @@ export default defineSchema({
       v.literal("entries_confirmed"),
       v.literal("entries_unconfirmed"),
       v.literal("approved"),
+      v.literal("rejected"),
+      v.literal("reopened"),
+      v.literal("deleted"),
     ),
     // What it was about, e.g. the corrected Field's label.
     detail: v.optional(v.string()),
