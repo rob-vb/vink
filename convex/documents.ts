@@ -248,6 +248,7 @@ export const get = orgQuery({
       deliveries: await deliveriesOf(ctx, documentId),
       rejection: rejectionOf(document),
       dataDeleted: document.dataDeletedAt !== undefined,
+      dataDeletedAt: document.dataDeletedAt ?? null,
       approval: document.approval
         ? { mode: document.approval.mode, by: document.approval.byEmail, at: document.approval.at }
         : null,

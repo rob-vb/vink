@@ -90,7 +90,10 @@ export const remove = orgMutation({
   },
 });
 
-/** Removes a Document's PDF from R2 and its Reading and Field Values. */
+/**
+ * Removes a Document's PDF from R2, its Reading and Field Values, and the
+ * Payload its Deliveries carried. Metadata, history and Delivery logs stay.
+ */
 export async function deleteData(ctx: MutationCtx, document: Doc<"documents">) {
   if (document.dataDeletedAt === undefined) await pdfStore.remove(ctx, document.key);
   for (const table of ["readings", "fieldValues", "listValues"] as const) {
@@ -100,5 +103,10 @@ export async function deleteData(ctx: MutationCtx, document: Doc<"documents">) {
       .take(5000);
     for (const row of rows) await ctx.db.delete(row._id);
   }
-  await ctx.db.patch(document._id, { dataDeletedAt: Date.now() });
+  const deliveries = await ctx.db
+    .query("deliveries")
+    .withIndex("by_documentId", (q) => q.eq("documentId", document._id))
+    .take(100);
+  for (const delivery of deliveries) await ctx.db.patch(delivery._id, { envelope: undefined });
+  await ctx.db.patch(document._id, { dataDeletedAt: Date.now(), retentionClockAt: undefined });
 }

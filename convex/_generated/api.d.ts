@@ -10,6 +10,7 @@
 
 import type * as auth from "../auth.js";
 import type * as changeForm from "../changeForm.js";
+import type * as crons from "../crons.js";
 import type * as deliveries from "../deliveries.js";
 import type * as documents from "../documents.js";
 import type * as email from "../email.js";
@@ -49,6 +50,7 @@ import type * as onboarding from "../onboarding.js";
 import type * as organisations from "../organisations.js";
 import type * as proposalRun from "../proposalRun.js";
 import type * as rejection from "../rejection.js";
+import type * as retention from "../retention.js";
 import type * as review from "../review.js";
 
 import type {
@@ -60,6 +62,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   changeForm: typeof changeForm;
+  crons: typeof crons;
   deliveries: typeof deliveries;
   documents: typeof documents;
   email: typeof email;
@@ -99,6 +102,7 @@ declare const fullApi: ApiFromModules<{
   organisations: typeof organisations;
   proposalRun: typeof proposalRun;
   rejection: typeof rejection;
+  retention: typeof retention;
   review: typeof review;
 }>;
 

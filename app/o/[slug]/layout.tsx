@@ -49,6 +49,12 @@ export default async function OrganisationLayout({
               >
                 Members
               </Link>
+              <Link
+                href={`/o/${slug}/settings`}
+                className="text-muted-foreground transition-colors hover:text-foreground"
+              >
+                Settings
+              </Link>
             </>
           )}
         </nav>

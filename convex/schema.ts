@@ -82,6 +82,9 @@ export default defineSchema({
   organisations: defineTable({
     name: v.string(),
     slug: v.string(),
+    // Days a Document's data is kept after its last successful Delivery
+    // (or its Approval, with no Integration). 30 when unset.
+    retentionDays: v.optional(v.number()),
   }).index("by_slug", ["slug"]),
 
   memberships: defineTable({
@@ -184,6 +187,9 @@ export default defineSchema({
     ),
     // When its PDF, Reading and Field Values were deleted; only metadata is left.
     dataDeletedAt: v.optional(v.number()),
+    // An approved Document's retention clock: its last successful Delivery,
+    // or its Approval when nothing is sent. Its data goes N days later.
+    retentionClockAt: v.optional(v.number()),
     // Why the last Extraction failed, after all its attempts.
     extractionError: v.optional(v.string()),
     // Set by a user's correction (and later Change Form or Reopen): rules out Auto-Send.
@@ -197,7 +203,9 @@ export default defineSchema({
         at: v.number(),
       }),
     ),
-  }).index("by_organisationId_and_state", ["organisationId", "state"]),
+  })
+    .index("by_organisationId_and_state", ["organisationId", "state"])
+    .index("by_organisationId_and_retentionClockAt", ["organisationId", "retentionClockAt"]),
 
   // What the vision model read on a Document (see lib/pipeline.ts), as JSON
   // text: its `_pages` and `_unsure` keys aren't valid Convex field names.
@@ -353,6 +361,7 @@ export default defineSchema({
       v.literal("rejected"),
       v.literal("reopened"),
       v.literal("form_changed"),
+      v.literal("data_deleted"),
       v.literal("deleted"),
     ),
     // What it was about, e.g. the corrected Field's label.

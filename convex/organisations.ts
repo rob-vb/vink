@@ -1,4 +1,4 @@
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import { orgMutation, orgQuery, userQuery } from "./lib/functions";
 
 export const home = orgQuery({
@@ -14,6 +14,32 @@ export const rename = orgMutation({
   args: { name: v.string() },
   handler: async (ctx, { name }) => {
     await ctx.db.patch(ctx.organisationId, { name });
+  },
+});
+
+// The days a Document's data is kept after its last successful Delivery.
+export const DEFAULT_RETENTION_DAYS = 30;
+
+export const settings = orgQuery({
+  role: "admin",
+  args: {},
+  handler: async (ctx) => {
+    const organisation = (await ctx.db.get(ctx.organisationId))!;
+    return {
+      name: organisation.name,
+      retentionDays: organisation.retentionDays ?? DEFAULT_RETENTION_DAYS,
+    };
+  },
+});
+
+export const updateRetention = orgMutation({
+  role: "admin",
+  args: { retentionDays: v.number() },
+  handler: async (ctx, { retentionDays }) => {
+    if (!Number.isInteger(retentionDays) || retentionDays < 1 || retentionDays > 3650) {
+      throw new ConvexError("Keep data from 1 to 3650 days");
+    }
+    await ctx.db.patch(ctx.organisationId, { retentionDays });
   },
 });
 

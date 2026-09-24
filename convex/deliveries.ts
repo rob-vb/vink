@@ -29,8 +29,12 @@ export async function createDeliveries(ctx: MutationCtx, document: Doc<"document
     .query("formIntegrations")
     .withIndex("by_formId", (q) => q.eq("formId", document.formId))
     .take(100);
-  if (links.length === 0) return;
   const approval = document.approval!;
+  if (links.length === 0) {
+    // Nothing to send: the retention clock starts at Approval.
+    await ctx.db.patch(document._id, { retentionClockAt: approval.at });
+    return;
+  }
   const data = await documentPayload(ctx, document);
   for (const link of links) {
     const integration = (await ctx.db.get(link.integrationId))!;
@@ -127,6 +131,13 @@ export const recordAttempt = internalMutation({
     const outcome = outcomeOf(attempt.status, retryAfter, attempt.error);
     if (outcome.kind === "delivered") {
       await ctx.db.patch(id, { attempts, state: "delivered", nextAttemptAt: undefined });
+      // The retention clock runs from the last successful Delivery.
+      const document = await ctx.db.get(delivery.documentId);
+      if (document && document.dataDeletedAt === undefined) {
+        await ctx.db.patch(document._id, {
+          retentionClockAt: Math.max(document.retentionClockAt ?? 0, attempt.at),
+        });
+      }
       return;
     }
     const inSeries = attempts.length - (delivery.seriesStart ?? 0);

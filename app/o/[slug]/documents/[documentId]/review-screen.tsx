@@ -54,6 +54,7 @@ const eventLabels = {
   rejected: "Rejected",
   reopened: "Reopened",
   form_changed: "Form changed",
+  data_deleted: "Data deleted",
   deleted: "Deleted",
   corrected: "Corrected",
   entry_added: "Entry added",
@@ -282,6 +283,18 @@ export function ReviewScreen({
               <RotateCcw />
               Retry
             </Button>
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {document.dataDeletedAt !== null && !document.rejection && (
+        <Alert>
+          <CircleAlert />
+          <AlertTitle>Data deleted</AlertTitle>
+          <AlertDescription>
+            Its PDF, what DocuHelper read and its values were deleted on{" "}
+            {when.format(document.dataDeletedAt)} under the Organisation&apos;s retention. Only this
+            record, its history and its Delivery log are kept.
           </AlertDescription>
         </Alert>
       )}
