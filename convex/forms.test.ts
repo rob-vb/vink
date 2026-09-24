@@ -1,5 +1,7 @@
+import type { Infer } from "convex/values";
 import { expect, test } from "vitest";
 import { api } from "./_generated/api";
+import type { field } from "./schema";
 import { addMembership, newBackend, signUp } from "./test.setup";
 
 const licensePlate = {
@@ -335,4 +337,104 @@ test("a Form needs a name", async () => {
       fields: [licensePlate],
     }),
   ).rejects.toThrow("A Form needs a name");
+});
+
+const position = { type: "text", label: "Positie", key: "position", required: true } as const;
+
+const tyreChanges: Infer<typeof field> = {
+  type: "list",
+  label: "Gewisselde banden",
+  key: "tyreChanges",
+  description: "One entry per changed tyre",
+  required: true,
+  fields: [
+    position,
+    { type: "number", label: "Profieldiepte", key: "treadDepthMm", required: false },
+    { type: "date", label: "Montagedatum", key: "mountedOn", required: false },
+    { type: "boolean", label: "Reserveband", key: "spare", required: false },
+    {
+      type: "choice",
+      label: "Reden",
+      key: "reason",
+      required: false,
+      options: [{ value: "worn", description: "Profiel versleten" }, { value: "puncture" }],
+    },
+  ],
+};
+
+test("saving creates a new Form Version that holds the List Field and its sub-Fields", async () => {
+  const t = newBackend();
+  const ann = await signUp(t, "ann", "Acme Fleet");
+  const organisationSlug = ann.slug;
+  const { formId } = await ann.user.mutation(api.forms.create, {
+    organisationSlug,
+    name: "Tyre service",
+    fields: [licensePlate],
+  });
+
+  await ann.user.mutation(api.forms.save, {
+    organisationSlug,
+    formId,
+    name: "Tyre service",
+    fields: [licensePlate, tyreChanges],
+  });
+
+  expect(
+    await ann.user.query(api.forms.get, { organisationSlug, formId }),
+  ).toMatchObject({ version: 2, fields: [licensePlate, tyreChanges] });
+  expect(
+    await ann.user.query(api.forms.get, { organisationSlug, formId, version: 1 }),
+  ).toMatchObject({ fields: [licensePlate] });
+});
+
+test("two sub-Fields of a List Field can't share a key, but a sub-Field may reuse a top-level key", async () => {
+  const t = newBackend();
+  const ann = await signUp(t, "ann", "Acme Fleet");
+
+  await expect(
+    ann.user.mutation(api.forms.create, {
+      organisationSlug: ann.slug,
+      name: "Tyre service",
+      fields: [
+        { ...tyreChanges, fields: [position, { ...position, label: "Plaats" }] },
+      ],
+    }),
+  ).rejects.toThrow(
+    'The key "position" is used by more than one sub-Field of the List Field "tyreChanges"',
+  );
+
+  const { formId } = await ann.user.mutation(api.forms.create, {
+    organisationSlug: ann.slug,
+    name: "Tyre service",
+    fields: [
+      licensePlate,
+      { ...tyreChanges, fields: [position, { ...licensePlate, required: false }] },
+    ],
+  });
+  expect(formId).toBeDefined();
+});
+
+test("a List Field needs at least one sub-Field, and no sub-Field is a list itself", async () => {
+  const t = newBackend();
+  const ann = await signUp(t, "ann", "Acme Fleet");
+  const organisationSlug = ann.slug;
+
+  await expect(
+    ann.user.mutation(api.forms.create, {
+      organisationSlug,
+      name: "Tyre service",
+      fields: [{ ...tyreChanges, fields: [] }],
+    }),
+  ).rejects.toThrow('The List Field "tyreChanges" needs at least one sub-Field');
+
+  const nested = { ...tyreChanges, key: "axles", fields: [tyreChanges] };
+  await expect(
+    ann.user.mutation(api.forms.create, {
+      organisationSlug,
+      name: "Tyre service",
+      // @ts-expect-error: the type forbids it too
+      fields: [nested],
+    }),
+  ).rejects.toThrow();
+  expect(await ann.user.query(api.forms.list, { organisationSlug })).toEqual([]);
 });

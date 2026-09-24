@@ -23,7 +23,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { cn } from "cn";
-import { type Draft, fieldProblems, fieldTypes, newField, toContent } from "./draft";
+import {
+  allProblems,
+  type Draft,
+  type DraftField,
+  fieldTypes,
+  newField,
+  subFieldTypes,
+  toContent,
+} from "./draft";
 import { FieldDetail } from "./field-detail";
 
 type Props = {
@@ -54,16 +62,56 @@ export function FormEditor({ organisationSlug, form, initial, settings }: Props)
     return () => window.removeEventListener("beforeunload", warn);
   }, [dirty]);
 
-  const problems = new Map(draft.fields.map((f) => [f.id, fieldProblems(f, draft.fields)]));
+  const problems = allProblems(draft.fields);
   const invalid =
     draft.name.trim() === "" || [...problems.values()].some((p) => p.length > 0);
-  const selected = draft.fields.find((f) => f.id === selectedId);
+  const parent = draft.fields.find(
+    (f) => f.type === "list" && f.fields.some((sub) => sub.id === selectedId),
+  );
+  const siblings = parent ? parent.fields : draft.fields;
+  const selected = siblings.find((f) => f.id === selectedId);
 
   function addField() {
     const field = newField(draft.fields.map((f) => f.key));
     setDraft({ ...draft, fields: [...draft.fields, field] });
     setSelectedId(field.id);
   }
+
+  function addSubField(list: DraftField) {
+    const sub = newField(list.fields.map((f) => f.key));
+    replaceField({ ...list, fields: [...list.fields, sub] });
+    setSelectedId(sub.id);
+  }
+
+  /** Replaces a Field or sub-Field, found by its id. */
+  function replaceField(field: DraftField) {
+    const replace = (fields: DraftField[]): DraftField[] =>
+      fields.map((f) =>
+        f.id === field.id ? field : { ...f, fields: replace(f.fields) },
+      );
+    setDraft({ ...draft, fields: replace(draft.fields) });
+  }
+
+  function removeSelected(selected: DraftField) {
+    const index = siblings.indexOf(selected);
+    const rest = siblings.filter((f) => f.id !== selected.id);
+    if (parent) {
+      replaceField({ ...parent, fields: rest });
+      setSelectedId(rest[Math.min(index, rest.length - 1)]?.id ?? parent.id);
+    } else {
+      setDraft({ ...draft, fields: rest });
+      setSelectedId(rest[Math.min(index, rest.length - 1)]?.id);
+    }
+  }
+
+  const row = (field: DraftField) => (
+    <FieldRow
+      field={field}
+      selected={field.id === selectedId}
+      invalid={problems.get(field.id)!.length > 0}
+      onSelect={() => setSelectedId(field.id)}
+    />
+  );
 
   async function onSave() {
     setSaving(true);
@@ -153,33 +201,28 @@ export function FormEditor({ organisationSlug, form, initial, settings }: Props)
           <ul className="flex flex-col gap-1">
             {draft.fields.map((field) => (
               <li key={field.id}>
-                <button
-                  type="button"
-                  onClick={() => setSelectedId(field.id)}
-                  aria-current={field.id === selectedId}
-                  className={cn(
-                    "flex w-full items-center gap-2 rounded-lg border px-3 py-2 text-left transition-colors hover:bg-muted",
-                    field.id === selectedId && "border-primary bg-muted",
-                    problems.get(field.id)!.length > 0 && "border-destructive/60",
-                  )}
-                >
-                  <span className="min-w-0 flex-1">
-                    <span className="flex items-center gap-1 truncate text-sm font-medium">
-                      {field.label || (
-                        <span className="text-muted-foreground">Untitled</span>
-                      )}
-                      {field.required && (
-                        <Asterisk className="size-3 text-destructive" aria-label="Required" />
-                      )}
-                    </span>
-                    <span className="block truncate font-mono text-xs text-muted-foreground">
-                      {field.key}
-                    </span>
-                  </span>
-                  <Badge variant="secondary">
-                    {fieldTypes.find((t) => t.value === field.type)!.label}
-                  </Badge>
-                </button>
+                {row(field)}
+                {field.type === "list" && (
+                  <ul
+                    aria-label={`Sub-Fields of ${field.label || "Untitled"}`}
+                    className="mt-1 ml-3 flex flex-col gap-1 border-l pl-3"
+                  >
+                    {field.fields.map((sub) => (
+                      <li key={sub.id}>{row(sub)}</li>
+                    ))}
+                    <li>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-muted-foreground"
+                        onClick={() => addSubField(field)}
+                      >
+                        <Plus />
+                        Add sub-Field
+                      </Button>
+                    </li>
+                  </ul>
+                )}
               </li>
             ))}
           </ul>
@@ -190,20 +233,13 @@ export function FormEditor({ organisationSlug, form, initial, settings }: Props)
             <FieldDetail
               key={selected.id}
               field={selected}
-              otherKeys={draft.fields.filter((f) => f.id !== selected.id).map((f) => f.key)}
+              parent={parent}
+              types={parent ? subFieldTypes : fieldTypes}
+              otherKeys={siblings.filter((f) => f.id !== selected.id).map((f) => f.key)}
               problems={problems.get(selected.id)!}
-              onChange={(field) =>
-                setDraft({
-                  ...draft,
-                  fields: draft.fields.map((f) => (f.id === field.id ? field : f)),
-                })
-              }
-              onRemove={() => {
-                const index = draft.fields.indexOf(selected);
-                const fields = draft.fields.filter((f) => f.id !== selected.id);
-                setDraft({ ...draft, fields });
-                setSelectedId(fields[Math.min(index, fields.length - 1)]?.id);
-              }}
+              onChange={replaceField}
+              onAddSubField={() => addSubField(selected)}
+              onRemove={() => removeSelected(selected)}
             />
           ) : (
             <Empty>
@@ -227,5 +263,45 @@ export function FormEditor({ organisationSlug, form, initial, settings }: Props)
 
       {settings}
     </main>
+  );
+}
+
+function FieldRow({
+  field,
+  selected,
+  invalid,
+  onSelect,
+}: {
+  field: DraftField;
+  selected: boolean;
+  invalid: boolean;
+  onSelect: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      aria-current={selected}
+      className={cn(
+        "flex w-full items-center gap-2 rounded-lg border px-3 py-2 text-left transition-colors hover:bg-muted",
+        selected && "border-primary bg-muted",
+        invalid && "border-destructive/60",
+      )}
+    >
+      <span className="min-w-0 flex-1">
+        <span className="flex items-center gap-1 truncate text-sm font-medium">
+          {field.label || <span className="text-muted-foreground">Untitled</span>}
+          {field.required && (
+            <Asterisk className="size-3 text-destructive" aria-label="Required" />
+          )}
+        </span>
+        <span className="block truncate font-mono text-xs text-muted-foreground">
+          {field.key}
+        </span>
+      </span>
+      <Badge variant="secondary">
+        {fieldTypes.find((t) => t.value === field.type)!.label}
+      </Badge>
+    </button>
   );
 }

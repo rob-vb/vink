@@ -12,7 +12,8 @@ const fieldBase = {
   required: v.boolean(),
 };
 
-export const field = v.union(
+// A top-level Field, or a sub-Field of a List Field.
+export const flatField = v.union(
   v.object({
     ...fieldBase,
     type: v.union(
@@ -33,6 +34,16 @@ export const field = v.union(
         description: v.optional(v.string()),
       }),
     ),
+  }),
+);
+
+export const field = v.union(
+  flatField,
+  v.object({
+    ...fieldBase,
+    type: v.literal("list"),
+    // One level deep: a sub-Field is never a list itself.
+    fields: v.array(flatField),
   }),
 );
 

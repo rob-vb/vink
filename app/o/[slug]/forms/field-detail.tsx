@@ -27,15 +27,23 @@ import { type DraftField, type FieldType, fieldTypes } from "./draft";
 
 export function FieldDetail({
   field,
+  parent,
+  types,
   otherKeys,
   problems,
   onChange,
+  onAddSubField,
   onRemove,
 }: {
   field: DraftField;
+  /** The List Field this sub-Field belongs to; absent for a top-level Field. */
+  parent?: DraftField;
+  /** A sub-Field is offered every type but List. */
+  types: typeof fieldTypes;
   otherKeys: string[];
   problems: string[];
   onChange: (field: DraftField) => void;
+  onAddSubField: () => void;
   onRemove: () => void;
 }) {
   const set = (patch: Partial<DraftField>) => onChange({ ...field, ...patch });
@@ -46,6 +54,13 @@ export function FieldDetail({
 
   return (
     <div className="flex flex-col gap-6">
+      {parent && (
+        <p className="text-sm text-muted-foreground">
+          Sub-Field of{" "}
+          <span className="font-medium text-foreground">{parent.label || "Untitled"}</span>.
+          Every entry of the List has one.
+        </p>
+      )}
       <FieldGroup>
         <Field>
           <FieldLabel htmlFor="field-label">Label</FieldLabel>
@@ -98,7 +113,7 @@ export function FieldDetail({
         <Field>
           <FieldLabel htmlFor="field-type">Type</FieldLabel>
           <Select
-            items={fieldTypes}
+            items={types}
             value={field.type}
             onValueChange={(type) => type && set({ type: type as FieldType })}
           >
@@ -106,7 +121,7 @@ export function FieldDetail({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {fieldTypes.map((t) => (
+              {types.map((t) => (
                 <SelectItem key={t.value} value={t.value}>
                   {t.label}
                 </SelectItem>
@@ -138,7 +153,11 @@ export function FieldDetail({
           <FieldContent>
             <FieldLabel htmlFor="field-required">Required</FieldLabel>
             <FieldDescription>
-              A Document without it always needs review before it is sent.
+              {field.type === "list"
+                ? "A Document without at least one entry always needs review before it is sent."
+                : parent
+                  ? "An entry without it always needs review before the Document is sent."
+                  : "A Document without it always needs review before it is sent."}
             </FieldDescription>
           </FieldContent>
         </Field>
@@ -194,6 +213,22 @@ export function FieldDetail({
         </FieldSet>
       )}
 
+      {field.type === "list" && (
+        <FieldSet>
+          <FieldLegend>Sub-Fields</FieldLegend>
+          <FieldDescription>
+            A List holds one entry per item on the document, for example per changed
+            tyre or per invoice line. Each entry has these sub-Fields.
+            {field.fields.length > 0 &&
+              ` This List has ${field.fields.length}; select one in the Field list to edit it.`}
+          </FieldDescription>
+          <Button variant="outline" size="sm" className="self-start" onClick={onAddSubField}>
+            <Plus />
+            Add sub-Field
+          </Button>
+        </FieldSet>
+      )}
+
       {problems.length > 0 && (
         <FieldError errors={problems.map((message) => ({ message }))} />
       )}
@@ -201,7 +236,7 @@ export function FieldDetail({
       <div className="border-t pt-4">
         <Button variant="ghost" className="text-destructive" onClick={onRemove}>
           <Trash2 />
-          Remove Field
+          {parent ? "Remove sub-Field" : "Remove Field"}
         </Button>
       </div>
     </div>

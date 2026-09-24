@@ -122,6 +122,21 @@ function checkContent(name: string, fields: Infer<typeof field>[]) {
   if (name.trim() === "") {
     throw new ConvexError("A Form needs a name");
   }
+  checkFields(fields, "Field");
+  for (const f of fields) {
+    if (f.type === "list") {
+      if (f.fields.length === 0) {
+        throw new ConvexError(
+          `The List Field "${f.key}" needs at least one sub-Field`,
+        );
+      }
+      checkFields(f.fields, `sub-Field of the List Field "${f.key}"`);
+    }
+  }
+}
+
+/** Keys are unique among siblings: top-level Fields, or one List Field's sub-Fields. */
+function checkFields(fields: Infer<typeof field>[], kind: string) {
   const keys = new Set<string>();
   for (const f of fields) {
     const { key, label } = f;
@@ -134,7 +149,7 @@ function checkContent(name: string, fields: Infer<typeof field>[]) {
       throw new ConvexError(`The Field "${key}" needs a label`);
     }
     if (keys.has(key)) {
-      throw new ConvexError(`The key "${key}" is used by more than one Field`);
+      throw new ConvexError(`The key "${key}" is used by more than one ${kind}`);
     }
     keys.add(key);
     if (f.type === "choice") {
