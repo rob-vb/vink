@@ -9,7 +9,7 @@ const PROMPT = `You get, for every Field, the text Match picked as its source on
 - Write only what the source says. Normalising is allowed: an ISO code from "658.08 EUR", a brand written out in full from a common abbreviation ("Bridge" → "Bridgestone"), a size formatted as the description shows, a plate without spaces. Never invent a value that isn't in the source; write null then.
 - number: a plain JSON number. date: ISO yyyy-mm-dd. boolean: true or false. choice: the value of the option the source means, or null if none fits.
 
-Answer with one JSON object with one key per Field key.`;
+Answer with one JSON object with one property per Field, named by its id.`;
 
 function valueSchema(field: FlatField) {
   const nullable = (schema: object) => ({ anyOf: [schema, { type: "null" }] });
@@ -25,8 +25,11 @@ function valueSchema(field: FlatField) {
   }
 }
 
-function describe({ field, source }: FillRequest) {
+// The model answers with one property per request, named `v<index>`, which
+// is safe as a JSON schema property name where `list[0].key` might not be.
+function describe({ field, source }: FillRequest, i: number) {
   return {
+    id: `v${i}`,
     key: field.key,
     label: field.label,
     type: field.type,
@@ -49,8 +52,8 @@ export const filler: Filler = {
           type: "json_schema",
           schema: {
             type: "object",
-            properties: Object.fromEntries(requests.map((r) => [r.field.key, valueSchema(r.field)])),
-            required: requests.map((r) => r.field.key),
+            properties: Object.fromEntries(requests.map((r, i) => [`v${i}`, valueSchema(r.field)])),
+            required: requests.map((_, i) => `v${i}`),
             additionalProperties: false,
           },
         },
@@ -64,7 +67,7 @@ export const filler: Filler = {
     });
     const values = parseJsonObject(textOf(message));
     return Object.fromEntries(
-      requests.map((r) => [r.field.key, (values[r.field.key] ?? null) as FilledValue]),
+      requests.map((r, i) => [r.id, (values[`v${i}`] ?? null) as FilledValue]),
     );
   },
 };

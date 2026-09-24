@@ -8,6 +8,7 @@ import type { Id } from "./_generated/dataModel";
 import type {
   FilledValue,
   Filler,
+  ListMatch,
   Match,
   Matcher,
   PageText,
@@ -138,12 +139,14 @@ export type Recording = {
   reading: Reading;
   /** The pages with a text layer; none (a scan) when left out. */
   textLayer?: PageText[];
-  /** Per Field key; a Field left out is matched to `none`. */
+  /** Per top-level Field key; a Field left out is matched to `none`. */
   matches: Record<string, Match>;
-  /** Per Field key, what Fill writes from the matched source. */
+  /** Per List Field key; a List left out, or a sub-Field, is matched to `none`. */
+  lists?: Record<string, ListMatch>;
+  /** Per value id (see FillRequest), what Fill writes from the matched source. */
   fills: Record<string, FilledValue>;
   /**
-   * Per Field key, Jev's fit and support; 1 for a Field left out. Support is
+   * Per value id, Jev's fit and support; 1 for a value left out. Support is
    * only answered when it was asked.
    */
   verifications?: Record<string, { fit: number; support: number }>;
@@ -161,7 +164,7 @@ export const fakePipeline = {
   failing: new Set<Step>(),
   calls: [] as Array<
     | { step: "read" }
-    | { step: "match"; reading: Reading; fields: string[] }
+    | { step: "match"; reading: Reading; fields: string[]; lists: string[] }
     | { step: "fill"; fields: string[] }
     | { step: "verify"; fields: string[]; supportAskedFor: string[] }
   >,
@@ -196,22 +199,37 @@ export const fakeReader: Reader = {
 };
 
 export const fakeMatcher: Matcher = {
-  async match(reading, fields) {
-    fakePipeline.calls.push({ step: "match", reading, fields: fields.map((f) => f.key) });
+  async match(reading, { fields, lists }) {
+    fakePipeline.calls.push({
+      step: "match",
+      reading,
+      fields: fields.map((f) => f.key),
+      lists: lists.map((l) => l.key),
+    });
     fakePipeline.failIfAsked("match");
-    const { matches } = fakePipeline.played();
-    return Object.fromEntries(
-      fields.map((f) => [f.key, matches[f.key] ?? { path: null, probability: 1 }]),
-    );
+    const { matches, lists: listMatches = {} } = fakePipeline.played();
+    const none = { path: null, probability: 1 };
+    return {
+      fields: Object.fromEntries(fields.map((f) => [f.key, matches[f.key] ?? none])),
+      lists: Object.fromEntries(
+        lists.map((l) => {
+          const { keys, ...array } = listMatches[l.key] ?? { ...none, keys: {} };
+          return [
+            l.key,
+            { ...array, keys: Object.fromEntries(l.fields.map((s) => [s.key, keys[s.key] ?? none])) },
+          ];
+        }),
+      ),
+    };
   },
 };
 
 export const fakeFiller: Filler = {
   async fill(requests) {
-    fakePipeline.calls.push({ step: "fill", fields: requests.map((r) => r.field.key) });
+    fakePipeline.calls.push({ step: "fill", fields: requests.map((r) => r.id) });
     fakePipeline.failIfAsked("fill");
     const { fills } = fakePipeline.played();
-    return Object.fromEntries(requests.map((r) => [r.field.key, fills[r.field.key] ?? null]));
+    return Object.fromEntries(requests.map((r) => [r.id, fills[r.id] ?? null]));
   },
 };
 
@@ -220,15 +238,15 @@ export const fakeVerifier: Verifier = {
     const withSupport = requests.filter((r) => r.pageText !== null);
     fakePipeline.calls.push({
       step: "verify",
-      fields: requests.map((r) => r.field.key),
-      supportAskedFor: withSupport.map((r) => r.field.key),
+      fields: requests.map((r) => r.id),
+      supportAskedFor: withSupport.map((r) => r.id),
     });
     fakePipeline.failIfAsked("verify");
     const { verifications = {} } = fakePipeline.played();
     return Object.fromEntries(
       requests.map((r): [string, Verification] => {
-        const { fit, support } = verifications[r.field.key] ?? { fit: 1, support: 1 };
-        return [r.field.key, { fit, support: r.pageText === null ? null : support }];
+        const { fit, support } = verifications[r.id] ?? { fit: 1, support: 1 };
+        return [r.id, { fit, support: r.pageText === null ? null : support }];
       }),
     );
   },

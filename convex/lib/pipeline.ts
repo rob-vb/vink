@@ -2,7 +2,7 @@
 // Filler each wrap one outside model; tests replace them with fakes that
 // replay recorded responses (see test.setup.ts).
 import type { Infer } from "convex/values";
-import type { flatField } from "../schema";
+import type { field, flatField } from "../schema";
 
 type Json = string | number | boolean | null | Json[] | { [key: string]: Json };
 
@@ -13,9 +13,16 @@ type Json = string | number | boolean | null | Json[] | { [key: string]: Json };
 export type Reading = { [key: string]: Json };
 
 export type FlatField = Infer<typeof flatField>;
+export type ListField = Extract<Infer<typeof field>, { type: "list" }>;
 
 /** Match's pick for one Field: a leaf path in the Reading, or `null` for `none`. */
 export type Match = { path: string | null; probability: number };
+
+/**
+ * Match's pick for a List Field: an array of objects in the Reading (or `null`
+ * for `none`), and per sub-Field key a path inside its elements.
+ */
+export type ListMatch = Match & { keys: Record<string, Match> };
 
 export type FilledValue = string | number | boolean | null;
 
@@ -31,19 +38,33 @@ export type Reader = {
 };
 
 export type Matcher = {
-  /** Picks, per Field key, the leaf of the Reading that holds that Field. */
-  match(reading: Reading, fields: FlatField[]): Promise<Record<string, Match>>;
+  /**
+   * Picks, per top-level Field key, the leaf of the Reading that holds it, and
+   * per List Field key, the array that holds its entries.
+   */
+  match(
+    reading: Reading,
+    request: { fields: FlatField[]; lists: ListField[] },
+  ): Promise<{ fields: Record<string, Match>; lists: Record<string, ListMatch> }>;
 };
 
-export type FillRequest = { field: FlatField; source: { path: string; text: string } };
+/**
+ * One value to fill. Its id is the Field key, or for a sub-Field of a List
+ * entry `list[entry].key`, e.g. `tyreChanges[0].position`.
+ */
+export type FillRequest = { id: string; field: FlatField; source: { path: string; text: string } };
 
 export type Filler = {
-  /** Writes, per Field key, the value from that Field's source only. */
+  /** Writes, per request id, the value from that request's source only. */
   fill(requests: FillRequest[]): Promise<Record<string, FilledValue>>;
 };
 
 export type VerifyRequest = {
+  /** As in FillRequest. */
+  id: string;
   field: FlatField;
+  /** The Field as a user knows it, e.g. `Tyre changes → Position`. */
+  label: string;
   value: string | number | boolean;
   readText: string;
   pages: number[];
@@ -55,7 +76,7 @@ export type VerifyRequest = {
 export type Verification = { fit: number; support: number | null };
 
 export type Verifier = {
-  /** Checks every filled value of one Document, in one request. */
+  /** Checks every filled value of one Document, in one request; answers per request id. */
   verify(
     document: { formName: string; formDescription: string | null; reading: Reading },
     requests: VerifyRequest[],

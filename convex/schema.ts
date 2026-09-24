@@ -150,11 +150,15 @@ export default defineSchema({
     textLayer: v.optional(v.array(v.object({ page: v.number(), text: v.string() }))),
   }).index("by_documentId", ["documentId"]),
 
-  // One per top-level Field of the Document's Form Version.
+  // One per top-level Field of the Document's Form Version, and one per
+  // sub-Field per entry of each List Field.
   fieldValues: defineTable({
     organisationId: v.id("organisations"),
     documentId: v.id("documents"),
+    // The Field's key; for a sub-Field, the sub-Field's key inside `list`.
     key: v.string(),
+    // Set on a sub-Field's value: its List Field's key and the entry's index.
+    list: v.optional(v.object({ key: v.string(), entry: v.number() })),
     // `null` when nothing on the Document holds the Field.
     value: v.union(v.string(), v.number(), v.boolean(), v.null()),
     // The Reading's value the Field Value was filled from, as it was read.
@@ -174,6 +178,19 @@ export default defineSchema({
     confidence: v.number(),
     lowestSignal: signal,
     // Why it is Needs Review; empty when it isn't.
+    reviewReasons: v.array(reviewReason),
+  }).index("by_documentId", ["documentId"]),
+
+  // One per List Field of the Document's Form Version: what holds its entries.
+  listValues: defineTable({
+    organisationId: v.id("organisations"),
+    documentId: v.id("documents"),
+    key: v.string(),
+    // The array in the Reading that Match chose, `null` for `none`.
+    sourcePath: v.union(v.string(), v.null()),
+    entryCount: v.number(),
+    // Jev's probability for the array choice: whether all entries were found.
+    completeness: v.number(),
     reviewReasons: v.array(reviewReason),
   }).index("by_documentId", ["documentId"]),
 

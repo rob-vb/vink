@@ -15,7 +15,7 @@ export const verifier: Verifier = {
       form: { name: formName, description: formDescription },
       document: reading,
       values: requests.map((r) => ({
-        field: r.field.label,
+        field: r.label,
         key: r.field.key,
         type: r.field.type,
         description: r.field.description ?? null,
@@ -52,7 +52,7 @@ export const verifier: Verifier = {
     });
     return Object.fromEntries(
       requests.map((r, i): [string, Verification] => [
-        r.field.key,
+        r.id,
         {
           fit: answers[`fit_${i}`].noul,
           support: r.pageText === null ? null : answers[`support_${i}`].noul,

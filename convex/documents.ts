@@ -1,7 +1,7 @@
 import { ConvexError, v } from "convex/values";
 import { PDFDocument } from "pdf-lib";
 import { internal } from "./_generated/api";
-import type { Id } from "./_generated/dataModel";
+import type { Doc, Id } from "./_generated/dataModel";
 import { internalMutation, type QueryCtx } from "./_generated/server";
 import { startExtraction } from "./extraction";
 import { countIn } from "./lib/documentStates";
@@ -110,9 +110,26 @@ async function getDocument(
   return document;
 }
 
+/** What a user sees of one Field Value. */
+function viewOf(field: { key: string; label: string }, fieldValue: Doc<"fieldValues">) {
+  return {
+    key: field.key,
+    label: field.label,
+    value: fieldValue.value,
+    readText: fieldValue.readText,
+    sourcePath: fieldValue.sourcePath,
+    pages: fieldValue.pages,
+    confidence: fieldValue.confidence,
+    lowestSignal: fieldValue.lowestSignal,
+    signals: fieldValue.signals,
+    reviewReasons: fieldValue.reviewReasons,
+  };
+}
+
 /**
  * One Document with its history, oldest event first, and its Field Values in
- * the order of its Form Version's Fields.
+ * the order of its Form Version's Fields: top-level ones, and per List Field
+ * its entries, each a Field Value per sub-Field.
  */
 export const get = orgQuery({
   args: { documentId: v.id("documents") },
@@ -125,10 +142,19 @@ export const get = orgQuery({
         q.eq("formId", document.formId).eq("number", document.formVersion),
       )
       .unique();
+    const fields = formVersion?.fields ?? [];
     const fieldValues = await ctx.db
       .query("fieldValues")
       .withIndex("by_documentId", (q) => q.eq("documentId", documentId))
-      .take(500);
+      .take(5000);
+    const topLevel = new Map(fieldValues.filter((f) => !f.list).map((f) => [f.key, f]));
+    const inLists = new Map(
+      fieldValues.flatMap((f) => (f.list ? [[`${f.list.key}[${f.list.entry}].${f.key}`, f]] : [])),
+    );
+    const listValues = await ctx.db
+      .query("listValues")
+      .withIndex("by_documentId", (q) => q.eq("documentId", documentId))
+      .take(100);
     const events = await ctx.db
       .query("documentEvents")
       .withIndex("by_documentId", (q) => q.eq("documentId", documentId))
@@ -143,21 +169,29 @@ export const get = orgQuery({
       jevVerified: document.jevVerified ?? false,
       reviewThreshold: document.reviewThreshold ?? null,
       history: events.map((e) => ({ event: e.event, by: e.byEmail, at: e.at })),
-      fieldValues: (formVersion?.fields ?? []).flatMap((field) => {
-        const fieldValue = fieldValues.find((f) => f.key === field.key);
-        if (fieldValue === undefined) return [];
+      fieldValues: fields.flatMap((field) => {
+        if (field.type === "list") return [];
+        const fieldValue = topLevel.get(field.key);
+        return fieldValue ? [viewOf(field, fieldValue)] : [];
+      }),
+      lists: fields.flatMap((field) => {
+        if (field.type !== "list") return [];
+        const list = listValues.find((l) => l.key === field.key);
+        if (list === undefined) return [];
+        const entries = Array.from({ length: list.entryCount }, (_, entry) =>
+          field.fields.flatMap((subField) => {
+            const fieldValue = inLists.get(`${field.key}[${entry}].${subField.key}`);
+            return fieldValue ? [viewOf(subField, fieldValue)] : [];
+          }),
+        );
         return [
           {
             key: field.key,
             label: field.label,
-            value: fieldValue.value,
-            readText: fieldValue.readText,
-            sourcePath: fieldValue.sourcePath,
-            pages: fieldValue.pages,
-            confidence: fieldValue.confidence,
-            lowestSignal: fieldValue.lowestSignal,
-            signals: fieldValue.signals,
-            reviewReasons: fieldValue.reviewReasons,
+            sourcePath: list.sourcePath,
+            completeness: list.completeness,
+            reviewReasons: list.reviewReasons,
+            entries,
           },
         ];
       }),

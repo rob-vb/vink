@@ -90,3 +90,38 @@ export function isConflicting(reading: Reading, path: string) {
     return text.includes(key.toLowerCase()) || text.includes(wordsOf(key));
   });
 }
+
+/** An array of objects in a Reading: where it is, and the value paths inside its elements. */
+export type ReadingArray = { path: string; length: number; keys: string[] };
+
+const isObject = (node: unknown): node is Record<string, unknown> =>
+  node !== null && typeof node === "object" && !Array.isArray(node);
+
+/**
+ * Every non-empty array of objects in a Reading, depth first, with the paths
+ * of the values inside its elements (e.g. `removed.serial`), in first-seen
+ * order across elements.
+ */
+export function readingArrays(reading: Reading): ReadingArray[] {
+  const arrays: ReadingArray[] = [];
+  const walk = (node: unknown, path: string) => {
+    if (Array.isArray(node)) {
+      if (node.length > 0 && node.every(isObject)) {
+        const keys = new Set<string>();
+        for (const item of node) {
+          for (const leaf of readingLeaves(item as Reading)) {
+            keys.add(leaf.path);
+          }
+        }
+        arrays.push({ path, length: node.length, keys: [...keys] });
+      }
+      node.forEach((item, i) => walk(item, `${path}[${i}]`));
+    } else if (isObject(node)) {
+      for (const [key, value] of Object.entries(node)) {
+        if (!key.startsWith("_")) walk(value, path ? `${path}.${key}` : key);
+      }
+    }
+  };
+  walk(reading, "");
+  return arrays;
+}

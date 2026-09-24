@@ -7,7 +7,7 @@ import type { Id } from "./_generated/dataModel";
 import { internalMutation, internalQuery, type MutationCtx } from "./_generated/server";
 import { confidenceOf, reviewReasonsOf } from "./lib/confidence";
 import { moveTo } from "./lib/documentStates";
-import type { FlatField } from "./lib/pipeline";
+import type { FlatField, ListField } from "./lib/pipeline";
 
 const extractionPool = new Workpool(components.extractionPool, {
   maxParallelism: 5,
@@ -40,8 +40,8 @@ export const input = internalQuery({
       pdfKey: document.key,
       formName: form.name,
       formDescription: form.description ?? null,
-      // List Fields go through the pipeline from ticket 25.
       fields: formVersion.fields.filter((f): f is FlatField => f.type !== "list"),
+      lists: formVersion.fields.filter((f): f is ListField => f.type === "list"),
       readingJson: reading?.json ?? null,
       textLayer: reading?.textLayer ?? [],
     };
@@ -73,9 +73,19 @@ export const finish = internalMutation({
   args: {
     documentId: v.id("documents"),
     jevVerified: v.boolean(),
+    lists: v.array(
+      v.object({
+        key: v.string(),
+        required: v.boolean(),
+        sourcePath: v.union(v.string(), v.null()),
+        entries: v.number(),
+        completeness: v.number(),
+      }),
+    ),
     fieldValues: v.array(
       v.object({
         key: v.string(),
+        list: v.optional(v.object({ key: v.string(), entry: v.number() })),
         required: v.boolean(),
         value: v.union(v.string(), v.number(), v.boolean(), v.null()),
         readText: v.union(v.string(), v.null()),
@@ -92,9 +102,26 @@ export const finish = internalMutation({
       }),
     ),
   },
-  handler: async (ctx, { documentId, jevVerified, fieldValues }) => {
+  handler: async (ctx, { documentId, jevVerified, lists, fieldValues }) => {
     const document = (await ctx.db.get(documentId))!;
     const { reviewThreshold } = (await ctx.db.get(document.formId))!;
+    for (const { required, entries, ...list } of lists) {
+      await ctx.db.insert("listValues", {
+        organisationId: document.organisationId,
+        documentId,
+        ...list,
+        entryCount: entries,
+        reviewReasons: reviewReasonsOf({
+          confidence: list.completeness,
+          threshold: reviewThreshold,
+          required,
+          empty: entries === 0,
+          typeMismatch: false,
+          unsure: false,
+          conflicting: false,
+        }),
+      });
+    }
     for (const { required, typeMismatch, unsure, conflicting, ...fieldValue } of fieldValues) {
       const { confidence, lowestSignal } = confidenceOf(fieldValue.signals);
       await ctx.db.insert("fieldValues", {

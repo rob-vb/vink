@@ -146,6 +146,7 @@ test("an Extraction reads, then matches the stored Reading, fills only the match
       step: "match",
       reading: workOrder.reading,
       fields: ["licensePlate", "mileageKm", "orderNumber", "purchaseOrderNumber"],
+      lists: [],
     },
     { step: "fill", fields: ["licensePlate", "mileageKm", "orderNumber"] },
     {
@@ -194,11 +195,21 @@ type FixtureForm = {
   }>;
 };
 type RecordedMatch = {
-  fields: Array<{ path: string; sources: Array<{ id: string; probability: number }> }>;
+  fields: Array<{
+    path: string;
+    sources: Array<{
+      id: string;
+      probability: number;
+      // A sub-Field of a List entry: the array, and the key inside its elements.
+      table?: string;
+      column?: string | null;
+      columnProbability?: number;
+    }>;
+  }>;
 };
-type RecordedRun = {
-  fieldValues: Record<string, { readText: string | null; pages: number[] }>;
-};
+type RecordedValue = { readText: string | null; pages: number[] };
+type RecordedList = { completenessConfidence: number; entries: Array<Record<string, unknown>> };
+type RecordedRun = { fieldValues: Record<string, RecordedValue & RecordedList> };
 type RecordedTextLayer = { pages: Array<{ page: number; hasTextLayer: boolean; text: string }> };
 type RecordedVerify = {
   results: Array<{ path: string; fit: number; support: number | null }>;
@@ -222,16 +233,33 @@ function recordingOf(fixture: string) {
   const textLayer = recorded(`${dir}/textlayer-inspector.json`) as RecordedTextLayer;
   const verify = recorded(`${dir}/jev-opus-clean-fill.json`) as RecordedVerify;
   const topLevel = map.fields.filter((f) => !f.path.includes("["));
+  const run = recorded(`${dir}/run2-opus-clean.json`) as RecordedRun;
+  const form = fixtureForms[`../fixtures/forms/${expected.form}.json`].default;
+  const lists: NonNullable<Recording["lists"]> = {};
+  for (const list of form.fields.filter((f) => f.type === "list")) {
+    const entries = map.fields.filter((f) => f.path.startsWith(`${list.name}[`));
+    const [first] = entries;
+    const keys = Object.fromEntries(
+      list.fields!.map((s) => {
+        const source = entries.find((f) => f.path.endsWith(`].${s.name}`))?.sources[0];
+        return [s.name, { path: source?.column ?? null, probability: source?.columnProbability ?? 1 }];
+      }),
+    );
+    lists[list.name] = {
+      path: first?.sources[0].table ?? null,
+      probability: run.fieldValues[list.name].completenessConfidence,
+      keys,
+    };
+  }
   const recording: Recording = {
     reading: recorded(`${dir}/clean-opus.json`) as Recording["reading"],
     textLayer: textLayer.pages
       .filter((p) => p.hasTextLayer && p.text.trim() !== "")
       .map((p) => ({ page: p.page, text: p.text })),
     verifications: Object.fromEntries(
-      verify.results
-        .filter((r) => !r.path.includes("["))
-        .map((r) => [r.path, { fit: r.fit, support: r.support ?? 0 }]),
+      verify.results.map((r) => [r.path, { fit: r.fit, support: r.support ?? 0 }]),
     ),
+    lists,
     matches: Object.fromEntries(
       topLevel.map((f) => {
         const [best] = f.sources;
@@ -239,16 +267,10 @@ function recordingOf(fixture: string) {
       }),
     ),
     fills: Object.fromEntries(
-      topLevel.map((f) => [f.path, (fills[f.path]?.value ?? null) as FilledValue]),
+      Object.entries(fills).map(([id, fill]) => [id, (fill.value ?? null) as FilledValue]),
     ),
   };
-  return {
-    recording,
-    form: fixtureForms[`../fixtures/forms/${expected.form}.json`].default,
-    pages: expected.pages,
-    topLevel,
-    run: recorded(`${dir}/run2-opus-clean.json`) as RecordedRun,
-  };
+  return { recording, form, pages: expected.pages, topLevel, run };
 }
 
 /** The fixture Form as an app Form: its field names become keys and labels. */
@@ -269,7 +291,7 @@ function fieldsOf(form: FixtureForm) {
 
 describe.runIf(fixtures.length > 0)("replaying the recorded fixture runs", () => {
   for (const fixture of fixtures) {
-    test(`${fixture}: every top-level Field gets the Field Value and Confidence its recorded Match, Fill and Verify give`, async () => {
+    test(`${fixture}: every Field and List entry gets the Field Value and Confidence its recorded Match, Fill and Verify give`, async () => {
       const t = newBackend();
       const { recording, form, pages, topLevel, run } = recordingOf(fixture);
       const ann = await signUp(t, "ann", "Acme Fleet");
@@ -318,6 +340,25 @@ describe.runIf(fixtures.length > 0)("replaying the recorded fixture runs", () =>
           };
         }),
       );
+      for (const list of form.fields.filter((f) => f.type === "list")) {
+        const { completenessConfidence, entries } = run.fieldValues[list.name];
+        const stored = document.lists.find((l) => l.key === list.name)!;
+        expect(stored.completeness).toBe(completenessConfidence);
+        expect(stored.entries).toHaveLength(entries.length);
+        entries.forEach((entry, i) => {
+          expect(stored.entries[i]).toMatchObject(
+            list.fields!.map((s) => {
+              const { readText, pages } = entry[s.name] as RecordedValue;
+              return {
+                key: s.name,
+                value: readText === null ? null : recording.fills[`${list.name}[${i}].${s.name}`],
+                readText,
+                pages,
+              };
+            }),
+          );
+        });
+      }
     });
   }
 });

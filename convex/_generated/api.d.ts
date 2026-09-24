@@ -22,6 +22,7 @@ import type * as lib_fieldKeys from "../lib/fieldKeys.js";
 import type * as lib_fieldTypes from "../lib/fieldTypes.js";
 import type * as lib_filler from "../lib/filler.js";
 import type * as lib_functions from "../lib/functions.js";
+import type * as lib_matchPlan from "../lib/matchPlan.js";
 import type * as lib_matcher from "../lib/matcher.js";
 import type * as lib_models from "../lib/models.js";
 import type * as lib_pdfStore from "../lib/pdfStore.js";
@@ -54,6 +55,7 @@ declare const fullApi: ApiFromModules<{
   "lib/fieldTypes": typeof lib_fieldTypes;
   "lib/filler": typeof lib_filler;
   "lib/functions": typeof lib_functions;
+  "lib/matchPlan": typeof lib_matchPlan;
   "lib/matcher": typeof lib_matcher;
   "lib/models": typeof lib_models;
   "lib/pdfStore": typeof lib_pdfStore;
