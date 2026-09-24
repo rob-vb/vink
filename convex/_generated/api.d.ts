@@ -29,6 +29,7 @@ import type * as lib_pdfStore from "../lib/pdfStore.js";
 import type * as lib_pipeline from "../lib/pipeline.js";
 import type * as lib_reader from "../lib/reader.js";
 import type * as lib_reading from "../lib/reading.js";
+import type * as lib_reviewState from "../lib/reviewState.js";
 import type * as lib_verifier from "../lib/verifier.js";
 import type * as memberships from "../memberships.js";
 import type * as onboarding from "../onboarding.js";
@@ -63,6 +64,7 @@ declare const fullApi: ApiFromModules<{
   "lib/pipeline": typeof lib_pipeline;
   "lib/reader": typeof lib_reader;
   "lib/reading": typeof lib_reading;
+  "lib/reviewState": typeof lib_reviewState;
   "lib/verifier": typeof lib_verifier;
   memberships: typeof memberships;
   onboarding: typeof onboarding;

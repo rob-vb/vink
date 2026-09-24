@@ -118,12 +118,12 @@ test("a List Field gets one entry per element of the array Match chose, with a F
 
   expect(list).toMatchObject({ key: "tyreChanges", label: "Bandenwissels", sourcePath: "tyreChanges" });
   expect(list.entries).toHaveLength(2);
-  expect(list.entries[0]).toMatchObject([
+  expect(list.entries[0].fieldValues).toMatchObject([
     { key: "position", label: "Positie", value: "2L1", readText: "2L1", sourcePath: "tyreChanges[0].position", pages: [1] },
     { key: "removedSerial", value: "6135366435", sourcePath: "tyreChanges[0].removed.serial", pages: [1] },
     { key: "treadDepthMm", value: 3, readText: "3", sourcePath: "tyreChanges[0].removed.treadDepthMm" },
   ]);
-  expect(list.entries[1]).toMatchObject([
+  expect(list.entries[1].fieldValues).toMatchObject([
     { key: "position", value: "2R1", pages: [2] },
     { key: "removedSerial", value: "BPP10930524" },
     { key: "treadDepthMm", value: null, readText: null, sourcePath: null, pages: [] },
@@ -133,7 +133,7 @@ test("a List Field gets one entry per element of the array Match chose, with a F
 test("a sub-Field's Match probability is the lower of the array choice and the key choice", async () => {
   const { list } = await extracted(tyreReport);
 
-  const [position, removedSerial] = list.entries[0];
+  const [position, removedSerial] = list.entries[0].fieldValues;
   expect(position.signals.match).toBe(0.94);
   expect(removedSerial.signals.match).toBe(0.9);
 });
@@ -188,8 +188,8 @@ test("a sub-Field Value is Needs Review by the same rules as a top-level one", a
     verifications: { "tyreChanges[1].position": { fit: 0.3, support: 1 } },
   });
 
-  expect(list.entries[0][1].reviewReasons).toEqual(["unsure"]);
-  expect(list.entries[1][0]).toMatchObject({ confidence: 0.3, reviewReasons: ["below_threshold"] });
+  expect(list.entries[0].fieldValues[1].reviewReasons).toEqual(["unsure"]);
+  expect(list.entries[1].fieldValues[0]).toMatchObject({ confidence: 0.3, reviewReasons: ["below_threshold"] });
 });
 
 test("a List Field's completeness confidence is Jev's probability for the array choice", async () => {
@@ -230,8 +230,8 @@ test("an optional List Field with no entries is not Needs Review", async () => {
 test("a required sub-Field that is empty in an entry is Needs Review in that entry only", async () => {
   const { list } = await extracted(tyreReport, { treadDepthRequired: true });
 
-  expect(list.entries[0][2].reviewReasons).toEqual([]);
-  expect(list.entries[1][2].reviewReasons).toEqual(["required_empty"]);
+  expect(list.entries[0].fieldValues[2].reviewReasons).toEqual([]);
+  expect(list.entries[1].fieldValues[2].reviewReasons).toEqual(["required_empty"]);
 });
 
 // Enough values that one Match request would pass Jev's 64k-token cap.

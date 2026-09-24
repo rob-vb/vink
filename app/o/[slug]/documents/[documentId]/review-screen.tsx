@@ -18,6 +18,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { FieldRow } from "./field-row";
+import { ListGroup } from "./list-group";
 
 // pdf.js needs the browser.
 const PdfPane = dynamic(() => import("./pdf-pane"), {
@@ -38,6 +39,11 @@ const eventLabels = {
   uploaded: "Uploaded",
   extracted: "Extracted",
   corrected: "Corrected",
+  entry_added: "Entry added",
+  entry_removed: "Entry removed",
+  entry_restored: "Entry restored",
+  entries_confirmed: "Entries confirmed complete",
+  entries_unconfirmed: "Entries no longer confirmed",
   approved: "Approved",
 } as const;
 
@@ -85,6 +91,18 @@ export function ReviewScreen({
     filter === "all"
       ? document.fieldValues
       : document.fieldValues.filter((f) => f.needsReview || f.id === selected);
+  const lists =
+    filter === "all"
+      ? document.lists
+      : document.lists.filter(
+          (l) =>
+            l.needsReview ||
+            l.entries.some((e) => !e.removed && e.fieldValues.some((f) => f.needsReview || f.id === selected)),
+        );
+  const select = (id: string, pages: number[]) => {
+    setSelected(id);
+    if (pages.length > 0) setPage(pages[0]);
+  };
 
   async function approveThen(next: boolean) {
     setApproving(true);
@@ -200,7 +218,7 @@ export function ReviewScreen({
                   <Skeleton key={i} className="h-12" />
                 ))}
               </div>
-            ) : rows.length === 0 ? (
+            ) : rows.length === 0 && lists.length === 0 ? (
               <p className="p-6 text-center text-sm text-muted-foreground">
                 Nothing left to review.
               </p>
@@ -213,14 +231,25 @@ export function ReviewScreen({
                   threshold={threshold}
                   disabled={!reviewing}
                   selected={selected === fieldValue.id}
-                  onSelect={() => {
-                    setSelected(fieldValue.id);
-                    if (fieldValue.pages.length > 0) setPage(fieldValue.pages[0]);
-                  }}
+                  onSelect={() => select(fieldValue.id, fieldValue.pages)}
                 />
               ))
             )}
           </div>
+
+          {lists.map((list) => (
+            <ListGroup
+              key={list.key}
+              organisationSlug={organisationSlug}
+              documentId={documentId}
+              list={list}
+              threshold={threshold}
+              disabled={!reviewing}
+              filter={filter}
+              selected={selected}
+              onSelect={select}
+            />
+          ))}
 
           {reviewing && (
             <div className="sticky bottom-4 z-20 flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-background p-3 shadow-md">

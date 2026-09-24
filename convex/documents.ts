@@ -8,7 +8,12 @@ import { countIn } from "./lib/documentStates";
 import { orgAction, orgMutation, orgQuery } from "./lib/functions";
 import { pdfStore } from "./lib/pdfStore";
 import type { FlatField } from "./lib/pipeline";
-import { needsReview } from "./review";
+import {
+  fieldValueNeedsReview,
+  listNeedsReview,
+  listReasons,
+  needsReviewCount,
+} from "./lib/reviewState";
 import { documentState } from "./schema";
 
 // An Extraction must finish within Convex's 10-minute action limit, and a PDF
@@ -130,7 +135,7 @@ function viewOf(field: FlatField, fieldValue: Doc<"fieldValues">) {
     lowestSignal: fieldValue.lowestSignal,
     signals: fieldValue.signals,
     reviewReasons: fieldValue.reviewReasons,
-    needsReview: needsReview(fieldValue),
+    needsReview: fieldValueNeedsReview(fieldValue),
     review: review ? { state: review.state, by: review.byEmail, at: review.at } : null,
   };
 }
@@ -181,9 +186,7 @@ export const get = orgQuery({
       approval: document.approval
         ? { mode: document.approval.mode, by: document.approval.byEmail, at: document.approval.at }
         : null,
-      needsReviewCount:
-        fieldValues.filter(needsReview).length +
-        listValues.filter((l) => l.reviewReasons.length > 0).length,
+      needsReviewCount: needsReviewCount(fieldValues, listValues),
       history: events.map((e) => ({
         event: e.event,
         detail: e.detail ?? null,
@@ -199,19 +202,27 @@ export const get = orgQuery({
         if (field.type !== "list") return [];
         const list = listValues.find((l) => l.key === field.key);
         if (list === undefined) return [];
-        const entries = Array.from({ length: list.entryCount }, (_, entry) =>
-          field.fields.flatMap((subField) => {
+        const removed = new Set(list.removedEntries ?? []);
+        const added = new Set(list.addedEntries ?? []);
+        const entries = Array.from({ length: list.entryCount }, (_, entry) => ({
+          entry,
+          removed: removed.has(entry),
+          added: added.has(entry),
+          fieldValues: field.fields.flatMap((subField) => {
             const fieldValue = inLists.get(`${field.key}[${entry}].${subField.key}`);
             return fieldValue ? [viewOf(subField, fieldValue)] : [];
           }),
-        );
+        }));
         return [
           {
             key: field.key,
             label: field.label,
+            required: field.required,
             sourcePath: list.sourcePath,
             completeness: list.completeness,
-            reviewReasons: list.reviewReasons,
+            reviewReasons: listReasons(list),
+            needsReview: listNeedsReview(list),
+            complete: list.complete ? { by: list.complete.byEmail, at: list.complete.at } : null,
             entries,
           },
         ];

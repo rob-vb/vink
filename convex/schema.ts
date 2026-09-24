@@ -215,7 +215,16 @@ export default defineSchema({
     entryCount: v.number(),
     // Jev's probability for the array choice: whether all entries were found.
     completeness: v.number(),
+    // As the Extraction judged it; see lib/reviewState.ts for the reasons now.
     reviewReasons: v.array(reviewReason),
+    // Optional only for rows stored before ticket 28.
+    required: v.optional(v.boolean()),
+    // Entries are numbered 0 up to `entryCount` and never renumbered: a
+    // removed entry is listed here, and an entry a user added is listed too.
+    removedEntries: v.optional(v.array(v.number())),
+    addedEntries: v.optional(v.array(v.number())),
+    // "Entries are complete": who confirmed all entries were found.
+    complete: v.optional(v.object({ by: v.string(), byEmail: v.string(), at: v.number() })),
   }).index("by_documentId", ["documentId"]),
 
   // A Document's history: who did what, and when.
@@ -226,6 +235,11 @@ export default defineSchema({
       v.literal("uploaded"),
       v.literal("extracted"),
       v.literal("corrected"),
+      v.literal("entry_added"),
+      v.literal("entry_removed"),
+      v.literal("entry_restored"),
+      v.literal("entries_confirmed"),
+      v.literal("entries_unconfirmed"),
       v.literal("approved"),
     ),
     // What it was about, e.g. the corrected Field's label.

@@ -346,7 +346,7 @@ describe.runIf(fixtures.length > 0)("replaying the recorded fixture runs", () =>
         expect(stored.completeness).toBe(completenessConfidence);
         expect(stored.entries).toHaveLength(entries.length);
         entries.forEach((entry, i) => {
-          expect(stored.entries[i]).toMatchObject(
+          expect(stored.entries[i].fieldValues).toMatchObject(
             list.fields!.map((s) => {
               const { readText, pages } = entry[s.name] as RecordedValue;
               return {

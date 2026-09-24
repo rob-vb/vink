@@ -92,6 +92,7 @@ export function FieldRow({
   fieldValue,
   threshold,
   disabled,
+  manual = false,
   selected,
   onSelect,
 }: {
@@ -99,6 +100,8 @@ export function FieldRow({
   fieldValue: FieldValueView;
   threshold: number;
   disabled: boolean;
+  /** In a List entry a user added: nothing was read, so there's no confidence to show. */
+  manual?: boolean;
   selected: boolean;
   onSelect: () => void;
 }) {
@@ -197,7 +200,9 @@ export function FieldRow({
           />
         )}
         <p className="mt-1 text-xs text-muted-foreground">
-          {fieldValue.readText === null ? (
+          {manual ? (
+            "Filled in by hand"
+          ) : fieldValue.readText === null ? (
             "Not found on the Document"
           ) : (
             <>
@@ -208,14 +213,14 @@ export function FieldRow({
         </p>
         {fieldValue.needsReview && (
           <p className="mt-1 text-xs text-amber-700 dark:text-amber-400">
-            {fieldValue.reviewReasons.map((r) => reasonLabels[r]).join(" · ")} · lowest signal:{" "}
-            {signalLabels[fieldValue.lowestSignal]}
+            {fieldValue.reviewReasons.map((r) => reasonLabels[r]).join(" · ")}
+            {!manual && <> · lowest signal: {signalLabels[fieldValue.lowestSignal]}</>}
           </p>
         )}
       </div>
 
       <div className="flex flex-wrap items-center gap-2 sm:flex-col sm:items-end">
-        <ConfidenceBar confidence={fieldValue.confidence} threshold={threshold} />
+        {!manual && <ConfidenceBar confidence={fieldValue.confidence} threshold={threshold} />}
         {fieldValue.needsReview ? (
           <Badge className="bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-200">
             Needs Review

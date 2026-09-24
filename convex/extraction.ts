@@ -110,6 +110,7 @@ export const finish = internalMutation({
         organisationId: document.organisationId,
         documentId,
         ...list,
+        required,
         entryCount: entries,
         reviewReasons: reviewReasonsOf({
           confidence: list.completeness,
