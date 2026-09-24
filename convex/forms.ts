@@ -100,24 +100,28 @@ export async function insertForm(
 export const save = orgMutation({
   role: "admin",
   args: { formId: v.id("forms"), ...formContent },
-  handler: async (ctx, { formId, name, description, fields }) => {
-    const form = await getForm(ctx, ctx.organisationId, formId);
-    checkContent(name, fields);
-    if (await hasIntegrations(ctx, formId)) {
-      checkKeysKept((await getVersion(ctx, formId, form.version)).fields, fields);
-    }
-    const number = form.version + 1;
-    await ctx.db.insert("formVersions", {
-      organisationId: ctx.organisationId,
-      formId,
-      number,
-      fields,
-      savedBy: ctx.userId,
-    });
-    await ctx.db.patch(formId, { name, description, version: number });
-    return { version: number };
-  },
+  handler: async (ctx, { formId, ...content }) =>
+    await saveVersion(ctx, ctx.organisationId, ctx.userId, formId, content),
 });
+
+/** Saves a Form's next Form Version; also used by "Suggest Fields from PDF". */
+export async function saveVersion(
+  ctx: MutationCtx,
+  organisationId: Id<"organisations">,
+  userId: string,
+  formId: Id<"forms">,
+  { name, description, fields }: { name: string; description?: string; fields: Infer<typeof field>[] },
+) {
+  const form = await getForm(ctx, organisationId, formId);
+  checkContent(name, fields);
+  if (await hasIntegrations(ctx, formId)) {
+    checkKeysKept((await getVersion(ctx, formId, form.version)).fields, fields);
+  }
+  const number = form.version + 1;
+  await ctx.db.insert("formVersions", { organisationId, formId, number, fields, savedBy: userId });
+  await ctx.db.patch(formId, { name, description, version: number });
+  return { version: number };
+}
 
 /** Form settings: they apply to Extractions that finish afterwards. */
 export const updateSettings = orgMutation({

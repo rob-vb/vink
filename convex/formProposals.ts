@@ -6,9 +6,10 @@ import type { DataModel, Doc, Id } from "./_generated/dataModel";
 import { internalMutation, internalQuery, type MutationCtx, type QueryCtx } from "./_generated/server";
 import { checkUpload, createDocument } from "./documents";
 import { extractionPool } from "./extraction";
-import { insertForm } from "./forms";
+import { insertForm, saveVersion } from "./forms";
 import { orgAction, orgMutation, orgQuery } from "./lib/functions";
 import { pdfStore } from "./lib/pdfStore";
+import type { FlatField, ListField } from "./lib/pipeline";
 import { field } from "./schema";
 
 async function ownProposal(
@@ -182,6 +183,33 @@ export const save = orgMutation({
   },
 });
 
+/**
+ * "Suggest Fields from PDF": saves the Form, now with the kept suggestions,
+ * as its next Form Version. Documents already in progress keep theirs.
+ */
+export const saveToForm = orgMutation({
+  role: "admin",
+  args: {
+    proposalId: v.id("formProposals"),
+    name: v.string(),
+    description: v.optional(v.string()),
+    fields: v.array(field),
+  },
+  handler: async (ctx, { proposalId, name, description, fields }) => {
+    const proposal = await ownProposal(ctx, ctx.organisationId, proposalId);
+    if (proposal.state !== "ready" || !proposal.formId) {
+      throw new ConvexError("This proposal doesn't extend a Form");
+    }
+    const { version } = await saveVersion(ctx, ctx.organisationId, ctx.userId, proposal.formId, {
+      name,
+      description,
+      fields,
+    });
+    await deleteProposal(ctx, proposal);
+    return { formId: proposal.formId, version };
+  },
+});
+
 // For the run in proposalRun.ts.
 
 export const runInput = internalQuery({
@@ -189,10 +217,22 @@ export const runInput = internalQuery({
   handler: async (ctx, { proposalId }) => {
     const proposal = await ctx.db.get(proposalId);
     if (proposal === null) return null;
+    // "Suggest Fields from PDF": what the Form already has, to match against.
+    const form = proposal.formId ? await ctx.db.get(proposal.formId) : null;
+    const formVersion = form
+      ? await ctx.db
+          .query("formVersions")
+          .withIndex("by_formId_and_number", (q) => q.eq("formId", form._id).eq("number", form.version))
+          .unique()
+      : null;
+    const current = formVersion?.fields ?? [];
     return {
       key: proposal.key,
       readingJson: proposal.readingJson ?? null,
       textLayer: proposal.textLayer ?? [],
+      extends: form !== null,
+      fields: current.filter((f): f is FlatField => f.type !== "list"),
+      lists: current.filter((f): f is ListField => f.type === "list"),
     };
   },
 });
@@ -211,14 +251,37 @@ export const saveReading = internalMutation({
 export const saveFields = internalMutation({
   args: { proposalId: v.id("formProposals"), fields: v.array(v.object({ field, ticked: v.boolean() })) },
   handler: async (ctx, { proposalId, fields }) => {
-    if ((await ctx.db.get(proposalId)) === null) return;
+    const proposal = await ctx.db.get(proposalId);
+    if (proposal === null) return;
+    // A key the Form (or an earlier suggestion) already uses gets a number,
+    // so a new Field never takes the place of one the Form has.
+    const taken = new Set<string>();
+    if (proposal.formId) {
+      const form = (await ctx.db.get(proposal.formId))!;
+      const version = await ctx.db
+        .query("formVersions")
+        .withIndex("by_formId_and_number", (q) => q.eq("formId", form._id).eq("number", form.version))
+        .unique();
+      for (const f of version?.fields ?? []) taken.add(f.key);
+    }
+    const unique = (key: string) => {
+      let candidate = key;
+      for (let n = 2; taken.has(candidate); n++) candidate = `${key}${n}`;
+      taken.add(candidate);
+      return candidate;
+    };
     // No proposed Field is required: that is the Admin's call, since it blocks Auto-Send.
     const optional = fields.map(({ field, ticked }) => ({
       ticked,
       field:
         field.type === "list"
-          ? { ...field, required: false, fields: field.fields.map((s) => ({ ...s, required: false })) }
-          : { ...field, required: false },
+          ? {
+              ...field,
+              key: unique(field.key),
+              required: false,
+              fields: field.fields.map((s) => ({ ...s, required: false })),
+            }
+          : { ...field, key: unique(field.key), required: false },
     }));
     await ctx.db.patch(proposalId, { fields: optional, state: "ready" });
   },

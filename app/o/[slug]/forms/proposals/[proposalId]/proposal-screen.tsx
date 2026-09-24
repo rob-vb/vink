@@ -124,12 +124,16 @@ export function ProposalScreen({
 }) {
   const router = useRouter();
   const proposal = useQuery(api.formProposals.get, { organisationSlug, proposalId });
+  const form = useQuery(
+    api.forms.get,
+    proposal?.formId ? { organisationSlug, formId: proposal.formId } : "skip",
+  );
   const retry = useMutation(api.formProposals.retry);
   const discard = useMutation(api.formProposals.discard);
   const [unticked, setUnticked] = useState<Set<string> | null>(null);
   const [editing, setEditing] = useState(false);
 
-  if (proposal === undefined) {
+  if (proposal === undefined || (proposal.formId && form === undefined)) {
     return (
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-8 md:px-6">
         <Skeleton className="h-64" />
@@ -148,7 +152,14 @@ export function ProposalScreen({
   const kept = proposal.fields.filter(isChecked).map((p) => p.field);
 
   if (editing) {
-    return (
+    return form ? (
+      <FormEditor
+        organisationSlug={organisationSlug}
+        form={{ id: form.id, version: form.version }}
+        initial={toDraft({ ...form, fields: [...form.fields, ...kept] })}
+        proposal={{ id: proposalId, filename: proposal.filename }}
+      />
+    ) : (
       <FormEditor
         organisationSlug={organisationSlug}
         initial={toDraft({ name: "", fields: kept })}
@@ -175,7 +186,9 @@ export function ProposalScreen({
           <ArrowLeft />
           Forms
         </Button>
-        <h1 className="text-xl font-semibold">Proposed Fields</h1>
+        <h1 className="text-xl font-semibold">
+          {form ? `New Fields for ${form.name}` : "Proposed Fields"}
+        </h1>
         <p className="text-sm text-muted-foreground">From {proposal.filename}</p>
       </div>
 
@@ -202,10 +215,36 @@ export function ProposalScreen({
         </Alert>
       )}
 
-      {proposal.state === "ready" && (
+      {proposal.state === "ready" && proposal.fields.length === 0 && (
+        <Alert>
+          <CircleCheck />
+          <AlertTitle>Nothing new</AlertTitle>
+          <AlertDescription>
+            <p>{form?.name ?? "The Form"} already places everything DocuHelper found on this sample.</p>
+            <Button
+              size="sm"
+              variant="outline"
+              className="mt-2"
+              onClick={() =>
+                discard({ organisationSlug, proposalId }).then(
+                  () => router.push(`/o/${organisationSlug}/forms${form ? `/${form.id}` : ""}`),
+                  failed,
+                )
+              }
+            >
+              Done
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {proposal.state === "ready" && proposal.fields.length > 0 && (
         <>
           <p className="text-sm text-muted-foreground">
-            Everything on the sample is listed. What serves this kind of document is ticked; untick
+            {form
+              ? `Only what ${form.name} can't place yet is listed.`
+              : "Everything on the sample is listed."}{" "}
+            What serves this kind of document is ticked; untick
             what your system doesn&apos;t need. You can still edit every Field next. None is
             required yet: decide that on purpose, because a required Field blocks Auto-Send.
           </p>

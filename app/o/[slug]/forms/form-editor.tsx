@@ -2,7 +2,7 @@
 
 import { useMutation } from "convex/react";
 import { ConvexError } from "convex/values";
-import { ArrowLeft, Asterisk, Plus } from "lucide-react";
+import { ArrowLeft, Asterisk, Plus, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -10,6 +10,14 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   Empty,
   EmptyContent,
@@ -40,6 +48,7 @@ import {
   toContent,
 } from "./draft";
 import { FieldDetail } from "./field-detail";
+import { SampleUpload } from "./sample-upload";
 
 type Props = {
   organisationSlug: string;
@@ -47,7 +56,10 @@ type Props = {
   form?: { id: Id<"forms">; version: number };
   initial: Draft;
   settings?: React.ReactNode;
-  /** A new Form from a Form Proposal: saving it can also process the sample. */
+  /**
+   * From a Form Proposal: a new Form (saving can also process the sample), or
+   * with `form`, the Form extended by "Suggest Fields from PDF".
+   */
   proposal?: { id: Id<"formProposals">; filename: string };
 };
 
@@ -56,6 +68,7 @@ export function FormEditor({ organisationSlug, form, initial, settings, proposal
   const create = useMutation(api.forms.create);
   const save = useMutation(api.forms.save);
   const saveProposal = useMutation(api.formProposals.save);
+  const saveSuggestions = useMutation(api.formProposals.saveToForm);
   const [processSample, setProcessSample] = useState(true);
   const [saved, setSaved] = useState(initial);
   const [draft, setDraft] = useState(initial);
@@ -128,7 +141,12 @@ export function FormEditor({ organisationSlug, form, initial, settings, proposal
     setSaving(true);
     try {
       const content = toContent(draft);
-      if (form) {
+      if (form && proposal) {
+        const { version } = await saveSuggestions({ organisationSlug, proposalId: proposal.id, ...content });
+        setSaved(draft);
+        toast.success(`Saved as version ${version}`);
+        router.replace(`/o/${organisationSlug}/forms/${form.id}`);
+      } else if (form) {
         const { version } = await save({ organisationSlug, formId: form.id, ...content });
         setSaved(draft);
         toast.success(`Saved as version ${version}`);
@@ -176,12 +194,30 @@ export function FormEditor({ organisationSlug, form, initial, settings, proposal
           {form && <Badge variant="outline">v{form.version}</Badge>}
         </div>
         <div className="flex items-center gap-3">
-          {dirty && (
+          {form && !proposal && (
+            <Dialog>
+              <DialogTrigger render={<Button variant="outline" />}>
+                <Sparkles />
+                Suggest Fields from PDF
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Suggest Fields from a PDF</DialogTitle>
+                  <DialogDescription>
+                    For a supplier whose documents show more than this Form has. DocuHelper reads
+                    the sample and proposes only what the Form can&apos;t place yet.
+                  </DialogDescription>
+                </DialogHeader>
+                <SampleUpload organisationSlug={organisationSlug} formId={form.id} />
+              </DialogContent>
+            </Dialog>
+          )}
+          {(dirty || proposal) && (
             <span className="hidden text-sm text-muted-foreground sm:inline">
               {form ? `Saving creates version ${form.version + 1}` : "Unsaved"}
             </span>
           )}
-          <Button onClick={() => void onSave()} disabled={saving || invalid || (form && !dirty)}>
+          <Button onClick={() => void onSave()} disabled={saving || invalid || (form && !proposal && !dirty)}>
             {saving && <Spinner />}
             {form ? "Save" : "Create Form"}
           </Button>
@@ -208,7 +244,7 @@ export function FormEditor({ organisationSlug, form, initial, settings, proposal
             onChange={(e) => setDraft({ ...draft, description: e.target.value })}
           />
         </Field>
-        {proposal && (
+        {proposal && !form && (
           <Field orientation="horizontal">
             <Checkbox
               id="process-sample"

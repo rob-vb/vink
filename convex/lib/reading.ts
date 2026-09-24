@@ -125,3 +125,29 @@ export function readingArrays(reading: Reading): ReadingArray[] {
   walk(reading, "");
   return arrays;
 }
+
+/**
+ * The Reading without the values (or arrays) at `paths`, e.g. what a Form
+ * already places. An object left with only the Reader's notes goes too.
+ */
+export function withoutPaths(reading: Reading, paths: string[]): Reading {
+  const drop = new Set(paths);
+  const prune = (node: unknown, path: string): unknown => {
+    if (drop.has(path)) return undefined;
+    if (Array.isArray(node)) {
+      const items = node.map((item, i) => prune(item, `${path}[${i}]`)).filter((i) => i !== undefined);
+      return items.length > 0 ? items : undefined;
+    }
+    if (isObject(node)) {
+      const kept = Object.entries(node).flatMap(([key, value]) => {
+        if (key.startsWith("_")) return [[key, value]];
+        const pruned = prune(value, path ? `${path}.${key}` : key);
+        return pruned === undefined ? [] : [[key, pruned]];
+      });
+      const hasValues = kept.some(([key]) => !(key as string).startsWith("_"));
+      return hasValues || path === "" ? Object.fromEntries(kept) : undefined;
+    }
+    return node;
+  };
+  return prune(reading, "") as Reading;
+}
