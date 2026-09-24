@@ -1,0 +1,16 @@
+{
+  "name": "invoice",
+  "description": "A generic supplier invoice.",
+  "fields": [
+    { "name": "supplierName", "type": "string", "description": "Company or person issuing the invoice" },
+    { "name": "supplierVatNumber", "type": "string", "description": "VAT number of the supplier" },
+    { "name": "invoiceNumber", "type": "string", "description": "Invoice number" },
+    { "name": "invoiceDate", "type": "date", "description": "Invoice date (ISO yyyy-mm-dd)" },
+    { "name": "customerName", "type": "string", "description": "Name of the invoiced customer" },
+    { "name": "iban", "type": "string", "description": "Supplier's bank account (IBAN), without spaces" },
+    { "name": "currency", "type": "string", "description": "ISO currency code" },
+    { "name": "totalExclVat", "type": "number", "description": "Subtotal excluding VAT" },
+    { "name": "vatAmount", "type": "number", "description": "VAT amount" },
+    { "name": "totalInclVat", "type": "number", "description": "Total including VAT" }
+  ]
+}
