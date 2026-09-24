@@ -161,7 +161,7 @@ type Step = "read" | "match" | "fill" | "verify";
  */
 export const fakePipeline = {
   recording: null as Recording | null,
-  failing: new Set<Step>(),
+  failing: new Map<Step, number>(),
   calls: [] as Array<
     | { step: "read" }
     | { step: "match"; reading: Reading; fields: string[]; lists: string[] }
@@ -173,7 +173,11 @@ export const fakePipeline = {
   },
   /** The next call to that step throws, as an outage would. */
   failOnce(step: Step) {
-    fakePipeline.failing.add(step);
+    fakePipeline.failTimes(step, 1);
+  },
+  /** The next `times` calls to that step throw. */
+  failTimes(step: Step, times: number) {
+    fakePipeline.failing.set(step, times);
   },
   reset() {
     fakePipeline.recording = null;
@@ -181,7 +185,11 @@ export const fakePipeline = {
     fakePipeline.calls = [];
   },
   failIfAsked(step: Step) {
-    if (fakePipeline.failing.delete(step)) throw new Error(`${step} is down`);
+    const left = fakePipeline.failing.get(step) ?? 0;
+    if (left > 0) {
+      fakePipeline.failing.set(step, left - 1);
+      throw new Error(`${step} is down`);
+    }
   },
   played() {
     if (fakePipeline.recording === null) throw new Error("No Recording to replay");

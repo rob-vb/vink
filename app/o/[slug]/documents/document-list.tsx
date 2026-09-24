@@ -1,7 +1,9 @@
 "use client";
 
-import { useQuery } from "convex/react";
-import { FileStack, FileText } from "lucide-react";
+import { useMutation, useQuery } from "convex/react";
+import { ConvexError } from "convex/values";
+import { FileStack, FileText, RotateCcw } from "lucide-react";
+import { toast } from "sonner";
 import Link from "next/link";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -53,6 +55,7 @@ export function DocumentList({
   const [state, setState] = useState<State>("extracting");
   const forms = useQuery(api.forms.list, { organisationSlug });
   const list = useQuery(api.documents.list, { organisationSlug, state });
+  const retry = useMutation(api.extraction.retry);
   if (forms === undefined) {
     return (
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8 md:px-6">
@@ -147,7 +150,9 @@ export function DocumentList({
                   <TableHead className="hidden sm:table-cell">Form</TableHead>
                   <TableHead className="hidden text-right md:table-cell">Pages</TableHead>
                   <TableHead className="hidden md:table-cell">Uploaded by</TableHead>
-                  <TableHead className="text-right">Uploaded</TableHead>
+                  <TableHead className="text-right">
+                    {state === "extraction_failed" ? <span className="sr-only">Retry</span> : "Uploaded"}
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -175,7 +180,26 @@ export function DocumentList({
                       {document.uploadedBy}
                     </TableCell>
                     <TableCell className="text-right whitespace-nowrap text-muted-foreground">
-                      {uploadedAt.format(document.uploadedAt)}
+                      {state === "extraction_failed" ? (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() =>
+                            retry({ organisationSlug, documentId: document.id }).catch((error) =>
+                              toast.error(
+                                error instanceof ConvexError
+                                  ? String(error.data)
+                                  : "The retry didn't start. Try again.",
+                              ),
+                            )
+                          }
+                        >
+                          <RotateCcw />
+                          Retry
+                        </Button>
+                      ) : (
+                        uploadedAt.format(document.uploadedAt)
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}

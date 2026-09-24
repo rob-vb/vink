@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery } from "convex/react";
 import { ConvexError } from "convex/values";
-import { ArrowLeft, CircleCheck, ShieldAlert } from "lucide-react";
+import { ArrowLeft, CircleAlert, CircleCheck, RotateCcw, ShieldAlert } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -38,6 +38,8 @@ const stateLabels = {
 const eventLabels = {
   uploaded: "Uploaded",
   extracted: "Extracted",
+  extraction_failed: "Extraction failed",
+  extraction_retried: "Extraction started again",
   corrected: "Corrected",
   entry_added: "Entry added",
   entry_removed: "Entry removed",
@@ -64,6 +66,7 @@ export function ReviewScreen({
   const document = useQuery(api.documents.get, { organisationSlug, documentId });
   const pdfUrl = useMutation(api.documents.pdfUrl);
   const approve = useMutation(api.review.approve);
+  const retry = useMutation(api.extraction.retry);
   const [url, setUrl] = useState<string | null>(null);
   const [urlFailed, setUrlFailed] = useState(false);
   const [page, setPage] = useState(1);
@@ -158,6 +161,37 @@ export function ReviewScreen({
           </p>
         </div>
       </div>
+
+      {document.state === "extraction_failed" && (
+        <Alert variant="destructive">
+          <CircleAlert />
+          <AlertTitle>DocuHelper couldn&apos;t read this Document</AlertTitle>
+          <AlertDescription>
+            <p>
+              It tried four times. This is usually a passing outage, so try again. When a
+              Reading was stored, the retry picks up from there and doesn&apos;t read the PDF
+              again.
+            </p>
+            {document.extractionError && (
+              <p className="font-mono text-xs break-all opacity-80">{document.extractionError}</p>
+            )}
+            <Button
+              size="sm"
+              className="mt-2"
+              onClick={() =>
+                retry({ organisationSlug, documentId }).catch((error) =>
+                  toast.error(
+                    error instanceof ConvexError ? String(error.data) : "The retry didn't start. Try again.",
+                  ),
+                )
+              }
+            >
+              <RotateCcw />
+              Retry
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
 
       {document.approval && (
         <Alert>

@@ -146,6 +146,8 @@ export default defineSchema({
     // Form's Review Threshold at that moment, which its Field Values keep.
     jevVerified: v.optional(v.boolean()),
     reviewThreshold: v.optional(v.number()),
+    // Why the last Extraction failed, after all its attempts.
+    extractionError: v.optional(v.string()),
     // Set by a user's correction (and later Change Form or Reopen): rules out Auto-Send.
     userTouched: v.optional(v.boolean()),
     approval: v.optional(
@@ -234,6 +236,8 @@ export default defineSchema({
     event: v.union(
       v.literal("uploaded"),
       v.literal("extracted"),
+      v.literal("extraction_failed"),
+      v.literal("extraction_retried"),
       v.literal("corrected"),
       v.literal("entry_added"),
       v.literal("entry_removed"),

@@ -1,12 +1,13 @@
 // An Extraction's steps around the Node action in extractionRun.ts: queueing
 // it, and what it reads and writes in the database.
 import { Workpool } from "@convex-dev/workpool";
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import { components, internal } from "./_generated/api";
-import type { Id } from "./_generated/dataModel";
+import type { DataModel, Id } from "./_generated/dataModel";
 import { internalMutation, internalQuery, type MutationCtx } from "./_generated/server";
 import { confidenceOf, reviewReasonsOf } from "./lib/confidence";
 import { moveTo } from "./lib/documentStates";
+import { orgMutation } from "./lib/functions";
 import type { FlatField, ListField } from "./lib/pipeline";
 
 const extractionPool = new Workpool(components.extractionPool, {
@@ -17,8 +18,63 @@ const extractionPool = new Workpool(components.extractionPool, {
 });
 
 export async function startExtraction(ctx: MutationCtx, documentId: Id<"documents">) {
-  await extractionPool.enqueueAction(ctx, internal.extractionRun.run, { documentId });
+  await extractionPool.enqueueAction(
+    ctx,
+    internal.extractionRun.run,
+    { documentId },
+    { onComplete: internal.extraction.completed, context: { documentId } },
+  );
 }
+
+/** After the last attempt: a run that failed every time leaves the Document Extraction Failed. */
+const completedContext = v.object({ documentId: v.id("documents") });
+
+export const completed = extractionPool.defineOnComplete<DataModel, typeof completedContext>({
+  context: completedContext,
+  handler: async (ctx, { context: { documentId }, result }) => {
+    if (result.kind === "success") return;
+    const document = await ctx.db.get(documentId);
+    if (document === null || document.state !== "extracting") return;
+    await ctx.db.patch(documentId, {
+      extractionError: result.kind === "failed" ? result.error : "canceled",
+    });
+    await moveTo(ctx, document, "extraction_failed");
+    await ctx.db.insert("documentEvents", {
+      organisationId: document.organisationId,
+      documentId,
+      event: "extraction_failed",
+      by: "docuhelper",
+      byEmail: "DocuHelper",
+      at: Date.now(),
+    });
+  },
+});
+
+/** Starts a failed Extraction again. It resumes at Match when a Reading is stored. */
+export const retry = orgMutation({
+  args: { documentId: v.id("documents") },
+  handler: async (ctx, { documentId }) => {
+    const document = await ctx.db.get(documentId);
+    if (document === null || document.organisationId !== ctx.organisationId) {
+      throw new ConvexError("Document not found");
+    }
+    if (document.state !== "extraction_failed") {
+      throw new ConvexError("Only a failed Extraction can be retried");
+    }
+    const identity = await ctx.auth.getUserIdentity();
+    await ctx.db.patch(documentId, { extractionError: undefined });
+    await moveTo(ctx, document, "extracting");
+    await ctx.db.insert("documentEvents", {
+      organisationId: ctx.organisationId,
+      documentId,
+      event: "extraction_retried",
+      by: ctx.userId,
+      byEmail: identity?.email?.toLowerCase() ?? "",
+      at: Date.now(),
+    });
+    await startExtraction(ctx, documentId);
+  },
+});
 
 /** What the Extraction works on: the PDF, the Form's Fields and any stored Reading. */
 export const input = internalQuery({
@@ -104,6 +160,9 @@ export const finish = internalMutation({
   },
   handler: async (ctx, { documentId, jevVerified, lists, fieldValues }) => {
     const document = (await ctx.db.get(documentId))!;
+    // A run that comes late (the Document moved on) changes nothing, so it
+    // never overwrites a user's corrections.
+    if (document.state !== "extracting") return;
     const { reviewThreshold } = (await ctx.db.get(document.formId))!;
     for (const { required, entries, ...list } of lists) {
       await ctx.db.insert("listValues", {

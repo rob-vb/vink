@@ -183,6 +183,7 @@ export const get = orgQuery({
       jevVerified: document.jevVerified ?? false,
       reviewThreshold: document.reviewThreshold ?? null,
       userTouched: document.userTouched ?? false,
+      extractionError: document.extractionError ?? null,
       approval: document.approval
         ? { mode: document.approval.mode, by: document.approval.byEmail, at: document.approval.at }
         : null,
