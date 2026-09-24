@@ -47,6 +47,15 @@ export const field = v.union(
   }),
 );
 
+export const documentState = v.union(
+  v.literal("extracting"),
+  v.literal("needs_review"),
+  v.literal("approved"),
+  v.literal("extraction_failed"),
+  v.literal("rejected"),
+  v.literal("deleted"),
+);
+
 // Every table except `organisations` itself carries an indexed `organisationId`.
 export default defineSchema({
   organisations: defineTable({
@@ -98,4 +107,38 @@ export default defineSchema({
     fields: v.array(field),
     savedBy: v.string(),
   }).index("by_formId_and_number", ["formId", "number"]),
+
+  // A PDF processed against the Form Version that was current at upload.
+  documents: defineTable({
+    organisationId: v.id("organisations"),
+    formId: v.id("forms"),
+    formVersion: v.number(),
+    // The PDF's key in R2 (see lib/pdfStore.ts), prefixed with the Organisation.
+    key: v.string(),
+    filename: v.string(),
+    pageCount: v.number(),
+    uploadedBy: v.string(),
+    // Copied from the uploader at upload time, for the Document list.
+    uploaderEmail: v.string(),
+    state: documentState,
+  }).index("by_organisationId_and_state", ["organisationId", "state"]),
+
+  // A Document's history: who did what, and when.
+  documentEvents: defineTable({
+    organisationId: v.id("organisations"),
+    documentId: v.id("documents"),
+    event: v.literal("uploaded"),
+    by: v.string(),
+    // Copied from the user at the time, like `documents.uploaderEmail`.
+    byEmail: v.string(),
+    at: v.number(),
+  }).index("by_documentId", ["documentId"]),
+
+  // How many Documents an Organisation has in each state, for the list's tabs.
+  // Kept in step by every state change, so the tabs never scan Documents.
+  documentCounts: defineTable({
+    organisationId: v.id("organisations"),
+    state: documentState,
+    count: v.number(),
+  }).index("by_organisationId_and_state", ["organisationId", "state"]),
 });

@@ -1,13 +1,17 @@
 // The only way to define a public Convex function in this app. Raw `query`,
 // `mutation` and `action` exports are banned by lint (see ADR 0001).
 import {
+  customAction,
   customCtx,
   customMutation,
   customQuery,
 } from "convex-helpers/server/customFunctions";
 import { ConvexError, v } from "convex/values";
-import type { Doc } from "../_generated/dataModel";
+import { internal } from "../_generated/api";
+import type { Doc, Id } from "../_generated/dataModel";
 import {
+  action,
+  internalQuery,
   mutation,
   query,
   type QueryCtx,
@@ -87,4 +91,32 @@ export const orgMutation = customMutation(mutation, {
   args: organisationArgs,
   input: (ctx, { organisationSlug }, required: RoleRequirement) =>
     resolveMembership(ctx, organisationSlug, required),
+});
+
+type MembershipCtx = { userId: string; organisationId: Id<"organisations">; role: Role };
+
+/** For `orgAction`, which has no `ctx.db` of its own. */
+export const membership = internalQuery({
+  args: { organisationSlug: v.string(), role: v.optional(v.literal("admin")) },
+  handler: async (ctx, { organisationSlug, role }): Promise<MembershipCtx> =>
+    (await resolveMembership(ctx, organisationSlug, { role })).ctx,
+});
+
+/**
+ * Like `orgQuery`, for actions. The Membership is checked once, at the start;
+ * pass `ctx.organisationId` to any internal function the action runs.
+ */
+export const orgAction = customAction(action, {
+  args: organisationArgs,
+  input: async (
+    ctx,
+    { organisationSlug },
+    { role }: RoleRequirement,
+  ): Promise<{ ctx: MembershipCtx; args: Record<string, never> }> => ({
+    ctx: await ctx.runQuery(internal.lib.functions.membership, {
+      organisationSlug,
+      role,
+    }),
+    args: {},
+  }),
 });

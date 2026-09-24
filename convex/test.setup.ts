@@ -53,3 +53,29 @@ export async function addMembership(
   });
   return asUser(t, userId);
 }
+
+/**
+ * Stands in for R2 (see lib/pdfStore.ts): objects live in `objects`, and an
+ * upload URL is the object's key behind a fake host. Install it in a test file
+ * with `vi.mock("./lib/pdfStore", () => ({ pdfStore: fakePdfStore }))`.
+ */
+export const fakePdfStore = {
+  objects: new Map<string, Uint8Array>(),
+  async uploadUrl(key: string) {
+    return `https://r2.test/upload/${key}`;
+  },
+  async read(key: string) {
+    return fakePdfStore.objects.get(key) ?? null;
+  },
+  async remove(_ctx: unknown, key: string) {
+    fakePdfStore.objects.delete(key);
+  },
+  async viewUrl(key: string, expiresInSeconds: number) {
+    return `https://r2.test/view/${key}?expires=${expiresInSeconds}`;
+  },
+};
+
+/** What the browser does with an upload URL: PUT the bytes there. */
+export function putToUploadUrl(url: string, bytes: Uint8Array) {
+  fakePdfStore.objects.set(url.replace("https://r2.test/upload/", ""), bytes);
+}

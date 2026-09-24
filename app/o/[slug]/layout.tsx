@@ -21,22 +21,30 @@ export default async function OrganisationLayout({
           <span className="text-muted-foreground">/</span>
           <OrganisationSwitcher slug={slug} name={organisation.name} />
         </div>
-        {organisation.role === "admin" && (
-          <nav className="order-last -mx-4 flex h-10 w-[calc(100%+2rem)] items-center gap-4 border-t px-4 text-sm sm:order-none sm:mx-0 sm:h-14 sm:w-auto sm:flex-1 sm:border-t-0 sm:px-2">
-            <Link
-              href={`/o/${slug}/forms`}
-              className="text-muted-foreground transition-colors hover:text-foreground"
-            >
-              Forms
-            </Link>
-            <Link
-              href={`/o/${slug}/members`}
-              className="text-muted-foreground transition-colors hover:text-foreground"
-            >
-              Members
-            </Link>
-          </nav>
-        )}
+        <nav className="order-last -mx-4 flex h-10 w-[calc(100%+2rem)] items-center gap-4 border-t px-4 text-sm sm:order-none sm:mx-0 sm:h-14 sm:w-auto sm:flex-1 sm:border-t-0 sm:px-2">
+          <Link
+            href={`/o/${slug}`}
+            className="text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Documents
+          </Link>
+          {organisation.role === "admin" && (
+            <>
+              <Link
+                href={`/o/${slug}/forms`}
+                className="text-muted-foreground transition-colors hover:text-foreground"
+              >
+                Forms
+              </Link>
+              <Link
+                href={`/o/${slug}/members`}
+                className="text-muted-foreground transition-colors hover:text-foreground"
+              >
+                Members
+              </Link>
+            </>
+          )}
+        </nav>
         <UserMenu />
       </header>
       {children}
