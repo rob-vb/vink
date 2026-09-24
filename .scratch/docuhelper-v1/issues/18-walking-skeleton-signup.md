@@ -29,3 +29,7 @@ See ADR 0001.
 - [ ] Every table carries an indexed `organisationId`
 - [ ] A `convex-test` test shows that a user can't read or change data of an Organisation they have no Membership in
 - [ ] The app runs under pm2 behind nginx on the VPS, and Convex deploys with `npx convex deploy`
+
+## Comments
+
+- The Convex project already exists: **tame-goose-939** (EU). Link the app to it, and don't create a new project. The Convex CLI on the VPS is already logged in.
