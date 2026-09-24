@@ -10,6 +10,7 @@
 
 import type * as auth from "../auth.js";
 import type * as changeForm from "../changeForm.js";
+import type * as deliveries from "../deliveries.js";
 import type * as documents from "../documents.js";
 import type * as email from "../email.js";
 import type * as extraction from "../extraction.js";
@@ -54,6 +55,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   changeForm: typeof changeForm;
+  deliveries: typeof deliveries;
   documents: typeof documents;
   email: typeof email;
   extraction: typeof extraction;

@@ -3,6 +3,7 @@
 import { useMutation, useQuery } from "convex/react";
 import { ConvexError } from "convex/values";
 import { Copy, Eye, Pencil, Plug, Plus, Trash2, X } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 import {
@@ -16,6 +17,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { DeliveryRow } from "@/components/deliveries/delivery-log";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -78,6 +80,38 @@ function SigningSecret({
           Reveal
         </Button>
       )}
+    </div>
+  );
+}
+
+function RecentDeliveries({
+  organisationSlug,
+  integrationId,
+}: {
+  organisationSlug: string;
+  integrationId: Id<"integrations">;
+}) {
+  const deliveries = useQuery(api.deliveries.forIntegration, { organisationSlug, integrationId });
+  if (deliveries === undefined || deliveries.length === 0) {
+    return <p className="text-muted-foreground">Nothing sent yet.</p>;
+  }
+  return (
+    <div className="overflow-hidden rounded-md border">
+      {deliveries.map((delivery) => (
+        <DeliveryRow
+          key={delivery.id}
+          delivery={delivery}
+          title={
+            <Link
+              href={`/o/${organisationSlug}/documents/${delivery.document.id}`}
+              className="hover:underline"
+              onClick={(event) => event.stopPropagation()}
+            >
+              {delivery.document.filename}
+            </Link>
+          }
+        />
+      ))}
     </div>
   );
 }
@@ -252,6 +286,13 @@ export function IntegrationsList({ organisationSlug }: { organisationSlug: strin
                       An attached Form&apos;s keys are locked. Documents approved before attaching
                       aren&apos;t sent.
                     </p>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <p className="font-medium">Recent Deliveries</p>
+                    <RecentDeliveries
+                      organisationSlug={organisationSlug}
+                      integrationId={integration.id}
+                    />
                   </div>
                   <div>
                     <TestSendButton

@@ -3,6 +3,7 @@ import { PDFDocument } from "pdf-lib";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { internalMutation, type QueryCtx } from "./_generated/server";
+import { deliveriesOf } from "./deliveries";
 import { startExtraction } from "./extraction";
 import { countIn } from "./lib/documentStates";
 import { orgAction, orgMutation, orgQuery } from "./lib/functions";
@@ -191,6 +192,7 @@ export const get = orgQuery({
       reviewThreshold: document.reviewThreshold ?? null,
       userTouched: document.userTouched ?? false,
       extractionError: document.extractionError ?? null,
+      deliveries: await deliveriesOf(ctx, documentId),
       rejection: rejectionOf(document),
       dataDeleted: document.dataDeletedAt !== undefined,
       approval: document.approval

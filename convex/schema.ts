@@ -263,6 +263,39 @@ export default defineSchema({
     .index("by_formId", ["formId"])
     .index("by_integrationId", ["integrationId"]),
 
+  // One attempt-series to send one approved Document's Payload to one Integration.
+  deliveries: defineTable({
+    organisationId: v.id("organisations"),
+    documentId: v.id("documents"),
+    integrationId: v.id("integrations"),
+    // Kept for the log after the Integration is deleted.
+    integrationName: v.string(),
+    // Stable over every attempt and re-send, so the receiver can dedupe.
+    deliveryId: v.string(),
+    // The envelope as frozen at Approval, JSON. Removed with the Document's data.
+    envelope: v.optional(v.string()),
+    state: v.union(
+      v.literal("pending"),
+      v.literal("retrying"),
+      v.literal("delivered"),
+      v.literal("failed"),
+    ),
+    failureReason: v.optional(v.string()),
+    attempts: v.array(
+      v.object({
+        at: v.number(),
+        status: v.union(v.number(), v.null()),
+        // The start of the response body.
+        body: v.union(v.string(), v.null()),
+        // Why there was no answer (timeout, network).
+        error: v.union(v.string(), v.null()),
+      }),
+    ),
+    nextAttemptAt: v.optional(v.number()),
+  })
+    .index("by_documentId", ["documentId"])
+    .index("by_integrationId", ["integrationId"]),
+
   // A Document's history: who did what, and when.
   documentEvents: defineTable({
     organisationId: v.id("organisations"),

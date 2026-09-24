@@ -3,6 +3,7 @@
 import { ConvexError, v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
+import { createDeliveries } from "./deliveries";
 import { reviewReasonsOf } from "./lib/confidence";
 import { moveTo } from "./lib/documentStates";
 import { fitType } from "./lib/fieldTypes";
@@ -147,8 +148,10 @@ export const approve = orgMutation({
       );
     }
     const who = await reviewer(ctx, ctx.userId);
-    await ctx.db.patch(documentId, { approval: { mode: "manual", ...who } });
+    const approval = { mode: "manual" as const, ...who };
+    await ctx.db.patch(documentId, { approval });
     await moveTo(ctx, document, "approved");
+    await createDeliveries(ctx, { ...document, approval });
     await ctx.db.insert("documentEvents", {
       organisationId: ctx.organisationId,
       documentId,

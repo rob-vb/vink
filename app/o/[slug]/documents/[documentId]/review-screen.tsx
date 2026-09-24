@@ -16,6 +16,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { DeliveryRow } from "@/components/deliveries/delivery-log";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -401,6 +402,17 @@ export function ReviewScreen({
                 </Button>
               </div>
             </div>
+          )}
+
+          {document.deliveries.length > 0 && (
+            <section aria-labelledby="deliveries" className="overflow-hidden rounded-lg border">
+              <h2 id="deliveries" className="border-b px-4 py-3 text-sm font-medium">
+                Deliveries
+              </h2>
+              {document.deliveries.map((delivery) => (
+                <DeliveryRow key={delivery.id} delivery={delivery} title={delivery.integrationName} />
+              ))}
+            </section>
           )}
 
           <section aria-labelledby="history" className="rounded-lg border p-4">
