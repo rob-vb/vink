@@ -1,17 +1,13 @@
-import { ConvexError, type Infer, v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import { PDFDocument } from "pdf-lib";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
-import {
-  internalMutation,
-  type MutationCtx,
-  type QueryCtx,
-} from "./_generated/server";
+import { internalMutation, type QueryCtx } from "./_generated/server";
+import { startExtraction } from "./extraction";
+import { countIn } from "./lib/documentStates";
 import { orgAction, orgMutation, orgQuery } from "./lib/functions";
 import { pdfStore } from "./lib/pdfStore";
 import { documentState } from "./schema";
-
-type DocumentState = Infer<typeof documentState>;
 
 // An Extraction must finish within Convex's 10-minute action limit, and a PDF
 // is never split.
@@ -96,28 +92,10 @@ export const insert = internalMutation({
       byEmail: document.uploaderEmail,
       at: Date.now(),
     });
-    await count(ctx, document.organisationId, "extracting", +1);
+    await countIn(ctx, document.organisationId, "extracting");
+    await startExtraction(ctx, documentId);
   },
 });
-
-async function count(
-  ctx: MutationCtx,
-  organisationId: Id<"organisations">,
-  state: DocumentState,
-  delta: number,
-) {
-  const counter = await ctx.db
-    .query("documentCounts")
-    .withIndex("by_organisationId_and_state", (q) =>
-      q.eq("organisationId", organisationId).eq("state", state),
-    )
-    .unique();
-  if (counter === null) {
-    await ctx.db.insert("documentCounts", { organisationId, state, count: delta });
-  } else {
-    await ctx.db.patch(counter._id, { count: counter.count + delta });
-  }
-}
 
 async function getDocument(
   ctx: QueryCtx,
@@ -132,12 +110,25 @@ async function getDocument(
   return document;
 }
 
-/** One Document with its history, oldest event first. */
+/**
+ * One Document with its history, oldest event first, and its Field Values in
+ * the order of its Form Version's Fields.
+ */
 export const get = orgQuery({
   args: { documentId: v.id("documents") },
   handler: async (ctx, { documentId }) => {
     const document = await getDocument(ctx, ctx.organisationId, documentId);
     const form = await ctx.db.get(document.formId);
+    const formVersion = await ctx.db
+      .query("formVersions")
+      .withIndex("by_formId_and_number", (q) =>
+        q.eq("formId", document.formId).eq("number", document.formVersion),
+      )
+      .unique();
+    const fieldValues = await ctx.db
+      .query("fieldValues")
+      .withIndex("by_documentId", (q) => q.eq("documentId", documentId))
+      .take(500);
     const events = await ctx.db
       .query("documentEvents")
       .withIndex("by_documentId", (q) => q.eq("documentId", documentId))
@@ -150,6 +141,21 @@ export const get = orgQuery({
       formName: form?.name ?? "",
       formVersion: document.formVersion,
       history: events.map((e) => ({ event: e.event, by: e.byEmail, at: e.at })),
+      fieldValues: (formVersion?.fields ?? []).flatMap((field) => {
+        const fieldValue = fieldValues.find((f) => f.key === field.key);
+        if (fieldValue === undefined) return [];
+        return [
+          {
+            key: field.key,
+            label: field.label,
+            value: fieldValue.value,
+            readText: fieldValue.readText,
+            sourcePath: fieldValue.sourcePath,
+            pages: fieldValue.pages,
+            matchProbability: fieldValue.matchProbability,
+          },
+        ];
+      }),
     };
   },
 });

@@ -123,6 +123,31 @@ export default defineSchema({
     state: documentState,
   }).index("by_organisationId_and_state", ["organisationId", "state"]),
 
+  // What the vision model read on a Document (see lib/pipeline.ts), as JSON
+  // text: its `_pages` and `_unsure` keys aren't valid Convex field names.
+  // Kept apart from `documents` so the Document list never loads it.
+  readings: defineTable({
+    organisationId: v.id("organisations"),
+    documentId: v.id("documents"),
+    json: v.string(),
+  }).index("by_documentId", ["documentId"]),
+
+  // One per top-level Field of the Document's Form Version.
+  fieldValues: defineTable({
+    organisationId: v.id("organisations"),
+    documentId: v.id("documents"),
+    key: v.string(),
+    // `null` when nothing on the Document holds the Field.
+    value: v.union(v.string(), v.number(), v.boolean(), v.null()),
+    // The Reading's value the Field Value was filled from, as it was read.
+    readText: v.union(v.string(), v.null()),
+    // Where that value sits in the Reading, e.g. `vehicle.licensePlate`.
+    sourcePath: v.union(v.string(), v.null()),
+    pages: v.array(v.number()),
+    // Jev's probability for its Match choice, `none` included.
+    matchProbability: v.number(),
+  }).index("by_documentId", ["documentId"]),
+
   // A Document's history: who did what, and when.
   documentEvents: defineTable({
     organisationId: v.id("organisations"),

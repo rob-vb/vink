@@ -1,10 +1,9 @@
 "use client";
 
-import { useMutation, useQuery } from "convex/react";
+import { useQuery } from "convex/react";
 import { FileStack, FileText } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,7 +25,6 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { api } from "@/convex/_generated/api";
-import type { Id } from "@/convex/_generated/dataModel";
 import { UploadDialog } from "./upload-dialog";
 
 const tabs = [
@@ -55,20 +53,6 @@ export function DocumentList({
   const [state, setState] = useState<State>("extracting");
   const forms = useQuery(api.forms.list, { organisationSlug });
   const list = useQuery(api.documents.list, { organisationSlug, state });
-  const pdfUrl = useMutation(api.documents.pdfUrl);
-
-  async function openPdf(documentId: Id<"documents">) {
-    // Open the tab first, so the browser doesn't block it as a pop-up.
-    const tab = window.open("", "_blank");
-    try {
-      const url = await pdfUrl({ organisationSlug, documentId });
-      (tab ?? window).location.assign(url);
-    } catch {
-      tab?.close();
-      toast.error("We couldn't open the PDF.");
-    }
-  }
-
   if (forms === undefined) {
     return (
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8 md:px-6">
@@ -170,13 +154,12 @@ export function DocumentList({
                 {list.documents.map((document) => (
                   <TableRow key={document.id}>
                     <TableCell className="w-full max-w-0">
-                      <button
-                        type="button"
-                        onClick={() => openPdf(document.id)}
-                        className="block max-w-full truncate text-left font-medium hover:underline"
+                      <Link
+                        href={`/o/${organisationSlug}/documents/${document.id}`}
+                        className="block max-w-full truncate font-medium hover:underline"
                       >
                         {document.filename}
-                      </button>
+                      </Link>
                       <p className="truncate text-muted-foreground sm:hidden">
                         {document.formName}
                       </p>
