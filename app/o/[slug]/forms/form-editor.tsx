@@ -1,0 +1,231 @@
+"use client";
+
+import { useMutation } from "convex/react";
+import { ConvexError } from "convex/values";
+import { ArrowLeft, Asterisk, Plus } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyTitle,
+} from "@/components/ui/empty";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/spinner";
+import { Textarea } from "@/components/ui/textarea";
+import { api } from "@/convex/_generated/api";
+import type { Id } from "@/convex/_generated/dataModel";
+import { cn } from "cn";
+import { type Draft, fieldProblems, fieldTypes, newField, toContent } from "./draft";
+import { FieldDetail } from "./field-detail";
+
+type Props = {
+  organisationSlug: string;
+  /** Absent for a new Form: the first save creates it as version 1. */
+  form?: { id: Id<"forms">; version: number };
+  initial: Draft;
+  settings?: React.ReactNode;
+};
+
+export function FormEditor({ organisationSlug, form, initial, settings }: Props) {
+  const router = useRouter();
+  const create = useMutation(api.forms.create);
+  const save = useMutation(api.forms.save);
+  const [saved, setSaved] = useState(initial);
+  const [draft, setDraft] = useState(initial);
+  const [selectedId, setSelectedId] = useState(initial.fields[0]?.id);
+  const [saving, setSaving] = useState(false);
+
+  const dirty = useMemo(
+    () => JSON.stringify(toContent(draft)) !== JSON.stringify(toContent(saved)),
+    [draft, saved],
+  );
+  useEffect(() => {
+    if (!dirty) return;
+    const warn = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [dirty]);
+
+  const problems = new Map(draft.fields.map((f) => [f.id, fieldProblems(f, draft.fields)]));
+  const invalid =
+    draft.name.trim() === "" || [...problems.values()].some((p) => p.length > 0);
+  const selected = draft.fields.find((f) => f.id === selectedId);
+
+  function addField() {
+    const field = newField(draft.fields.map((f) => f.key));
+    setDraft({ ...draft, fields: [...draft.fields, field] });
+    setSelectedId(field.id);
+  }
+
+  async function onSave() {
+    setSaving(true);
+    try {
+      const content = toContent(draft);
+      if (form) {
+        const { version } = await save({ organisationSlug, formId: form.id, ...content });
+        setSaved(draft);
+        toast.success(`Saved as version ${version}`);
+      } else {
+        const { formId } = await create({ organisationSlug, ...content });
+        setSaved(draft);
+        toast.success("Form created as version 1");
+        router.replace(`/o/${organisationSlug}/forms/${formId}`);
+      }
+    } catch (error) {
+      toast.error(error instanceof ConvexError ? String(error.data) : "Couldn't save the Form");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-4 py-6 md:px-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Back to Forms"
+            nativeButton={false}
+            render={<Link href={`/o/${organisationSlug}/forms`} />}
+          >
+            <ArrowLeft />
+          </Button>
+          <h1 className="truncate text-xl font-semibold">
+            {form ? saved.name : "New Form"}
+          </h1>
+          {form && <Badge variant="outline">v{form.version}</Badge>}
+        </div>
+        <div className="flex items-center gap-3">
+          {dirty && (
+            <span className="hidden text-sm text-muted-foreground sm:inline">
+              {form ? `Saving creates version ${form.version + 1}` : "Unsaved"}
+            </span>
+          )}
+          <Button onClick={() => void onSave()} disabled={saving || invalid || (form && !dirty)}>
+            {saving && <Spinner />}
+            {form ? "Save" : "Create Form"}
+          </Button>
+        </div>
+      </div>
+
+      <FieldGroup className="max-w-2xl">
+        <Field>
+          <FieldLabel htmlFor="form-name">Name</FieldLabel>
+          <Input
+            id="form-name"
+            value={draft.name}
+            placeholder="Tyre service report"
+            onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+          />
+        </Field>
+        <Field>
+          <FieldLabel htmlFor="form-description">Description</FieldLabel>
+          <Textarea
+            id="form-description"
+            value={draft.description}
+            placeholder="Optional. Which documents this Form is for."
+            className="min-h-16"
+            onChange={(e) => setDraft({ ...draft, description: e.target.value })}
+          />
+        </Field>
+      </FieldGroup>
+
+      <section className="grid gap-4 md:grid-cols-[18rem_minmax(0,1fr)]">
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-medium">
+              Fields <span className="text-muted-foreground">{draft.fields.length}</span>
+            </h2>
+            <Button variant="outline" size="sm" onClick={addField}>
+              <Plus />
+              Add Field
+            </Button>
+          </div>
+          <ul className="flex flex-col gap-1">
+            {draft.fields.map((field) => (
+              <li key={field.id}>
+                <button
+                  type="button"
+                  onClick={() => setSelectedId(field.id)}
+                  aria-current={field.id === selectedId}
+                  className={cn(
+                    "flex w-full items-center gap-2 rounded-lg border px-3 py-2 text-left transition-colors hover:bg-muted",
+                    field.id === selectedId && "border-primary bg-muted",
+                    problems.get(field.id)!.length > 0 && "border-destructive/60",
+                  )}
+                >
+                  <span className="min-w-0 flex-1">
+                    <span className="flex items-center gap-1 truncate text-sm font-medium">
+                      {field.label || (
+                        <span className="text-muted-foreground">Untitled</span>
+                      )}
+                      {field.required && (
+                        <Asterisk className="size-3 text-destructive" aria-label="Required" />
+                      )}
+                    </span>
+                    <span className="block truncate font-mono text-xs text-muted-foreground">
+                      {field.key}
+                    </span>
+                  </span>
+                  <Badge variant="secondary">
+                    {fieldTypes.find((t) => t.value === field.type)!.label}
+                  </Badge>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="rounded-lg border p-4 md:p-6">
+          {selected ? (
+            <FieldDetail
+              key={selected.id}
+              field={selected}
+              otherKeys={draft.fields.filter((f) => f.id !== selected.id).map((f) => f.key)}
+              problems={problems.get(selected.id)!}
+              onChange={(field) =>
+                setDraft({
+                  ...draft,
+                  fields: draft.fields.map((f) => (f.id === field.id ? field : f)),
+                })
+              }
+              onRemove={() => {
+                const index = draft.fields.indexOf(selected);
+                const fields = draft.fields.filter((f) => f.id !== selected.id);
+                setDraft({ ...draft, fields });
+                setSelectedId(fields[Math.min(index, fields.length - 1)]?.id);
+              }}
+            />
+          ) : (
+            <Empty>
+              <EmptyHeader>
+                <EmptyTitle>No Field selected</EmptyTitle>
+                <EmptyDescription>
+                  Add a Field for each piece of data you want from the document:
+                  a license plate, a date, an amount.
+                </EmptyDescription>
+              </EmptyHeader>
+              <EmptyContent>
+                <Button variant="outline" onClick={addField}>
+                  <Plus />
+                  Add Field
+                </Button>
+              </EmptyContent>
+            </Empty>
+          )}
+        </div>
+      </section>
+
+      {settings}
+    </main>
+  );
+}
