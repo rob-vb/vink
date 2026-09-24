@@ -259,3 +259,38 @@ export const fakeVerifier: Verifier = {
     );
   },
 };
+
+/**
+ * Stands in for outbound HTTP to Integrations (lib/http.ts): records every
+ * request and answers from a script, 200 "ok" when nothing is scripted.
+ * Install with `vi.mock("./lib/http", …)`.
+ */
+type HttpAnswer =
+  | { status: number; body?: string; retryAfter?: string }
+  | { fail: "timeout" | "network" };
+
+export const fakeHttp = {
+  requests: [] as Array<{ url: string; headers: Record<string, string>; body: string }>,
+  script: [] as HttpAnswer[],
+  reset() {
+    fakeHttp.requests = [];
+    fakeHttp.script = [];
+  },
+  /** The next requests get these answers, in order. */
+  answer(...answers: HttpAnswer[]) {
+    fakeHttp.script.push(...answers);
+  },
+  async post(
+    url: string,
+    headers: Record<string, string>,
+    body: string,
+  ): Promise<{ status: number; body: string; retryAfter: string | null }> {
+    fakeHttp.requests.push({ url, headers, body });
+    const next = fakeHttp.script.shift() ?? { status: 200, body: "ok" };
+    if ("fail" in next) {
+      const { HttpFailure } = await import("./lib/http");
+      throw new HttpFailure(next.fail);
+    }
+    return { status: next.status, body: next.body ?? "", retryAfter: next.retryAfter ?? null };
+  },
+};

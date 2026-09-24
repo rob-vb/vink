@@ -2,6 +2,7 @@ import { ConvexError, type Infer, v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import type { QueryCtx } from "./_generated/server";
 import { isValidKey } from "./lib/fieldKeys";
+import { hasIntegrations } from "./integrations";
 import { orgMutation, orgQuery } from "./lib/functions";
 import { field } from "./schema";
 
@@ -47,6 +48,7 @@ export const get = orgQuery({
       currentVersion: form.version,
       version: formVersion.number,
       fields: formVersion.fields,
+      keysLocked: await hasIntegrations(ctx, formId),
     };
   },
 });
@@ -88,6 +90,9 @@ export const save = orgMutation({
   handler: async (ctx, { formId, name, description, fields }) => {
     const form = await getForm(ctx, ctx.organisationId, formId);
     checkContent(name, fields);
+    if (await hasIntegrations(ctx, formId)) {
+      checkKeysKept((await getVersion(ctx, formId, form.version)).fields, fields);
+    }
     const number = form.version + 1;
     await ctx.db.insert("formVersions", {
       organisationId: ctx.organisationId,
@@ -117,6 +122,27 @@ export const updateSettings = orgMutation({
     await ctx.db.patch(formId, { reviewThreshold, autoSend });
   },
 });
+
+/**
+ * While an Integration is attached, every key it receives must stay: a Field
+ * or sub-Field can be added or relabelled, not renamed or removed.
+ */
+function checkKeysKept(current: Infer<typeof field>[], next: Infer<typeof field>[]) {
+  for (const f of current) {
+    const kept = next.find((n) => n.key === f.key);
+    if (kept === undefined) {
+      throw new ConvexError(
+        `The key "${f.key}" is locked while an Integration is attached: keep that Field`,
+      );
+    }
+    if (f.type === "list") {
+      if (kept.type !== "list") {
+        throw new ConvexError(`The key "${f.key}" is locked while an Integration is attached`);
+      }
+      checkKeysKept(f.fields, kept.fields);
+    }
+  }
+}
 
 function checkContent(name: string, fields: Infer<typeof field>[]) {
   if (name.trim() === "") {

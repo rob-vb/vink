@@ -243,6 +243,26 @@ export default defineSchema({
     complete: v.optional(v.object({ by: v.string(), byEmail: v.string(), at: v.number() })),
   }).index("by_documentId", ["documentId"]),
 
+  // An external endpoint that receives Payloads by HTTP POST.
+  integrations: defineTable({
+    organisationId: v.id("organisations"),
+    name: v.string(),
+    url: v.string(),
+    // Static headers; a secret header's value is encrypted (lib/secrets.ts).
+    headers: v.array(v.object({ name: v.string(), value: v.string(), secret: v.boolean() })),
+    // The HMAC-SHA256 key requests are signed with, encrypted.
+    signingSecret: v.string(),
+  }).index("by_organisationId", ["organisationId"]),
+
+  // Which Integrations a Form sends to. Keys are locked while any exists.
+  formIntegrations: defineTable({
+    organisationId: v.id("organisations"),
+    formId: v.id("forms"),
+    integrationId: v.id("integrations"),
+  })
+    .index("by_formId", ["formId"])
+    .index("by_integrationId", ["integrationId"]),
+
   // A Document's history: who did what, and when.
   documentEvents: defineTable({
     organisationId: v.id("organisations"),

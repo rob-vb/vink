@@ -21,6 +21,8 @@ export type DraftField = {
   options: Option[];
   /** A List Field's sub-Fields. They are never lists themselves. */
   fields: DraftField[];
+  /** Saved while an Integration is attached: its key can't change and it can't be removed. */
+  locked?: boolean;
 };
 
 export type Draft = { name: string; description: string; fields: DraftField[] };
@@ -55,16 +57,18 @@ export function toDraft(form: {
   name: string;
   description?: string;
   fields: Field[];
+  keysLocked?: boolean;
 }): Draft {
   return {
     name: form.name,
     description: form.description ?? "",
-    fields: form.fields.map(toDraftField),
+    fields: form.fields.map((f) => toDraftField(f, form.keysLocked ?? false)),
   };
 }
 
-function toDraftField(field: Field): DraftField {
+function toDraftField(field: Field, locked: boolean): DraftField {
   return {
+    locked,
     id: crypto.randomUUID(),
     label: field.label,
     key: field.key,
@@ -76,7 +80,7 @@ function toDraftField(field: Field): DraftField {
       field.type === "choice"
         ? field.options.map((o) => ({ value: o.value, description: o.description ?? "" }))
         : [],
-    fields: field.type === "list" ? field.fields.map(toDraftField) : [],
+    fields: field.type === "list" ? field.fields.map((f) => toDraftField(f, locked)) : [],
   };
 }
 

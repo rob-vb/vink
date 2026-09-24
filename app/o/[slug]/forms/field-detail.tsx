@@ -89,11 +89,15 @@ export function FieldDetail({
             value={field.key}
             spellCheck={false}
             autoComplete="off"
+            readOnly={field.locked}
             onChange={(e) => set({ key: e.target.value.trim(), keyFollowsLabel: false })}
           />
           <FieldDescription>
             The name in the Payload your system receives, in camelCase.
-            {!field.keyFollowsLabel && field.label.trim() !== "" && (
+            {field.locked && (
+              <> Locked while an Integration is attached, so your system keeps receiving it.</>
+            )}
+            {!field.locked && !field.keyFollowsLabel && field.label.trim() !== "" && (
               <>
                 {" "}
                 <button
@@ -115,6 +119,7 @@ export function FieldDetail({
           <Select
             items={types}
             value={field.type}
+            disabled={field.locked && field.type === "list"}
             onValueChange={(type) => type && set({ type: type as FieldType })}
           >
             <SelectTrigger id="field-type" className="w-full sm:w-56">
@@ -234,7 +239,13 @@ export function FieldDetail({
       )}
 
       <div className="border-t pt-4">
-        <Button variant="ghost" className="text-destructive" onClick={onRemove}>
+        <Button
+          variant="ghost"
+          className="text-destructive"
+          disabled={field.locked}
+          title={field.locked ? "Locked while an Integration is attached" : undefined}
+          onClick={onRemove}
+        >
           <Trash2 />
           {parent ? "Remove sub-Field" : "Remove Field"}
         </Button>

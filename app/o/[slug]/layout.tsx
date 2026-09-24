@@ -37,6 +37,12 @@ export default async function OrganisationLayout({
                 Forms
               </Link>
               <Link
+                href={`/o/${slug}/integrations`}
+                className="text-muted-foreground transition-colors hover:text-foreground"
+              >
+                Integrations
+              </Link>
+              <Link
                 href={`/o/${slug}/members`}
                 className="text-muted-foreground transition-colors hover:text-foreground"
               >
