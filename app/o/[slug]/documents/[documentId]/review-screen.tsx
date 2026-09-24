@@ -1,0 +1,270 @@
+"use client";
+
+import { useMutation, useQuery } from "convex/react";
+import { ConvexError } from "convex/values";
+import { ArrowLeft, CircleCheck, ShieldAlert } from "lucide-react";
+import dynamic from "next/dynamic";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { api } from "@/convex/_generated/api";
+import type { Id } from "@/convex/_generated/dataModel";
+import { FieldRow } from "./field-row";
+
+// pdf.js needs the browser.
+const PdfPane = dynamic(() => import("./pdf-pane"), {
+  ssr: false,
+  loading: () => <Skeleton className="h-full min-h-96 w-full" />,
+});
+
+const stateLabels = {
+  extracting: "Extracting",
+  needs_review: "Needs Review",
+  approved: "Approved",
+  extraction_failed: "Extraction Failed",
+  rejected: "Rejected",
+  deleted: "Deleted",
+} as const;
+
+const eventLabels = {
+  uploaded: "Uploaded",
+  extracted: "Extracted",
+  corrected: "Corrected",
+  approved: "Approved",
+} as const;
+
+const when = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" });
+
+/**
+ * The review screen (review-screen prototype, variant A): the PDF on the left
+ * and the Form's Fields on the right, stacked on mobile. Updates live.
+ */
+export function ReviewScreen({
+  organisationSlug,
+  documentId,
+}: {
+  organisationSlug: string;
+  documentId: Id<"documents">;
+}) {
+  const router = useRouter();
+  const document = useQuery(api.documents.get, { organisationSlug, documentId });
+  const pdfUrl = useMutation(api.documents.pdfUrl);
+  const approve = useMutation(api.review.approve);
+  const [url, setUrl] = useState<string | null>(null);
+  const [urlFailed, setUrlFailed] = useState(false);
+  const [page, setPage] = useState(1);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [filter, setFilter] = useState<"all" | "needs_review">("all");
+  const [approving, setApproving] = useState(false);
+
+  useEffect(() => {
+    pdfUrl({ organisationSlug, documentId }).then(setUrl, () => setUrlFailed(true));
+  }, [pdfUrl, organisationSlug, documentId]);
+
+  if (document === undefined) {
+    return (
+      <main className="grid flex-1 gap-4 p-4 md:grid-cols-2 md:p-6">
+        <Skeleton className="h-96" />
+        <Skeleton className="h-96" />
+      </main>
+    );
+  }
+
+  const threshold = document.reviewThreshold ?? 0.8;
+  const reviewing = document.state === "needs_review";
+  const left = document.needsReviewCount;
+  const rows =
+    filter === "all"
+      ? document.fieldValues
+      : document.fieldValues.filter((f) => f.needsReview || f.id === selected);
+
+  async function approveThen(next: boolean) {
+    setApproving(true);
+    try {
+      const { nextDocumentId } = await approve({ organisationSlug, documentId });
+      toast.success(`${document!.filename} is approved.`);
+      if (next && nextDocumentId) {
+        router.push(`/o/${organisationSlug}/documents/${nextDocumentId}`);
+      } else if (next) {
+        toast.info("Nothing else needs review.");
+        router.push(`/o/${organisationSlug}`);
+      }
+    } catch (error) {
+      toast.error(error instanceof ConvexError ? String(error.data) : "Approval didn't work. Try again.");
+    } finally {
+      setApproving(false);
+    }
+  }
+
+  return (
+    <main className="flex w-full flex-1 flex-col gap-4 px-4 py-4 md:px-6">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="-ml-2"
+            nativeButton={false}
+            render={<Link href={`/o/${organisationSlug}`} />}
+          >
+            <ArrowLeft />
+            Documents
+          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="truncate text-xl font-semibold">{document.filename}</h1>
+            <Badge variant={reviewing ? "default" : "secondary"}>{stateLabels[document.state]}</Badge>
+            {!document.jevVerified && (reviewing || document.state === "approved") && (
+              <Tooltip>
+                <TooltipTrigger render={<Badge variant="outline" className="cursor-help" />}>
+                  <ShieldAlert />
+                  Not verified by Jev
+                </TooltipTrigger>
+                <TooltipContent>
+                  Jev couldn&apos;t verify this Document, so it is never approved automatically.
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </div>
+          <p className="text-sm text-muted-foreground">
+            {document.formName} v{document.formVersion} · {document.pageCount}{" "}
+            {document.pageCount === 1 ? "page" : "pages"}
+            {document.reviewThreshold !== null && <> · Review Threshold {threshold.toFixed(2)}</>}
+          </p>
+        </div>
+      </div>
+
+      {document.approval && (
+        <Alert>
+          <CircleCheck />
+          <AlertTitle>Approved</AlertTitle>
+          <AlertDescription>
+            {document.approval.mode === "auto" ? "Automatically" : `By ${document.approval.by}`},{" "}
+            {when.format(document.approval.at)}.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      <div className="grid flex-1 items-start gap-4 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
+        <div className="h-[55vh] lg:sticky lg:top-4 lg:h-[calc(100vh-7rem)]">
+          {url ? (
+            <PdfPane url={url} pageCount={document.pageCount} page={page} onPageChange={setPage} />
+          ) : urlFailed ? (
+            <div className="flex h-full items-center justify-center rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+              The PDF couldn&apos;t be loaded.
+            </div>
+          ) : (
+            <Skeleton className="h-full" />
+          )}
+        </div>
+
+        <div className="flex min-w-0 flex-col gap-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-sm font-medium text-muted-foreground">Fields</h2>
+            <ToggleGroup
+              variant="outline"
+              size="sm"
+              value={[filter]}
+              onValueChange={(value) => value[0] && setFilter(value[0] as typeof filter)}
+            >
+              <ToggleGroupItem value="all">All fields</ToggleGroupItem>
+              <ToggleGroupItem value="needs_review">
+                Needs Review only
+                <Badge variant="secondary" className="tabular-nums">
+                  {left}
+                </Badge>
+              </ToggleGroupItem>
+            </ToggleGroup>
+          </div>
+
+          <div className="relative overflow-hidden rounded-lg border bg-card">
+            {document.state === "extracting" && (
+              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-background/80 p-6 text-center backdrop-blur-[1px]">
+                <Spinner />
+                <p className="text-sm font-medium">DocuHelper is reading this Document</p>
+                <p className="text-xs text-muted-foreground">
+                  This can take up to a minute. The Fields fill in here when it&apos;s done.
+                </p>
+              </div>
+            )}
+            {document.state === "extracting" && document.fieldValues.length === 0 ? (
+              <div className="grid gap-3 p-4" aria-hidden>
+                {[0, 1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="h-12" />
+                ))}
+              </div>
+            ) : rows.length === 0 ? (
+              <p className="p-6 text-center text-sm text-muted-foreground">
+                Nothing left to review.
+              </p>
+            ) : (
+              rows.map((fieldValue) => (
+                <FieldRow
+                  key={fieldValue.id}
+                  organisationSlug={organisationSlug}
+                  fieldValue={fieldValue}
+                  threshold={threshold}
+                  disabled={!reviewing}
+                  selected={selected === fieldValue.id}
+                  onSelect={() => {
+                    setSelected(fieldValue.id);
+                    if (fieldValue.pages.length > 0) setPage(fieldValue.pages[0]);
+                  }}
+                />
+              ))
+            )}
+          </div>
+
+          {reviewing && (
+            <div className="sticky bottom-4 z-20 flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-background p-3 shadow-md">
+              <p className="text-sm text-muted-foreground">
+                {left === 0
+                  ? "Everything is checked."
+                  : `${left} ${left === 1 ? "value needs" : "values need"} review before Approval.`}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  variant="outline"
+                  disabled={left > 0 || approving}
+                  onClick={() => approveThen(true)}
+                >
+                  Approve and next
+                </Button>
+                <Button disabled={left > 0 || approving} onClick={() => approveThen(false)}>
+                  {left > 0 ? `Approve (${left} left)` : "Approve and send"}
+                </Button>
+              </div>
+            </div>
+          )}
+
+          <section aria-labelledby="history" className="rounded-lg border p-4">
+            <h2 id="history" className="mb-3 text-sm font-medium">
+              History
+            </h2>
+            <ol className="grid gap-2 text-sm">
+              {document.history.map((entry, i) => (
+                <li key={i} className="flex flex-wrap justify-between gap-x-4">
+                  <span>
+                    {eventLabels[entry.event]}
+                    {entry.detail && <span className="text-muted-foreground"> · {entry.detail}</span>}
+                    <span className="text-muted-foreground"> · {entry.by}</span>
+                  </span>
+                  <time className="text-muted-foreground tabular-nums" dateTime={new Date(entry.at).toISOString()}>
+                    {when.format(entry.at)}
+                  </time>
+                </li>
+              ))}
+            </ol>
+          </section>
+        </div>
+      </div>
+    </main>
+  );
+}

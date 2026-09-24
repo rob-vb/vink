@@ -142,6 +142,14 @@ export const finish = internalMutation({
       });
     }
     await ctx.db.patch(documentId, { jevVerified, reviewThreshold });
+    await ctx.db.insert("documentEvents", {
+      organisationId: document.organisationId,
+      documentId,
+      event: "extracted",
+      by: "docuhelper",
+      byEmail: "DocuHelper",
+      at: Date.now(),
+    });
     await moveTo(ctx, document, "needs_review");
   },
 });

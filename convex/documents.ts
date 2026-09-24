@@ -7,6 +7,8 @@ import { startExtraction } from "./extraction";
 import { countIn } from "./lib/documentStates";
 import { orgAction, orgMutation, orgQuery } from "./lib/functions";
 import { pdfStore } from "./lib/pdfStore";
+import type { FlatField } from "./lib/pipeline";
+import { needsReview } from "./review";
 import { documentState } from "./schema";
 
 // An Extraction must finish within Convex's 10-minute action limit, and a PDF
@@ -111,10 +113,15 @@ async function getDocument(
 }
 
 /** What a user sees of one Field Value. */
-function viewOf(field: { key: string; label: string }, fieldValue: Doc<"fieldValues">) {
+function viewOf(field: FlatField, fieldValue: Doc<"fieldValues">) {
+  const { review } = fieldValue;
   return {
+    id: fieldValue._id,
     key: field.key,
     label: field.label,
+    type: field.type,
+    required: field.required,
+    options: field.type === "choice" ? field.options.map((o) => o.value) : null,
     value: fieldValue.value,
     readText: fieldValue.readText,
     sourcePath: fieldValue.sourcePath,
@@ -123,6 +130,8 @@ function viewOf(field: { key: string; label: string }, fieldValue: Doc<"fieldVal
     lowestSignal: fieldValue.lowestSignal,
     signals: fieldValue.signals,
     reviewReasons: fieldValue.reviewReasons,
+    needsReview: needsReview(fieldValue),
+    review: review ? { state: review.state, by: review.byEmail, at: review.at } : null,
   };
 }
 
@@ -168,7 +177,19 @@ export const get = orgQuery({
       formVersion: document.formVersion,
       jevVerified: document.jevVerified ?? false,
       reviewThreshold: document.reviewThreshold ?? null,
-      history: events.map((e) => ({ event: e.event, by: e.byEmail, at: e.at })),
+      userTouched: document.userTouched ?? false,
+      approval: document.approval
+        ? { mode: document.approval.mode, by: document.approval.byEmail, at: document.approval.at }
+        : null,
+      needsReviewCount:
+        fieldValues.filter(needsReview).length +
+        listValues.filter((l) => l.reviewReasons.length > 0).length,
+      history: events.map((e) => ({
+        event: e.event,
+        detail: e.detail ?? null,
+        by: e.byEmail,
+        at: e.at,
+      })),
       fieldValues: fields.flatMap((field) => {
         if (field.type === "list") return [];
         const fieldValue = topLevel.get(field.key);

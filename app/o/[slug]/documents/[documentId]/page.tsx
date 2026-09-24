@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import type { Id } from "@/convex/_generated/dataModel";
 import { getOrganisation } from "../../organisation";
-import { DocumentView } from "./document-view";
+import { ReviewScreen } from "./review-screen";
 
-export const metadata: Metadata = { title: "Document · DocuHelper" };
+export const metadata: Metadata = { title: "Review · DocuHelper" };
 
 export default async function DocumentPage({
   params,
@@ -12,5 +12,5 @@ export default async function DocumentPage({
   // Checks the Membership before anything renders.
   await getOrganisation(slug);
 
-  return <DocumentView organisationSlug={slug} documentId={documentId as Id<"documents">} />;
+  return <ReviewScreen organisationSlug={slug} documentId={documentId as Id<"documents">} />;
 }

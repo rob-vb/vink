@@ -67,6 +67,16 @@ export const reviewReason = v.union(
   v.literal("conflicting"),
 );
 
+export const fieldValue = v.union(v.string(), v.number(), v.boolean(), v.null());
+
+// Who confirmed a Field Value by hand: Corrected (edited) or Checked ("Value is right").
+export const review = v.object({
+  state: v.union(v.literal("corrected"), v.literal("checked")),
+  by: v.string(),
+  byEmail: v.string(),
+  at: v.number(),
+});
+
 // Every table except `organisations` itself carries an indexed `organisationId`.
 export default defineSchema({
   organisations: defineTable({
@@ -136,6 +146,17 @@ export default defineSchema({
     // Form's Review Threshold at that moment, which its Field Values keep.
     jevVerified: v.optional(v.boolean()),
     reviewThreshold: v.optional(v.number()),
+    // Set by a user's correction (and later Change Form or Reopen): rules out Auto-Send.
+    userTouched: v.optional(v.boolean()),
+    approval: v.optional(
+      v.object({
+        mode: v.union(v.literal("manual"), v.literal("auto")),
+        // The approving user; `null` for Auto-Send.
+        by: v.union(v.string(), v.null()),
+        byEmail: v.union(v.string(), v.null()),
+        at: v.number(),
+      }),
+    ),
   }).index("by_organisationId_and_state", ["organisationId", "state"]),
 
   // What the vision model read on a Document (see lib/pipeline.ts), as JSON
@@ -160,7 +181,10 @@ export default defineSchema({
     // Set on a sub-Field's value: its List Field's key and the entry's index.
     list: v.optional(v.object({ key: v.string(), entry: v.number() })),
     // `null` when nothing on the Document holds the Field.
-    value: v.union(v.string(), v.number(), v.boolean(), v.null()),
+    value: fieldValue,
+    // What the Extraction wrote, kept while a correction replaces it, for Undo.
+    extractedValue: v.optional(fieldValue),
+    review: v.optional(review),
     // The Reading's value the Field Value was filled from, as it was read.
     readText: v.union(v.string(), v.null()),
     // Where that value sits in the Reading, e.g. `vehicle.licensePlate`.
@@ -198,7 +222,15 @@ export default defineSchema({
   documentEvents: defineTable({
     organisationId: v.id("organisations"),
     documentId: v.id("documents"),
-    event: v.literal("uploaded"),
+    event: v.union(
+      v.literal("uploaded"),
+      v.literal("extracted"),
+      v.literal("corrected"),
+      v.literal("approved"),
+    ),
+    // What it was about, e.g. the corrected Field's label.
+    detail: v.optional(v.string()),
+    // The user's id, or `docuhelper` for what DocuHelper did itself.
     by: v.string(),
     // Copied from the user at the time, like `documents.uploaderEmail`.
     byEmail: v.string(),

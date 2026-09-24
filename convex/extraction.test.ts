@@ -81,7 +81,7 @@ test("an uploaded PDF is extracted into a Field Value per Field, and its Documen
     documentId: documentId!,
   });
   expect(document.state).toBe("needs_review");
-  expect(document.fieldValues).toEqual([
+  expect(document.fieldValues).toMatchObject([
     {
       key: "licensePlate",
       label: "Kenteken",
@@ -313,7 +313,7 @@ describe.runIf(fixtures.length > 0)("replaying the recorded fixture runs", () =>
       });
       expect(document.state).toBe("needs_review");
       expect(document.jevVerified).toBe(true);
-      expect(document.fieldValues).toEqual(
+      expect(document.fieldValues).toMatchObject(
         topLevel.map(({ path: key, sources: [best] }) => {
           const value = best.id === "none" ? null : recording.fills[key];
           const { pages } = run.fieldValues[key];
