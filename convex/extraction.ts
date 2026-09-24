@@ -12,7 +12,8 @@ import { orgMutation } from "./lib/functions";
 import { openReviews } from "./review";
 import type { FlatField, ListField } from "./lib/pipeline";
 
-const extractionPool = new Workpool(components.extractionPool, {
+// Every model-heavy background run shares it: Extractions and Form Proposals.
+export const extractionPool = new Workpool(components.extractionPool, {
   maxParallelism: 5,
   retryActionsByDefault: true,
   // The first run and 3 retries.

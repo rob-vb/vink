@@ -12,6 +12,8 @@ import type {
   Match,
   Matcher,
   PageText,
+  ProposedField,
+  Proposer,
   Reader,
   Reading,
   Verification,
@@ -150,9 +152,11 @@ export type Recording = {
    * only answered when it was asked.
    */
   verifications?: Record<string, { fit: number; support: number }>;
+  /** What the Proposer suggests for a Form Proposal of this sample. */
+  proposal?: ProposedField[];
 };
 
-type Step = "read" | "match" | "fill" | "verify";
+type Step = "read" | "match" | "fill" | "verify" | "propose";
 
 /**
  * Stands in for the Extraction's adapters (lib/reader.ts, lib/matcher.ts,
@@ -167,6 +171,7 @@ export const fakePipeline = {
     | { step: "match"; reading: Reading; fields: string[]; lists: string[] }
     | { step: "fill"; fields: string[] }
     | { step: "verify"; fields: string[]; supportAskedFor: string[] }
+    | { step: "propose"; reading: Reading }
   >,
   replay(recording: Recording) {
     fakePipeline.recording = recording;
@@ -238,6 +243,14 @@ export const fakeFiller: Filler = {
     fakePipeline.failIfAsked("fill");
     const { fills } = fakePipeline.played();
     return Object.fromEntries(requests.map((r) => [r.id, fills[r.id] ?? null]));
+  },
+};
+
+export const fakeProposer: Proposer = {
+  async propose({ reading }) {
+    fakePipeline.calls.push({ step: "propose", reading });
+    fakePipeline.failIfAsked("propose");
+    return fakePipeline.played().proposal ?? [];
   },
 };
 

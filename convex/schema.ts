@@ -129,6 +129,30 @@ export default defineSchema({
     savedBy: v.string(),
   }).index("by_formId_and_number", ["formId", "number"]),
 
+  // Fields proposed from one sample PDF, before they are a Form (Version).
+  formProposals: defineTable({
+    organisationId: v.id("organisations"),
+    createdBy: v.string(),
+    createdByEmail: v.string(),
+    // The sample's PDF in R2, like `documents.key`.
+    key: v.string(),
+    filename: v.string(),
+    pageCount: v.number(),
+    // For "Suggest Fields from PDF": the Form being extended.
+    formId: v.optional(v.id("forms")),
+    state: v.union(
+      v.literal("reading"),
+      v.literal("proposing"),
+      v.literal("ready"),
+      v.literal("failed"),
+    ),
+    error: v.optional(v.string()),
+    // The sample's Reading and text layer, as stored for a Document.
+    readingJson: v.optional(v.string()),
+    textLayer: v.optional(v.array(v.object({ page: v.number(), text: v.string() }))),
+    fields: v.optional(v.array(v.object({ field, ticked: v.boolean() }))),
+  }).index("by_organisationId", ["organisationId"]),
+
   // A PDF processed against the Form Version that was current at upload.
   documents: defineTable({
     organisationId: v.id("organisations"),

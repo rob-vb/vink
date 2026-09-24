@@ -1,6 +1,6 @@
 import { ConvexError, type Infer, v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
-import type { QueryCtx } from "./_generated/server";
+import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { isValidKey } from "./lib/fieldKeys";
 import { hasIntegrations } from "./integrations";
 import { orgMutation, orgQuery } from "./lib/functions";
@@ -62,26 +62,39 @@ const formContent = {
 export const create = orgMutation({
   role: "admin",
   args: formContent,
-  handler: async (ctx, { name, description, fields }) => {
-    checkContent(name, fields);
-    const formId = await ctx.db.insert("forms", {
-      organisationId: ctx.organisationId,
-      name,
-      description,
-      reviewThreshold: 0.8,
-      autoSend: false,
-      version: 1,
-    });
-    await ctx.db.insert("formVersions", {
-      organisationId: ctx.organisationId,
-      formId,
-      number: 1,
-      fields,
-      savedBy: ctx.userId,
-    });
-    return { formId };
-  },
+  handler: async (ctx, { name, description, fields }) =>
+    await insertForm(ctx, { organisationId: ctx.organisationId, name, description, fields, savedBy: ctx.userId }),
 });
+
+/** A new Form with its first Form Version; also used by Form Proposals. */
+export async function insertForm(
+  ctx: MutationCtx,
+  {
+    organisationId,
+    name,
+    description,
+    fields,
+    savedBy,
+  }: {
+    organisationId: Id<"organisations">;
+    name: string;
+    description?: string;
+    fields: Infer<typeof field>[];
+    savedBy: string;
+  },
+) {
+  checkContent(name, fields);
+  const formId = await ctx.db.insert("forms", {
+    organisationId,
+    name,
+    description,
+    reviewThreshold: 0.8,
+    autoSend: false,
+    version: 1,
+  });
+  await ctx.db.insert("formVersions", { organisationId, formId, number: 1, fields, savedBy });
+  return { formId };
+}
 
 /** Saves a Form's name, description and Fields as its next Form Version. */
 export const save = orgMutation({

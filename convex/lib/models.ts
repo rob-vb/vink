@@ -9,6 +9,8 @@ export const models = {
   reader: process.env.READER_MODEL ?? "claude-opus-5",
   /** Writes each Field Value from its source (ADR 0003, Fill). */
   filler: process.env.FILL_MODEL ?? "claude-haiku-4-5@20251001",
+  /** Proposes a Form's Fields from a sample (ticket 36). */
+  proposer: process.env.PROPOSER_MODEL ?? "claude-opus-5",
   /** Matches Fields to the Reading; never `jev-latest`. */
   jev: process.env.JEV_MODEL ?? "jev-1.13.0",
 };

@@ -9,6 +9,7 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Empty,
   EmptyContent,
@@ -16,7 +17,13 @@ import {
   EmptyHeader,
   EmptyTitle,
 } from "@/components/ui/empty";
-import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import {
+  Field,
+  FieldContent,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
@@ -40,12 +47,16 @@ type Props = {
   form?: { id: Id<"forms">; version: number };
   initial: Draft;
   settings?: React.ReactNode;
+  /** A new Form from a Form Proposal: saving it can also process the sample. */
+  proposal?: { id: Id<"formProposals">; filename: string };
 };
 
-export function FormEditor({ organisationSlug, form, initial, settings }: Props) {
+export function FormEditor({ organisationSlug, form, initial, settings, proposal }: Props) {
   const router = useRouter();
   const create = useMutation(api.forms.create);
   const save = useMutation(api.forms.save);
+  const saveProposal = useMutation(api.formProposals.save);
+  const [processSample, setProcessSample] = useState(true);
   const [saved, setSaved] = useState(initial);
   const [draft, setDraft] = useState(initial);
   const [selectedId, setSelectedId] = useState(initial.fields[0]?.id);
@@ -121,6 +132,18 @@ export function FormEditor({ organisationSlug, form, initial, settings }: Props)
         const { version } = await save({ organisationSlug, formId: form.id, ...content });
         setSaved(draft);
         toast.success(`Saved as version ${version}`);
+      } else if (proposal) {
+        const { formId, documentId } = await saveProposal({
+          organisationSlug,
+          proposalId: proposal.id,
+          ...content,
+          processSample,
+        });
+        setSaved(draft);
+        toast.success(
+          documentId ? `Form created. ${proposal.filename} is being read as its first Document.` : "Form created as version 1",
+        );
+        router.replace(`/o/${organisationSlug}/forms/${formId}`);
       } else {
         const { formId } = await create({ organisationSlug, ...content });
         setSaved(draft);
@@ -185,6 +208,23 @@ export function FormEditor({ organisationSlug, form, initial, settings }: Props)
             onChange={(e) => setDraft({ ...draft, description: e.target.value })}
           />
         </Field>
+        {proposal && (
+          <Field orientation="horizontal">
+            <Checkbox
+              id="process-sample"
+              checked={processSample}
+              onCheckedChange={(checked) => setProcessSample(checked === true)}
+            />
+            <FieldContent>
+              <FieldLabel htmlFor="process-sample">Also process this sample as a Document</FieldLabel>
+              <FieldDescription>
+                {processSample
+                  ? `${proposal.filename} becomes this Form's first Document, from what DocuHelper already read.`
+                  : `${proposal.filename} and what DocuHelper read from it are deleted when you create the Form.`}
+              </FieldDescription>
+            </FieldContent>
+          </Field>
+        )}
       </FieldGroup>
 
       <section className="grid gap-4 md:grid-cols-[18rem_minmax(0,1fr)]">

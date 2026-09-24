@@ -15,6 +15,7 @@ import type * as documents from "../documents.js";
 import type * as email from "../email.js";
 import type * as extraction from "../extraction.js";
 import type * as extractionRun from "../extractionRun.js";
+import type * as formProposals from "../formProposals.js";
 import type * as forms from "../forms.js";
 import type * as http from "../http.js";
 import type * as integrations from "../integrations.js";
@@ -35,6 +36,7 @@ import type * as lib_models from "../lib/models.js";
 import type * as lib_payload from "../lib/payload.js";
 import type * as lib_pdfStore from "../lib/pdfStore.js";
 import type * as lib_pipeline from "../lib/pipeline.js";
+import type * as lib_proposer from "../lib/proposer.js";
 import type * as lib_reader from "../lib/reader.js";
 import type * as lib_reading from "../lib/reading.js";
 import type * as lib_reviewState from "../lib/reviewState.js";
@@ -45,6 +47,7 @@ import type * as memberships from "../memberships.js";
 import type * as notifications from "../notifications.js";
 import type * as onboarding from "../onboarding.js";
 import type * as organisations from "../organisations.js";
+import type * as proposalRun from "../proposalRun.js";
 import type * as rejection from "../rejection.js";
 import type * as review from "../review.js";
 
@@ -62,6 +65,7 @@ declare const fullApi: ApiFromModules<{
   email: typeof email;
   extraction: typeof extraction;
   extractionRun: typeof extractionRun;
+  formProposals: typeof formProposals;
   forms: typeof forms;
   http: typeof http;
   integrations: typeof integrations;
@@ -82,6 +86,7 @@ declare const fullApi: ApiFromModules<{
   "lib/payload": typeof lib_payload;
   "lib/pdfStore": typeof lib_pdfStore;
   "lib/pipeline": typeof lib_pipeline;
+  "lib/proposer": typeof lib_proposer;
   "lib/reader": typeof lib_reader;
   "lib/reading": typeof lib_reading;
   "lib/reviewState": typeof lib_reviewState;
@@ -92,6 +97,7 @@ declare const fullApi: ApiFromModules<{
   notifications: typeof notifications;
   onboarding: typeof onboarding;
   organisations: typeof organisations;
+  proposalRun: typeof proposalRun;
   rejection: typeof rejection;
   review: typeof review;
 }>;

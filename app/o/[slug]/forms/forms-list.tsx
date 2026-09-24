@@ -28,6 +28,7 @@ import { api } from "@/convex/_generated/api";
 export function FormsList({ organisationSlug }: { organisationSlug: string }) {
   const router = useRouter();
   const forms = useQuery(api.forms.list, { organisationSlug });
+  const proposals = useQuery(api.formProposals.list, { organisationSlug });
   const newForm = (
     <Button nativeButton={false} render={<Link href={`/o/${organisationSlug}/forms/new`} />}>
       <Plus />
@@ -46,6 +47,37 @@ export function FormsList({ organisationSlug }: { organisationSlug: string }) {
         </div>
         {forms && forms.length > 0 && newForm}
       </div>
+
+      {proposals && proposals.length > 0 && (
+        <section aria-labelledby="proposals" className="mb-6 rounded-lg border p-4">
+          <h2 id="proposals" className="mb-2 text-sm font-medium">
+            Proposals from sample PDFs
+          </h2>
+          <ul className="flex flex-col gap-1 text-sm">
+            {proposals.map((p) => (
+              <li key={p.id} className="flex flex-wrap items-center gap-2">
+                <Link
+                  href={`/o/${organisationSlug}/forms/proposals/${p.id}`}
+                  className="font-medium hover:underline"
+                >
+                  {p.filename}
+                </Link>
+                <Badge variant={p.state === "failed" ? "destructive" : "secondary"}>
+                  {p.state === "ready"
+                    ? "Ready to review"
+                    : p.state === "failed"
+                      ? "Failed"
+                      : "Being read"}
+                </Badge>
+                {p.formId && <span className="text-muted-foreground">new Fields for a Form</span>}
+              </li>
+            ))}
+          </ul>
+          <p className="mt-2 text-xs text-muted-foreground">
+            An unsaved proposal is deleted after 7 days, with its PDF.
+          </p>
+        </section>
+      )}
 
       {forms === undefined ? (
         <div className="flex flex-col gap-2">

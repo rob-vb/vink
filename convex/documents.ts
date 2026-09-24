@@ -2,7 +2,12 @@ import { ConvexError, v } from "convex/values";
 import { PDFDocument } from "pdf-lib";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
-import { internalMutation, type QueryCtx } from "./_generated/server";
+import {
+  type ActionCtx,
+  internalMutation,
+  type MutationCtx,
+  type QueryCtx,
+} from "./_generated/server";
 import { deliveriesOf } from "./deliveries";
 import { startExtraction } from "./extraction";
 import { countIn } from "./lib/documentStates";
@@ -30,41 +35,57 @@ export const generateUploadUrl = orgMutation({
   },
 });
 
+/**
+ * Checks an uploaded PDF: issued to this Organisation, arrived, readable and
+ * at most 20 pages. Returns its page count; a refused upload is removed.
+ */
+export async function checkUpload(
+  ctx: ActionCtx,
+  organisationId: Id<"organisations">,
+  key: string,
+) {
+  // The key must be one issued to this Organisation by generateUploadUrl.
+  if (!key.startsWith(`${organisationId}/`)) {
+    throw new ConvexError("Forbidden");
+  }
+  const bytes = await pdfStore.read(key);
+  if (bytes === null) {
+    throw new ConvexError("The upload didn't arrive. Try again.");
+  }
+  try {
+    const pdf = await PDFDocument.load(bytes, { ignoreEncryption: true }).catch(() => {
+      throw new ConvexError("This file isn't a PDF DocuHelper can read.");
+    });
+    if (pdf.getPageCount() > MAX_PAGES) {
+      throw new ConvexError(
+        `This PDF has ${pdf.getPageCount()} pages. DocuHelper reads up to ${MAX_PAGES} pages per Document.`,
+      );
+    }
+    return pdf.getPageCount();
+  } catch (error) {
+    // A refused upload leaves nothing behind.
+    await pdfStore.remove(ctx, key);
+    throw error;
+  }
+}
+
 /** Step 2 of an upload: turns the uploaded PDF into a Document of a Form. */
 export const create = orgAction({
   args: { formId: v.id("forms"), key: v.string(), filename: v.string() },
   handler: async (ctx, { formId, key, filename }) => {
-    // The key must be one issued to this Organisation by generateUploadUrl.
-    if (!key.startsWith(`${ctx.organisationId}/`)) {
-      throw new ConvexError("Forbidden");
-    }
-    const bytes = await pdfStore.read(key);
-    if (bytes === null) {
-      throw new ConvexError("The upload didn't arrive. Try again.");
-    }
+    const pageCount = await checkUpload(ctx, ctx.organisationId, key);
+    const identity = (await ctx.auth.getUserIdentity())!;
     try {
-      const pdf = await PDFDocument.load(bytes, { ignoreEncryption: true }).catch(
-        () => {
-          throw new ConvexError("This file isn't a PDF DocuHelper can read.");
-        },
-      );
-      if (pdf.getPageCount() > MAX_PAGES) {
-        throw new ConvexError(
-          `This PDF has ${pdf.getPageCount()} pages. DocuHelper reads up to ${MAX_PAGES} pages per Document.`,
-        );
-      }
-      const identity = (await ctx.auth.getUserIdentity())!;
       await ctx.runMutation(internal.documents.insert, {
         organisationId: ctx.organisationId,
         formId,
         key,
         filename,
-        pageCount: pdf.getPageCount(),
+        pageCount,
         uploadedBy: ctx.userId,
         uploaderEmail: identity.email?.toLowerCase() ?? "",
       });
     } catch (error) {
-      // A refused upload leaves nothing behind.
       await pdfStore.remove(ctx, key);
       throw error;
     }
@@ -81,29 +102,61 @@ export const insert = internalMutation({
     uploadedBy: v.string(),
     uploaderEmail: v.string(),
   },
-  handler: async (ctx, { formId, ...document }) => {
-    const form = await ctx.db.get(formId);
-    if (form === null || form.organisationId !== document.organisationId) {
-      throw new ConvexError("Form not found");
-    }
-    const documentId = await ctx.db.insert("documents", {
-      ...document,
-      formId,
-      formVersion: form.version,
-      state: "extracting",
-    });
-    await ctx.db.insert("documentEvents", {
-      organisationId: document.organisationId,
-      documentId,
-      event: "uploaded",
-      by: document.uploadedBy,
-      byEmail: document.uploaderEmail,
-      at: Date.now(),
-    });
-    await countIn(ctx, document.organisationId, "extracting");
-    await startExtraction(ctx, documentId);
+  handler: async (ctx, args) => {
+    await createDocument(ctx, args);
   },
 });
+
+/**
+ * A Document of a Form at its current Form Version, in Extracting. With a
+ * `reading`, the Extraction starts from it and never reads the PDF.
+ */
+export async function createDocument(
+  ctx: MutationCtx,
+  {
+    formId,
+    reading,
+    ...document
+  }: {
+    organisationId: Id<"organisations">;
+    formId: Id<"forms">;
+    key: string;
+    filename: string;
+    pageCount: number;
+    uploadedBy: string;
+    uploaderEmail: string;
+    reading?: { json: string; textLayer: Array<{ page: number; text: string }> };
+  },
+) {
+  const form = await ctx.db.get(formId);
+  if (form === null || form.organisationId !== document.organisationId) {
+    throw new ConvexError("Form not found");
+  }
+  const documentId = await ctx.db.insert("documents", {
+    ...document,
+    formId,
+    formVersion: form.version,
+    state: "extracting",
+  });
+  await ctx.db.insert("documentEvents", {
+    organisationId: document.organisationId,
+    documentId,
+    event: "uploaded",
+    by: document.uploadedBy,
+    byEmail: document.uploaderEmail,
+    at: Date.now(),
+  });
+  await countIn(ctx, document.organisationId, "extracting");
+  if (reading) {
+    await ctx.db.insert("readings", {
+      organisationId: document.organisationId,
+      documentId,
+      ...reading,
+    });
+  }
+  await startExtraction(ctx, documentId);
+  return documentId;
+}
 
 async function getDocument(
   ctx: QueryCtx,

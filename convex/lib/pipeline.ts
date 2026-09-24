@@ -82,3 +82,16 @@ export type Verifier = {
     requests: VerifyRequest[],
   ): Promise<Record<string, Verification>>;
 };
+
+/** One Field a Form Proposal suggests, and whether it serves the document's purpose. */
+export type ProposedField = { field: Infer<typeof field>; ticked: boolean };
+
+export type Proposer = {
+  /**
+   * Proposes a Form's Fields from a sample: its PDF (page images and text
+   * layer) and its Reading, which lists everything on it.
+   */
+  propose(
+    sample: { pdf: Uint8Array; reading: Reading; textLayer: PageText[] },
+  ): Promise<ProposedField[]>;
+};
