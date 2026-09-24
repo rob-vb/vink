@@ -140,6 +140,8 @@ export const get = orgQuery({
       state: document.state,
       formName: form?.name ?? "",
       formVersion: document.formVersion,
+      jevVerified: document.jevVerified ?? false,
+      reviewThreshold: document.reviewThreshold ?? null,
       history: events.map((e) => ({ event: e.event, by: e.byEmail, at: e.at })),
       fieldValues: (formVersion?.fields ?? []).flatMap((field) => {
         const fieldValue = fieldValues.find((f) => f.key === field.key);
@@ -152,7 +154,10 @@ export const get = orgQuery({
             readText: fieldValue.readText,
             sourcePath: fieldValue.sourcePath,
             pages: fieldValue.pages,
-            matchProbability: fieldValue.matchProbability,
+            confidence: fieldValue.confidence,
+            lowestSignal: fieldValue.lowestSignal,
+            signals: fieldValue.signals,
+            reviewReasons: fieldValue.reviewReasons,
           },
         ];
       }),

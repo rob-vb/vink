@@ -56,6 +56,17 @@ export const documentState = v.union(
   v.literal("deleted"),
 );
 
+// A Field Value's raw signals: Jev's Match probability, fit and support.
+export const signal = v.union(v.literal("match"), v.literal("fit"), v.literal("support"));
+
+export const reviewReason = v.union(
+  v.literal("below_threshold"),
+  v.literal("required_empty"),
+  v.literal("type_mismatch"),
+  v.literal("unsure"),
+  v.literal("conflicting"),
+);
+
 // Every table except `organisations` itself carries an indexed `organisationId`.
 export default defineSchema({
   organisations: defineTable({
@@ -121,6 +132,10 @@ export default defineSchema({
     // Copied from the uploader at upload time, for the Document list.
     uploaderEmail: v.string(),
     state: documentState,
+    // Set when an Extraction finishes: whether Jev's Verify succeeded, and the
+    // Form's Review Threshold at that moment, which its Field Values keep.
+    jevVerified: v.optional(v.boolean()),
+    reviewThreshold: v.optional(v.number()),
   }).index("by_organisationId_and_state", ["organisationId", "state"]),
 
   // What the vision model read on a Document (see lib/pipeline.ts), as JSON
@@ -130,6 +145,9 @@ export default defineSchema({
     organisationId: v.id("organisations"),
     documentId: v.id("documents"),
     json: v.string(),
+    // The pages with a text layer, for Verify's support check. Optional only
+    // for Readings stored before ticket 24.
+    textLayer: v.optional(v.array(v.object({ page: v.number(), text: v.string() }))),
   }).index("by_documentId", ["documentId"]),
 
   // One per top-level Field of the Document's Form Version.
@@ -144,8 +162,19 @@ export default defineSchema({
     // Where that value sits in the Reading, e.g. `vehicle.licensePlate`.
     sourcePath: v.union(v.string(), v.null()),
     pages: v.array(v.number()),
-    // Jev's probability for its Match choice, `none` included.
-    matchProbability: v.number(),
+    // The raw signals, kept for calibration and never sent: Jev's probability
+    // for its Match choice (`none` included), and Verify's fit and support,
+    // `null` when not asked.
+    signals: v.object({
+      match: v.number(),
+      fit: v.union(v.number(), v.null()),
+      support: v.union(v.number(), v.null()),
+    }),
+    // The lowest of the signals, and which one it was.
+    confidence: v.number(),
+    lowestSignal: signal,
+    // Why it is Needs Review; empty when it isn't.
+    reviewReasons: v.array(reviewReason),
   }).index("by_documentId", ["documentId"]),
 
   // A Document's history: who did what, and when.

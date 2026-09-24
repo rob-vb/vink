@@ -1,13 +1,11 @@
-import { PDFDocument } from "pdf-lib";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { api } from "./_generated/api";
-import type { Id } from "./_generated/dataModel";
 import {
   fakePdfStore,
   fakePipeline,
   newBackend,
-  putToUploadUrl,
   signUp,
+  uploadAndExtract,
   type Recording,
 } from "./test.setup";
 import type { FilledValue } from "./lib/pipeline";
@@ -24,9 +22,11 @@ vi.mock("./lib/matcher", async () => ({
 vi.mock("./lib/filler", async () => ({
   filler: (await import("./test.setup")).fakeFiller,
 }));
+vi.mock("./lib/verifier", async () => ({
+  verifier: (await import("./test.setup")).fakeVerifier,
+}));
 
 type Backend = ReturnType<typeof newBackend>;
-type User = ReturnType<Backend["withIdentity"]>;
 
 beforeEach(() => {
   vi.useFakeTimers();
@@ -37,38 +37,6 @@ beforeEach(() => {
 afterEach(() => {
   vi.useRealTimers();
 });
-
-async function pdfWithPages(pages: number) {
-  const pdf = await PDFDocument.create();
-  for (let i = 0; i < pages; i++) pdf.addPage();
-  return await pdf.save();
-}
-
-/** Uploads a PDF and lets the Extraction it starts run to the end. */
-async function uploadAndExtract(
-  t: Backend,
-  user: User,
-  organisationSlug: string,
-  formId: Id<"forms">,
-  pages = 1,
-) {
-  const { key, url } = await user.mutation(api.documents.generateUploadUrl, {
-    organisationSlug,
-  });
-  putToUploadUrl(url, await pdfWithPages(pages));
-  await user.action(api.documents.create, {
-    organisationSlug,
-    formId,
-    key,
-    filename: "werkorder.pdf",
-  });
-  await t.finishAllScheduledFunctions(vi.runAllTimers);
-  const { documents } = await user.query(api.documents.list, {
-    organisationSlug,
-    state: "needs_review",
-  });
-  return documents[0]?.id;
-}
 
 // A two-paper work order: plate and mileage on page 1, the order number on page 2.
 const workOrder: Recording = {
@@ -121,7 +89,10 @@ test("an uploaded PDF is extracted into a Field Value per Field, and its Documen
       readText: "NWA-30-E",
       sourcePath: "vehicle.licensePlate",
       pages: [1],
-      matchProbability: 0.97,
+      confidence: 0.97,
+      lowestSignal: "match",
+      signals: { match: 0.97, fit: 1, support: null },
+      reviewReasons: [],
     },
     {
       key: "mileageKm",
@@ -130,7 +101,10 @@ test("an uploaded PDF is extracted into a Field Value per Field, and its Documen
       readText: "9.899 km",
       sourcePath: "vehicle.mileage",
       pages: [1],
-      matchProbability: 0.91,
+      confidence: 0.91,
+      lowestSignal: "match",
+      signals: { match: 0.91, fit: 1, support: null },
+      reviewReasons: [],
     },
     {
       key: "orderNumber",
@@ -139,7 +113,10 @@ test("an uploaded PDF is extracted into a Field Value per Field, and its Documen
       readText: "WO-0142",
       sourcePath: "workOrder.number",
       pages: [2],
-      matchProbability: 0.88,
+      confidence: 0.88,
+      lowestSignal: "match",
+      signals: { match: 0.88, fit: 1, support: null },
+      reviewReasons: [],
     },
     {
       key: "purchaseOrderNumber",
@@ -148,12 +125,15 @@ test("an uploaded PDF is extracted into a Field Value per Field, and its Documen
       readText: null,
       sourcePath: null,
       pages: [],
-      matchProbability: 0.93,
+      confidence: 0.93,
+      lowestSignal: "match",
+      signals: { match: 0.93, fit: null, support: null },
+      reviewReasons: [],
     },
   ]);
 });
 
-test("an Extraction reads, then matches the stored Reading, then fills only the matched Fields", async () => {
+test("an Extraction reads, then matches the stored Reading, fills only the matched Fields and verifies them", async () => {
   const t = newBackend();
   const { user, slug, formId } = await acmeWithWorkOrderForm(t);
   fakePipeline.replay(workOrder);
@@ -168,6 +148,11 @@ test("an Extraction reads, then matches the stored Reading, then fills only the 
       fields: ["licensePlate", "mileageKm", "orderNumber", "purchaseOrderNumber"],
     },
     { step: "fill", fields: ["licensePlate", "mileageKm", "orderNumber"] },
+    {
+      step: "verify",
+      fields: ["licensePlate", "mileageKm", "orderNumber"],
+      supportAskedFor: [],
+    },
   ]);
 });
 
@@ -179,7 +164,7 @@ test("an Extraction that is run again matches the stored Reading without reading
 
   await uploadAndExtract(t, user, slug, formId, 2);
 
-  expect(fakePipeline.calls.map((c) => c.step)).toEqual(["read", "match", "match", "fill"]);
+  expect(fakePipeline.calls.map((c) => c.step)).toEqual(["read", "match", "match", "fill", "verify"]);
   expect(fakePipeline.calls[2]).toMatchObject({ reading: workOrder.reading });
 });
 
@@ -214,6 +199,10 @@ type RecordedMatch = {
 type RecordedRun = {
   fieldValues: Record<string, { readText: string | null; pages: number[] }>;
 };
+type RecordedTextLayer = { pages: Array<{ page: number; hasTextLayer: boolean; text: string }> };
+type RecordedVerify = {
+  results: Array<{ path: string; fit: number; support: number | null }>;
+};
 const recordings = import.meta.glob("../fixtures/documents/*/*.json", {
   eager: true,
 }) as Record<string, { default: unknown }>;
@@ -230,9 +219,19 @@ function recordingOf(fixture: string) {
   const expected = recorded(`${dir}/expected.json`) as { form: string; pages: number };
   const map = recorded(`${dir}/map-opus-clean.json`) as RecordedMatch;
   const fills = recorded(`${dir}/fill-opus-clean.json`) as Record<string, { value: unknown }>;
+  const textLayer = recorded(`${dir}/textlayer-inspector.json`) as RecordedTextLayer;
+  const verify = recorded(`${dir}/jev-opus-clean-fill.json`) as RecordedVerify;
   const topLevel = map.fields.filter((f) => !f.path.includes("["));
   const recording: Recording = {
     reading: recorded(`${dir}/clean-opus.json`) as Recording["reading"],
+    textLayer: textLayer.pages
+      .filter((p) => p.hasTextLayer && p.text.trim() !== "")
+      .map((p) => ({ page: p.page, text: p.text })),
+    verifications: Object.fromEntries(
+      verify.results
+        .filter((r) => !r.path.includes("["))
+        .map((r) => [r.path, { fit: r.fit, support: r.support ?? 0 }]),
+    ),
     matches: Object.fromEntries(
       topLevel.map((f) => {
         const [best] = f.sources;
@@ -270,7 +269,7 @@ function fieldsOf(form: FixtureForm) {
 
 describe.runIf(fixtures.length > 0)("replaying the recorded fixture runs", () => {
   for (const fixture of fixtures) {
-    test(`${fixture}: every top-level Field gets the Field Value its recorded Match and Fill give`, async () => {
+    test(`${fixture}: every top-level Field gets the Field Value and Confidence its recorded Match, Fill and Verify give`, async () => {
       const t = newBackend();
       const { recording, form, pages, topLevel, run } = recordingOf(fixture);
       const ann = await signUp(t, "ann", "Acme Fleet");
@@ -283,23 +282,41 @@ describe.runIf(fixtures.length > 0)("replaying the recorded fixture runs", () =>
 
       const documentId = await uploadAndExtract(t, ann.user, ann.slug, formId, pages);
 
-      expect(fakePipeline.calls.map((c) => c.step)).toEqual(["read", "match", "fill"]);
+      expect(fakePipeline.calls.map((c) => c.step)).toEqual(["read", "match", "fill", "verify"]);
       expect(fakePipeline.calls[1]).toMatchObject({ reading: recording.reading });
+      const textPages = new Set(recording.textLayer!.map((p) => p.page));
       const document = await ann.user.query(api.documents.get, {
         organisationSlug: ann.slug,
         documentId: documentId!,
       });
       expect(document.state).toBe("needs_review");
+      expect(document.jevVerified).toBe(true);
       expect(document.fieldValues).toEqual(
-        topLevel.map(({ path: key, sources: [best] }) => ({
-          key,
-          label: key,
-          value: best.id === "none" ? null : recording.fills[key],
-          readText: run.fieldValues[key].readText,
-          sourcePath: best.id === "none" ? null : best.id,
-          pages: run.fieldValues[key].pages,
-          matchProbability: best.probability,
-        })),
+        topLevel.map(({ path: key, sources: [best] }) => {
+          const value = best.id === "none" ? null : recording.fills[key];
+          const { pages } = run.fieldValues[key];
+          const verified = value !== null ? recording.verifications![key] : undefined;
+          const signals = {
+            match: best.probability,
+            fit: verified?.fit ?? null,
+            support: verified && pages.some((p) => textPages.has(p)) ? verified.support : null,
+          };
+          const confidence = Math.min(
+            ...[signals.match, signals.fit, signals.support].filter((s) => s !== null),
+          );
+          return {
+            key,
+            label: key,
+            value,
+            readText: run.fieldValues[key].readText,
+            sourcePath: best.id === "none" ? null : best.id,
+            pages,
+            confidence,
+            lowestSignal: expect.any(String),
+            signals,
+            reviewReasons: expect.any(Array),
+          };
+        }),
       );
     });
   }

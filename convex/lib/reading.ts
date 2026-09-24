@@ -27,3 +27,66 @@ export function readingLeaves(reading: Reading): Leaf[] {
   walk(reading, "", []);
   return leaves;
 }
+
+type Segment = string | number;
+
+/** `tyreChanges[0].removed.serial` → `["tyreChanges", 0, "removed", "serial"]`. */
+function segmentsOf(path: string): Segment[] {
+  return [...path.matchAll(/([^.[\]]+)|\[(\d+)\]/g)].map((m) =>
+    m[2] === undefined ? m[1] : Number(m[2]),
+  );
+}
+
+function pathOf(segments: Segment[]) {
+  return segments
+    .map((s, i) => (typeof s === "number" ? `[${s}]` : i === 0 ? s : `.${s}`))
+    .join("");
+}
+
+/** The objects on the way to a leaf, each with the rest of the path from it. */
+function ancestors(reading: Reading, path: string) {
+  const segments = segmentsOf(path);
+  const found: Array<{ node: Record<string, unknown>; rest: Segment[] }> = [];
+  let node: unknown = reading;
+  for (let i = 0; i < segments.length; i++) {
+    if (node === null || typeof node !== "object") break;
+    if (!Array.isArray(node)) {
+      found.push({ node: node as Record<string, unknown>, rest: segments.slice(i) });
+    }
+    node = (node as Record<Segment, unknown>)[segments[i]];
+  }
+  return found;
+}
+
+/** Whether the Reader listed this value in an `_unsure` of any object around it. */
+export function isUnsure(reading: Reading, path: string) {
+  return ancestors(reading, path).some(({ node, rest }) => {
+    const unsure = node._unsure;
+    return Array.isArray(unsure) && unsure.includes(pathOf(rest));
+  });
+}
+
+/** `licensePlate` → `license plate`. */
+function wordsOf(key: string) {
+  return key.replace(/([a-z0-9])([A-Z])/g, "$1 $2").toLowerCase();
+}
+
+/**
+ * Whether the Reader kept conflicting readings of this value: an `…Alt`
+ * sibling on the way to it (`position` and `positionAlt`), or a `conflicts`
+ * note around it that names it.
+ */
+export function isConflicting(reading: Reading, path: string) {
+  const key = segmentsOf(path).findLast((s) => typeof s === "string");
+  return ancestors(reading, path).some(({ node, rest }) => {
+    const [next] = rest;
+    if (typeof next === "string") {
+      const alternative = next.endsWith("Alt") ? next.slice(0, -3) : `${next}Alt`;
+      if (alternative in node) return true;
+    }
+    const note = node.conflicts;
+    if (typeof note !== "string" || key === undefined) return false;
+    const text = note.toLowerCase();
+    return text.includes(key.toLowerCase()) || text.includes(wordsOf(key));
+  });
+}

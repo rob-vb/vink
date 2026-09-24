@@ -1,7 +1,7 @@
 # 23 — Extraction tracer: Read → Match → Fill for top-level Fields
 
 Type: task
-Status: ready-for-agent
+Status: resolved
 Blocked by: 22
 
 ## What to build

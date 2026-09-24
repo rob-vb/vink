@@ -3,7 +3,7 @@
 // images, plus pdf-inspector's per-page markdown, and writes the Reading.
 import { extractPagesMarkdown } from "@firecrawl/pdf-inspector";
 import { models, parseJsonObject, textOf, vertex } from "./models";
-import type { Reader, Reading } from "./pipeline";
+import type { PageText, Reader, Reading } from "./pipeline";
 
 const PROMPT = `Describe everything this Document says as one clean JSON object, so that a program can pick any fact out of it. The Document is a PDF that may bundle several papers about the same job (an invoice, a work order, handwritten forms). You get the page images and the text layer per page (when a page has one).
 
@@ -16,19 +16,27 @@ const PROMPT = `Describe everything this Document says as one clean JSON object,
 
 Answer with the JSON object only.`;
 
-/** Per page, the markdown of its text layer, or a note that it has none (a scan). */
-function textLayer(pdf: Uint8Array) {
+/** The markdown of every page that has a text layer (a scan has none), and the page count. */
+function textLayerOf(pdf: Uint8Array) {
   const { pages } = extractPagesMarkdown(Buffer.from(pdf));
-  return pages
-    .map((page) => {
-      const text = page.needsOcr ? "" : page.markdown.trim();
-      return `## Page ${page.page + 1}\n\n${text || "(no text layer: read the image)"}`;
-    })
-    .join("\n\n");
+  const textLayer = pages.flatMap((page): PageText[] => {
+    const text = page.needsOcr ? "" : page.markdown.trim();
+    return text ? [{ page: page.page + 1, text }] : [];
+  });
+  return { textLayer, pageCount: pages.length };
+}
+
+/** The text layer as the vision model gets it: every page, scans noted. */
+function describe(textLayer: PageText[], pageCount: number) {
+  return Array.from({ length: pageCount }, (_, i) => {
+    const text = textLayer.find((p) => p.page === i + 1)?.text;
+    return `## Page ${i + 1}\n\n${text ?? "(no text layer: read the image)"}`;
+  }).join("\n\n");
 }
 
 export const reader: Reader = {
   async read(pdf) {
+    const { textLayer, pageCount } = textLayerOf(pdf);
     const message = await vertex()
       .messages.stream({
         model: models.reader,
@@ -46,13 +54,13 @@ export const reader: Reader = {
                   data: Buffer.from(pdf).toString("base64"),
                 },
               },
-              { type: "text", text: `# Text layer\n\n${textLayer(pdf)}` },
+              { type: "text", text: `# Text layer\n\n${describe(textLayer, pageCount)}` },
               { type: "text", text: PROMPT },
             ],
           },
         ],
       })
       .finalMessage();
-    return parseJsonObject(textOf(message)) as Reading;
+    return { reading: parseJsonObject(textOf(message)) as Reading, textLayer };
   },
 };

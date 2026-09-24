@@ -34,6 +34,16 @@ function formatValue(value: string | number | boolean | null) {
   return String(value);
 }
 
+const reasonLabels = {
+  below_threshold: "Below threshold",
+  required_empty: "Required but empty",
+  type_mismatch: "Doesn't fit the type",
+  unsure: "Read as unsure",
+  conflicting: "Conflicting readings",
+} as const;
+
+const signalLabels = { match: "Match", fit: "Jev fit", support: "Jev support" } as const;
+
 function pagesLabel(pages: number[]) {
   return pages.length === 1 ? `page ${pages[0]}` : `pages ${pages.join(", ")}`;
 }
@@ -114,7 +124,7 @@ export function DocumentView({
                     <TableHead>Field</TableHead>
                     <TableHead>Value</TableHead>
                     <TableHead className="hidden md:table-cell">Read on the Document</TableHead>
-                    <TableHead className="text-right">Match</TableHead>
+                    <TableHead className="text-right">Confidence</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -147,8 +157,20 @@ export function DocumentView({
                         )}
                       </TableCell>
                       {/* A ranking score, never shown as a percentage. */}
-                      <TableCell className="text-right align-top tabular-nums">
-                        {fieldValue.matchProbability.toFixed(2)}
+                      <TableCell className="text-right align-top whitespace-normal">
+                        <p className="tabular-nums">{fieldValue.confidence.toFixed(2)}</p>
+                        <p className="text-xs text-muted-foreground">
+                          Lowest: {signalLabels[fieldValue.lowestSignal]}
+                        </p>
+                        {fieldValue.reviewReasons.length > 0 && (
+                          <div className="mt-1 flex flex-wrap justify-end gap-1">
+                            {fieldValue.reviewReasons.map((reason) => (
+                              <Badge key={reason} variant="destructive">
+                                {reasonLabels[reason]}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}

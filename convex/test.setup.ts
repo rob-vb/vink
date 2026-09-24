@@ -1,14 +1,20 @@
 /// <reference types="vite/client" />
 import workpool from "@convex-dev/workpool/test";
 import { convexTest } from "convex-test";
+import { PDFDocument } from "pdf-lib";
+import { vi } from "vitest";
 import { api } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
 import type {
   FilledValue,
   Filler,
   Match,
   Matcher,
+  PageText,
   Reader,
   Reading,
+  Verification,
+  Verifier,
 } from "./lib/pipeline";
 import schema from "./schema";
 
@@ -25,6 +31,7 @@ export function newBackend() {
 }
 
 type Backend = ReturnType<typeof newBackend>;
+type User = ReturnType<Backend["withIdentity"]>;
 
 /** Call as a signed-in user, with no Organisation yet. Their email is `<userId>@example.com`. */
 export function asUser(t: Backend, userId: string) {
@@ -91,36 +98,78 @@ export function putToUploadUrl(url: string, bytes: Uint8Array) {
   fakePdfStore.objects.set(url.replace("https://r2.test/upload/", ""), bytes);
 }
 
+export async function pdfWithPages(pages: number) {
+  const pdf = await PDFDocument.create();
+  for (let i = 0; i < pages; i++) pdf.addPage();
+  return await pdf.save();
+}
+
+/** Uploads a PDF and lets the Extraction it starts run to the end. */
+export async function uploadAndExtract(
+  t: Backend,
+  user: User,
+  organisationSlug: string,
+  formId: Id<"forms">,
+  pages = 1,
+) {
+  const { key, url } = await user.mutation(api.documents.generateUploadUrl, {
+    organisationSlug,
+  });
+  putToUploadUrl(url, await pdfWithPages(pages));
+  await user.action(api.documents.create, {
+    organisationSlug,
+    formId,
+    key,
+    filename: "werkorder.pdf",
+  });
+  await t.finishAllScheduledFunctions(vi.runAllTimers);
+  const { documents } = await user.query(api.documents.list, {
+    organisationSlug,
+    state: "needs_review",
+  });
+  return documents[0]?.id;
+}
+
 /**
- * What the Extraction's Reader, Matcher and Filler answer for one Document:
- * recorded from a real run (see fixtures/), or written by hand.
+ * What the Extraction's Reader, Matcher, Filler and Verifier answer for one
+ * Document: recorded from a real run (see fixtures/), or written by hand.
  */
 export type Recording = {
   reading: Reading;
+  /** The pages with a text layer; none (a scan) when left out. */
+  textLayer?: PageText[];
   /** Per Field key; a Field left out is matched to `none`. */
   matches: Record<string, Match>;
   /** Per Field key, what Fill writes from the matched source. */
   fills: Record<string, FilledValue>;
+  /**
+   * Per Field key, Jev's fit and support; 1 for a Field left out. Support is
+   * only answered when it was asked.
+   */
+  verifications?: Record<string, { fit: number; support: number }>;
 };
 
+type Step = "read" | "match" | "fill" | "verify";
+
 /**
- * Stands in for the Extraction's adapters (lib/reader.ts, lib/matcher.ts and
- * lib/filler.ts) by replaying a Recording, and logs every call. Install each
- * fake with `vi.mock`, as for fakePdfStore.
+ * Stands in for the Extraction's adapters (lib/reader.ts, lib/matcher.ts,
+ * lib/filler.ts and lib/verifier.ts) by replaying a Recording, and logs every
+ * call. Install each fake with `vi.mock`, as for fakePdfStore.
  */
 export const fakePipeline = {
   recording: null as Recording | null,
-  failing: new Set<"read" | "match" | "fill">(),
+  failing: new Set<Step>(),
   calls: [] as Array<
     | { step: "read" }
     | { step: "match"; reading: Reading; fields: string[] }
     | { step: "fill"; fields: string[] }
+    | { step: "verify"; fields: string[]; supportAskedFor: string[] }
   >,
   replay(recording: Recording) {
     fakePipeline.recording = recording;
   },
   /** The next call to that step throws, as an outage would. */
-  failOnce(step: "read" | "match" | "fill") {
+  failOnce(step: Step) {
     fakePipeline.failing.add(step);
   },
   reset() {
@@ -128,7 +177,7 @@ export const fakePipeline = {
     fakePipeline.failing.clear();
     fakePipeline.calls = [];
   },
-  failIfAsked(step: "read" | "match" | "fill") {
+  failIfAsked(step: Step) {
     if (fakePipeline.failing.delete(step)) throw new Error(`${step} is down`);
   },
   played() {
@@ -141,7 +190,8 @@ export const fakeReader: Reader = {
   async read() {
     fakePipeline.calls.push({ step: "read" });
     fakePipeline.failIfAsked("read");
-    return fakePipeline.played().reading;
+    const { reading, textLayer = [] } = fakePipeline.played();
+    return { reading, textLayer };
   },
 };
 
@@ -162,5 +212,24 @@ export const fakeFiller: Filler = {
     fakePipeline.failIfAsked("fill");
     const { fills } = fakePipeline.played();
     return Object.fromEntries(requests.map((r) => [r.field.key, fills[r.field.key] ?? null]));
+  },
+};
+
+export const fakeVerifier: Verifier = {
+  async verify(_document, requests) {
+    const withSupport = requests.filter((r) => r.pageText !== null);
+    fakePipeline.calls.push({
+      step: "verify",
+      fields: requests.map((r) => r.field.key),
+      supportAskedFor: withSupport.map((r) => r.field.key),
+    });
+    fakePipeline.failIfAsked("verify");
+    const { verifications = {} } = fakePipeline.played();
+    return Object.fromEntries(
+      requests.map((r): [string, Verification] => {
+        const { fit, support } = verifications[r.field.key] ?? { fit: 1, support: 1 };
+        return [r.field.key, { fit, support: r.pageText === null ? null : support }];
+      }),
+    );
   },
 };

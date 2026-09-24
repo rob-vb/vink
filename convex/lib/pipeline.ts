@@ -19,9 +19,15 @@ export type Match = { path: string | null; probability: number };
 
 export type FilledValue = string | number | boolean | null;
 
+/** The text of one page's text layer. A scanned page has none. */
+export type PageText = { page: number; text: string };
+
 export type Reader = {
-  /** Reads every page of the PDF into a Reading. */
-  read(pdf: Uint8Array): Promise<Reading>;
+  /**
+   * Reads every page of the PDF into a Reading, and returns the text layer of
+   * the pages that have one, for Verify.
+   */
+  read(pdf: Uint8Array): Promise<{ reading: Reading; textLayer: PageText[] }>;
 };
 
 export type Matcher = {
@@ -34,4 +40,24 @@ export type FillRequest = { field: FlatField; source: { path: string; text: stri
 export type Filler = {
   /** Writes, per Field key, the value from that Field's source only. */
   fill(requests: FillRequest[]): Promise<Record<string, FilledValue>>;
+};
+
+export type VerifyRequest = {
+  field: FlatField;
+  value: string | number | boolean;
+  readText: string;
+  pages: number[];
+  /** The text layer of the value's pages; `null` when none has one, so support isn't asked. */
+  pageText: string | null;
+};
+
+/** Jev's answers for one value: fit, and support when its pages have a text layer. */
+export type Verification = { fit: number; support: number | null };
+
+export type Verifier = {
+  /** Checks every filled value of one Document, in one request. */
+  verify(
+    document: { formName: string; formDescription: string | null; reading: Reading },
+    requests: VerifyRequest[],
+  ): Promise<Record<string, Verification>>;
 };
