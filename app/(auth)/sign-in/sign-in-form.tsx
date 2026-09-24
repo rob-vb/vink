@@ -27,7 +27,14 @@ import { authClient } from "@/lib/auth-client";
 
 type Pending = "password" | "link" | null;
 
-export function SignInForm({ linkFailed }: { linkFailed: boolean }) {
+export function SignInForm({
+  linkFailed,
+  next,
+}: {
+  linkFailed: boolean;
+  /** Where to go after signing in: an invite link, or home. */
+  next: string | null;
+}) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -40,8 +47,8 @@ export function SignInForm({ linkFailed }: { linkFailed: boolean }) {
     setError(null);
     const { error } = await authClient.signIn.magicLink({
       email,
-      callbackURL: "/",
-      newUserCallbackURL: "/welcome",
+      callbackURL: next ?? "/",
+      newUserCallbackURL: next ?? "/welcome",
       errorCallbackURL: "/sign-in?error=link",
     });
     setPending(null);
@@ -65,7 +72,7 @@ export function SignInForm({ linkFailed }: { linkFailed: boolean }) {
       setError("That email and password don't match.");
       return;
     }
-    router.push("/");
+    router.push(next ?? "/");
     router.refresh();
   }
 
@@ -147,7 +154,11 @@ export function SignInForm({ linkFailed }: { linkFailed: boolean }) {
                 Email me a sign-in link
               </Button>
               <FieldDescription className="text-center">
-                New to DocuHelper? <Link href="/sign-up">Create an Organisation</Link>
+                New to DocuHelper? {next ? (
+                  <Link href={`/sign-up?${new URLSearchParams({ next })}`}>Create an account</Link>
+                ) : (
+                  <Link href="/sign-up">Create an Organisation</Link>
+                )}
               </FieldDescription>
             </Field>
           </FieldGroup>

@@ -47,10 +47,26 @@ export default defineSchema({
     organisationId: v.id("organisations"),
     // Better Auth user id (the JWT subject).
     userId: v.string(),
+    // Copied from the user at join time, for the Members list. Optional only
+    // for Memberships created before ticket 19 (see memberships.backfillEmails).
+    email: v.optional(v.string()),
     role,
   })
     .index("by_organisationId_and_userId", ["organisationId", "userId"])
     .index("by_userId", ["userId"]),
+
+  // An Admin's offer of a Membership, sent by email. Only the token's hash is kept.
+  invitations: defineTable({
+    organisationId: v.id("organisations"),
+    email: v.string(),
+    role,
+    tokenHash: v.string(),
+    expiresAt: v.number(),
+    invitedBy: v.string(),
+    acceptedAt: v.optional(v.number()),
+  })
+    .index("by_organisationId_and_email", ["organisationId", "email"])
+    .index("by_tokenHash", ["tokenHash"]),
 
   // The Review Threshold and Auto-Send are Form settings, outside any Form Version.
   forms: defineTable({

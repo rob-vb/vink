@@ -13,24 +13,27 @@ import {
   type QueryCtx,
 } from "../_generated/server";
 
-async function requireUserId(ctx: { auth: QueryCtx["auth"] }) {
+async function requireIdentity(ctx: { auth: QueryCtx["auth"] }) {
   const identity = await ctx.auth.getUserIdentity();
   if (identity === null) {
     throw new ConvexError("Unauthenticated");
   }
-  return identity.subject;
+  return identity;
 }
 
-/** Signed in, outside any Organisation. */
-export const userQuery = customQuery(
-  query,
-  customCtx(async (ctx) => ({ userId: await requireUserId(ctx) })),
-);
+async function requireUserId(ctx: { auth: QueryCtx["auth"] }) {
+  return (await requireIdentity(ctx)).subject;
+}
 
-export const userMutation = customMutation(
-  mutation,
-  customCtx(async (ctx) => ({ userId: await requireUserId(ctx) })),
-);
+async function requireUser(ctx: { auth: QueryCtx["auth"] }) {
+  const identity = await requireIdentity(ctx);
+  return { userId: identity.subject, email: identity.email?.toLowerCase() ?? "" };
+}
+
+/** Signed in, outside any Organisation. Injects `userId` and a lower-case `email`. */
+export const userQuery = customQuery(query, customCtx(requireUser));
+
+export const userMutation = customMutation(mutation, customCtx(requireUser));
 
 type Role = Doc<"memberships">["role"];
 

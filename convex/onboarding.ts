@@ -23,6 +23,7 @@ export const createOrganisation = userMutation({
     await ctx.db.insert("memberships", {
       organisationId,
       userId: ctx.userId,
+      email: ctx.email,
       role: "admin",
     });
     return { slug };

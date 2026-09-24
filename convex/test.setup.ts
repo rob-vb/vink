@@ -15,9 +15,9 @@ export function newBackend() {
 
 type Backend = ReturnType<typeof newBackend>;
 
-/** Call as a signed-in user, with no Organisation yet. */
+/** Call as a signed-in user, with no Organisation yet. Their email is `<userId>@example.com`. */
 export function asUser(t: Backend, userId: string) {
-  return t.withIdentity({ subject: userId });
+  return t.withIdentity({ subject: userId, email: `${userId}@example.com` });
 }
 
 /** A user signs up and gets their own Organisation; returns them and its slug. */
@@ -30,8 +30,8 @@ export async function signUp(t: Backend, userId: string, organisationName: strin
 }
 
 /**
- * Gives a user a Membership in an existing Organisation. A stand-in until
- * Invitations exist (ticket 19).
+ * Gives a user a Membership in an existing Organisation, skipping the
+ * Invitation (see invitations.test.ts for that path).
  */
 export async function addMembership(
   t: Backend,
@@ -47,6 +47,7 @@ export async function addMembership(
     await ctx.db.insert("memberships", {
       organisationId: organisation!._id,
       userId,
+      email: `${userId}@example.com`,
       role,
     });
   });

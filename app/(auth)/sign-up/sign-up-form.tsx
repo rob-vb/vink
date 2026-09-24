@@ -26,7 +26,11 @@ import { authClient } from "@/lib/auth-client";
 
 type Pending = "password" | "link" | null;
 
-export function SignUpForm() {
+/**
+ * Signs up and creates the user's own Organisation, or, when `next` is an
+ * invite link, signs up only and returns there to join the inviting one.
+ */
+export function SignUpForm({ next }: { next: string | null }) {
   const router = useRouter();
   const [organisation, setOrganisation] = useState("");
   const [email, setEmail] = useState("");
@@ -35,15 +39,16 @@ export function SignUpForm() {
   const [error, setError] = useState<string | null>(null);
   const [linkSentTo, setLinkSentTo] = useState<string | null>(null);
 
-  const welcomeUrl = `/welcome?${new URLSearchParams({ organisation: organisation.trim() })}`;
+  const afterSignUp =
+    next ?? `/welcome?${new URLSearchParams({ organisation: organisation.trim() })}`;
 
   async function sendLink() {
     setPending("link");
     setError(null);
     const { error } = await authClient.signIn.magicLink({
       email,
-      callbackURL: welcomeUrl,
-      newUserCallbackURL: welcomeUrl,
+      callbackURL: afterSignUp,
+      newUserCallbackURL: afterSignUp,
       errorCallbackURL: "/sign-in?error=link",
     });
     setPending(null);
@@ -71,7 +76,7 @@ export function SignUpForm() {
       setError(error.message ?? "We couldn't create your account. Try again.");
       return;
     }
-    router.push(welcomeUrl);
+    router.push(afterSignUp);
   }
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
@@ -98,25 +103,31 @@ export function SignUpForm() {
   return (
     <Card>
       <CardHeader className="text-center">
-        <CardTitle className="text-xl">Create your Organisation</CardTitle>
+        <CardTitle className="text-xl">
+          {next ? "Create your account" : "Create your Organisation"}
+        </CardTitle>
         <CardDescription>
-          You&apos;ll be its Admin and can invite your team later.
+          {next
+            ? "Use the address your invitation was sent to."
+            : "You'll be its Admin and can invite your team later."}
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={onSubmit}>
           <FieldGroup>
-            <Field>
-              <FieldLabel htmlFor="organisation">Organisation name</FieldLabel>
-              <Input
-                id="organisation"
-                placeholder="Acme Fleet"
-                autoComplete="organization"
-                required
-                value={organisation}
-                onChange={(e) => setOrganisation(e.target.value)}
-              />
-            </Field>
+            {!next && (
+              <Field>
+                <FieldLabel htmlFor="organisation">Organisation name</FieldLabel>
+                <Input
+                  id="organisation"
+                  placeholder="Acme Fleet"
+                  autoComplete="organization"
+                  required
+                  value={organisation}
+                  onChange={(e) => setOrganisation(e.target.value)}
+                />
+              </Field>
+            )}
             <Field>
               <FieldLabel htmlFor="email">Work email</FieldLabel>
               <Input
@@ -159,7 +170,10 @@ export function SignUpForm() {
                 Email me a sign-up link
               </Button>
               <FieldDescription className="text-center">
-                Already have an account? <Link href="/sign-in">Sign in</Link>
+                Already have an account?{" "}
+                <Link href={next ? `/sign-in?${new URLSearchParams({ next })}` : "/sign-in"}>
+                  Sign in
+                </Link>
               </FieldDescription>
             </Field>
           </FieldGroup>
