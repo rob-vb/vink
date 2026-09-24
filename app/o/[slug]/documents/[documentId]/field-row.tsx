@@ -131,6 +131,13 @@ export function FieldRow({
   }
 
   const inputId = `field-${fieldValue.id}`;
+  const items =
+    fieldValue.type === "boolean"
+      ? [
+          { value: "true", label: "Yes" },
+          { value: "false", label: "No" },
+        ]
+      : (fieldValue.options ?? []).map((option) => ({ value: option, label: option }));
   const { review } = fieldValue;
 
   return (
@@ -154,13 +161,16 @@ export function FieldRow({
       <div className="min-w-0">
         {fieldValue.type === "boolean" || fieldValue.type === "choice" ? (
           <Select
-            value={fieldValue.value === null ? "" : String(fieldValue.value)}
+            items={items}
+            value={fieldValue.value === null ? null : String(fieldValue.value)}
             disabled={disabled}
             onValueChange={(choice) =>
               save(
-                fieldValue.type === "boolean"
-                  ? choice === "true"
-                  : (choice as string) || null,
+                choice === null
+                  ? null
+                  : fieldValue.type === "boolean"
+                    ? choice === "true"
+                    : (choice as string),
               )
             }
           >
@@ -168,18 +178,11 @@ export function FieldRow({
               <SelectValue placeholder="No value" />
             </SelectTrigger>
             <SelectContent>
-              {fieldValue.type === "boolean" ? (
-                <>
-                  <SelectItem value="true">Yes</SelectItem>
-                  <SelectItem value="false">No</SelectItem>
-                </>
-              ) : (
-                fieldValue.options!.map((option) => (
-                  <SelectItem key={option} value={option}>
-                    {option}
-                  </SelectItem>
-                ))
-              )}
+              {items.map((item) => (
+                <SelectItem key={item.value} value={item.value}>
+                  {item.label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         ) : (

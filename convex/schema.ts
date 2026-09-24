@@ -145,6 +145,8 @@ export default defineSchema({
     // Set when an Extraction finishes: whether Jev's Verify succeeded, and the
     // Form's Review Threshold at that moment, which its Field Values keep.
     jevVerified: v.optional(v.boolean()),
+    // "Does not fit this Form": set from the Match result (see lib/fit.ts).
+    doesNotFit: v.optional(v.boolean()),
     reviewThreshold: v.optional(v.number()),
     // Who ruled it unusable, and the state Reopen returns it to.
     rejection: v.optional(
@@ -259,6 +261,7 @@ export default defineSchema({
       v.literal("approved"),
       v.literal("rejected"),
       v.literal("reopened"),
+      v.literal("form_changed"),
       v.literal("deleted"),
     ),
     // What it was about, e.g. the corrected Field's label.

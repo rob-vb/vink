@@ -9,6 +9,7 @@
  */
 
 import type * as auth from "../auth.js";
+import type * as changeForm from "../changeForm.js";
 import type * as documents from "../documents.js";
 import type * as email from "../email.js";
 import type * as extraction from "../extraction.js";
@@ -21,6 +22,7 @@ import type * as lib_documentStates from "../lib/documentStates.js";
 import type * as lib_fieldKeys from "../lib/fieldKeys.js";
 import type * as lib_fieldTypes from "../lib/fieldTypes.js";
 import type * as lib_filler from "../lib/filler.js";
+import type * as lib_fit from "../lib/fit.js";
 import type * as lib_functions from "../lib/functions.js";
 import type * as lib_matchPlan from "../lib/matchPlan.js";
 import type * as lib_matcher from "../lib/matcher.js";
@@ -45,6 +47,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
+  changeForm: typeof changeForm;
   documents: typeof documents;
   email: typeof email;
   extraction: typeof extraction;
@@ -57,6 +60,7 @@ declare const fullApi: ApiFromModules<{
   "lib/fieldKeys": typeof lib_fieldKeys;
   "lib/fieldTypes": typeof lib_fieldTypes;
   "lib/filler": typeof lib_filler;
+  "lib/fit": typeof lib_fit;
   "lib/functions": typeof lib_functions;
   "lib/matchPlan": typeof lib_matchPlan;
   "lib/matcher": typeof lib_matcher;

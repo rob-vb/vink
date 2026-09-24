@@ -39,7 +39,12 @@ function failed(error: unknown) {
 type Target = { organisationSlug: string; documentId: Id<"documents">; filename: string };
 
 /** Reject with an optional reason: the Document is never approved or sent. */
-export function RejectButton({ organisationSlug, documentId, filename }: Target) {
+export function RejectButton({
+  organisationSlug,
+  documentId,
+  filename,
+  size = "default",
+}: Target & { size?: "default" | "sm" }) {
   const reject = useMutation(api.rejection.reject);
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState("");
@@ -60,7 +65,7 @@ export function RejectButton({ organisationSlug, documentId, filename }: Target)
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<Button variant="outline" />}>
+      <DialogTrigger render={<Button variant="outline" size={size} />}>
         <Ban />
         Reject
       </DialogTrigger>

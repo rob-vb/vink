@@ -6,6 +6,7 @@ import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { internalAction } from "./_generated/server";
 import { fitType } from "./lib/fieldTypes";
+import { doesNotFit } from "./lib/fit";
 import { filler } from "./lib/filler";
 import { matcher } from "./lib/matcher";
 import { matchRequests } from "./lib/matchPlan";
@@ -159,6 +160,7 @@ export const run = internalAction({
     await ctx.runMutation(internal.extraction.finish, {
       documentId,
       jevVerified,
+      doesNotFit: doesNotFit(reading, fields, lists, matches),
       lists: listResults,
       fieldValues: values.map(({ id, field, list, source, value, match, typeMismatch }) => ({
         key: field.key,

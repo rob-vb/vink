@@ -2,7 +2,15 @@
 
 import { useMutation, useQuery } from "convex/react";
 import { ConvexError } from "convex/values";
-import { ArrowLeft, Ban, CircleAlert, CircleCheck, RotateCcw, ShieldAlert } from "lucide-react";
+import {
+  ArrowLeft,
+  Ban,
+  CircleAlert,
+  CircleCheck,
+  RotateCcw,
+  ShieldAlert,
+  TriangleAlert,
+} from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -19,6 +27,7 @@ import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { FieldRow } from "./field-row";
 import { ListGroup } from "./list-group";
+import { ChangeFormButton } from "./change-form";
 import { DeleteButton, RejectButton, ReopenButton } from "./rejection-actions";
 
 // pdf.js needs the browser.
@@ -43,6 +52,7 @@ const eventLabels = {
   extraction_retried: "Extraction started again",
   rejected: "Rejected",
   reopened: "Reopened",
+  form_changed: "Form changed",
   deleted: "Deleted",
   corrected: "Corrected",
   entry_added: "Entry added",
@@ -169,13 +179,47 @@ export function ReviewScreen({
           </p>
         </div>
         {(reviewing || document.state === "extraction_failed") && (
-          <RejectButton
-            organisationSlug={organisationSlug}
-            documentId={documentId}
-            filename={document.filename}
-          />
+          <div className="flex flex-wrap gap-2">
+            <ChangeFormButton
+              organisationSlug={organisationSlug}
+              documentId={documentId}
+              currentFormId={document.formId}
+            />
+            <RejectButton
+              organisationSlug={organisationSlug}
+              documentId={documentId}
+              filename={document.filename}
+            />
+          </div>
         )}
       </div>
+
+      {reviewing && document.doesNotFit && (
+        <Alert className="border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+          <TriangleAlert />
+          <AlertTitle>Does not fit this Form</AlertTitle>
+          <AlertDescription className="text-amber-900/80 dark:text-amber-200/80">
+            <p>
+              Too few of {document.formName}&apos;s required Fields were found on it. It may have
+              been uploaded against the wrong Form, or not be a usable Document.
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <ChangeFormButton
+                organisationSlug={organisationSlug}
+                documentId={documentId}
+                currentFormId={document.formId}
+                size="sm"
+              />
+              <RejectButton
+                organisationSlug={organisationSlug}
+                documentId={documentId}
+                filename={document.filename}
+                size="sm"
+              />
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
 
       {document.rejection && (
         <Alert>

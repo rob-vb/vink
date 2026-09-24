@@ -130,6 +130,7 @@ export const finish = internalMutation({
   args: {
     documentId: v.id("documents"),
     jevVerified: v.boolean(),
+    doesNotFit: v.boolean(),
     lists: v.array(
       v.object({
         key: v.string(),
@@ -159,7 +160,7 @@ export const finish = internalMutation({
       }),
     ),
   },
-  handler: async (ctx, { documentId, jevVerified, lists, fieldValues }) => {
+  handler: async (ctx, { documentId, jevVerified, doesNotFit, lists, fieldValues }) => {
     const document = (await ctx.db.get(documentId))!;
     // A run that comes late (the Document moved on) changes nothing, so it
     // never overwrites a user's corrections.
@@ -202,7 +203,7 @@ export const finish = internalMutation({
         }),
       });
     }
-    await ctx.db.patch(documentId, { jevVerified, reviewThreshold });
+    await ctx.db.patch(documentId, { jevVerified, doesNotFit, reviewThreshold });
     await ctx.db.insert("documentEvents", {
       organisationId: document.organisationId,
       documentId,
