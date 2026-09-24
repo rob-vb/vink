@@ -4,6 +4,7 @@
 import { extractPagesMarkdown } from "@firecrawl/pdf-inspector";
 import { models, parseJsonObject, textOf, vertex } from "./models";
 import type { PageText, Reader, Reading } from "./pipeline";
+import { usage } from "./usage";
 
 const PROMPT = `Describe everything this Document says as one clean JSON object, so that a program can pick any fact out of it. The Document is a PDF that may bundle several papers about the same job (an invoice, a work order, handwritten forms). You get the page images and the text layer per page (when a page has one).
 
@@ -61,6 +62,11 @@ export const reader: Reader = {
         ],
       })
       .finalMessage();
+    usage.record({
+      model: models.reader,
+      inputTokens: message.usage.input_tokens,
+      outputTokens: message.usage.output_tokens,
+    });
     return { reading: parseJsonObject(textOf(message)) as Reading, textLayer };
   },
 };

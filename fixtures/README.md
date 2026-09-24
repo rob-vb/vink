@@ -58,3 +58,7 @@ Ground truth is not written up front. The benchmark run produces Field Values; t
 `expected.json` now exists for every Document (2026-09-23, from the benchmark in ticket 07). It lists `verified` paths (confirmed or corrected by the user), `unverified` paths (model output the user accepted without checking) and `unknown` paths (the user couldn't judge; left out of scoring). Scripts are on branch `prototype/extraction-benchmark`.
 
 Five Documents is a starter set for a qualitative first benchmark; confidence calibration needs 30–50.
+
+## Eval harness (ticket 26)
+
+`npm run eval` runs the real pipeline on every Document here and scores it against `expected.json`. It needs `GOOGLE_VERTEX_CREDENTIALS` and `TYPESAFE_API_KEY`, for example in `.env.eval`. It also writes each Document's model answers to `recording.json`, which the Seam 1 fakes (`convex/test.setup.ts`) can replay. See `scripts/eval/run.ts`.

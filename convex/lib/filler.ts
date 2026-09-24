@@ -3,6 +3,7 @@
 // source Match picked for it. It never sees the PDF or the rest of the Reading.
 import { models, parseJsonObject, textOf, vertex } from "./models";
 import type { FilledValue, FillRequest, Filler, FlatField } from "./pipeline";
+import { usage } from "./usage";
 
 const PROMPT = `You get, for every Field, the text Match picked as its source on the Document. Write each Field's value from its source, in the form the Field's type and description ask for.
 
@@ -64,6 +65,11 @@ export const filler: Filler = {
           content: `${PROMPT}\n\n${JSON.stringify(requests.map(describe), null, 2)}`,
         },
       ],
+    });
+    usage.record({
+      model: models.filler,
+      inputTokens: message.usage.input_tokens,
+      outputTokens: message.usage.output_tokens,
     });
     const values = parseJsonObject(textOf(message));
     return Object.fromEntries(

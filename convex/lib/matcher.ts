@@ -8,6 +8,7 @@ import { MAX_CRITERIA } from "./matchPlan";
 import { models } from "./models";
 import type { FlatField, ListField, ListMatch, Match, Matcher, Reading } from "./pipeline";
 import { type Leaf, type ReadingArray, readingArrays, readingLeaves } from "./reading";
+import { usage } from "./usage";
 
 const NONE = { none: "Nothing in the Reading holds this" };
 
@@ -62,12 +63,17 @@ type Answers = Record<string, ChoiceResponse>;
 
 async function ask(reading: Reading, questions: Record<string, ReturnType<typeof choice>>) {
   if (Object.keys(questions).length === 0) return {};
-  const { answers } = await new TypeSafeClient().systemOne({
+  const result = await new TypeSafeClient().systemOne({
     model: models.jev,
     state: { document: reading },
     questions,
   });
-  return answers as Answers;
+  usage.record({
+    model: result.model,
+    inputTokens: result.usage.input_tokens,
+    outputTokens: result.usage.output_tokens,
+  });
+  return result.answers as Answers;
 }
 
 const picked = (answers: Answers, id: string) => {

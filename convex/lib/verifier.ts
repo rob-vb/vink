@@ -5,6 +5,7 @@
 import { TypeSafeClient, noul } from "@typesafe-ai/sdk";
 import { models } from "./models";
 import type { Verification, Verifier } from "./pipeline";
+import { usage } from "./usage";
 
 // Terms and conditions pages are long and carry nothing for the Form.
 const PAGE_TEXT_MAX = 6000;
@@ -45,11 +46,12 @@ export const verifier: Verifier = {
         );
       }
     });
-    const { answers } = await new TypeSafeClient().systemOne({
+    const { answers, model, usage: used } = await new TypeSafeClient().systemOne({
       model: models.jev,
       state,
       questions,
     });
+    usage.record({ model, inputTokens: used.input_tokens, outputTokens: used.output_tokens });
     return Object.fromEntries(
       requests.map((r, i): [string, Verification] => [
         r.id,
