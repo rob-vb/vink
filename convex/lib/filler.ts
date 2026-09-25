@@ -1,9 +1,8 @@
 "use node";
 // Fill (ADR 0003): a small text model writes each Field Value from the one
 // source Match picked for it. It never sees the PDF or the rest of the Reading.
-import { models, parseJsonObject, textOf, vertex } from "./models";
+import { complete, models, parseJsonObject } from "./models";
 import type { FilledValue, FillRequest, Filler, FlatField } from "./pipeline";
-import { usage } from "./usage";
 
 const PROMPT = `You get, for every Field, the text Match picked as its source on the Document. Write each Field's value from its source, in the form the Field's type and description ask for.
 
@@ -45,33 +44,18 @@ function describe({ field, source }: FillRequest, i: number) {
 
 export const filler: Filler = {
   async fill(requests) {
-    const message = await vertex().messages.create({
+    const answer = await complete({
       model: models.filler,
-      max_tokens: 16000,
-      output_config: {
-        format: {
-          type: "json_schema",
-          schema: {
-            type: "object",
-            properties: Object.fromEntries(requests.map((r, i) => [`v${i}`, valueSchema(r.field)])),
-            required: requests.map((_, i) => `v${i}`),
-            additionalProperties: false,
-          },
-        },
+      maxTokens: 16000,
+      jsonSchema: {
+        type: "object",
+        properties: Object.fromEntries(requests.map((r, i) => [`v${i}`, valueSchema(r.field)])),
+        required: requests.map((_, i) => `v${i}`),
+        additionalProperties: false,
       },
-      messages: [
-        {
-          role: "user",
-          content: `${PROMPT}\n\n${JSON.stringify(requests.map(describe), null, 2)}`,
-        },
-      ],
+      texts: [`${PROMPT}\n\n${JSON.stringify(requests.map(describe), null, 2)}`],
     });
-    usage.record({
-      model: models.filler,
-      inputTokens: message.usage.input_tokens,
-      outputTokens: message.usage.output_tokens,
-    });
-    const values = parseJsonObject(textOf(message));
+    const values = parseJsonObject(answer);
     return Object.fromEntries(
       requests.map((r, i) => [r.id, (values[`v${i}`] ?? null) as FilledValue]),
     );

@@ -2,9 +2,8 @@
 // Read (ADR 0003): the vision model gets the PDF, which it sees as page
 // images, plus pdf-inspector's per-page markdown, and writes the Reading.
 import { extractPagesMarkdown } from "@firecrawl/pdf-inspector";
-import { models, parseJsonObject, textOf, vertex } from "./models";
+import { complete, models, parseJsonObject } from "./models";
 import type { PageText, Reader, Reading } from "./pipeline";
-import { usage } from "./usage";
 
 const PROMPT = `Describe everything this Document says as one clean JSON object, so that a program can pick any fact out of it. The Document is a PDF that may bundle several papers about the same job (an invoice, a work order, handwritten forms). You get the page images and the text layer per page (when a page has one).
 
@@ -38,35 +37,13 @@ function describe(textLayer: PageText[], pageCount: number) {
 export const reader: Reader = {
   async read(pdf) {
     const { textLayer, pageCount } = textLayerOf(pdf);
-    const message = await vertex()
-      .messages.stream({
-        model: models.reader,
-        max_tokens: 64000,
-        thinking: { type: "adaptive" },
-        messages: [
-          {
-            role: "user",
-            content: [
-              {
-                type: "document",
-                source: {
-                  type: "base64",
-                  media_type: "application/pdf",
-                  data: Buffer.from(pdf).toString("base64"),
-                },
-              },
-              { type: "text", text: `# Text layer\n\n${describe(textLayer, pageCount)}` },
-              { type: "text", text: PROMPT },
-            ],
-          },
-        ],
-      })
-      .finalMessage();
-    usage.record({
+    const answer = await complete({
       model: models.reader,
-      inputTokens: message.usage.input_tokens,
-      outputTokens: message.usage.output_tokens,
+      pdf,
+      maxTokens: 64000,
+      thinking: true,
+      texts: [`# Text layer\n\n${describe(textLayer, pageCount)}`, PROMPT],
     });
-    return { reading: parseJsonObject(textOf(message)) as Reading, textLayer };
+    return { reading: parseJsonObject(answer) as Reading, textLayer };
   },
 };

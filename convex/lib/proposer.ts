@@ -2,7 +2,7 @@
 // Form Proposal (ticket 14): one vision-model call gets a sample's Reading
 // plus its pages (images and text layer) and proposes the Form's Fields.
 import { isValidKey } from "./fieldKeys";
-import { models, parseJsonObject, textOf, vertex } from "./models";
+import { complete, models, parseJsonObject } from "./models";
 import type { ProposedField, Proposer } from "./pipeline";
 
 const PROMPT = `You design a data-entry Form from one sample Document. You get the PDF, its text layer, and the Reading: a JSON description of everything the Document says, with English keys.
@@ -48,35 +48,18 @@ function toField(p: Proposed, list: boolean): ProposedField["field"] | null {
 
 export const proposer: Proposer = {
   async propose({ pdf, reading, textLayer }) {
-    const message = await vertex()
-      .messages.stream({
-        model: models.proposer,
-        max_tokens: 32000,
-        thinking: { type: "adaptive" },
-        messages: [
-          {
-            role: "user",
-            content: [
-              {
-                type: "document",
-                source: {
-                  type: "base64",
-                  media_type: "application/pdf",
-                  data: Buffer.from(pdf).toString("base64"),
-                },
-              },
-              {
-                type: "text",
-                text: `# Text layer\n\n${textLayer.map((p) => `## Page ${p.page}\n\n${p.text}`).join("\n\n") || "(none: a scan)"}`,
-              },
-              { type: "text", text: `# Reading\n\n${JSON.stringify(reading, null, 2)}` },
-              { type: "text", text: PROMPT },
-            ],
-          },
-        ],
-      })
-      .finalMessage();
-    const { fields } = parseJsonObject(textOf(message)) as { fields?: Proposed[] };
+    const answer = await complete({
+      model: models.proposer,
+      pdf,
+      maxTokens: 32000,
+      thinking: true,
+      texts: [
+        `# Text layer\n\n${textLayer.map((p) => `## Page ${p.page}\n\n${p.text}`).join("\n\n") || "(none: a scan)"}`,
+        `# Reading\n\n${JSON.stringify(reading, null, 2)}`,
+        PROMPT,
+      ],
+    });
+    const { fields } = parseJsonObject(answer) as { fields?: Proposed[] };
     return (fields ?? []).flatMap((p) => {
       const field = toField(p, false);
       return field ? [{ field, ticked: p.ticked ?? false }] : [];

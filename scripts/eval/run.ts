@@ -5,7 +5,9 @@
 //   npm run eval -- --no-record  score only
 //   npm run eval -- --threshold 0.85
 //
-// Needs GOOGLE_VERTEX_CREDENTIALS and TYPESAFE_API_KEY, e.g. in .env.eval.
+// Needs GOOGLE_VERTEX_CREDENTIALS and TYPESAFE_API_KEY, e.g. in .env.eval. With
+// CLAUDE_BRIDGE_URL (e.g. http://127.0.0.1:3004) and CLAUDE_BRIDGE_SECRET
+// instead of Vertex, Claude Code answers the Claude steps (scripts/claude-bridge).
 // READER_MODEL, FILL_MODEL and JEV_MODEL try other versions (convex/lib/models.ts).
 import { join } from "node:path";
 import { filler } from "../../convex/lib/filler";
