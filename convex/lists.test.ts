@@ -266,11 +266,11 @@ test("matching in two requests gives the same Field Values as one request", asyn
   expect(single.document.lists).toEqual(split.document.lists);
 });
 
-// A work order as the Reader writes it: about 200 values, with long printed
-// texts, which Jev counts at about two characters per token.
-function workOrderReading() {
+// A long invoice as the Reader writes it: 150 lines, 600 values. Each Field's
+// Choice lists 255 of them, so 13 Fields pass Jev's cap in one request.
+function longInvoiceReading() {
   const reading = structuredClone(tyreReport.reading);
-  reading.lineItems = Array.from({ length: 40 }, (_, i) => ({
+  reading.lineItems = Array.from({ length: 150 }, (_, i) => ({
     description: `385/55 R 22.5 R168 M+S 160K/158L TL, article ${170000 + i}, montage en balanceren`,
     quantity: `${(i % 4) + 1}`,
     unitPrice: `${(i * 13.37).toFixed(2)} EUR`,
@@ -295,7 +295,7 @@ test("a Form with many Fields is matched in as many requests as Jev's cap needs,
       name: "Work order",
       fields: [{ type: "text", label: "Kenteken", key: "licensePlate", required: false }, ...fields],
     });
-    fakePipeline.replay({ ...tyreReport, reading: workOrderReading() });
+    fakePipeline.replay({ ...tyreReport, reading: longInvoiceReading() });
     const documentId = await uploadAndExtract(t, ann.user, ann.slug, formId, 2);
     return await ann.user.query(api.documents.get, { organisationSlug: ann.slug, documentId: documentId! });
   };
@@ -306,7 +306,6 @@ test("a Form with many Fields is matched in as many requests as Jev's cap needs,
   vi.stubEnv("MATCH_TOKEN_CAP", "10000000");
   const single = await run();
 
-  // 13 Fields over these values pass the cap in one request.
   expect(requests.length).toBeGreaterThan(1);
   expect(requests.flatMap((r) => r.fields).sort()).toEqual(
     ["licensePlate", ...fields.map((f) => f.key)].sort(),

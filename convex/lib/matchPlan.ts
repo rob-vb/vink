@@ -16,16 +16,17 @@ const READING_CHARS_PER_TOKEN = 1;
 const CRITERIA_CHARS_PER_TOKEN = 1.5;
 const OVERHEAD_TOKENS = 1_000;
 
-const criterion = (path: string, text: string) => path.length + text.length + 10;
+const criterion = (text: string) => text.length + 10;
 
 /** A rough upper bound of the tokens each Choice adds: its criteria. */
 function choiceTokens(reading: Reading) {
   const leafChars = readingLeaves(reading)
     .slice(0, MAX_CRITERIA)
-    .reduce((sum, leaf) => sum + criterion(leaf.path, leaf.text), 0);
+    // A Field's criteria name the leaves by path; Jev reads the values in the state.
+    .reduce((sum, leaf) => sum + criterion(leaf.path), 0);
   const arrayChars = readingArrays(reading)
     .slice(0, MAX_CRITERIA)
-    .reduce((sum, array) => sum + criterion(array.path, array.keys.join(", ")), 0);
+    .reduce((sum, array) => sum + criterion(`${array.path} ${array.keys.join(", ")}`), 0);
   return {
     base: JSON.stringify(reading).length / READING_CHARS_PER_TOKEN + OVERHEAD_TOKENS,
     field: leafChars / CRITERIA_CHARS_PER_TOKEN,

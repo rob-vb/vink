@@ -23,11 +23,14 @@ function about(field: { label: string; description?: string }) {
   return [field.label, field.description].filter(Boolean).join(": ");
 }
 
+// Each criterion is a leaf's path only: its value is in the state already, and
+// repeating it per Field doubled the request for the same answers (eval,
+// 2026-09-25: 76/84 values either way).
 function fieldQuestion(field: FlatField, leaves: Leaf[]) {
   const criteria: Record<string, string> = { ...NONE };
   leaves.forEach((leaf, i) => {
     if (couldHold(field, leaf) && Object.keys(criteria).length < MAX_CRITERIA) {
-      criteria[`v${i}`] = `\`${leaf.path}\` = ${JSON.stringify(leaf.text)}`;
+      criteria[`v${i}`] = `\`${leaf.path}\``;
     }
   });
   return choice(
