@@ -265,3 +265,51 @@ test("matching in two requests gives the same Field Values as one request", asyn
   expect(single.document.fieldValues).toEqual(split.document.fieldValues);
   expect(single.document.lists).toEqual(split.document.lists);
 });
+
+// A work order as the Reader writes it: about 200 values, with long printed
+// texts, which Jev counts at about two characters per token.
+function workOrderReading() {
+  const reading = structuredClone(tyreReport.reading);
+  reading.lineItems = Array.from({ length: 40 }, (_, i) => ({
+    description: `385/55 R 22.5 R168 M+S 160K/158L TL, article ${170000 + i}, montage en balanceren`,
+    quantity: `${(i % 4) + 1}`,
+    unitPrice: `${(i * 13.37).toFixed(2)} EUR`,
+    vatCode: "BTW verlegd",
+    _pages: [2],
+  }));
+  return reading;
+}
+
+test("a Form with many Fields is matched in as many requests as Jev's cap needs, with the same Field Values", async () => {
+  const fields = Array.from({ length: 12 }, (_, i) => ({
+    type: "text" as const,
+    label: `Veld ${i}`,
+    key: `field${i}`,
+    required: false,
+  }));
+  const run = async () => {
+    const t = newBackend();
+    const ann = await signUp(t, "ann", "Acme Fleet");
+    const { formId } = await ann.user.mutation(api.forms.create, {
+      organisationSlug: ann.slug,
+      name: "Work order",
+      fields: [{ type: "text", label: "Kenteken", key: "licensePlate", required: false }, ...fields],
+    });
+    fakePipeline.replay({ ...tyreReport, reading: workOrderReading() });
+    const documentId = await uploadAndExtract(t, ann.user, ann.slug, formId, 2);
+    return await ann.user.query(api.documents.get, { organisationSlug: ann.slug, documentId: documentId! });
+  };
+
+  const split = await run();
+  const requests = fakePipeline.calls.filter((c) => c.step === "match");
+  fakePipeline.reset();
+  vi.stubEnv("MATCH_TOKEN_CAP", "10000000");
+  const single = await run();
+
+  // 13 Fields over these values pass the cap in one request.
+  expect(requests.length).toBeGreaterThan(1);
+  expect(requests.flatMap((r) => r.fields).sort()).toEqual(
+    ["licensePlate", ...fields.map((f) => f.key)].sort(),
+  );
+  expect(split.fieldValues).toEqual(single.fieldValues);
+});

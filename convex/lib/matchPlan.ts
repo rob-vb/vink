@@ -1,6 +1,6 @@
 // How Match is asked (spec, Extraction pipeline): one request, or, when the
-// Reading would push a request past Jev's 64k-token cap, one request for the
-// top-level Fields and one for the List Fields.
+// Reading and its Choices would push a request past Jev's 64k-token cap, the
+// top-level Fields and the List Fields apart, over as many requests as needed.
 import type { FlatField, ListField, Reading } from "./pipeline";
 import { readingArrays, readingLeaves } from "./reading";
 
@@ -9,33 +9,52 @@ const TOKEN_CAP = 64_000;
 // Jev takes at most this many criteria per Choice, `none` included.
 export const MAX_CRITERIA = 255;
 
-// A cautious characters-per-token for JSON full of numbers and codes.
-const CHARS_PER_TOKEN = 3;
+// Measured on jev-1.13.0 (2026-09-25): the Reading, sent as state, costs
+// about a token per character; the criteria about 1.5 to 2 characters per
+// token. Both rounded to the cautious side, plus a fixed overhead.
+const READING_CHARS_PER_TOKEN = 1;
+const CRITERIA_CHARS_PER_TOKEN = 1.5;
+const OVERHEAD_TOKENS = 1_000;
 
-/** A rough upper bound of a Match request's tokens: the Reading plus every Choice's criteria. */
-function estimateTokens(reading: Reading, fields: FlatField[], lists: ListField[]) {
-  const criterion = (path: string, text: string) => path.length + text.length + 10;
-  const leafCriteria = readingLeaves(reading)
+const criterion = (path: string, text: string) => path.length + text.length + 10;
+
+/** A rough upper bound of the tokens each Choice adds: its criteria. */
+function choiceTokens(reading: Reading) {
+  const leafChars = readingLeaves(reading)
     .slice(0, MAX_CRITERIA)
     .reduce((sum, leaf) => sum + criterion(leaf.path, leaf.text), 0);
-  const arrayCriteria = readingArrays(reading)
+  const arrayChars = readingArrays(reading)
     .slice(0, MAX_CRITERIA)
     .reduce((sum, array) => sum + criterion(array.path, array.keys.join(", ")), 0);
-  const chars =
-    JSON.stringify(reading).length +
-    fields.length * leafCriteria +
-    lists.length * arrayCriteria;
-  return Math.ceil(chars / CHARS_PER_TOKEN);
+  return {
+    base: JSON.stringify(reading).length / READING_CHARS_PER_TOKEN + OVERHEAD_TOKENS,
+    field: leafChars / CRITERIA_CHARS_PER_TOKEN,
+    list: arrayChars / CRITERIA_CHARS_PER_TOKEN,
+  };
 }
 
-/** The Match requests for a Reading: one, or two when one would pass the cap. */
+/** Packs items into as few groups as fit under the cap, in order; each group has at least one. */
+function pack<T>(items: T[], perItem: number, room: number) {
+  const size = Math.max(1, Math.floor(room / perItem));
+  const groups: T[][] = [];
+  for (let i = 0; i < items.length; i += size) groups.push(items.slice(i, i + size));
+  return groups;
+}
+
+/**
+ * The Match requests for a Reading: one when it fits under Jev's cap;
+ * otherwise top-level Fields and List Fields apart, each spread over as many
+ * requests as the cap needs.
+ */
 export function matchRequests(reading: Reading, fields: FlatField[], lists: ListField[]) {
   const cap = Number(process.env.MATCH_TOKEN_CAP ?? TOKEN_CAP);
-  if (fields.length === 0 || lists.length === 0 || estimateTokens(reading, fields, lists) <= cap) {
+  const tokens = choiceTokens(reading);
+  const room = cap - tokens.base;
+  if (tokens.base + fields.length * tokens.field + lists.length * tokens.list <= cap) {
     return [{ fields, lists }];
   }
   return [
-    { fields, lists: [] },
-    { fields: [], lists },
+    ...pack(fields, tokens.field, room).map((group) => ({ fields: group, lists: [] as ListField[] })),
+    ...pack(lists, tokens.list, room).map((group) => ({ fields: [] as FlatField[], lists: group })),
   ];
 }
