@@ -4,6 +4,7 @@
 //   npm run eval                 score, and rewrite each recording.json
 //   npm run eval -- --no-record  score only
 //   npm run eval -- --threshold 0.85
+//   npm run eval -- --readings <dir>  keep each Reading in <dir>, reuse it next time
 //
 // Needs GOOGLE_VERTEX_CREDENTIALS and TYPESAFE_API_KEY, e.g. in .env.eval. With
 // CLAUDE_BRIDGE_URL (e.g. http://127.0.0.1:3004) and CLAUDE_BRIDGE_SECRET
@@ -29,6 +30,7 @@ const prices: Prices = {
 
 const args = process.argv.slice(2);
 const thresholdAt = args.indexOf("--threshold");
+const readingsAt = args.indexOf("--readings");
 
 async function main() {
   const report = await evaluate({
@@ -37,6 +39,7 @@ async function main() {
     prices,
     threshold: thresholdAt === -1 ? 0.8 : Number(args[thresholdAt + 1]),
     record: !args.includes("--no-record"),
+    readingsDir: readingsAt === -1 ? undefined : args[readingsAt + 1],
   });
   console.log(`Reader ${models.reader}, Fill ${models.filler}, Jev ${models.jev}\n`);
   console.log(formatReport(report));

@@ -8,6 +8,7 @@ type FixtureType = "string" | "number" | "date";
 /** A Form definition in fixtures/forms. */
 export type FixtureForm = {
   name: string;
+  description?: string;
   fields: Array<
     | { name: string; type: FixtureType }
     | { name: string; type: "list"; fields: Array<{ name: string; type: FixtureType }> }

@@ -1,6 +1,7 @@
 // The fixture eval harness (spec, Seam 2): runs the pipeline on every
 // fixtures/documents/* Document and scores it against its expected.json.
 // run.ts runs it with the real adapters; tests run it with the Seam 1 fakes.
+import { createHash } from "node:crypto";
 import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { extract } from "../../convex/lib/extract";
@@ -58,12 +59,30 @@ function costOf(entries: Usage[], prices: Prices) {
 
 const json = <T>(path: string) => JSON.parse(readFileSync(path, "utf8")) as T;
 
+/**
+ * The Reader, but each PDF's Reading is kept in `dir` (by the PDF's sha256)
+ * and reused after the first read, so Match and Fill changes can be compared
+ * on the same Readings: Read differs from run to run.
+ */
+function storedReadings(reader: Reader, dir: string): Reader {
+  return {
+    async read(pdf) {
+      const file = join(dir, `${createHash("sha256").update(pdf).digest("hex")}.json`);
+      if (existsSync(file)) return json<Awaited<ReturnType<Reader["read"]>>>(file);
+      const read = await reader.read(pdf);
+      writeFileSync(file, JSON.stringify(read));
+      return read;
+    },
+  };
+}
+
 export async function evaluate({
   fixturesDir,
   adapters,
   prices,
   threshold,
   record = false,
+  readingsDir,
 }: {
   fixturesDir: string;
   adapters: Adapters;
@@ -71,7 +90,10 @@ export async function evaluate({
   threshold: number;
   /** Writes each Document's answers to its recording.json, for the Seam 1 fakes to replay. */
   record?: boolean;
+  /** Keeps each Document's Reading here and reuses it on later runs; see storedReadings. */
+  readingsDir?: string;
 }) {
+  const reader = readingsDir ? storedReadings(adapters.reader, readingsDir) : adapters.reader;
   const documents: DocumentResult[] = [];
   const failures: Array<{ document: string; error: string }> = [];
   const fixtures = readdirSync(join(fixturesDir, "documents"))
@@ -98,7 +120,7 @@ export async function evaluate({
     const start = performance.now();
     try {
       const pdf = new Uint8Array(readFileSync(join(dir, "document.pdf")));
-      const { reading, textLayer } = await timed("read", adapters.reader.read)(pdf);
+      const { reading, textLayer } = await timed("read", reader.read)(pdf);
       const recording: Required<Omit<Recording, "proposal">> = {
         reading,
         textLayer,
@@ -108,7 +130,13 @@ export async function evaluate({
         verifications: {},
       };
       const extracted = await extract(
-        { reading, textLayer, formName: form.name, formDescription: null, ...formFields(form) },
+        {
+          reading,
+          textLayer,
+          formName: form.name,
+          formDescription: form.description ?? null,
+          ...formFields(form),
+        },
         {
           matcher: {
             match: timed("match", async (...args: Parameters<Matcher["match"]>) => {

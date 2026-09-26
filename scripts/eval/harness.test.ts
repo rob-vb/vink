@@ -145,3 +145,38 @@ test("a Document whose pipeline fails is reported with its error, and the others
   expect(report.documents.map((d) => d.document)).toEqual(["invoice-002"]);
   expect(report.totals.values).toEqual({ right: 1, total: 2 });
 });
+
+test("with a readings folder, each Document is read once and its stored Reading is reused after that", async () => {
+  const fixturesDir = fixturesWithInvoice();
+  const readingsDir = mkdtempSync(join(tmpdir(), "readings-"));
+  fakePipeline.replay(invoiceRecording);
+  const first = await evaluate({ fixturesDir, adapters: metered, prices, threshold: 0.8, readingsDir });
+
+  fakePipeline.reset();
+  fakePipeline.replay({ ...invoiceRecording, reading: { unrelated: "not read again" } });
+  const second = await evaluate({ fixturesDir, adapters: metered, prices, threshold: 0.8, readingsDir });
+
+  expect(fakePipeline.calls.map((c) => c.step)).toEqual(["match", "fill", "verify"]);
+  expect(fakePipeline.calls[0]).toMatchObject({ reading: invoiceRecording.reading });
+  expect(second.documents[0].score).toEqual(first.documents[0].score);
+});
+
+test("Verify gets the fixture Form's name and description, as it does in the app", async () => {
+  const fixturesDir = fixturesWithInvoice();
+  writeFileSync(
+    join(fixturesDir, "forms/invoice.json"),
+    JSON.stringify({ ...invoiceForm, description: "Supplier invoices for fleet repairs" }),
+  );
+  fakePipeline.replay(invoiceRecording);
+  const seen: Array<{ formName: string; formDescription: string | null }> = [];
+  const verifier: Verifier = {
+    async verify(document, requests) {
+      seen.push({ formName: document.formName, formDescription: document.formDescription });
+      return fakeVerifier.verify(document, requests);
+    },
+  };
+
+  await evaluate({ fixturesDir, adapters: { ...metered, verifier }, prices, threshold: 0.8 });
+
+  expect(seen).toEqual([{ formName: "invoice", formDescription: "Supplier invoices for fleet repairs" }]);
+});
