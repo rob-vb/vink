@@ -17,7 +17,7 @@ import type {
   Verifier,
   VerifyRequest,
 } from "./pipeline";
-import { isConflicting, isUnsure, type Leaf, readingLeaves } from "./reading";
+import { isConflicting, isUnsure, type Leaf, readingLeaves, sourceAt } from "./reading";
 
 /**
  * One Field Value to be: a top-level Field, or a sub-Field of one List entry.
@@ -39,7 +39,7 @@ function slotsOf(
   lists: ListField[],
   matches: { fields: Record<string, Match>; lists: Record<string, ListMatch> },
 ) {
-  const leaves = new Map(readingLeaves(reading).map((leaf) => [leaf.path, leaf]));
+  const leaves = readingLeaves(reading);
   const slots: Slot[] = fields.map((field) => {
     const { path, probability } = matches.fields[field.key];
     return {
@@ -47,7 +47,7 @@ function slotsOf(
       field,
       label: field.label,
       list: null,
-      source: path === null ? undefined : leaves.get(path),
+      source: path === null ? undefined : sourceAt(leaves, path),
       match: probability,
     };
   });
@@ -62,7 +62,7 @@ function slotsOf(
           field,
           label: `${list.label} → ${field.label}`,
           list: { key: list.key, entry },
-          source: key.path === null ? undefined : leaves.get(`${path}[${entry}].${key.path}`),
+          source: key.path === null ? undefined : sourceAt(leaves, `${path}[${entry}].${key.path}`),
           match: Math.min(probability, key.probability),
         });
       }

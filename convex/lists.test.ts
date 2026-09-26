@@ -312,3 +312,43 @@ test("a Form with many Fields is matched in as many requests as Jev's cap needs,
   );
   expect(split.fieldValues).toEqual(single.fieldValues);
 });
+
+test("a sub-Field matched to an object in the entries is filled from all the values in it", async () => {
+  const reading = structuredClone(tyreReport.reading);
+  const changes = reading.tyreChanges as Array<Record<string, Record<string, unknown>>>;
+  // The brand and the model sit apart; the sub-Field wants them together.
+  changes[0].removed = { ...changes[0].removed, brand: "WESTLAKE", pattern: "WTR1" };
+  changes[1].removed = { ...changes[1].removed, brand: "GITI", pattern: "GTR955", _pages: [3] };
+  const recording: Recording = {
+    ...tyreReport,
+    reading,
+    lists: {
+      tyreChanges: {
+        ...tyreReport.lists!.tyreChanges,
+        keys: {
+          ...tyreReport.lists!.tyreChanges.keys,
+          removedSerial: { path: "removed", probability: 0.9 },
+        },
+      },
+    },
+    fills: {
+      ...tyreReport.fills,
+      "tyreChanges[0].removedSerial": "Westlake WTR1",
+      "tyreChanges[1].removedSerial": "Giti GTR955",
+    },
+  };
+
+  const { list } = await extracted(recording);
+
+  expect(list.entries[0].fieldValues[1]).toMatchObject({
+    value: "Westlake WTR1",
+    sourcePath: "tyreChanges[0].removed",
+    readText: "serial: 6135366435\ntreadDepthMm: 3\nbrand: WESTLAKE\npattern: WTR1",
+    pages: [1],
+  });
+  expect(list.entries[1].fieldValues[1]).toMatchObject({
+    value: "Giti GTR955",
+    sourcePath: "tyreChanges[1].removed",
+    pages: [3],
+  });
+});

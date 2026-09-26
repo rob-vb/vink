@@ -2,12 +2,15 @@
 // Reading and its Choices would push a request past Jev's 64k-token cap, the
 // top-level Fields and the List Fields apart, over as many requests as needed.
 import type { FlatField, ListField, Reading } from "./pipeline";
-import { readingArrays, readingLeaves } from "./reading";
+import { readingArrays, readingLeaves, readingObjects } from "./reading";
 
 const TOKEN_CAP = 64_000;
 
 // Jev takes at most this many criteria per Choice, `none` included.
 export const MAX_CRITERIA = 255;
+
+// Of a Choice's criteria, at most this many are objects (see reading.sourceAt).
+export const MAX_OBJECTS = 60;
 
 // Measured on jev-1.13.0 (2026-09-25): the Reading, sent as state, costs
 // about a token per character; the criteria about 1.5 to 2 characters per
@@ -23,7 +26,10 @@ function choiceTokens(reading: Reading) {
   const leafChars = readingLeaves(reading)
     .slice(0, MAX_CRITERIA)
     // A Field's criteria name the leaves by path; Jev reads the values in the state.
-    .reduce((sum, leaf) => sum + criterion(leaf.path), 0);
+    .reduce((sum, leaf) => sum + criterion(leaf.path), 0) +
+    readingObjects(reading)
+      .slice(0, MAX_OBJECTS)
+      .reduce((sum, object) => sum + criterion(`object ${object.path} ${object.keys.slice(0, 8).join(", ")}`), 0);
   const arrayChars = readingArrays(reading)
     .slice(0, MAX_CRITERIA)
     .reduce((sum, array) => sum + criterion(`${array.path} ${array.keys.join(", ")}`), 0);

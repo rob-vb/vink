@@ -4,13 +4,27 @@
 // entries, `none` included. A second request then picks, per sub-Field, the
 // key inside the chosen array's elements. The whole Reading is Jev's state.
 import { type ChoiceResponse, TypeSafeClient, choice } from "@typesafe-ai/sdk";
-import { MAX_CRITERIA } from "./matchPlan";
+import { MAX_CRITERIA, MAX_OBJECTS } from "./matchPlan";
 import { models } from "./models";
 import type { FlatField, ListField, ListMatch, Match, Matcher, Reading } from "./pipeline";
-import { type Leaf, type ReadingArray, readingArrays, readingLeaves } from "./reading";
+import {
+  type Leaf,
+  type ReadingArray,
+  type ReadingObject,
+  readingArrays,
+  readingLeaves,
+  readingObjects,
+} from "./reading";
 import { usage } from "./usage";
 
 const NONE = { none: "Nothing in the Reading holds this" };
+
+const WHOLE =
+  "Pick a whole object only when the value needs several of its values together (e.g. a brand and a model kept apart); otherwise the one value.";
+
+function objectCriterion(path: string, keys: string[]) {
+  return `object \`${path}\` (${keys.slice(0, 8).join(", ")}${keys.length > 8 ? ", …" : ""})`;
+}
 
 /** Whether a leaf could hold a value of the Field's type at all. */
 function couldHold(field: FlatField, leaf: Leaf) {
@@ -26,15 +40,19 @@ function about(field: { label: string; description?: string }) {
 // Each criterion is a leaf's path only: its value is in the state already, and
 // repeating it per Field doubled the request for the same answers (eval,
 // 2026-09-25: 76/84 values either way).
-function fieldQuestion(field: FlatField, leaves: Leaf[]) {
+function fieldQuestion(field: FlatField, leaves: Leaf[], objects: ReadingObject[]) {
   const criteria: Record<string, string> = { ...NONE };
+  const wholes = objects.slice(0, MAX_OBJECTS);
   leaves.forEach((leaf, i) => {
-    if (couldHold(field, leaf) && Object.keys(criteria).length < MAX_CRITERIA) {
+    if (couldHold(field, leaf) && Object.keys(criteria).length < MAX_CRITERIA - wholes.length) {
       criteria[`v${i}`] = `\`${leaf.path}\``;
     }
   });
+  wholes.forEach((object, i) => {
+    criteria[`o${i}`] = objectCriterion(object.path, object.keys);
+  });
   return choice(
-    `Which value in \`document\` is the Field "${field.key}" (${field.type}) of this Form: ${about(field)}?`,
+    `Which value in \`document\` is the Field "${field.key}" (${field.type}) of this Form: ${about(field)}? ${WHOLE}`,
     criteria,
   );
 }
@@ -51,13 +69,30 @@ function listQuestion(list: ListField, arrays: ReadingArray[]) {
   );
 }
 
+/** The objects inside an array's elements, as key prefixes shared by two or more keys (e.g. `removed`). */
+function elementObjects(array: ReadingArray): ReadingObject[] {
+  const byPrefix = new Map<string, string[]>();
+  for (const key of array.keys) {
+    const parts = key.split(".");
+    for (let n = 1; n < parts.length; n++) {
+      const prefix = parts.slice(0, n).join(".");
+      byPrefix.set(prefix, [...(byPrefix.get(prefix) ?? []), parts.slice(n).join(".")]);
+    }
+  }
+  return [...byPrefix].filter(([, keys]) => keys.length >= 2).map(([path, keys]) => ({ path, keys }));
+}
+
 function keyQuestion(list: ListField, array: ReadingArray, field: FlatField) {
   const criteria: Record<string, string> = { ...NONE };
-  array.keys.slice(0, MAX_CRITERIA - 1).forEach((key, i) => {
+  const wholes = elementObjects(array).slice(0, MAX_OBJECTS);
+  array.keys.slice(0, MAX_CRITERIA - 1 - wholes.length).forEach((key, i) => {
     criteria[`k${i}`] = `key \`${key}\``;
   });
+  wholes.forEach((object, i) => {
+    criteria[`o${i}`] = objectCriterion(object.path, object.keys);
+  });
   return choice(
-    `Each element of \`document.${array.path}\` is one entry of "${list.key}". Which key inside those elements holds the sub-Field "${field.key}" (${field.type}): ${about(field)}?`,
+    `Each element of \`document.${array.path}\` is one entry of "${list.key}". Which key inside those elements holds the sub-Field "${field.key}" (${field.type}): ${about(field)}? ${WHOLE}`,
     criteria,
   );
 }
@@ -84,12 +119,20 @@ const picked = (answers: Answers, id: string) => {
   return { choice: answer.choice, probability: answer.probabilities[answer.choice] };
 };
 
+/** The path a Field's answer names: a leaf (`v…`), an object (`o…`), or none. */
+function pathOf(choice: string, leaves: Leaf[], objects: ReadingObject[]) {
+  if (choice === "none") return null;
+  const index = Number(choice.slice(1));
+  return choice.startsWith("o") ? objects[index].path : leaves[index].path;
+}
+
 export const matcher: Matcher = {
   async match(reading, { fields, lists }) {
     const leaves = readingLeaves(reading);
+    const objects = readingObjects(reading);
     const arrays = readingArrays(reading);
     const first = await ask(reading, {
-      ...Object.fromEntries(fields.map((f) => [`field_${f.key}`, fieldQuestion(f, leaves)])),
+      ...Object.fromEntries(fields.map((f) => [`field_${f.key}`, fieldQuestion(f, leaves, objects)])),
       ...Object.fromEntries(lists.map((l) => [`list_${l.key}`, listQuestion(l, arrays)])),
     });
 
@@ -114,8 +157,7 @@ export const matcher: Matcher = {
       fields: Object.fromEntries(
         fields.map((field): [string, Match] => {
           const { choice, probability } = picked(first, `field_${field.key}`);
-          const leaf = choice === "none" ? undefined : leaves[Number(choice.slice(1))];
-          return [field.key, { path: leaf?.path ?? null, probability }];
+          return [field.key, { path: pathOf(choice, leaves, objects), probability }];
         }),
       ),
       lists: Object.fromEntries(
@@ -126,13 +168,14 @@ export const matcher: Matcher = {
             list.fields.map((f): [string, Match] => {
               if (!array) return [f.key, { path: null, probability: 1 }];
               const key = picked(second, `key_${list.key}_${f.key}`);
-              return [
-                f.key,
-                {
-                  path: key.choice === "none" ? null : array.keys[Number(key.choice.slice(1))],
-                  probability: key.probability,
-                },
-              ];
+              const wholes = elementObjects(array);
+              const path =
+                key.choice === "none"
+                  ? null
+                  : key.choice.startsWith("o")
+                    ? wholes[Number(key.choice.slice(1))].path
+                    : array.keys[Number(key.choice.slice(1))];
+              return [f.key, { path, probability: key.probability }];
             }),
           );
           return [list.key, { path: array?.path ?? null, probability, keys }];

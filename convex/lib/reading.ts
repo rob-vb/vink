@@ -28,6 +28,49 @@ export function readingLeaves(reading: Reading): Leaf[] {
   return leaves;
 }
 
+/**
+ * What Match can pick as a Field's source: one value, or an object (or
+ * array) whose values together hold it, like `removed` with its `brand` and
+ * `pattern`. An object's text lists its values as `key: value` lines, and
+ * its pages are all of theirs.
+ */
+export function sourceAt(leaves: Leaf[], path: string): Leaf | undefined {
+  const exact = leaves.find((leaf) => leaf.path === path);
+  if (exact) return exact;
+  const inside = leaves.filter(
+    (leaf) => leaf.path.startsWith(`${path}.`) || leaf.path.startsWith(`${path}[`),
+  );
+  if (inside.length === 0) return undefined;
+  return {
+    path,
+    text: inside
+      .map((leaf) => `${leaf.path.slice(path.length).replace(/^\./, "")}: ${leaf.text}`)
+      .join("\n"),
+    pages: [...new Set(inside.flatMap((leaf) => leaf.pages))].sort((a, b) => a - b),
+  };
+}
+
+/** An object in a Reading (not the Reading itself) with at least two values, and their keys. */
+export type ReadingObject = { path: string; keys: string[] };
+
+/** Every object in a Reading that holds two or more values, depth first; see sourceAt. */
+export function readingObjects(reading: Reading): ReadingObject[] {
+  const objects: ReadingObject[] = [];
+  const walk = (node: unknown, path: string) => {
+    if (Array.isArray(node)) {
+      node.forEach((item, i) => walk(item, `${path}[${i}]`));
+    } else if (node !== null && typeof node === "object") {
+      const keys = readingLeaves(node as Reading).map((leaf) => leaf.path);
+      if (path && keys.length >= 2) objects.push({ path, keys });
+      for (const [key, value] of Object.entries(node)) {
+        if (!key.startsWith("_")) walk(value, path ? `${path}.${key}` : key);
+      }
+    }
+  };
+  walk(reading, "");
+  return objects;
+}
+
 type Segment = string | number;
 
 /** `tyreChanges[0].removed.serial` → `["tyreChanges", 0, "removed", "serial"]`. */
