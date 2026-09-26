@@ -3,12 +3,12 @@
   "description": "Tyre service carried out on a fleet vehicle: invoice, work order and/or tyre report from a tyre supplier. Layouts and languages (NL, BE-NL/FR, SE) vary per supplier.",
   "fields": [
     { "name": "supplierName", "type": "string", "description": "Company that carried out the service, e.g. 'QTeam Noord NV', 'Vianor AB'" },
-    { "name": "documentNumber", "type": "string", "description": "Invoice, work order or reservation number of the supplier" },
+    { "name": "documentNumber", "type": "string", "description": "Number of the supplier's leading paper: the invoice, or else the reservation or work order; not the number of an attached tyre form" },
     { "name": "documentDate", "type": "date", "description": "Date of the invoice/work order (ISO yyyy-mm-dd)" },
     { "name": "purchaseOrderNumber", "type": "string", "description": "Customer's purchase order (Bestelbon), e.g. HFS0028875" },
     { "name": "licensePlate", "type": "string", "description": "Registration or fleet ID of the vehicle/trailer, without spaces or dashes, e.g. OR18DH" },
     { "name": "mileageKm", "type": "number", "description": "Odometer reading in km (Kilometerstand / Mileage / Km. stand)" },
-    { "name": "serviceLocation", "type": "string", "description": "Where the service took place, e.g. breakdown address" },
+    { "name": "serviceLocation", "type": "string", "description": "Address where the work was done when it was done on site, e.g. a breakdown address ('Depannage te') or a customer's parking; empty when the work was done at the supplier's workshop" },
     { "name": "tireSize", "type": "string", "description": "Tyre dimension, normalised as e.g. 385/65 R22.5" },
     {
       "name": "tireChanges",
@@ -16,10 +16,10 @@
       "description": "One entry per tyre that was changed. A bundle can hold several handwritten sheets, each for a different tyre change",
       "fields": [
         { "name": "position", "type": "string", "description": "Axle position as written on the Document, e.g. 2R1, 6" },
-        { "name": "removedBrandModel", "type": "string", "description": "Brand and model of the removed tyre, brand written out in full (e.g. 'Bridge R179' → 'Bridgestone R179'); no size or load index" },
+        { "name": "removedBrandModel", "type": "string", "description": "Brand and model of the removed tyre, brand written out in full (e.g. 'Bridge R179' → 'Bridgestone R179'); the model alone when the brand is not on the Document; no size or load index" },
         { "name": "removedTreadDepthMm", "type": "number", "description": "Tread depth of the removed tyre in mm" },
         { "name": "removedSerial", "type": "string", "description": "Serial number of the removed tyre" },
-        { "name": "mountedBrandModel", "type": "string", "description": "Brand and model of the mounted tyre, brand written out in full (e.g. 'AP ENDURACE RT2' → 'Apollo Endurace RT2'); no size or load index" },
+        { "name": "mountedBrandModel", "type": "string", "description": "Brand and model of the mounted tyre, brand written out in full (e.g. 'AP ENDURACE RT2' → 'Apollo Endurace RT2'); the model alone when the brand is not on the Document; no size or load index" },
         { "name": "mountedSerial", "type": "string", "description": "Serial number of the mounted tyre" },
         { "name": "reasonForRemoval", "type": "string", "description": "Why the tyre was removed, e.g. tread worn, puncture" }
       ]

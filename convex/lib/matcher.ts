@@ -22,6 +22,11 @@ const NONE = { none: "Nothing in the Reading holds this" };
 const WHOLE =
   "Pick a whole object only when the value needs several of its values together (e.g. a brand and a model kept apart); otherwise the one value.";
 
+// Jev answered none for a brand-and-model Field when only the model was on the
+// Document (eval, 2026-09-26); part of a value is worth a user's review.
+const PART =
+  "When the Document holds only part of what the Field asks for (e.g. a model without its brand), pick that part rather than none.";
+
 function objectCriterion(path: string, keys: string[]) {
   return `object \`${path}\` (${keys.slice(0, 8).join(", ")}${keys.length > 8 ? ", …" : ""})`;
 }
@@ -52,7 +57,7 @@ function fieldQuestion(field: FlatField, leaves: Leaf[], objects: ReadingObject[
     criteria[`o${i}`] = objectCriterion(object.path, object.keys);
   });
   return choice(
-    `Which value in \`document\` is the Field "${field.key}" (${field.type}) of this Form: ${about(field)}? ${WHOLE}`,
+    `Which value in \`document\` is the Field "${field.key}" (${field.type}) of this Form: ${about(field)}? ${WHOLE} ${PART}`,
     criteria,
   );
 }
@@ -92,7 +97,7 @@ function keyQuestion(list: ListField, array: ReadingArray, field: FlatField) {
     criteria[`o${i}`] = objectCriterion(object.path, object.keys);
   });
   return choice(
-    `Each element of \`document.${array.path}\` is one entry of "${list.key}". Which key inside those elements holds the sub-Field "${field.key}" (${field.type}): ${about(field)}? ${WHOLE}`,
+    `Each element of \`document.${array.path}\` is one entry of "${list.key}". Which key inside those elements holds the sub-Field "${field.key}" (${field.type}): ${about(field)}? ${WHOLE} ${PART}`,
     criteria,
   );
 }
@@ -118,6 +123,18 @@ const picked = (answers: Answers, id: string) => {
   const answer = answers[id];
   return { choice: answer.choice, probability: answer.probabilities[answer.choice] };
 };
+
+// Below this, a source Jev weighed isn't worth filling (see extract.likeliestValue).
+const ALTERNATIVE_MIN = 0.05;
+
+/** Jev's pick for a question as a Match, with the other criteria it gave some probability. */
+function matchOf(answers: Answers, id: string, pathOf: (choice: string) => string | null): Match {
+  const { choice, probability } = picked(answers, id);
+  const alternatives = Object.entries(answers[id].probabilities)
+    .filter(([label, p]) => label !== choice && p >= ALTERNATIVE_MIN)
+    .map(([label, p]) => ({ path: pathOf(label), probability: p }));
+  return { path: pathOf(choice), probability, ...(alternatives.length > 0 ? { alternatives } : {}) };
+}
 
 /** The path a Field's answer names: a leaf (`v…`), an object (`o…`), or none. */
 function pathOf(choice: string, leaves: Leaf[], objects: ReadingObject[]) {
@@ -155,10 +172,10 @@ export const matcher: Matcher = {
 
     return {
       fields: Object.fromEntries(
-        fields.map((field): [string, Match] => {
-          const { choice, probability } = picked(first, `field_${field.key}`);
-          return [field.key, { path: pathOf(choice, leaves, objects), probability }];
-        }),
+        fields.map((field): [string, Match] => [
+          field.key,
+          matchOf(first, `field_${field.key}`, (choice) => pathOf(choice, leaves, objects)),
+        ]),
       ),
       lists: Object.fromEntries(
         lists.map((list): [string, ListMatch] => {
@@ -167,15 +184,14 @@ export const matcher: Matcher = {
           const keys = Object.fromEntries(
             list.fields.map((f): [string, Match] => {
               if (!array) return [f.key, { path: null, probability: 1 }];
-              const key = picked(second, `key_${list.key}_${f.key}`);
               const wholes = elementObjects(array);
-              const path =
-                key.choice === "none"
+              const keyPath = (choice: string) =>
+                choice === "none"
                   ? null
-                  : key.choice.startsWith("o")
-                    ? wholes[Number(key.choice.slice(1))].path
-                    : array.keys[Number(key.choice.slice(1))];
-              return [f.key, { path, probability: key.probability }];
+                  : choice.startsWith("o")
+                    ? wholes[Number(choice.slice(1))].path
+                    : array.keys[Number(choice.slice(1))];
+              return [f.key, matchOf(second, `key_${list.key}_${f.key}`, keyPath)];
             }),
           );
           return [list.key, { path: array?.path ?? null, probability, keys }];
