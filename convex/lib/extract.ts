@@ -8,6 +8,7 @@ import type {
   Filler,
   FlatField,
   ListField,
+  FilledValue,
   ListMatch,
   Match,
   Matcher,
@@ -28,9 +29,23 @@ type Slot = {
   field: FlatField;
   label: string;
   list: { key: string; entry: number } | null;
-  source: Leaf | undefined;
-  match: number;
+  /** Jev's pick first, then the other sources it weighed. */
+  candidates: Candidate[];
+  /** For a sub-Field, Jev's probability for the List's array; 1 otherwise. */
+  arrayProbability: number;
 };
+
+/** A source Match weighed for a Field Value: `undefined` for `none`. */
+type Candidate = { source: Leaf | undefined; probability: number };
+
+/** A Match's pick and alternatives as Candidates, with their paths made whole by `pathOf`. */
+function candidatesOf(leaves: Leaf[], match: Match, pathOf: (path: string) => string): Candidate[] {
+  const alternatives = [...(match.alternatives ?? [])].sort((a, b) => b.probability - a.probability);
+  return [match, ...alternatives].map(({ path, probability }) => ({
+    source: path === null ? undefined : sourceAt(leaves, pathOf(path)),
+    probability,
+  }));
+}
 
 /** Every Field Value the Match result asks for, in Form order, List entries in order. */
 function slotsOf(
@@ -40,17 +55,14 @@ function slotsOf(
   matches: { fields: Record<string, Match>; lists: Record<string, ListMatch> },
 ) {
   const leaves = readingLeaves(reading);
-  const slots: Slot[] = fields.map((field) => {
-    const { path, probability } = matches.fields[field.key];
-    return {
-      id: field.key,
-      field,
-      label: field.label,
-      list: null,
-      source: path === null ? undefined : sourceAt(leaves, path),
-      match: probability,
-    };
-  });
+  const slots: Slot[] = fields.map((field) => ({
+    id: field.key,
+    field,
+    label: field.label,
+    list: null,
+    candidates: candidatesOf(leaves, matches.fields[field.key], (path) => path),
+    arrayProbability: 1,
+  }));
   const listResults = lists.map((list) => {
     const { path, probability, keys } = matches.lists[list.key];
     const entries = path === null ? 0 : entryCount(reading, path);
@@ -62,14 +74,47 @@ function slotsOf(
           field,
           label: `${list.label} → ${field.label}`,
           list: { key: list.key, entry },
-          source: key.path === null ? undefined : sourceAt(leaves, `${path}[${entry}].${key.path}`),
-          match: Math.min(probability, key.probability),
+          candidates: candidatesOf(leaves, key, (keyPath) => `${path}[${entry}].${keyPath}`),
+          arrayProbability: probability,
         });
       }
     }
     return { key: list.key, required: list.required, sourcePath: path, completeness: probability, entries };
   });
   return { slots, listResults };
+}
+
+/** Jev's pick fills under the value's own id; an alternative under `id@path`. */
+function fillId(slot: Slot, candidate: number) {
+  return candidate === 0 ? slot.id : `${slot.id}@${slot.candidates[candidate].source!.path}`;
+}
+
+/** Equal Field Values compare equal here: text ignores case and spaces. */
+function sameValueKey(value: FilledValue) {
+  return typeof value === "string" ? `s:${value.toLowerCase().replace(/\s+/g, "")}` : JSON.stringify(value);
+}
+
+/**
+ * The value that most of Jev's probability supports: each source it weighed
+ * counts for the value it fills to, so a total on two papers isn't split in
+ * two. Its Match probability is that sum; its source the likeliest one that
+ * gives it. A tie goes to Jev's pick.
+ */
+function likeliestValue(slot: Slot, filled: Record<string, FilledValue>) {
+  const options = slot.candidates.map((candidate, i) => {
+    const checked = fitType(slot.field, candidate.source ? filled[fillId(slot, i)] : null);
+    return {
+      ...candidate,
+      value: checked.fits ? checked.value : null,
+      typeMismatch: !checked.fits,
+      // A value that doesn't fit its type only counts for itself.
+      key: checked.fits ? sameValueKey(checked.value) : `mismatch:${i}`,
+    };
+  });
+  const totals = new Map<string, number>();
+  for (const { key, probability } of options) totals.set(key, (totals.get(key) ?? 0) + probability);
+  const best = options.reduce((a, b) => (totals.get(b.key)! > totals.get(a.key)! ? b : a));
+  return { ...best, probability: totals.get(best.key)! };
 }
 
 /** How many elements the array at a path in the Reading has. */
@@ -109,15 +154,17 @@ export async function extract(
   const { slots, listResults } = slotsOf(reading, fields, lists, matches);
 
   const toFill = slots.flatMap((slot) =>
-    slot.source
-      ? [{ id: slot.id, field: slot.field, source: { path: slot.source.path, text: slot.source.text } }]
-      : [],
+    slot.candidates.flatMap(({ source }, i) =>
+      source
+        ? [{ id: fillId(slot, i), field: slot.field, source: { path: source.path, text: source.text } }]
+        : [],
+    ),
   );
   const filled = toFill.length > 0 ? await adapters.filler.fill(toFill) : {};
 
   const values = slots.map((slot) => {
-    const checked = fitType(slot.field, slot.source ? filled[slot.id] : null);
-    return { ...slot, value: checked.fits ? checked.value : null, typeMismatch: !checked.fits };
+    const { source, value, typeMismatch, probability } = likeliestValue(slot, filled);
+    return { ...slot, source, value, typeMismatch, match: Math.min(slot.arrayProbability, probability) };
   });
 
   const pageTexts = new Map(textLayer.map((p) => [p.page, p.text]));

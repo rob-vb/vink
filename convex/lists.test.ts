@@ -352,3 +352,28 @@ test("a sub-Field matched to an object in the entries is filled from all the val
     pages: [3],
   });
 });
+
+test("a sub-Field's Match probability adds up the keys that give the same value, capped by the array choice", async () => {
+  const { list } = await extracted({
+    ...tyreReport,
+    lists: {
+      tyreChanges: {
+        ...tyreReport.lists!.tyreChanges,
+        keys: {
+          ...tyreReport.lists!.tyreChanges.keys,
+          treadDepthMm: {
+            path: "removed.treadDepthMm",
+            probability: 0.7,
+            alternatives: [{ path: "removed", probability: 0.28 }],
+          },
+        },
+      },
+    },
+    fills: { ...tyreReport.fills, "tyreChanges[0].treadDepthMm@tyreChanges[0].removed": 3 },
+  });
+
+  const treadDepth = list.entries[0].fieldValues[2];
+  expect(treadDepth).toMatchObject({ value: 3, sourcePath: "tyreChanges[0].removed.treadDepthMm" });
+  // 0.7 + 0.28 for the key, but the array choice was 0.94.
+  expect(treadDepth.signals.match).toBe(0.94);
+});

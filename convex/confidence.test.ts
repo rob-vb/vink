@@ -289,3 +289,68 @@ test("changing the Review Threshold leaves finished Documents alone, and the nex
     "below_threshold",
   ]);
 });
+
+// The mileage on both papers: Jev splits its probability over the two.
+const mileageTwice: Recording = {
+  ...workOrder,
+  reading: {
+    ...workOrder.reading,
+    workOrder: { number: "WO-0142", date: "1 maart 2026", km: "9.899", _pages: [2] },
+  },
+  matches: {
+    ...workOrder.matches,
+    mileageKm: {
+      path: "vehicle.mileage",
+      probability: 0.55,
+      alternatives: [
+        { path: "workOrder.km", probability: 0.4 },
+        { path: null, probability: 0.05 },
+      ],
+    },
+  },
+  fills: { ...workOrder.fills, "mileageKm@workOrder.km": 9899 },
+};
+
+test("a Field Value's Match probability adds up every source Jev weighed that gives the same value", async () => {
+  const { fieldValue } = await extracted(mileageTwice);
+
+  expect(fieldValue("mileageKm")).toMatchObject({
+    value: 9899,
+    sourcePath: "vehicle.mileage",
+    signals: { match: expect.closeTo(0.95, 10) },
+  });
+});
+
+test("a source Jev weighed that gives another value doesn't add to the pick's Match probability", async () => {
+  const { fieldValue } = await extracted({
+    ...mileageTwice,
+    fills: { ...mileageTwice.fills, "mileageKm@workOrder.km": 9989 },
+  });
+
+  expect(fieldValue("mileageKm")).toMatchObject({ value: 9899, signals: { match: 0.55 } });
+});
+
+test("the value most of Jev's probability supports wins over its single likeliest source", async () => {
+  const { fieldValue } = await extracted({
+    ...mileageTwice,
+    matches: {
+      ...mileageTwice.matches,
+      mileageKm: {
+        path: "vehicle.mileage",
+        probability: 0.4,
+        alternatives: [
+          { path: "workOrder.km", probability: 0.35 },
+          { path: "workOrder", probability: 0.25 },
+        ],
+      },
+    },
+    fills: { ...mileageTwice.fills, mileageKm: 9899, "mileageKm@workOrder.km": 9989, "mileageKm@workOrder": 9989 },
+  });
+
+  expect(fieldValue("mileageKm")).toMatchObject({
+    value: 9989,
+    sourcePath: "workOrder.km",
+    readText: "9.899",
+    signals: { match: expect.closeTo(0.6, 10) },
+  });
+});

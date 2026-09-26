@@ -15,8 +15,16 @@ export type Reading = { [key: string]: Json };
 export type FlatField = Infer<typeof flatField>;
 export type ListField = Extract<Infer<typeof field>, { type: "list" }>;
 
-/** Match's pick for one Field: a leaf path in the Reading, or `null` for `none`. */
-export type Match = { path: string | null; probability: number };
+/**
+ * Match's pick for one Field: a leaf path in the Reading, or `null` for
+ * `none`. Its alternatives are the other sources Jev gave some probability,
+ * which may give the same value (the same total on two papers).
+ */
+export type Match = {
+  path: string | null;
+  probability: number;
+  alternatives?: Array<{ path: string | null; probability: number }>;
+};
 
 /**
  * Match's pick for a List Field: an array of objects in the Reading (or `null`
