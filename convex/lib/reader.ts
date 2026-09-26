@@ -10,6 +10,7 @@ const PROMPT = `Describe everything this Document says as one clean JSON object,
 - **Model the real world, not the paper.** One object per real thing: the supplier, the customer, the vehicle, each tyre change, each invoice line, the totals. When several papers record the same thing, write it once and merge what they say. Keep conflicting readings side by side (e.g. \`"position": "6"\` and \`"positionAlt": "2L1"\`, or a \`conflicts\` note), never pick silently.
 - **Arrays of objects** for anything that repeats (tyre changes, line items). Only put something in an array of events if it actually happened: a tread depth measured on a tyre that wasn't changed is a measurement, not a change.
 - **Your own keys**, descriptive and in English (\`invoiceNumber\`, \`mounted.serial\`, \`removed.treadDepthMm\`). Values as written on the Document (no reformatting), except that you may split a combined text into parts.
+- **Keys that say what the value is on their own**, without needing their neighbours: \`taxableAmount\`, \`vatAmount\` and \`totalInclVat\` in a VAT breakdown, never a bare \`amount\` or \`total\`; \`workshopName\` vs \`serviceAddress\`.
 - Add \`"_pages": [..]\` to every object: the pages its facts came from.
 - Skip running prose (terms and conditions, email boilerplate).
 - Never guess what you can't read; write what you see and add \`"_unsure": ["key", …]\` to that object.
