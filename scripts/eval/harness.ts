@@ -88,7 +88,10 @@ export async function evaluate({
   adapters: Adapters;
   prices: Prices;
   threshold: number;
-  /** Writes each Document's answers to its recording.json, for the Seam 1 fakes to replay. */
+  /**
+   * Writes each Document's answers to its recording.json, for the Seam 1 fakes
+   * to replay, and the result to its extracted.json.
+   */
   record?: boolean;
   /** Keeps each Document's Reading here and reuses it on later runs; see storedReadings. */
   readingsDir?: string;
@@ -163,7 +166,11 @@ export async function evaluate({
           },
         },
       );
-      if (record) writeFileSync(join(dir, "recording.json"), `${JSON.stringify(recording, null, 2)}\n`);
+      if (record) {
+        writeFileSync(join(dir, "recording.json"), `${JSON.stringify(recording, null, 2)}\n`);
+        // What the pipeline made of it, for the replay test to hold the app to.
+        writeFileSync(join(dir, "extracted.json"), `${JSON.stringify(extracted, null, 2)}\n`);
+      }
       ms.total = performance.now() - start;
       documents.push({
         document,

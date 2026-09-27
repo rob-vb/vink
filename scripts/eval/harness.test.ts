@@ -127,6 +127,18 @@ test("records what the models answered as a Recording the Seam 1 fakes replay to
   expect(replayed.documents[0].score.values).toEqual({ right: 1, total: 2 });
 });
 
+test("records what the pipeline made of the Document next to its Recording", async () => {
+  const fixturesDir = fixturesWithInvoice();
+  fakePipeline.replay(invoiceRecording);
+  await evaluate({ fixturesDir, adapters: metered, prices, threshold: 0.8, record: true });
+
+  const extracted = JSON.parse(
+    readFileSync(join(fixturesDir, "documents/invoice-001/extracted.json"), "utf8"),
+  );
+  expect(extracted).toMatchObject({ jevVerified: true, lists: [] });
+  expect(extracted.fieldValues.map((v: { key: string }) => v.key)).toContain("total");
+});
+
 test("a Document whose pipeline fails is reported with its error, and the others are still scored", async () => {
   const fixturesDir = fixturesWithInvoice();
   const second = join(fixturesDir, "documents/invoice-002");

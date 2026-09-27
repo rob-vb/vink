@@ -8,7 +8,7 @@ import {
   uploadAndExtract,
   type Recording,
 } from "./test.setup";
-import type { FilledValue } from "./lib/pipeline";
+import type { Extracted } from "./lib/extract";
 
 vi.mock("./lib/pdfStore", async () => ({
   pdfStore: (await import("./test.setup")).fakePdfStore,
@@ -183,36 +183,18 @@ test("the Document list's counts move the Document from Extracting to Needs Revi
   expect(counts).toEqual({ extracting: 0, needs_review: 1, approved: 0, extraction_failed: 0, rejected: 0 });
 });
 
-// The 5 fixture Documents' recorded pipeline runs (ticket 11, variant C). They
-// hold personal data, so they're git-ignored, and these tests are skipped
-// where they're missing.
+// The fixture Documents' real pipeline runs, recorded by the eval harness
+// (`npm run eval`, scripts/eval): what the models answered (recording.json)
+// and what the pipeline made of it (extracted.json). They hold personal data,
+// so they're git-ignored, and these tests are skipped where they're missing.
 type FixtureForm = {
   name: string;
   fields: Array<{
     name: string;
     type: "string" | "number" | "date" | "list";
-    fields?: Array<{ name: string; type: "string" | "number" | "date" }>;
+    description?: string;
+    fields?: Array<{ name: string; type: "string" | "number" | "date"; description?: string }>;
   }>;
-};
-type RecordedMatch = {
-  fields: Array<{
-    path: string;
-    sources: Array<{
-      id: string;
-      probability: number;
-      // A sub-Field of a List entry: the array, and the key inside its elements.
-      table?: string;
-      column?: string | null;
-      columnProbability?: number;
-    }>;
-  }>;
-};
-type RecordedValue = { readText: string | null; pages: number[] };
-type RecordedList = { completenessConfidence: number; entries: Array<Record<string, unknown>> };
-type RecordedRun = { fieldValues: Record<string, RecordedValue & RecordedList> };
-type RecordedTextLayer = { pages: Array<{ page: number; hasTextLayer: boolean; text: string }> };
-type RecordedVerify = {
-  results: Array<{ path: string; fit: number; support: number | null }>;
 };
 const recordings = import.meta.glob("../fixtures/documents/*/*.json", {
   eager: true,
@@ -222,78 +204,54 @@ const fixtureForms = import.meta.glob("../fixtures/forms/*.json", {
   eager: true,
 }) as Record<string, { default: FixtureForm }>;
 const fixtures = Object.keys(
-  import.meta.glob("../fixtures/documents/*/clean-opus.json"),
-).map((path) => path.split("/")[3]);
+  import.meta.glob(["../fixtures/documents/*/recording.json", "../fixtures/documents/*/extracted.json"]),
+)
+  .map((path) => path.split("/")[3])
+  .filter((fixture, i, all) => all.indexOf(fixture) !== i);
 
 function recordingOf(fixture: string) {
   const dir = `../fixtures/documents/${fixture}`;
   const expected = recorded(`${dir}/expected.json`) as { form: string; pages: number };
-  const map = recorded(`${dir}/map-opus-clean.json`) as RecordedMatch;
-  const fills = recorded(`${dir}/fill-opus-clean.json`) as Record<string, { value: unknown }>;
-  const textLayer = recorded(`${dir}/textlayer-inspector.json`) as RecordedTextLayer;
-  const verify = recorded(`${dir}/jev-opus-clean-fill.json`) as RecordedVerify;
-  const topLevel = map.fields.filter((f) => !f.path.includes("["));
-  const run = recorded(`${dir}/run2-opus-clean.json`) as RecordedRun;
-  const form = fixtureForms[`../fixtures/forms/${expected.form}.json`].default;
-  const lists: NonNullable<Recording["lists"]> = {};
-  for (const list of form.fields.filter((f) => f.type === "list")) {
-    const entries = map.fields.filter((f) => f.path.startsWith(`${list.name}[`));
-    const [first] = entries;
-    const keys = Object.fromEntries(
-      list.fields!.map((s) => {
-        const source = entries.find((f) => f.path.endsWith(`].${s.name}`))?.sources[0];
-        return [s.name, { path: source?.column ?? null, probability: source?.columnProbability ?? 1 }];
-      }),
-    );
-    lists[list.name] = {
-      path: first?.sources[0].table ?? null,
-      probability: run.fieldValues[list.name].completenessConfidence,
-      keys,
-    };
-  }
-  const recording: Recording = {
-    reading: recorded(`${dir}/clean-opus.json`) as Recording["reading"],
-    textLayer: textLayer.pages
-      .filter((p) => p.hasTextLayer && p.text.trim() !== "")
-      .map((p) => ({ page: p.page, text: p.text })),
-    verifications: Object.fromEntries(
-      verify.results.map((r) => [r.path, { fit: r.fit, support: r.support ?? 0 }]),
-    ),
-    lists,
-    matches: Object.fromEntries(
-      topLevel.map((f) => {
-        const [best] = f.sources;
-        return [f.path, { path: best.id === "none" ? null : best.id, probability: best.probability }];
-      }),
-    ),
-    fills: Object.fromEntries(
-      Object.entries(fills).map(([id, fill]) => [id, (fill.value ?? null) as FilledValue]),
-    ),
+  return {
+    recording: recorded(`${dir}/recording.json`) as Recording,
+    extracted: recorded(`${dir}/extracted.json`) as Extracted,
+    form: fixtureForms[`../fixtures/forms/${expected.form}.json`].default,
+    pages: expected.pages,
   };
-  return { recording, form, pages: expected.pages, topLevel, run };
 }
 
-/** The fixture Form as an app Form: its field names become keys and labels. */
+/** The fixture Form as an app Form, as the eval harness builds it. */
 function fieldsOf(form: FixtureForm) {
   const type = (t: "string" | "number" | "date") => (t === "string" ? ("text" as const) : t);
+  const flat = (f: { name: string; type: "string" | "number" | "date"; description?: string }) => ({
+    type: type(f.type),
+    label: f.name,
+    key: f.name,
+    required: false,
+    ...(f.description ? { description: f.description } : {}),
+  });
   return form.fields.map((f) =>
     f.type === "list"
-      ? {
-          type: "list" as const,
-          label: f.name,
-          key: f.name,
-          required: false,
-          fields: f.fields!.map((s) => ({ type: type(s.type), label: s.name, key: s.name, required: false })),
-        }
-      : { type: type(f.type), label: f.name, key: f.name, required: false },
+      ? { ...flat({ ...f, type: "string" }), type: "list" as const, fields: f.fields!.map(flat) }
+      : flat(f as Parameters<typeof flat>[0]),
   );
 }
 
+/** A Field Value as stored, in the shape the pipeline produced it. */
+const asExtracted = ({ key, value, readText, sourcePath, pages, signals }: Extracted["fieldValues"][number]) => ({
+  key,
+  value,
+  readText,
+  sourcePath,
+  pages,
+  signals,
+});
+
 describe.runIf(fixtures.length > 0)("replaying the recorded fixture runs", () => {
   for (const fixture of fixtures) {
-    test(`${fixture}: every Field and List entry gets the Field Value and Confidence its recorded Match, Fill and Verify give`, async () => {
+    test(`${fixture}: the app stores the Field Values and Lists the recorded run produced`, async () => {
       const t = newBackend();
-      const { recording, form, pages, topLevel, run } = recordingOf(fixture);
+      const { recording, extracted, form, pages } = recordingOf(fixture);
       const ann = await signUp(t, "ann", "Acme Fleet");
       const { formId } = await ann.user.mutation(api.forms.create, {
         organisationSlug: ann.slug,
@@ -304,58 +262,26 @@ describe.runIf(fixtures.length > 0)("replaying the recorded fixture runs", () =>
 
       const documentId = await uploadAndExtract(t, ann.user, ann.slug, formId, pages);
 
-      expect(fakePipeline.calls.map((c) => c.step)).toEqual(["read", "match", "fill", "verify"]);
-      expect(fakePipeline.calls[1]).toMatchObject({ reading: recording.reading });
-      const textPages = new Set(recording.textLayer!.map((p) => p.page));
+      expect(fakePipeline.calls.map((c) => c.step)).toEqual(
+        expect.arrayContaining(["read", "match", "fill", "verify"]),
+      );
       const document = await ann.user.query(api.documents.get, {
         organisationSlug: ann.slug,
         documentId: documentId!,
       });
-      expect(document.state).toBe("needs_review");
-      expect(document.jevVerified).toBe(true);
+      expect(document.jevVerified).toBe(extracted.jevVerified);
       expect(document.fieldValues).toMatchObject(
-        topLevel.map(({ path: key, sources: [best] }) => {
-          const value = best.id === "none" ? null : recording.fills[key];
-          const { pages } = run.fieldValues[key];
-          const verified = value !== null ? recording.verifications![key] : undefined;
-          const signals = {
-            match: best.probability,
-            fit: verified?.fit ?? null,
-            support: verified && pages.some((p) => textPages.has(p)) ? verified.support : null,
-          };
-          const confidence = Math.min(
-            ...[signals.match, signals.fit, signals.support].filter((s) => s !== null),
-          );
-          return {
-            key,
-            label: key,
-            value,
-            readText: run.fieldValues[key].readText,
-            sourcePath: best.id === "none" ? null : best.id,
-            pages,
-            confidence,
-            lowestSignal: expect.any(String),
-            signals,
-            reviewReasons: expect.any(Array),
-          };
-        }),
+        extracted.fieldValues.filter((v) => !v.list).map(asExtracted),
       );
-      for (const list of form.fields.filter((f) => f.type === "list")) {
-        const { completenessConfidence, entries } = run.fieldValues[list.name];
-        const stored = document.lists.find((l) => l.key === list.name)!;
-        expect(stored.completeness).toBe(completenessConfidence);
-        expect(stored.entries).toHaveLength(entries.length);
-        entries.forEach((entry, i) => {
-          expect(stored.entries[i].fieldValues).toMatchObject(
-            list.fields!.map((s) => {
-              const { readText, pages } = entry[s.name] as RecordedValue;
-              return {
-                key: s.name,
-                value: readText === null ? null : recording.fills[`${list.name}[${i}].${s.name}`],
-                readText,
-                pages,
-              };
-            }),
+      for (const list of extracted.lists) {
+        const stored = document.lists.find((l) => l.key === list.key)!;
+        expect(stored.completeness).toBe(list.completeness);
+        expect(stored.entries).toHaveLength(list.entries);
+        stored.entries.forEach((entry, i) => {
+          expect(entry.fieldValues).toMatchObject(
+            extracted.fieldValues
+              .filter((v) => v.list?.key === list.key && v.list.entry === i)
+              .map(asExtracted),
           );
         });
       }

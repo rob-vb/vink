@@ -1,17 +1,16 @@
 "use node";
 // Which outside models an Extraction uses, pinned. Each can be overridden per
 // deployment (`npx convex env set`) when a new version has been benchmarked.
-import { AnthropicVertex } from "@anthropic-ai/vertex-sdk";
-import { GoogleAuth } from "google-auth-library";
+import { FinishReason, GoogleGenAI, ThinkingLevel } from "@google/genai";
 import { usage } from "./usage";
 
 export const models = {
   /** Reads the PDF into a Reading (ADR 0003, Read). */
-  reader: process.env.READER_MODEL ?? "claude-opus-5",
+  reader: process.env.READER_MODEL ?? "gemini-3.8-flash",
   /** Writes each Field Value from its source (ADR 0003, Fill). */
-  filler: process.env.FILL_MODEL ?? "claude-haiku-4-5@20251001",
+  filler: process.env.FILL_MODEL ?? "gemini-3.8-flash",
   /** Proposes a Form's Fields from a sample (ticket 36). */
-  proposer: process.env.PROPOSER_MODEL ?? "claude-opus-5",
+  proposer: process.env.PROPOSER_MODEL ?? "gemini-3.8-flash",
   /** Matches Fields to the Reading; never `jev-latest`. */
   jev: process.env.JEV_MODEL ?? "jev-1.13.0",
 };
@@ -23,31 +22,39 @@ function requireEnv(name: string) {
 }
 
 /**
- * Claude on Vertex AI in the EU. GOOGLE_VERTEX_CREDENTIALS holds a service
- * account's JSON key; its project is the one billed.
+ * Gemini on Vertex AI in the EU multi-region. GOOGLE_VERTEX_CREDENTIALS holds
+ * a service account's JSON key; its project is the one billed.
  */
 function vertex() {
   const credentials = JSON.parse(requireEnv("GOOGLE_VERTEX_CREDENTIALS"));
-  return new AnthropicVertex({
-    projectId: credentials.project_id,
-    region: process.env.VERTEX_REGION ?? "eu",
-    googleAuth: new GoogleAuth({
+  return new GoogleGenAI({
+    vertexai: true,
+    project: credentials.project_id,
+    location: process.env.VERTEX_REGION ?? "eu",
+    googleAuthOptions: {
       credentials,
       scopes: "https://www.googleapis.com/auth/cloud-platform",
-    }),
+    },
   });
 }
 
-/** The text of a finished response, refusing to go on from a cut-off or refused one. */
-export function textOf(message: {
-  stop_reason: string | null;
-  content: Array<{ type: string; text?: string }>;
-}) {
-  if (message.stop_reason !== "end_turn") {
-    throw new Error(`The model stopped early: ${message.stop_reason}`);
+type Chunk = {
+  candidates?: Array<{
+    finishReason?: string;
+    content?: { parts?: Array<{ text?: string; thought?: boolean }> };
+  }>;
+};
+
+/** The text of a finished streamed response, refusing to go on from a cut-off or blocked one. */
+export function textOf(chunks: Chunk[]) {
+  const finishReason = chunks.findLast((c) => c.candidates?.[0]?.finishReason)?.candidates?.[0]
+    ?.finishReason;
+  if (finishReason !== FinishReason.STOP) {
+    throw new Error(`The model stopped early: ${finishReason ?? "no answer"}`);
   }
-  return message.content
-    .flatMap((block) => (block.type === "text" ? [block.text ?? ""] : []))
+  return chunks
+    .flatMap((chunk) => chunk.candidates?.[0]?.content?.parts ?? [])
+    .flatMap((part) => (part.text && !part.thought ? [part.text] : []))
     .join("");
 }
 
@@ -61,32 +68,42 @@ export function parseJsonObject(text: string): Record<string, unknown> {
   return parsed;
 }
 
-/** One prompt to a Claude model: the PDF (if any), then the texts in order. */
+/** One prompt to a model: the PDF (if any), then the texts in order. */
 export type Completion = {
   model: string;
   pdf?: Uint8Array;
   texts: string[];
   maxTokens: number;
-  /** Adaptive thinking, for the vision steps. */
+  /** Thinks hard, for the vision steps; otherwise thinks little. */
   thinking?: boolean;
   /** Structured output: the answer is JSON that fits this schema. */
   jsonSchema?: Record<string, unknown>;
 };
 
 /**
- * Asks Claude and returns its answer's text. With CLAUDE_BRIDGE_URL set, the
- * Claude bridge on the VPS answers with Claude Code (scripts/claude-bridge),
- * until Vertex is set up; otherwise Claude on Vertex EU.
+ * Asks the model and returns its answer's text: Gemini on Vertex EU. With
+ * CLAUDE_BRIDGE_URL set, the Claude bridge on the VPS answers with Claude Code
+ * instead (scripts/claude-bridge), for testing without Vertex.
  */
 export async function complete(completion: Completion): Promise<string> {
-  const { text, inputTokens, outputTokens } = process.env.CLAUDE_BRIDGE_URL
+  const { model, text, inputTokens, outputTokens } = process.env.CLAUDE_BRIDGE_URL
     ? await viaBridge(process.env.CLAUDE_BRIDGE_URL, completion)
-    : await viaVertex(completion);
-  usage.record({ model: completion.model, inputTokens, outputTokens });
+    : { model: completion.model, ...(await viaVertex(completion)) };
+  usage.record({ model, inputTokens, outputTokens });
   return text;
 }
 
-async function viaBridge(url: string, { model, pdf, texts, jsonSchema }: Completion) {
+/**
+ * The Claude model the bridge runs for a step: the pinned one when it's Claude,
+ * else Opus for the vision steps and Haiku for Fill, as benchmarked in ticket 26.
+ */
+function bridgeModel(model: string, pdf: Uint8Array | undefined) {
+  if (model.startsWith("claude")) return model;
+  return pdf ? "claude-opus-5" : "claude-haiku-4-5@20251001";
+}
+
+async function viaBridge(url: string, { model: pinned, pdf, texts, jsonSchema }: Completion) {
+  const model = bridgeModel(pinned, pdf);
   const response = await fetch(`${url}/complete`, {
     method: "POST",
     headers: {
@@ -105,41 +122,32 @@ async function viaBridge(url: string, { model, pdf, texts, jsonSchema }: Complet
     text: string;
     usage: { inputTokens: number; outputTokens: number };
   };
-  return { text, ...usage };
+  return { model, text, ...usage };
 }
 
 async function viaVertex({ model, pdf, texts, maxTokens, thinking, jsonSchema }: Completion) {
   const document = pdf
-    ? [
-        {
-          type: "document" as const,
-          source: {
-            type: "base64" as const,
-            media_type: "application/pdf" as const,
-            data: Buffer.from(pdf).toString("base64"),
-          },
-        },
-      ]
+    ? [{ inlineData: { mimeType: "application/pdf", data: Buffer.from(pdf).toString("base64") } }]
     : [];
-  const message = await vertex()
-    .messages.stream({
-      model,
-      max_tokens: maxTokens,
-      ...(thinking ? { thinking: { type: "adaptive" as const } } : {}),
+  // Streamed, so a long Read isn't cut off by Node's 5-minute wait for a first byte.
+  const stream = await vertex().models.generateContentStream({
+    model,
+    contents: [{ role: "user", parts: [...document, ...texts.map((text) => ({ text }))] }],
+    config: {
+      maxOutputTokens: maxTokens,
+      thinkingConfig: { thinkingLevel: thinking ? ThinkingLevel.HIGH : ThinkingLevel.LOW },
       ...(jsonSchema
-        ? { output_config: { format: { type: "json_schema" as const, schema: jsonSchema } } }
+        ? { responseMimeType: "application/json", responseJsonSchema: jsonSchema }
         : {}),
-      messages: [
-        {
-          role: "user",
-          content: [...document, ...texts.map((text) => ({ type: "text" as const, text }))],
-        },
-      ],
-    })
-    .finalMessage();
+    },
+  });
+  const chunks = [];
+  for await (const chunk of stream) chunks.push(chunk);
+  const tokens = chunks.findLast((c) => c.usageMetadata)?.usageMetadata;
   return {
-    text: textOf(message),
-    inputTokens: message.usage.input_tokens,
-    outputTokens: message.usage.output_tokens,
+    text: textOf(chunks),
+    inputTokens: tokens?.promptTokenCount ?? 0,
+    // Thinking is billed as output.
+    outputTokens: (tokens?.candidatesTokenCount ?? 0) + (tokens?.thoughtsTokenCount ?? 0),
   };
 }

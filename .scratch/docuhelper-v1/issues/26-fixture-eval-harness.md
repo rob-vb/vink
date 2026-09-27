@@ -16,9 +16,9 @@ It is used to choose and pin the reader and fill models on Vertex EU, and to cat
 ## Acceptance criteria
 
 - [x] One command runs the real pipeline on every fixture and prints the scores above
-- [ ] The chosen models reach the ADR 0003 bar of 80/84 values and Lists 4/4. The pinned versions are recorded in configuration
+- [x] The chosen models reach the ADR 0003 bar of 80/84 values and Lists 4/4. The pinned versions are recorded in configuration
 - [x] The harness can rewrite the recorded responses used by the Seam 1 fakes
-- [ ] Reader cost and latency, and 20-page timing against the 10-minute limit, are recorded in a comment on this ticket
+- [x] Reader cost and latency, and 20-page timing against the 10-minute limit, are recorded in a comment on this ticket
 
 ## Comments
 
@@ -46,3 +46,11 @@ It is used to choose and pin the reader and fill models on Vertex EU, and to cat
   - **Read: unambiguous keys** (commit a5ed9ee): `taxableAmount` / `vatAmount` / `totalInclVat` instead of a bare `amount`. It fixed `vatAmount` on the new Readings. A tried rule to also write a product `name` (brand + model) was dropped: Match's objects cover it, and on 001 it steered Match to a misread handwritten name.
   - Read-to-read variation is large (73 vs 76 on the same prompt and model), so compare Match and Fill changes on cached Readings only.
   - What's left: a serial misread from handwriting, "Bridgestone" not being on the paper (003), `serviceLocation` in 001 (should be empty; Match takes the workshop or supplier address), `documentNumber` in bundled papers (002, sometimes), and Needs Review precision falling to 14–21%.
+- 2026-09-26 — **The user chose Gemini 3.8 Flash on Vertex EU for every Claude step** (Read, Fill, Proposer), not Claude. `convex/lib/models.ts` now calls `gemini-3.8-flash` through `@google/genai` on the `eu` multi-region (`aiplatform.eu.rep.googleapis.com`); thinking is `HIGH` for Read and Proposer and `LOW` for Fill, and Fill's schema goes in `responseJsonSchema`. `READER_MODEL` / `FILL_MODEL` / `PROPOSER_MODEL` still override it. The Claude bridge keeps running Claude (Opus for PDF steps, Haiku for Fill) and records the model that actually ran. Eval prices: $0.75 / $3.75 per million tokens (Gemini API list price until 2026-12-31, doubling on 2027-01-01). Setup: `scripts/setup-vertex.sh`. The first real Gemini run still has to show the 80/84 bar; the Claude-bridge numbers above don't carry over.
+- 2026-09-27 — **First real run on Vertex EU: Gemini 3.8 Flash for Read and Fill, Jev live.**
+  - **Values 82/84, verified 15/15, Lists 4/4**: the ADR 0003 bar is met. A second Match/Fill pass on the same Readings gave the same result. Needs Review: precision 13%, recall 50%. The missed wrong value is `supplierName` in 002 ("QTeam Bandenbedrijf Vandekerckhove NV"); `documentNumber` in 002 is wrong but flagged. The handwritten serial that Claude misread in every run (`6135366435`) is read correctly.
+  - **Cost and latency** (Gemini API list prices, $0.75/$3.75 per M tokens until 2026-12-31): $0.16 for the 5 Documents, of which Read $0.13 (~$0.012 per page) and Match/Fill/Verify $0.03. Per Document 16–55 s in total: Read 13–51 s, Match 0.3–1.4 s, Fill 2–3 s, Verify 0.3–0.5 s. Still to check against the Vertex EU bill.
+  - **20 pages** (`fixtures/timing`, the tyre fixtures merged twice; the PDF is git-ignored, rebuild it with `pdfunite` from 001, 002, 004, 003 twice over): 306–316 s in total, of which Read 245–300 s and $0.24–0.26. Under the 10-minute limit, but half of it. The Reading is only 13k characters; the time goes to thinking at `HIGH`, which on 20 pages uses most of the 64k output tokens (thinking counts toward them). A plain transcription of the same PDF takes 138 s at `HIGH` and 95 s at `LOW`. Open: whether Read at `MEDIUM` keeps 80/84 and is faster, and whether `maxTokens` for Read needs raising.
+  - Gemini calls now stream, so Node's 5-minute wait for a first byte can't cut a long Read off.
+  - Pinned: `gemini-3.8-flash` for Read, Fill and Proposer (the GA model id from the docs), `jev-1.13.0`.
+  - The fixture-replay test in `convex/extraction.test.ts` now replays `recording.json` and checks the app stores what the harness's run produced (`extracted.json`, which the harness now writes too).
