@@ -4,7 +4,7 @@ Label: wayfinder:map
 
 ## Destination
 
-A build-ready spec at `docs/spec.md` (plus ADRs for hard calls) for v1: a user creates a Form, uploads a PDF (incl. handwritten), a pipeline fills every Field with a confidence-scored Field Value, low-confidence values are Needs Review, and after Approval (manual, or automatic via the Form's Auto-Send) the Payload is POSTed as JSON to an Integration. When no tickets remain, write the spec with `/to-spec`.
+A build-ready spec at `.scratch/docuhelper-v1/spec.md` (plus ADRs for hard calls) for v1: a user creates a Form, uploads a PDF (incl. handwritten), a pipeline fills every Field with a confidence-scored Field Value, low-confidence values are Needs Review, and after Approval (manual, or automatic via the Form's Auto-Send) the Payload is POSTed as JSON to an Integration. When no tickets remain, write the spec with `/to-spec`.
 
 ## Notes
 
@@ -37,6 +37,7 @@ A build-ready spec at `docs/spec.md` (plus ADRs for hard calls) for v1: a user c
 - [Extraction without Jev](issues/15-extraction-without-jev.md) — Jev is required in v1. The Admin switch is dropped, and there is no fallback matcher and no fallback benchmark. If Jev still fails after the retries, the Document is Extraction Failed and a manual retry resumes from the stored Reading. If only Verify fails, the Extraction succeeds without Auto-Send. TypeSafe now receives the whole Reading, so its zero-retention quote and the transfer impact assessment block launch.
 - [Firecrawl /parse as the Read step, then Jev](issues/16-firecrawl-parse-then-jev.md) — We're pursuing the user's Firecrawl route so the pipeline needs no vision model. Two variants are benchmarked: /parse markdown straight to Jev, and /parse markdown turned into the Reading by a text model. Fill stays. The route replaces ADR 0003's Read step only if it reaches 80/84 values, Lists 4/4 and correct handwriting. Firecrawl becomes a second US subprocessor; the DPA with SCCs (paid plan, no Enterprise) is arranged later, before launch.
 - [Firecrawl route benchmark](issues/17-firecrawl-route-benchmark.md) — Both variants miss the bar: 53/84 and 57/84 values, Lists 1/4 and 2/4. GLM-OCR loses the Dutch handwriting (misread serials, dropped page) and gives no OCR confidence. ADR 0003 stands, and Firecrawl drops out as a subprocessor.
+- [Read thinking level](issues/39-read-thinking-level.md) — Read stays at thinking `HIGH`. `MEDIUM` met the bar (80–81/84) at half the cost and about 7× faster on 20 pages, but it misread a handwritten mileage digit without flagging it. `READER_THINKING` overrides the level.
 
 ## Not yet specified
 

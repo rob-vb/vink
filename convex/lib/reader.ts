@@ -45,7 +45,7 @@ export const reader: Reader = {
       model: models.reader,
       pdf,
       maxTokens: 64000,
-      thinking: true,
+      thinking: models.readerThinking,
       texts: [`# Text layer\n\n${describe(textLayer, pageCount)}`, PROMPT],
     });
     return { reading: parseJsonObject(answer) as Reading, textLayer };

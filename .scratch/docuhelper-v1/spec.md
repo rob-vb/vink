@@ -319,4 +319,3 @@ Metadata, history and Delivery logs are kept.
 - **Known behaviour at the 0.8 threshold:** about a quarter of correct values are flagged, and no fixture Document would be auto-sent. Jev is blind to handwriting misreads, so `_unsure` and conflict flags plus human review cover those. The 0.8 threshold stays until calibration.
 - The ground truth for tire-service-002 (one tyre change) is unverified by the user.
 - Language: the app, code and all terms are in English; Field labels may be in any language.
-- The map's Destination names `docs/spec.md`; this spec follows the tracker convention (`.scratch/docuhelper-v1/spec.md`).

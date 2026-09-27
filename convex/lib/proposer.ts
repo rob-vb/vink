@@ -1,6 +1,7 @@
 "use node";
 // Form Proposal (ticket 14): one vision-model call gets a sample's Reading
 // plus its pages (images and text layer) and proposes the Form's Fields.
+import { ThinkingLevel } from "@google/genai";
 import { isValidKey } from "./fieldKeys";
 import { complete, models, parseJsonObject } from "./models";
 import type { ProposedField, Proposer } from "./pipeline";
@@ -52,7 +53,7 @@ export const proposer: Proposer = {
       model: models.proposer,
       pdf,
       maxTokens: 32000,
-      thinking: true,
+      thinking: ThinkingLevel.HIGH,
       texts: [
         `# Text layer\n\n${textLayer.map((p) => `## Page ${p.page}\n\n${p.text}`).join("\n\n") || "(none: a scan)"}`,
         `# Reading\n\n${JSON.stringify(reading, null, 2)}`,

@@ -7,6 +7,8 @@ import { usage } from "./usage";
 export const models = {
   /** Reads the PDF into a Reading (ADR 0003, Read). */
   reader: process.env.READER_MODEL ?? "gemini-3.8-flash",
+  /** How hard the reader thinks (ticket 39). */
+  readerThinking: (process.env.READER_THINKING ?? "HIGH") as ThinkingLevel,
   /** Writes each Field Value from its source (ADR 0003, Fill). */
   filler: process.env.FILL_MODEL ?? "gemini-3.8-flash",
   /** Proposes a Form's Fields from a sample (ticket 36). */
@@ -74,8 +76,8 @@ export type Completion = {
   pdf?: Uint8Array;
   texts: string[];
   maxTokens: number;
-  /** Thinks hard, for the vision steps; otherwise thinks little. */
-  thinking?: boolean;
+  /** How hard the model thinks; LOW when left out. */
+  thinking?: ThinkingLevel;
   /** Structured output: the answer is JSON that fits this schema. */
   jsonSchema?: Record<string, unknown>;
 };
@@ -135,7 +137,7 @@ async function viaVertex({ model, pdf, texts, maxTokens, thinking, jsonSchema }:
     contents: [{ role: "user", parts: [...document, ...texts.map((text) => ({ text }))] }],
     config: {
       maxOutputTokens: maxTokens,
-      thinkingConfig: { thinkingLevel: thinking ? ThinkingLevel.HIGH : ThinkingLevel.LOW },
+      thinkingConfig: { thinkingLevel: thinking ?? ThinkingLevel.LOW },
       ...(jsonSchema
         ? { responseMimeType: "application/json", responseJsonSchema: jsonSchema }
         : {}),

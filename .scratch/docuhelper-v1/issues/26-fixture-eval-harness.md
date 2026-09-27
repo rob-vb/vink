@@ -1,7 +1,7 @@
 # 26 — Fixture eval harness (Seam 2)
 
 Type: task
-Status: ready-for-agent
+Status: resolved
 Blocked by: 25
 
 ## What to build
@@ -54,3 +54,7 @@ It is used to choose and pin the reader and fill models on Vertex EU, and to cat
   - Gemini calls now stream, so Node's 5-minute wait for a first byte can't cut a long Read off.
   - Pinned: `gemini-3.8-flash` for Read, Fill and Proposer (the GA model id from the docs), `jev-1.13.0`.
   - The fixture-replay test in `convex/extraction.test.ts` now replays `recording.json` and checks the app stores what the harness's run produced (`extracted.json`, which the harness now writes too).
+
+## Answer
+
+Done. Every acceptance criterion is met by the real run on Vertex EU (2026-09-27): values 82/84, verified 15/15, Lists 4/4 with `gemini-3.8-flash` (Read, Fill, Proposer) and `jev-1.13.0` pinned. Cost is about $0.012 per page for Read. 20 pages take 306–316 s, under the 10-minute limit. The replay test now uses `recording.json`. The open question of Read at `MEDIUM` thinking moves to [Read thinking level](39-read-thinking-level.md).
