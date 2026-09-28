@@ -22,7 +22,7 @@ export function OrganisationSwitcher({ slug, name }: { slug: string; name: strin
     <DropdownMenu>
       <DropdownMenuTrigger
         render={
-          <Button variant="ghost" size="sm" className="min-w-0 gap-1 px-2 font-medium">
+          <Button variant="ghost" size="sm" className="min-w-0 shrink gap-1 px-2 font-medium">
             <span className="truncate">{name}</span>
             <ChevronsUpDown className="text-muted-foreground" />
           </Button>

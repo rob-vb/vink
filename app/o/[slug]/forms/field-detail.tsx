@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, Trash2, X } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Field,
@@ -33,7 +33,6 @@ export function FieldDetail({
   problems,
   onChange,
   onAddSubField,
-  onRemove,
 }: {
   field: DraftField;
   /** The List Field this sub-Field belongs to; absent for a top-level Field. */
@@ -44,7 +43,6 @@ export function FieldDetail({
   problems: string[];
   onChange: (field: DraftField) => void;
   onAddSubField: () => void;
-  onRemove: () => void;
 }) {
   const set = (patch: Partial<DraftField>) => onChange({ ...field, ...patch });
   const setOption = (index: number, patch: Partial<DraftField["options"][number]>) =>
@@ -237,19 +235,6 @@ export function FieldDetail({
       {problems.length > 0 && (
         <FieldError errors={problems.map((message) => ({ message }))} />
       )}
-
-      <div className="border-t pt-4">
-        <Button
-          variant="ghost"
-          className="text-destructive"
-          disabled={field.locked}
-          title={field.locked ? "Locked while an Integration is attached" : undefined}
-          onClick={onRemove}
-        >
-          <Trash2 />
-          {parent ? "Remove sub-Field" : "Remove Field"}
-        </Button>
-      </div>
     </div>
   );
 }

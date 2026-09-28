@@ -1,6 +1,7 @@
 "use client";
 
-import { LogOut } from "lucide-react";
+import { LogOut, Settings } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -15,7 +16,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { authClient } from "@/lib/auth-client";
 
-export function UserMenu() {
+export function UserMenu({
+  organisationSlug,
+  isAdmin,
+}: {
+  organisationSlug: string;
+  isAdmin: boolean;
+}) {
   const router = useRouter();
   const { data: session } = authClient.useSession();
   const email = session?.user.email ?? "";
@@ -44,6 +51,15 @@ export function UserMenu() {
           </DropdownMenuLabel>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
+        {isAdmin && (
+          <>
+            <DropdownMenuItem render={<Link href={`/o/${organisationSlug}/settings`} />}>
+              <Settings />
+              Organisation settings
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+          </>
+        )}
         <DropdownMenuItem onClick={() => void signOut()}>
           <LogOut />
           Sign out

@@ -39,6 +39,8 @@ export default async function FormPage({
       initial={toDraft(form)}
       settings={
         <FormSettings
+          // Rendered on the server and handed over as a prop, so React checks it for a key.
+          key="settings"
           organisationSlug={slug}
           formId={form.id}
           initial={{ reviewThreshold: form.reviewThreshold, autoSend: form.autoSend }}

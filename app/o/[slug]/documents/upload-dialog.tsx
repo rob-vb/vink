@@ -3,6 +3,7 @@
 import { useAction, useMutation } from "convex/react";
 import { ConvexError } from "convex/values";
 import { FileUp, Upload, X } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState, type DragEvent, type FormEvent } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -38,6 +39,7 @@ export function UploadDialog({
   organisationSlug: string;
   forms: Form[];
 }) {
+  const router = useRouter();
   const generateUploadUrl = useMutation(api.documents.generateUploadUrl);
   const create = useAction(api.documents.create);
   const [open, setOpen] = useState(false);
@@ -87,7 +89,13 @@ export function UploadDialog({
       });
       if (!response.ok) throw new Error(`Upload failed: ${response.status}`);
       await create({ organisationSlug, formId, key, filename: file.name });
-      toast.success(`${file.name} uploaded`);
+      toast.success(`${file.name} uploaded`, {
+        description: "DocuHelper is reading it now.",
+        action: {
+          label: "View",
+          onClick: () => router.push(`/o/${organisationSlug}/documents/extracting`),
+        },
+      });
       setOpen(false);
     } catch (error) {
       setError(

@@ -73,7 +73,7 @@ DocuHelper is a multi-tenant web app. An Admin defines a **Form** once: the **Fi
 
 ### Review
 
-46. As a Member, I want the Document list split into tabs by state, with counts (Extracting, Needs Review, Approved, Failed), so that I see my workload at a glance.
+46. As a Member, I want the Document list split into tabs by state, with counts (Needs Review, Approved, Failed, Rejected), and the Documents still being read on their own Extracting page, so that I see my workload at a glance.
 47. As a Member, I want the PDF on the left, with page navigation and zoom, and the Form's Fields on the right, so that I can compare value and source side by side.
 48. As a Member, I want to filter the Fields to "Needs Review only", so that I only look at what matters.
 49. As a Member, I want each row to show the label and key, the editable value, "Read on page N:" with the read text, and a confidence bar with a tick at the threshold plus the number to two decimals, so that I can judge each value quickly.
@@ -256,7 +256,7 @@ Further decisions:
 - Each row shows the label and key, the editable value, "Read on page N:" with the read text, a confidence bar with a threshold tick and the number to two decimals, and the Needs Review label with its reason and lowest signal. Its actions are "Value is right" and Undo.
 - Each List Field has a completeness row with "Add entry" and "Entries are complete", and each entry has a remove action. Selecting a row jumps the PDF to its source page. There is no region highlight.
 - The Approve button reads "Approve (N left)" or "Approve and send", with "Approve and next" beside it. Change Form and Reject sit next to it. The screen also shows the "not verified by Jev" marker, the "Does not fit this Form" banner, an Extracting overlay with the fields disabled, and the Extraction Failed state with Retry.
-- The Document list has tabs by state with counts (Extracting, Needs Review, Approved, Failed), and a Rejected filter that is off by default. Status updates arrive live through Convex subscriptions.
+- The Document list has tabs by state with counts (Needs Review, Approved, Failed, Rejected), opening on Needs Review. Documents being read have their own Extracting page, linked with its count from the list's header. Status updates arrive live through Convex subscriptions.
 
 ### Retention
 

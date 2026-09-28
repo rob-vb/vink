@@ -54,12 +54,12 @@ export function FormSettings({
   }
 
   return (
-    <section className="max-w-2xl rounded-lg border p-4 md:p-6">
+    <section className="rounded-lg border p-4 md:p-6">
       <FieldSet>
-        <FieldLegend>Settings</FieldLegend>
+        <FieldLegend>Review &amp; sending</FieldLegend>
         <FieldDescription>
-          These apply to Extractions that finish after you save them. They aren&apos;t
-          part of a Form Version.
+          Saved on their own, with the button below, and not part of a Form Version. They
+          apply to Extractions that finish after you save them.
         </FieldDescription>
         <FieldGroup>
           <Field>
