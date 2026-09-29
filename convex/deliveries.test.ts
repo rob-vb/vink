@@ -198,7 +198,7 @@ test("each request is signed over its raw body with the Integration's secret, ne
   expect(request.headers).toMatchObject({
     Authorization: "Bearer token-1",
     "Content-Type": "application/json",
-    "X-DocuHelper-Signature": `sha256=${createHmac("sha256", secret).update(request.body).digest("hex")}`,
+    "X-Vink-Signature": `sha256=${createHmac("sha256", secret).update(request.body).digest("hex")}`,
   });
 });
 

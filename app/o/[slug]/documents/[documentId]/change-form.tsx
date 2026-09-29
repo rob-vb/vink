@@ -29,7 +29,7 @@ import type { Id } from "@/convex/_generated/dataModel";
 
 /**
  * Change Form: pick another Form. Warns how many corrections will be lost,
- * then DocuHelper reads the Document against the new Form.
+ * then Vink reads the Document against the new Form.
  */
 export function ChangeFormButton({
   organisationSlug,
@@ -76,7 +76,7 @@ export function ChangeFormButton({
         <DialogHeader>
           <DialogTitle>Change the Form</DialogTitle>
           <DialogDescription>
-            DocuHelper fills the new Form from what it already read on the PDF. Only when it
+            Vink fills the new Form from what it already read on the PDF. Only when it
             hasn&apos;t read it yet does it read the PDF again.
           </DialogDescription>
         </DialogHeader>

@@ -142,7 +142,7 @@ export function FieldDetail({
             onChange={(e) => set({ description: e.target.value })}
           />
           <FieldDescription>
-            Optional. Synonyms and other languages help DocuHelper find this Field
+            Optional. Synonyms and other languages help Vink find this Field
             on differently worded documents.
           </FieldDescription>
         </Field>

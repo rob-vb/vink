@@ -22,8 +22,8 @@ async function logged(ctx: MutationCtx, document: Doc<"documents">, detail: stri
     documentId: document._id,
     event: "data_deleted",
     detail,
-    by: "docuhelper",
-    byEmail: "DocuHelper",
+    by: "vink",
+    byEmail: "Vink",
     at: Date.now(),
   });
 }

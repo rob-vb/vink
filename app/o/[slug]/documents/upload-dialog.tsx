@@ -90,7 +90,7 @@ export function UploadDialog({
       if (!response.ok) throw new Error(`Upload failed: ${response.status}`);
       await create({ organisationSlug, formId, key, filename: file.name });
       toast.success(`${file.name} uploaded`, {
-        description: "DocuHelper is reading it now.",
+        description: "Vink is reading it now.",
         action: {
           label: "View",
           onClick: () => router.push(`/o/${organisationSlug}/documents/extracting`),
@@ -125,7 +125,7 @@ export function UploadDialog({
           <DialogHeader>
             <DialogTitle>Upload a PDF</DialogTitle>
             <DialogDescription>
-              DocuHelper fills the Form you choose from all of its pages.
+              Vink fills the Form you choose from all of its pages.
             </DialogDescription>
           </DialogHeader>
           <FieldGroup>

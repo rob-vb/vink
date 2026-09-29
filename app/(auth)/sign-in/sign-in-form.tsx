@@ -100,7 +100,7 @@ export function SignInForm({
   return (
     <Card>
       <CardHeader className="text-center">
-        <CardTitle className="text-xl">Sign in to DocuHelper</CardTitle>
+        <CardTitle className="text-xl">Sign in to Vink</CardTitle>
         <CardDescription>Use your password or get a link by email.</CardDescription>
       </CardHeader>
       <CardContent>
@@ -154,7 +154,7 @@ export function SignInForm({
                 Email me a sign-in link
               </Button>
               <FieldDescription className="text-center">
-                New to DocuHelper? {next ? (
+                New to Vink? {next ? (
                   <Link href={`/sign-up?${new URLSearchParams({ next })}`}>Create an account</Link>
                 ) : (
                   <Link href="/sign-up">Create an Organisation</Link>

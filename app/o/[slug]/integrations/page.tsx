@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { requireAdmin } from "../organisation";
 import { IntegrationsList } from "./integrations-list";
 
-export const metadata: Metadata = { title: "Integrations · DocuHelper" };
+export const metadata: Metadata = { title: "Integrations · Vink" };
 
 export default async function IntegrationsPage({ params }: PageProps<"/o/[slug]/integrations">) {
   const { slug } = await params;

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { requireAdmin } from "../../organisation";
 import { NewForm } from "./new-form";
 
-export const metadata: Metadata = { title: "New Form · DocuHelper" };
+export const metadata: Metadata = { title: "New Form · Vink" };
 
 export default async function NewFormPage({
   params,

@@ -93,7 +93,7 @@ export function FormsList({ organisationSlug }: { organisationSlug: string }) {
             </EmptyMedia>
             <EmptyTitle>No Forms yet</EmptyTitle>
             <EmptyDescription>
-              A Form lists the Fields DocuHelper fills from a kind of document,
+              A Form lists the Fields Vink fills from a kind of document,
               such as a tyre service report or an invoice.
             </EmptyDescription>
           </EmptyHeader>

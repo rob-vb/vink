@@ -366,7 +366,7 @@ export default defineSchema({
     ),
     // What it was about, e.g. the corrected Field's label.
     detail: v.optional(v.string()),
-    // The user's id, or `docuhelper` for what DocuHelper did itself.
+    // The user's id, or `vink` for what Vink did itself.
     by: v.string(),
     // Copied from the user at the time, like `documents.uploaderEmail`.
     byEmail: v.string(),

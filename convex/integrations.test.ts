@@ -70,7 +70,7 @@ async function acme(t: Backend) {
     ann.user.mutation(api.integrations.create, {
       organisationSlug,
       name: "Fleet system",
-      url: "https://fleet.example.com/hooks/docuhelper",
+      url: "https://fleet.example.com/hooks/vink",
       headers: [
         { name: "Authorization", value: "Bearer sk_live_abcdef123456", secret: true },
         { name: "X-Tenant", value: "acme", secret: false },
@@ -89,7 +89,7 @@ test("an Admin creates an Integration; header secrets are stored encrypted and s
   expect(integration).toMatchObject({
     id: integrationId,
     name: "Fleet system",
-    url: "https://fleet.example.com/hooks/docuhelper",
+    url: "https://fleet.example.com/hooks/vink",
     headers: [
       { name: "Authorization", value: "••••••••3456", secret: true },
       { name: "X-Tenant", value: "acme", secret: false },
@@ -250,12 +250,12 @@ test("a test-send posts the test envelope with example data, signed like a real 
 
   expect(result).toEqual({ ok: true, status: 202, body: '{"received":true}', error: null });
   const [request] = fakeHttp.requests;
-  expect(request.url).toBe("https://fleet.example.com/hooks/docuhelper");
+  expect(request.url).toBe("https://fleet.example.com/hooks/vink");
   expect(request.headers).toMatchObject({
     "Content-Type": "application/json",
     Authorization: "Bearer sk_live_abcdef123456",
     "X-Tenant": "acme",
-    "X-DocuHelper-Signature": `sha256=${createHmac("sha256", secret).update(request.body).digest("hex")}`,
+    "X-Vink-Signature": `sha256=${createHmac("sha256", secret).update(request.body).digest("hex")}`,
   });
   expect(JSON.parse(request.body)).toMatchObject({
     event: "document.approved",

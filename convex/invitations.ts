@@ -78,8 +78,8 @@ export const send = internalAction({
     const url = `${process.env.SITE_URL}/invite/${token}`;
     await sendEmail({
       to: email,
-      subject: `You're invited to ${organisationName} on DocuHelper`,
-      html: `<p>You're invited to join <strong>${escapeHtml(organisationName)}</strong> on DocuHelper.</p><p><a href="${url}">Accept the invitation</a></p><p>This link expires in 7 days.</p>`,
+      subject: `You're invited to ${organisationName} on Vink`,
+      html: `<p>You're invited to join <strong>${escapeHtml(organisationName)}</strong> on Vink.</p><p><a href="${url}">Accept the invitation</a></p><p>This link expires in 7 days.</p>`,
     });
   },
 });

@@ -292,7 +292,7 @@ export function FormEditor({ organisationSlug, form, initial, settings, proposal
                 <DialogHeader>
                   <DialogTitle>Suggest Fields from a PDF</DialogTitle>
                   <DialogDescription>
-                    For a supplier whose documents show more than this Form has. DocuHelper reads
+                    For a supplier whose documents show more than this Form has. Vink reads
                     the sample and proposes only what the Form can&apos;t place yet.
                   </DialogDescription>
                 </DialogHeader>
@@ -539,8 +539,8 @@ export function FormEditor({ organisationSlug, form, initial, settings, proposal
                       <FieldLabel htmlFor="process-sample">Also process this sample as a Document</FieldLabel>
                       <FieldDescription>
                         {processSample
-                          ? `${proposal.filename} becomes this Form's first Document, from what DocuHelper already read.`
-                          : `${proposal.filename} and what DocuHelper read from it are deleted when you create the Form.`}
+                          ? `${proposal.filename} becomes this Form's first Document, from what Vink already read.`
+                          : `${proposal.filename} and what Vink read from it are deleted when you create the Form.`}
                       </FieldDescription>
                     </FieldContent>
                   </Field>

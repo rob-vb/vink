@@ -257,7 +257,7 @@ export function ReviewScreen({
       {document.state === "extraction_failed" && (
         <Alert variant="destructive">
           <CircleAlert />
-          <AlertTitle>DocuHelper couldn&apos;t read this Document</AlertTitle>
+          <AlertTitle>Vink couldn&apos;t read this Document</AlertTitle>
           <AlertDescription>
             <p>
               It tried four times. This is usually a passing outage, so try again. When a
@@ -292,7 +292,7 @@ export function ReviewScreen({
           <CircleAlert />
           <AlertTitle>Data deleted</AlertTitle>
           <AlertDescription>
-            Its PDF, what DocuHelper read and its values were deleted on{" "}
+            Its PDF, what Vink read and its values were deleted on{" "}
             {when.format(document.dataDeletedAt)} under the Organisation&apos;s retention. Only this
             record, its history and its Delivery log are kept.
           </AlertDescription>
@@ -350,7 +350,7 @@ export function ReviewScreen({
             {document.state === "extracting" && (
               <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-background/80 p-6 text-center backdrop-blur-[1px]">
                 <Spinner />
-                <p className="text-sm font-medium">DocuHelper is reading this Document</p>
+                <p className="text-sm font-medium">Vink is reading this Document</p>
                 <p className="text-xs text-muted-foreground">
                   This can take up to a minute. The Fields fill in here when it&apos;s done.
                 </p>

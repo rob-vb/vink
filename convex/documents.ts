@@ -54,11 +54,11 @@ export async function checkUpload(
   }
   try {
     const pdf = await PDFDocument.load(bytes, { ignoreEncryption: true }).catch(() => {
-      throw new ConvexError("This file isn't a PDF DocuHelper can read.");
+      throw new ConvexError("This file isn't a PDF Vink can read.");
     });
     if (pdf.getPageCount() > MAX_PAGES) {
       throw new ConvexError(
-        `This PDF has ${pdf.getPageCount()} pages. DocuHelper reads up to ${MAX_PAGES} pages per Document.`,
+        `This PDF has ${pdf.getPageCount()} pages. Vink reads up to ${MAX_PAGES} pages per Document.`,
       );
     }
     return pdf.getPageCount();

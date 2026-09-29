@@ -3,7 +3,7 @@ import type { Id } from "@/convex/_generated/dataModel";
 import { requireAdmin } from "../../../organisation";
 import { ProposalScreen } from "./proposal-screen";
 
-export const metadata: Metadata = { title: "Proposed Fields · DocuHelper" };
+export const metadata: Metadata = { title: "Proposed Fields · Vink" };
 
 export default async function ProposalPage({
   params,

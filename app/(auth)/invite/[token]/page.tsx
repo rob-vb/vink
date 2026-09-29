@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { isAuthenticated } from "@/lib/auth-server";
 import { AcceptInvitation } from "./accept-invitation";
 
-export const metadata: Metadata = { title: "Invitation · DocuHelper" };
+export const metadata: Metadata = { title: "Invitation · Vink" };
 
 export default async function InvitePage({ params }: PageProps<"/invite/[token]">) {
   const { token } = await params;
@@ -17,7 +17,7 @@ export default async function InvitePage({ params }: PageProps<"/invite/[token]"
   return (
     <Card>
       <CardHeader className="text-center">
-        <CardTitle className="text-xl">You&apos;re invited to DocuHelper</CardTitle>
+        <CardTitle className="text-xl">You&apos;re invited to Vink</CardTitle>
         <CardDescription>
           Sign in or create an account with the address the invitation was sent to.
         </CardDescription>

@@ -93,7 +93,7 @@ test("a PDF over 20 pages is refused with a clear message, and nothing is stored
 
   await expect(
     upload(cas, slug, formId, "bundle.pdf", await pdfWithPages(21)),
-  ).rejects.toThrow("This PDF has 21 pages. DocuHelper reads up to 20 pages per Document.");
+  ).rejects.toThrow("This PDF has 21 pages. Vink reads up to 20 pages per Document.");
 
   expect(fakePdfStore.objects.size).toBe(0);
   expect(
@@ -171,7 +171,7 @@ test("a file that isn't a readable PDF is refused with a clear message, and noth
 
   await expect(
     upload(cas, slug, formId, "photo.pdf", new TextEncoder().encode("not a pdf")),
-  ).rejects.toThrow("This file isn't a PDF DocuHelper can read.");
+  ).rejects.toThrow("This file isn't a PDF Vink can read.");
   expect(fakePdfStore.objects.size).toBe(0);
 });
 

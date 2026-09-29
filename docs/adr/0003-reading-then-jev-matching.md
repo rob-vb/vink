@@ -8,7 +8,7 @@ An Extraction runs in four steps:
 3. **Fill:** a small text model writes each Field Value from the source Jev picked, in the form the Field asks for (an ISO code, a brand written out in full, a formatted size). It may only use that source.
 4. **Verify:** Jev checks each filled value, as in ADR 0002: whether it fits and is plausible, and whether the page text supports it on pages that have a text layer.
 
-We chose this over one vision call that fills the Form directly (ADR 0002). The local benchmark in [API pipeline benchmark](../../.scratch/docuhelper-v1/issues/11-api-pipeline-benchmark.md) scored 80/84 values for it, against 84/84 for ADR 0002, with List entries 4/4 for both. In return:
+We chose this over one vision call that fills the Form directly (ADR 0002). The local benchmark in [API pipeline benchmark](../../.scratch/vink-v1/issues/11-api-pipeline-benchmark.md) scored 80/84 values for it, against 84/84 for ADR 0002, with List entries 4/4 for both. In return:
 - **The Reading is independent of the Form.** Choosing another Form re-runs Match and Fill only, for fractions of a cent and without reading the PDF again. The Form proposal can start from the same Reading.
 - **Every Field Value gets a real probability** from Jev's Choice, not just the vision model's self-report.
 - **Every Field Value gets a traceable source:** a path in the Reading, plus its pages.
@@ -17,7 +17,7 @@ We rejected letting Jev map a Reading that copies the papers as printed (tables 
 
 ## Consequences
 
-- Jev is on the critical path: without Jev there is no Match. Decided in [Extraction without Jev](../../.scratch/docuhelper-v1/issues/15-extraction-without-jev.md): there is no fallback matcher, and the Organisation setting from ADR 0002 that let an Admin switch Jev off is dropped, so Jev is required in v1. If Match still fails after the Workpool retries, the Extraction is Extraction Failed. A manual retry resumes from the stored Reading. If Verify fails, the Extraction still succeeds without Auto-Send.
+- Jev is on the critical path: without Jev there is no Match. Decided in [Extraction without Jev](../../.scratch/vink-v1/issues/15-extraction-without-jev.md): there is no fallback matcher, and the Organisation setting from ADR 0002 that let an Admin switch Jev off is dropped, so Jev is required in v1. If Match still fails after the Workpool retries, the Extraction is Extraction Failed. A manual retry resumes from the stored Reading. If Verify fails, the Extraction still succeeds without Auto-Send.
 - TypeSafe now receives the whole Reading, personal data included (names, plates, addresses), but never the PDF. Its zero-retention quote and the transfer impact assessment block launch.
 - The Reading is stored with the Document (same retention as the PDF). It stays internal and never goes in the Payload.
 - A Field Value whose source object lists it in `_unsure`, or has a conflicting reading, is Needs Review, whatever its confidence.

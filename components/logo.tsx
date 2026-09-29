@@ -6,7 +6,7 @@ export function Logo() {
       <span className="flex size-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
         <FileText className="size-4" />
       </span>
-      DocuHelper
+      Vink
     </span>
   );
 }

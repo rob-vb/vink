@@ -11,7 +11,7 @@ let sent: { to: string[]; subject: string; html: string }[];
 beforeEach(() => {
   vi.useFakeTimers();
   vi.stubEnv("RESEND_API_KEY", "re_test");
-  vi.stubEnv("SITE_URL", "https://docuhelper.test");
+  vi.stubEnv("SITE_URL", "https://vink.test");
   sent = [];
   vi.stubGlobal(
     "fetch",
@@ -33,7 +33,7 @@ async function inviteTokenSentTo(t: Backend, to: string) {
   await t.finishAllScheduledFunctions(vi.runAllTimers);
   const mail = sent.findLast((mail) => mail.to.includes(to));
   expect(mail, `no mail to ${to}`).toBeDefined();
-  const link = mail!.html.match(/https:\/\/docuhelper\.test\/invite\/([\w-]+)/);
+  const link = mail!.html.match(/https:\/\/vink\.test\/invite\/([\w-]+)/);
   expect(link, "no invite link in the mail").not.toBeNull();
   return link![1];
 }

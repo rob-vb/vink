@@ -56,7 +56,7 @@ function Settings({
         <CardHeader>
           <CardTitle>Data retention</CardTitle>
           <CardDescription>
-            DocuHelper deletes a Document&apos;s PDF, what it read and its values once they&apos;re
+            Vink deletes a Document&apos;s PDF, what it read and its values once they&apos;re
             no longer needed. The Document&apos;s name, dates, history and Delivery log stay.
           </CardDescription>
         </CardHeader>

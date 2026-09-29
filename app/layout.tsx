@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "DocuHelper",
+  title: "Vink",
   description:
     "Reads your documents, fills your Forms and sends the data where it belongs.",
 };

@@ -7,7 +7,7 @@ export async function sendEmail(input: {
 }): Promise<void> {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
-    console.log(`[DocuHelper] Mail to ${input.to}: ${input.subject}\n${input.html}`);
+    console.log(`[Vink] Mail to ${input.to}: ${input.subject}\n${input.html}`);
     return;
   }
 
@@ -18,7 +18,7 @@ export async function sendEmail(input: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      from: process.env.RESEND_FROM ?? "DocuHelper <onboarding@resend.dev>",
+      from: process.env.RESEND_FROM ?? "Vink <onboarding@resend.dev>",
       to: [input.to],
       subject: input.subject,
       html: input.html,

@@ -57,7 +57,7 @@ export function AcceptInvitation({ token }: { token: string }) {
 
   const home = (
     <Button variant="outline" nativeButton={false} render={<Link href="/" />}>
-      Open DocuHelper
+      Open Vink
     </Button>
   );
 

@@ -1,4 +1,4 @@
-// Form Proposals: an Admin uploads one sample PDF, DocuHelper reads it and
+// Form Proposals: an Admin uploads one sample PDF, Vink reads it and
 // proposes Fields, and the Admin saves the ones they keep as a Form Version.
 import { ConvexError, v } from "convex/values";
 import { internal } from "./_generated/api";

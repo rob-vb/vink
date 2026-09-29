@@ -49,7 +49,7 @@ function checkHeaders(headers: Array<{ name: string }>) {
       throw new ConvexError(`"${name}" isn't a valid header name`);
     }
     if (name.toLowerCase() === SIGNATURE_HEADER.toLowerCase() || name.toLowerCase() === "content-type") {
-      throw new ConvexError(`DocuHelper sets the ${name} header itself`);
+      throw new ConvexError(`Vink sets the ${name} header itself`);
     }
   }
 }

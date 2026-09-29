@@ -1,11 +1,11 @@
-# DocuHelper
+# Vink
 
 Multi-tenant SaaS that reads documents (PDF, incl. handwritten), extracts their data into user-defined Forms, and — after approval — sends it to external systems via Integrations.
 
 ## Language
 
 **Organisation**:
-The customer company that uses DocuHelper. It owns its Forms, Integrations and Documents, and its data is never visible to another Organisation.
+The customer company that uses Vink. It owns its Forms, Integrations and Documents, and its data is never visible to another Organisation.
 _Avoid_: tenant, workspace, account
 
 **Membership**:
@@ -27,7 +27,7 @@ _Avoid_: table, repeating group
 A frozen state of a Form's Fields. A Document is processed and sent according to the Form Version that was current when it was uploaded.
 
 **Form Proposal**:
-A draft set of Fields that DocuHelper proposes from one sample PDF, before it is a Form (or before it is added to one). It holds the sample, its Reading and the proposed Fields. An Admin edits it and saves it as a Form Version, and the sample can then become that Form's first Document. An unsaved Form Proposal is deleted after 7 days.
+A draft set of Fields that Vink proposes from one sample PDF, before it is a Form (or before it is added to one). It holds the sample, its Reading and the proposed Fields. An Admin edits it and saves it as a Form Version, and the sample can then become that Form's first Document. An unsaved Form Proposal is deleted after 7 days.
 _Avoid_: template, template agent, form suggestion
 
 **Document**:

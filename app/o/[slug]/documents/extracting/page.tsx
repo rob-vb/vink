@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { ExtractingList } from "./extracting-list";
 
-export const metadata: Metadata = { title: "Extracting · DocuHelper" };
+export const metadata: Metadata = { title: "Extracting · Vink" };
 
 export default async function ExtractingPage({
   params,

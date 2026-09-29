@@ -26,7 +26,7 @@ function bridgeAnswers(text: string) {
 
 beforeEach(() => {
   sent = [];
-  vi.stubEnv("CLAUDE_BRIDGE_URL", "https://docuhelper.example/claude-bridge");
+  vi.stubEnv("CLAUDE_BRIDGE_URL", "https://vink.example/claude-bridge");
   vi.stubEnv("CLAUDE_BRIDGE_SECRET", "s3cret");
 });
 
@@ -47,7 +47,7 @@ test("Read sends the PDF and its text layer to the bridge and returns the Readin
   expect(reading).toEqual({ invoice: { number: "F-2024-001", _pages: [1] } });
   expect(textLayer.length).toBeGreaterThan(0);
   expect(sent).toHaveLength(1);
-  expect(sent[0].url).toBe("https://docuhelper.example/claude-bridge/complete");
+  expect(sent[0].url).toBe("https://vink.example/claude-bridge/complete");
   expect(sent[0].authorization).toBe("Bearer s3cret");
   expect(sent[0].body.model).toBe("claude-opus-5");
   expect(Buffer.from(sent[0].body.pdf as string, "base64").equals(Buffer.from(pdf))).toBe(true);

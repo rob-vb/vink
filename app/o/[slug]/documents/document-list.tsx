@@ -63,7 +63,7 @@ export function DocumentList({
             <EmptyTitle>Welcome to {organisationName}</EmptyTitle>
             <EmptyDescription>
               {isAdmin
-                ? "Set up a Form for each kind of document you receive, and DocuHelper will fill it from your PDFs."
+                ? "Set up a Form for each kind of document you receive, and Vink will fill it from your PDFs."
                 : "An Admin first sets up a Form for each kind of document you receive. Then you can upload PDFs here."}
             </EmptyDescription>
           </EmptyHeader>

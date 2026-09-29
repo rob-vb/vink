@@ -35,7 +35,7 @@ export function NewForm({
               From a sample PDF
             </CardTitle>
             <CardDescription>
-              DocuHelper reads one example and proposes the Fields. You untick what you don&apos;t
+              Vink reads one example and proposes the Fields. You untick what you don&apos;t
               need and adjust the rest.
             </CardDescription>
           </CardHeader>

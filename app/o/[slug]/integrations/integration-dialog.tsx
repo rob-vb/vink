@@ -111,7 +111,7 @@ export function IntegrationDialog({
           <DialogHeader>
             <DialogTitle>{integration ? "Edit Integration" : "New Integration"}</DialogTitle>
             <DialogDescription>
-              DocuHelper POSTs each approved Document&apos;s Payload here as JSON, signed with this
+              Vink POSTs each approved Document&apos;s Payload here as JSON, signed with this
               Integration&apos;s own secret.
             </DialogDescription>
           </DialogHeader>

@@ -38,7 +38,7 @@ function Progress({ proposal }: { proposal: Proposal }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>DocuHelper is reading your sample</CardTitle>
+        <CardTitle>Vink is reading your sample</CardTitle>
         <CardDescription>
           This takes a minute or two. You can leave this page: the proposal waits for you under
           Forms.
@@ -197,7 +197,7 @@ export function ProposalScreen({
       {proposal.state === "failed" && (
         <Alert variant="destructive">
           <CircleAlert />
-          <AlertTitle>DocuHelper couldn&apos;t propose Fields from this sample</AlertTitle>
+          <AlertTitle>Vink couldn&apos;t propose Fields from this sample</AlertTitle>
           <AlertDescription>
             {proposal.error && (
               <p className="line-clamp-2 font-mono text-xs break-all opacity-80">{proposal.error}</p>
@@ -220,7 +220,7 @@ export function ProposalScreen({
           <CircleCheck />
           <AlertTitle>Nothing new</AlertTitle>
           <AlertDescription>
-            <p>{form?.name ?? "The Form"} already places everything DocuHelper found on this sample.</p>
+            <p>{form?.name ?? "The Form"} already places everything Vink found on this sample.</p>
             <Button
               size="sm"
               variant="outline"

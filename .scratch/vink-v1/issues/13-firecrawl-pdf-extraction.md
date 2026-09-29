@@ -30,4 +30,4 @@ The user ruled out hosted Firecrawl on cost (2026-09-23): Gemini 3.8 Flash on Ve
   - **Where it runs:** the Node package is a napi-rs native module (14 MB linux-x64 binary). Convex Node actions accept it as an `externalPackages` entry, but Convex doesn't document native-module support, so test it with one deploy. The fallbacks are the WASM build in the default runtime (which has no positioned text) or the VPS.
   - **Handwriting:** it doesn't detect handwriting. Handwritten scans come back as `Scanned`, and a handwritten image on a digital PDF comes back as `TextBased`, so the vision call still gets every page image.
 
-Findings: branch `research/firecrawl-pdf-extraction`, file `.scratch/docuhelper-v1/research/firecrawl-pdf-extraction.md`.
+Findings: branch `research/firecrawl-pdf-extraction`, file `.scratch/vink-v1/research/firecrawl-pdf-extraction.md`.

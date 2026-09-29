@@ -10,9 +10,9 @@ const eslintConfig = defineConfig([
     files: ["convex/**/*.{ts,js}"],
     ignores: ["convex/lib/functions.ts"],
     plugins: {
-      docuhelper: { rules: { "no-raw-convex-functions": noRawConvexFunctions } },
+      vink: { rules: { "no-raw-convex-functions": noRawConvexFunctions } },
     },
-    rules: { "docuhelper/no-raw-convex-functions": "error" },
+    rules: { "vink/no-raw-convex-functions": "error" },
   },
   // Override default ignores of eslint-config-next.
   globalIgnores([

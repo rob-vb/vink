@@ -1,10 +1,10 @@
-# DocuHelper v1 — map
+# Vink v1 — map
 
 Label: wayfinder:map
 
 ## Destination
 
-A build-ready spec at `.scratch/docuhelper-v1/spec.md` (plus ADRs for hard calls) for v1: a user creates a Form, uploads a PDF (incl. handwritten), a pipeline fills every Field with a confidence-scored Field Value, low-confidence values are Needs Review, and after Approval (manual, or automatic via the Form's Auto-Send) the Payload is POSTed as JSON to an Integration. When no tickets remain, write the spec with `/to-spec`.
+A build-ready spec at `.scratch/vink-v1/spec.md` (plus ADRs for hard calls) for v1: a user creates a Form, uploads a PDF (incl. handwritten), a pipeline fills every Field with a confidence-scored Field Value, low-confidence values are Needs Review, and after Approval (manual, or automatic via the Form's Auto-Send) the Payload is POSTed as JSON to an Integration. When no tickets remain, write the spec with `/to-spec`.
 
 ## Notes
 

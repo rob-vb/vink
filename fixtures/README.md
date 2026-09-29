@@ -1,6 +1,6 @@
 # Benchmark fixtures
 
-Test document set for the extraction benchmark (see `.scratch/docuhelper-v1/issues/03-test-document-set.md`).
+Test document set for the extraction benchmark (see `.scratch/vink-v1/issues/03-test-document-set.md`).
 
 Real Documents contain personal data, so `inbox/` and `documents/` are git-ignored. Only Form definitions and this README are committed.
 
@@ -17,7 +17,7 @@ fixtures/
 
 ## Form definition — `forms/<form>.json`
 
-Field model: see `.scratch/docuhelper-v1/issues/04-field-model.md`. These definitions still lack labels, required flags and `choice` options. `list` is a repeating group with its own sub-Fields.
+Field model: see `.scratch/vink-v1/issues/04-field-model.md`. These definitions still lack labels, required flags and `choice` options. `list` is a repeating group with its own sub-Fields.
 
 ```json
 {

@@ -22,8 +22,8 @@ export const createAuth = (ctx: GenericCtx<DataModel>) =>
         sendMagicLink: async ({ email, url }) => {
           await sendEmail({
             to: email,
-            subject: "Your DocuHelper sign-in link",
-            html: `<p><a href="${url}">Sign in to DocuHelper</a></p><p>This link expires in 5 minutes.</p>`,
+            subject: "Your Vink sign-in link",
+            html: `<p><a href="${url}">Sign in to Vink</a></p><p>This link expires in 5 minutes.</p>`,
           });
         },
       }),

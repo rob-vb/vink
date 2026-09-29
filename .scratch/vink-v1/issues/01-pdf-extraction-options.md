@@ -21,4 +21,4 @@ None of the classic OCR services reads Dutch handwriting: Azure, Google Document
   - C: Mistral OCR 4, then a cheap text model maps it to Fields. Word-level confidence and page coordinates, useful for Needs Review and for highlighting source text in the review screen.
 - **Batch APIs** could halve all of these costs.
 
-Findings: branch `research/pdf-extraction-options`, file `.scratch/docuhelper-v1/research/pdf-extraction-options.md`.
+Findings: branch `research/pdf-extraction-options`, file `.scratch/vink-v1/research/pdf-extraction-options.md`.

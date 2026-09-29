@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { api } from "@/convex/_generated/api";
 import { DocumentTable } from "../document-table";
 
-/** The Documents DocuHelper is reading right now. Each leaves the list when its Extraction ends. */
+/** The Documents Vink is reading right now. Each leaves the list when its Extraction ends. */
 export function ExtractingList({ organisationSlug }: { organisationSlug: string }) {
   const list = useQuery(api.documents.list, { organisationSlug, state: "extracting" });
 
@@ -26,7 +26,7 @@ export function ExtractingList({ organisationSlug }: { organisationSlug: string 
         </Button>
         <h1 className="text-xl font-semibold">Extracting</h1>
         <p className="text-sm text-muted-foreground">
-          DocuHelper is reading these now. Each moves to Needs Review or Approved when it is
+          Vink is reading these now. Each moves to Needs Review or Approved when it is
           done, or to Failed.
         </p>
       </div>

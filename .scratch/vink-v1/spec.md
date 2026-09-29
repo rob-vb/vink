@@ -1,8 +1,8 @@
-# DocuHelper v1 — spec
+# Vink v1 — spec
 
 Status: ready-for-agent
 
-Synthesised from the [DocuHelper v1 map](map.md), its 17 resolved tickets, `CONTEXT.md` and ADRs 0001–0003. Terms in **bold** are from `CONTEXT.md`. Where this spec and a ticket differ, the later ticket wins. This spec already reflects that, so ADR 0002 applies only where ADR 0003 hasn't superseded it.
+Synthesised from the [Vink v1 map](map.md), its 17 resolved tickets, `CONTEXT.md` and ADRs 0001–0003. Terms in **bold** are from `CONTEXT.md`. Where this spec and a ticket differ, the later ticket wins. This spec already reflects that, so ADR 0002 applies only where ADR 0003 hasn't superseded it.
 
 ## Problem Statement
 
@@ -10,7 +10,7 @@ Operations staff at companies such as fleet operators receive paper-heavy docume
 
 ## Solution
 
-DocuHelper is a multi-tenant web app. An Admin defines a **Form** once: the **Fields** their system needs, typically proposed automatically from one sample PDF. From then on a Member uploads a PDF against that Form. DocuHelper reads it (handwriting included), fills every Field with a **Field Value** that carries a **Confidence**, the text as read and the page it came from, and flags as **Needs Review** only the values a person should check. The Member checks those values next to the PDF, corrects them where needed and gives **Approval**. The Payload then goes as JSON by HTTP POST to every **Integration** attached to the Form. When the Admin trusts a Form, they turn on **Auto-Send**, and a Document with nothing Needs Review and a full Jev verification is approved and sent with no human involved.
+Vink is a multi-tenant web app. An Admin defines a **Form** once: the **Fields** their system needs, typically proposed automatically from one sample PDF. From then on a Member uploads a PDF against that Form. Vink reads it (handwriting included), fills every Field with a **Field Value** that carries a **Confidence**, the text as read and the page it came from, and flags as **Needs Review** only the values a person should check. The Member checks those values next to the PDF, corrects them where needed and gives **Approval**. The Payload then goes as JSON by HTTP POST to every **Integration** attached to the Form. When the Admin trusts a Form, they turn on **Auto-Send**, and a Document with nothing Needs Review and a full Jev verification is approved and sent with no human involved.
 
 ## User Stories
 
@@ -45,7 +45,7 @@ DocuHelper is a multi-tenant web app. An Admin defines a **Form** once: the **Fi
 ### Form Proposal from a sample PDF
 
 23. As an Admin, I want "New Form" to offer "from a sample PDF" or "blank", so that the usual path needs no typing.
-24. As an Admin, I want to upload one sample PDF and have DocuHelper propose the Fields, so that I don't have to model the Form by hand.
+24. As an Admin, I want to upload one sample PDF and have Vink propose the Fields, so that I don't have to model the Form by hand.
 25. As an Admin, I want to see progress while the sample is read, and to leave and come back, so that I don't have to wait on the page.
 26. As an Admin, I want every piece of data in the sample to be listed, with the useful Fields pre-ticked and things like bank details left unticked, so that nothing is dropped silently and I only have to untick.
 27. As an Admin, I want proposed labels to use the printed term in the document's language, keys in English camelCase, and descriptions in English with the printed terms as synonyms, so that the Form works for other suppliers too.
@@ -105,14 +105,14 @@ DocuHelper is a multi-tenant web app. An Admin defines a **Form** once: the **Fi
 69. As an Admin, I want a Document to be approved automatically when Auto-Send is on, nothing is Needs Review, Jev verified it, it doesn't carry "Does not fit this Form", and no user has touched it, so that clean Documents flow through without anyone.
 70. As an Admin, I want Auto-Send evaluated once, right after an Extraction succeeds (including a successful manual retry), so that its behaviour is predictable.
 71. As an Admin, I want any user action (correction, Change Form, Reopen) to rule out Auto-Send for that Document, so that a human decision is never overridden.
-72. As a Member, I want Approval of a Form with no Integration attached to simply mark the Document approved, so that I can use DocuHelper before the integration exists.
+72. As a Member, I want Approval of a Form with no Integration attached to simply mark the Document approved, so that I can use Vink before the integration exists.
 73. As an Admin, I want Approval to record whether it was manual or automatic and by whom, so that it can be audited.
 
 ### Integrations and Delivery
 
 74. As an Admin, I want to create an Integration with an endpoint URL and free static headers (API key, Bearer, Basic), so that I can reach my system.
 75. As an Admin, I want header secrets stored encrypted and masked in the UI, so that credentials don't leak.
-76. As an Admin, I want every request signed with HMAC-SHA256 using a secret per Integration, so that my receiver can verify that DocuHelper sent it.
+76. As an Admin, I want every request signed with HMAC-SHA256 using a secret per Integration, so that my receiver can verify that Vink sent it.
 77. As an Admin, I want to attach an Integration to several Forms, and a Form to several Integrations, so that one system can receive several document kinds, and one document kind can go to several systems.
 78. As an Admin, I want a test-send with dummy data generated from the Form (marked `"test": true`), or optionally with a processed Document, with the response shown, so that I can check the integration before going live.
 79. As a receiver's developer, I want a stable envelope (event, deliveryId, test, document, form, approval, data), so that my endpoint can route and dedupe.

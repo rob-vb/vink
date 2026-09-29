@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { DocumentList } from "./documents/document-list";
 import { getOrganisation } from "./organisation";
 
-export const metadata: Metadata = { title: "Documents · DocuHelper" };
+export const metadata: Metadata = { title: "Documents · Vink" };
 
 export default async function OrganisationHome({ params }: PageProps<"/o/[slug]">) {
   const { slug } = await params;

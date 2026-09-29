@@ -97,7 +97,7 @@ test("a clean, Jev-verified Document on a Form with Auto-Send on is approved aut
   const document = await read();
   expect(document.state).toBe("approved");
   expect(document.approval).toMatchObject({ mode: "auto", by: null });
-  expect(document.history.at(-1)).toMatchObject({ event: "approved", by: "DocuHelper", detail: "Auto-Send" });
+  expect(document.history.at(-1)).toMatchObject({ event: "approved", by: "Vink", detail: "Auto-Send" });
   const { documents } = await user.query(api.documents.list, { organisationSlug, state: "approved" });
   expect(documents).toEqual([expect.objectContaining({ approvalMode: "auto" })]);
 });

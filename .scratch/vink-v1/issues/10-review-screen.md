@@ -48,7 +48,7 @@ No ADR was written. These are UI calls that are cheap to change.
 - **PDF toolbar:** page n/N navigation and zoom (Airwallex, Xero, Deel). Zoom matters for handwriting.
 - **Extracting state:** the Document is shown with a progress overlay or skeleton and the fields are disabled ("may take up to a minute"): [Airwallex](https://mobbin.com/screens/7228964b-3706-452e-9e70-2973fbb5e5b9), [Mercury flow](https://mobbin.com/flows/332881d8-7f08-46ec-bc6d-5a669ea56e0d).
 - **"Approve and next":** QuickBooks' "Save and next" moves straight on to the next Document that needs review.
-- **Document list tabs by state, with counts:** Mercury (Inbox / Needs Approval / Scheduled / Paid) and [Acctual](https://mobbin.com/flows/8131cf84-1b89-4dde-a474-a87c42c32316) (Draft / Approve / Ready / Paid). Midday shows an "Analyzing" badge per row. For DocuHelper that means Extracting / Needs Review / Approved / Failed.
+- **Document list tabs by state, with counts:** Mercury (Inbox / Needs Approval / Scheduled / Paid) and [Acctual](https://mobbin.com/flows/8131cf84-1b89-4dde-a474-a87c42c32316) (Draft / Approve / Ready / Paid). Midday shows an "Analyzing" badge per row. For Vink that means Extracting / Needs Review / Approved / Failed.
 - **Reject or Delete next to Approve** (Airwallex, Mercury). This is missing from our screen.
 - **A per-item marker for AI-filled values and "Review required"** (Revolut). It matches our Needs Review label.
 - Xero marks the source lines in the PDF margin. That needs line positions, which v1 doesn't have.

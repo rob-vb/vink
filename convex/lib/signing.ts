@@ -1,8 +1,8 @@
 // Every request to an Integration is signed with HMAC-SHA256 over the raw
 // body, using the Integration's own secret, so the receiver can check that
-// DocuHelper sent it.
+// Vink sent it.
 
-export const SIGNATURE_HEADER = "X-DocuHelper-Signature";
+export const SIGNATURE_HEADER = "X-Vink-Signature";
 
 function hex(bytes: ArrayBuffer) {
   return [...new Uint8Array(bytes)].map((b) => b.toString(16).padStart(2, "0")).join("");

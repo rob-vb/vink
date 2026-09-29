@@ -47,8 +47,8 @@ export const completed = extractionPool.defineOnComplete<DataModel, typeof compl
       organisationId: document.organisationId,
       documentId,
       event: "extraction_failed",
-      by: "docuhelper",
-      byEmail: "DocuHelper",
+      by: "vink",
+      byEmail: "Vink",
       at: Date.now(),
     });
   },
@@ -207,12 +207,12 @@ export const finish = internalMutation({
       });
     }
     await ctx.db.patch(documentId, { jevVerified, doesNotFit, reviewThreshold });
-    const docuhelper = { by: "docuhelper", byEmail: "DocuHelper", at: Date.now() };
+    const vink = { by: "vink", byEmail: "Vink", at: Date.now() };
     await ctx.db.insert("documentEvents", {
       organisationId: document.organisationId,
       documentId,
       event: "extracted",
-      ...docuhelper,
+      ...vink,
     });
 
     // Auto-Send is evaluated here, once, right after the Extraction succeeds.
@@ -227,7 +227,7 @@ export const finish = internalMutation({
       await moveTo(ctx, document, "needs_review");
       return;
     }
-    const approval = { mode: "auto" as const, by: null, byEmail: null, at: docuhelper.at };
+    const approval = { mode: "auto" as const, by: null, byEmail: null, at: vink.at };
     await ctx.db.patch(documentId, { approval });
     await moveTo(ctx, document, "approved");
     await ctx.db.insert("documentEvents", {
@@ -235,7 +235,7 @@ export const finish = internalMutation({
       documentId,
       event: "approved",
       detail: "Auto-Send",
-      ...docuhelper,
+      ...vink,
     });
     await createDeliveries(ctx, { ...document, approval });
   },

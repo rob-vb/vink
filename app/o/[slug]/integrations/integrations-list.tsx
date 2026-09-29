@@ -155,7 +155,7 @@ export function IntegrationsList({ organisationSlug }: { organisationSlug: strin
             <EmptyTitle>No Integrations yet</EmptyTitle>
             <EmptyDescription>
               Without one, approving a Document just marks it approved. Add your system&apos;s
-              endpoint to have DocuHelper send the data there.
+              endpoint to have Vink send the data there.
             </EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
@@ -229,7 +229,7 @@ export function IntegrationsList({ organisationSlug }: { organisationSlug: strin
                   <div className="flex flex-col gap-1">
                     <p className="font-medium">Signing secret</p>
                     <p className="text-muted-foreground">
-                      Every request carries an <code className="font-mono">X-DocuHelper-Signature</code>{" "}
+                      Every request carries an <code className="font-mono">X-Vink-Signature</code>{" "}
                       header: HMAC-SHA256 of the body with this secret.
                     </p>
                     <SigningSecret organisationSlug={organisationSlug} integrationId={integration.id} />

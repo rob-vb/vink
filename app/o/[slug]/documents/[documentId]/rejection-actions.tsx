@@ -126,7 +126,7 @@ export function DeleteButton({ organisationSlug, documentId, filename }: Target)
         <AlertDialogHeader>
           <AlertDialogTitle>Delete {filename} for good?</AlertDialogTitle>
           <AlertDialogDescription>
-            The PDF, what DocuHelper read and every value are deleted now and can&apos;t be
+            The PDF, what Vink read and every value are deleted now and can&apos;t be
             brought back. Only the filename, dates and history stay, with a &quot;Deleted by
             you&quot; line.
           </AlertDialogDescription>

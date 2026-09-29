@@ -3,7 +3,7 @@ import type { Id } from "@/convex/_generated/dataModel";
 import { getOrganisation } from "../../organisation";
 import { ReviewScreen } from "./review-screen";
 
-export const metadata: Metadata = { title: "Review · DocuHelper" };
+export const metadata: Metadata = { title: "Review · Vink" };
 
 export default async function DocumentPage({
   params,

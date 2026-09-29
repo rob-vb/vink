@@ -9,7 +9,7 @@ import { toDraft } from "../draft";
 import { FormEditor } from "../form-editor";
 import { FormSettings } from "../form-settings";
 
-export const metadata: Metadata = { title: "Form · DocuHelper" };
+export const metadata: Metadata = { title: "Form · Vink" };
 
 export default async function FormPage({
   params,
