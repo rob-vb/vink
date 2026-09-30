@@ -1,9 +1,9 @@
-import { createHmac } from "node:crypto";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import {
   addMembership,
+  expectSignedBy,
   fakeHttp,
   fakePdfStore,
   fakePipeline,
@@ -255,8 +255,8 @@ test("a test-send posts the test envelope with example data, signed like a real 
     "Content-Type": "application/json",
     Authorization: "Bearer sk_live_abcdef123456",
     "X-Tenant": "acme",
-    "X-Vink-Signature": `sha256=${createHmac("sha256", secret).update(request.body).digest("hex")}`,
   });
+  expectSignedBy(secret, request);
   expect(JSON.parse(request.body)).toMatchObject({
     event: "document.approved",
     test: true,
