@@ -1,1 +1,8 @@
-{}
+{
+  "title": "Can we measure visits to this site?",
+  "body": "With your permission, Vink uses Google Analytics to count visits and see which pages help people. Google is the one third party that receives this data. It sets statistics cookies and is only loaded if you accept. You can change your choice any time under Cookie settings at the bottom of every page.",
+  "policy": "Privacy policy",
+  "accept": "Accept statistics",
+  "reject": "Reject",
+  "label": "Cookie choice"
+}
