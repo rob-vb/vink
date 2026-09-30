@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { CheckInbox } from "@/components/check-inbox";
 import { Button } from "@/components/ui/button";
@@ -26,18 +25,29 @@ import { authClient } from "@/lib/auth-client";
 
 type Pending = "password" | "link" | null;
 
+/** Better Auth's own answer to a per-IP limit is too technical; others are shown as they are. */
+function messageOf(error: { status?: number; message?: string }, fallback: string) {
+  if (error.status === 429 && error.message?.startsWith("Too many requests")) {
+    return "Too many attempts from here. Wait a few minutes and try again.";
+  }
+  return error.message ?? fallback;
+}
+
 /**
  * Signs up and creates the user's own Organisation, or, when `next` is an
  * invite link, signs up only and returns there to join the inviting one.
  */
 export function SignUpForm({ next }: { next: string | null }) {
-  const router = useRouter();
   const [organisation, setOrganisation] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [pending, setPending] = useState<Pending>(null);
   const [error, setError] = useState<string | null>(null);
-  const [linkSentTo, setLinkSentTo] = useState<string | null>(null);
+  const [linkSentTo, setLinkSentTo] = useState<{ email: string; purpose: "sign-in" | "verify" } | null>(
+    null,
+  );
+  // The honeypot: a field people never see, so only bots fill it in.
+  const [website, setWebsite] = useState("");
 
   const afterSignUp =
     next ?? `/app/welcome?${new URLSearchParams({ organisation: organisation.trim() })}`;
@@ -50,13 +60,22 @@ export function SignUpForm({ next }: { next: string | null }) {
       callbackURL: afterSignUp,
       newUserCallbackURL: afterSignUp,
       errorCallbackURL: "/app/sign-in?error=link",
+      fetchOptions: { body: { website } },
     });
     setPending(null);
     if (error) {
-      setError(error.message ?? "We couldn't send the link. Try again.");
+      setError(messageOf(error, "We couldn't send the link. Try again."));
       return;
     }
-    setLinkSentTo(email);
+    setLinkSentTo({ email, purpose: "sign-in" });
+  }
+
+  /** The link that verifies a password sign-up; it signs in and continues to `afterSignUp`. */
+  async function resendVerification() {
+    setPending("password");
+    const { error } = await authClient.sendVerificationEmail({ email, callbackURL: afterSignUp });
+    setPending(null);
+    if (error) setError(messageOf(error, "We couldn't send the link. Try again."));
   }
 
   async function signUpWithPassword() {
@@ -70,13 +89,16 @@ export function SignUpForm({ next }: { next: string | null }) {
       name: email.split("@")[0],
       email,
       password,
+      // Where the verification link lands, signed in: always inside /app.
+      callbackURL: afterSignUp,
+      fetchOptions: { body: { website } },
     });
+    setPending(null);
     if (error) {
-      setPending(null);
-      setError(error.message ?? "We couldn't create your account. Try again.");
+      setError(messageOf(error, "We couldn't create your account. Try again."));
       return;
     }
-    router.push(afterSignUp);
+    setLinkSentTo({ email, purpose: "verify" });
   }
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
@@ -92,9 +114,10 @@ export function SignUpForm({ next }: { next: string | null }) {
   if (linkSentTo) {
     return (
       <CheckInbox
-        email={linkSentTo}
-        resending={pending === "link"}
-        onResend={() => void sendLink()}
+        email={linkSentTo.email}
+        purpose={linkSentTo.purpose}
+        resending={pending !== null}
+        onResend={() => void (linkSentTo.purpose === "verify" ? resendVerification() : sendLink())}
         onChangeEmail={() => setLinkSentTo(null)}
       />
     );
@@ -151,6 +174,18 @@ export function SignUpForm({ next }: { next: string | null }) {
               />
               <FieldDescription>At least 8 characters.</FieldDescription>
             </Field>
+            <div aria-hidden className="absolute -left-[9999px] size-px overflow-hidden">
+              <label htmlFor="website">Website</label>
+              <input
+                id="website"
+                name="website"
+                type="text"
+                tabIndex={-1}
+                autoComplete="off"
+                value={website}
+                onChange={(e) => setWebsite(e.target.value)}
+              />
+            </div>
             {error && <FieldError>{error}</FieldError>}
             <Field>
               <Button type="submit" value="password" disabled={pending !== null}>
@@ -174,6 +209,14 @@ export function SignUpForm({ next }: { next: string | null }) {
                 <Link href={next ? `/app/sign-in?${new URLSearchParams({ next })}` : "/app/sign-in"}>
                   Sign in
                 </Link>
+              </FieldDescription>
+              {/* Plain links: the legal pages are on the marketing site, under another root layout. */}
+              <FieldDescription className="text-center">
+                By creating an account you agree to the{" "}
+                {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+                <a href="/terms">Terms</a> and{" "}
+                {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+                <a href="/privacy">Privacy policy</a>.
               </FieldDescription>
             </Field>
           </FieldGroup>
