@@ -41,12 +41,32 @@ export function asUser(t: Backend, userId: string) {
   return t.withIdentity({ subject: userId, email: `${userId}@example.com` });
 }
 
-/** A user signs up and gets their own Organisation; returns them and its slug. */
-export async function signUp(t: Backend, userId: string, organisationName: string) {
+/**
+ * A user signs up and gets their own Organisation; returns them and its slug.
+ * The Organisation is put on the internal unlimited Plan so Pages never get in
+ * a test's way; pass `plan: null` to keep what a real sign-up gets (Free Pages).
+ */
+export async function signUp(
+  t: Backend,
+  userId: string,
+  organisationName: string,
+  { plan = "internal_unlimited" }: { plan?: "internal_unlimited" | null } = {},
+) {
   const user = asUser(t, userId);
   const { slug } = await user.mutation(api.onboarding.createOrganisation, {
     name: organisationName,
   });
+  if (plan !== null) {
+    await t.run(async (ctx) => {
+      const organisation = (await ctx.db
+        .query("organisations")
+        .withIndex("by_slug", (q) => q.eq("slug", slug))
+        .unique())!;
+      await ctx.db.patch(organisation._id, {
+        pages: { ...organisation.pages!, plan, periodEndsAt: null },
+      });
+    });
+  }
   return { user, slug };
 }
 

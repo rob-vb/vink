@@ -12,6 +12,7 @@ import { deliveriesOf } from "./deliveries";
 import { startExtraction } from "./extraction";
 import { countIn } from "./lib/documentStates";
 import { orgAction, orgMutation, orgQuery } from "./lib/functions";
+import { chargePages } from "./pages";
 import { pdfStore } from "./lib/pdfStore";
 import type { FlatField } from "./lib/pipeline";
 import {
@@ -103,6 +104,7 @@ export const insert = internalMutation({
     uploaderEmail: v.string(),
   },
   handler: async (ctx, args) => {
+    await chargePages(ctx, args.organisationId, args.pageCount);
     await createDocument(ctx, args);
   },
 });

@@ -50,6 +50,7 @@ import type * as memberships from "../memberships.js";
 import type * as notifications from "../notifications.js";
 import type * as onboarding from "../onboarding.js";
 import type * as organisations from "../organisations.js";
+import type * as pages from "../pages.js";
 import type * as proposalRun from "../proposalRun.js";
 import type * as rejection from "../rejection.js";
 import type * as retention from "../retention.js";
@@ -104,6 +105,7 @@ declare const fullApi: ApiFromModules<{
   notifications: typeof notifications;
   onboarding: typeof onboarding;
   organisations: typeof organisations;
+  pages: typeof pages;
   proposalRun: typeof proposalRun;
   rejection: typeof rejection;
   retention: typeof retention;

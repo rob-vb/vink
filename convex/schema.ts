@@ -77,6 +77,15 @@ export const review = v.object({
   at: v.number(),
 });
 
+export const planName = v.union(
+  v.literal("starter"),
+  v.literal("team"),
+  v.literal("business"),
+  v.literal("custom"),
+  // For Rob's own and test Organisations: never refuses, never on the site.
+  v.literal("internal_unlimited"),
+);
+
 // Every table except `organisations` itself carries an indexed `organisationId`.
 export default defineSchema({
   organisations: defineTable({
@@ -85,7 +94,31 @@ export default defineSchema({
     // Days a Document's data is kept after its last successful Delivery
     // (or its Approval, with no Integration). 30 when unset.
     retentionDays: v.optional(v.number()),
-  }).index("by_slug", ["slug"]),
+    // The user who created it, so only a user's first Organisation gets Free
+    // Pages. Unset for Organisations created before Plans.
+    createdBy: v.optional(v.string()),
+    // Its Plan and Pages (see pages.ts). Unset for Organisations created
+    // before Plans, which count as the internal unlimited Plan.
+    pages: v.optional(
+      v.object({
+        // `null`: no Plan, only Free Pages.
+        plan: v.union(planName, v.null()),
+        // Pages per period, and how many of them this period has used.
+        allowance: v.number(),
+        allowanceUsed: v.number(),
+        // When the period ends: the allowance renews and Top-ups expire.
+        // `null` without a period (no Plan, or internal unlimited).
+        periodEndsAt: v.union(v.number(), v.null()),
+        topUp: v.number(),
+        free: v.number(),
+        // Every Page charged this period (without a period: ever), for the 80% warning.
+        used: v.number(),
+      }),
+    ),
+  })
+    .index("by_slug", ["slug"])
+    .index("by_createdBy", ["createdBy"])
+    .index("by_periodEndsAt", ["pages.periodEndsAt"]),
 
   memberships: defineTable({
     organisationId: v.id("organisations"),
