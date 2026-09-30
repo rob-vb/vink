@@ -1,1 +1,46 @@
-{}
+{
+  "frame": {
+    "label": "Vink-demo met demodata",
+    "organisation": "Kantoor Noord",
+    "documents": "Documenten",
+    "forms": "Formulieren",
+    "integrations": "Koppelingen",
+    "members": "Leden",
+    "demoData": "Demodata",
+    "startOver": "Opnieuw beginnen"
+  },
+  "heading": {
+    "pagesLeft": "Nog 480 pagina's",
+    "extracting": "Wordt gelezen",
+    "emailIn": "Per e-mail",
+    "upload": "PDF's uploaden"
+  },
+  "pane": {
+    "previous": "Vorige pagina",
+    "next": "Volgende pagina",
+    "zoomIn": "Inzoomen",
+    "zoomOut": "Uitzoomen"
+  },
+  "toast": {
+    "approved": "{filename} is goedgekeurd.",
+    "nothingElse": "Er is niets meer te controleren.",
+    "ownAccount": "Uploaden en documenten mailen doe je in je eigen account.",
+    "extracting": "Er wordt nu niets gelezen. Nieuwe documenten staan hier zolang Vink ze leest."
+  },
+  "delivery": {
+    "integration": "Verstuurd naar je systeem"
+  },
+  "done": {
+    "eyebrow": "Niets meer te controleren",
+    "title": "Vijf documenten binnen. Niets overgetikt.",
+    "time": "jouw tijd",
+    "checked": "waarden gecontroleerd",
+    "read": "waarden gelezen door Vink",
+    "seconds": "{s}s",
+    "minutes": "{m}m {s}s",
+    "body": "Probeer het nu met je eigen documenten. 20 gratis pagina's. Geen creditcard.",
+    "startFree": "Gratis starten",
+    "lookAround": "Rondkijken",
+    "startOver": "Opnieuw beginnen"
+  }
+}

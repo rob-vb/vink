@@ -1,1 +1,181 @@
-{}
+{
+  "meta": {
+    "title": "Features",
+    "description": "How Vink turns any PDF, typed, scanned or handwritten, into clean data for your systems: upload or email it in, AI document data extraction into your own fields, you check only what's unsure, and approved data goes out as JSON."
+  },
+  "hero": {
+    "eyebrow": "Features",
+    "title": "Everything between the PDF and your system.",
+    "lede": "Four stops, from the PDF in your inbox to the data in your system. Watch one document go through, then open each stop.",
+    "startFree": "Start free",
+    "tryDemo": "Try the demo",
+    "note": "20 free pages. No credit card."
+  },
+  "video": {
+    "caption": "One PDF in, clean data out.",
+    "label": "A 15-second video: one PDF goes into Vink and comes out as clean data."
+  },
+  "frames": {
+    "documents": "/app/o/kantoor-noord",
+    "invoice": "/app/o/kantoor-noord/documents/jd72q8vn",
+    "delivery": "/app/o/kantoor-noord/documents/jd7f4mx1",
+    "upload": "/app/o/kantoor-noord/forms/invoices",
+    "form": "/app/o/kantoor-noord/forms/invoices",
+    "integration": "/app/o/kantoor-noord/integrations",
+    "members": "/app/o/kantoor-noord/members",
+    "settings": "/app/o/kantoor-noord/settings"
+  },
+  "stops": {
+    "arrives": {
+      "label": "It arrives",
+      "title": "Getting documents in.",
+      "lede": "Upload a stack or email them in. Any PDF, typed, scanned or handwritten."
+    },
+    "reads": {
+      "label": "Vink reads it",
+      "title": "Your fields, filled from the page.",
+      "lede": "You say once what you need. Vink finds it on every document, whatever the layout."
+    },
+    "check": {
+      "label": "You check",
+      "title": "You only check what's unsure.",
+      "lede": "Vink flags what it isn't sure about, and nothing goes out until someone approves it."
+    },
+    "lands": {
+      "label": "It lands",
+      "title": "Straight into your systems.",
+      "lede": "Approved data goes to your system as clean JSON, keyed by your own fields."
+    },
+    "around": {
+      "label": "Around it",
+      "title": "For the whole team, with data kept short.",
+      "lede": "Everyone who handles the documents, on every plan. And nothing kept longer than it has to be."
+    }
+  },
+  "intake": {
+    "title": "Upload it or email it in.",
+    "text": "Drag in several PDFs at once, or give a Form its own email address and let suppliers, scanners or other systems send documents straight in.",
+    "bullets": [
+      "Several PDFs in one go, each with its own progress and errors",
+      "One email address per Form, switched on by an Admin",
+      "Recent emails shows what came in, and what was refused and why",
+      "PDFs up to 20 pages each"
+    ],
+    "otherSources": "Other sources? Tell us.",
+    "alt": "The upload dialog with three PDFs, one of them refused for having more than 20 pages, next to a Form's email address and its recent emails.",
+    "placeholder": "Upload dialog and Intake Address"
+  },
+  "anyPdf": {
+    "title": "Any PDF. Even handwriting.",
+    "text": "Typed, scanned, faxed or filled in by hand; one page or a bundle of papers. All pages of a document fill one set of values.",
+    "bullets": [
+      "Handwriting, stamps and crossed-out numbers",
+      "Tables become lists: one entry per invoice line or order line",
+      "No template per layout: a new supplier's invoice just works"
+    ],
+    "alt": "Four documents: a typed invoice, a scanned two-page delivery note, a handwritten service request and a faxed order form."
+  },
+  "fields": {
+    "title": "Your fields, not a template.",
+    "text": "Describe the fields you need in plain words, or upload one sample PDF and Vink proposes them. You edit them, then save.",
+    "bullets": [
+      "Text, number, date, yes/no, choice and list fields",
+      "A short description per field guides the reading",
+      "Change a Form any time; each Document keeps the version it came in with"
+    ],
+    "alt": "The Form editor for Invoices with six fields, one of them a list, and the option to propose fields from a sample PDF.",
+    "placeholder": "Form editor"
+  },
+  "source": {
+    "title": "Every value, with its source.",
+    "text": "Each value shows the text as it was read and the page it came from. Click it and the PDF turns to that page.",
+    "bullets": [
+      "“Read on page N” next to every value",
+      "A confidence on every value, from 0 to 1",
+      "Conflicting readings are shown, not guessed away"
+    ],
+    "alt": "The review screen for a demo invoice: the page on the left, and every field on the right with what was read, on which page, and its confidence."
+  },
+  "review": {
+    "title": "Check only what's flagged.",
+    "text": "Vink flags a value when it's unsure, when it doesn't fit the field, when a required value is missing, or when two readings disagree. Confirm it or type the right value.",
+    "bullets": [
+      "A Review Threshold per Form, 0.80 by default",
+      "The reason next to every flag",
+      "Your corrections are never overwritten"
+    ],
+    "alt": "A demo delivery note with two values in Needs Review, each with its reason and a button to confirm it."
+  },
+  "approve": {
+    "title": "Nothing goes out without approval.",
+    "text": "Someone on your team approves each Document before it's sent. For Forms you trust, switch on Auto-Send: a Document then goes out by itself, but only when nothing on it needs review.",
+    "bullets": [
+      "Approve, or reject a blank or wrong document with a reason",
+      "Auto-Send is set per Form, and off until you switch it on",
+      "Every Approval records who and when"
+    ],
+    "alt": "The Approved tab of the Documents page: an invoice approved by hand and a receipt sent by Auto-Send."
+  },
+  "demo": {
+    "eyebrow": "Try it · demo data",
+    "title": "This morning's documents. Clear them.",
+    "text": "Five documents came in, and one was already approved automatically. Open the others, check what Vink flagged, and approve. This is the app itself, with demo data.",
+    "hint": "Click a value to turn to its page. Works on your phone too."
+  },
+  "deliver": {
+    "title": "Your system gets clean JSON.",
+    "text": "Approved data goes out keyed by your own fields. Your developer connects one webhook, or we build the connection for you.",
+    "bullets": [
+      "Signed requests, automatic retries, send again by hand",
+      "Test-send before you go live",
+      "One Integration can serve several Forms"
+    ],
+    "docs": "Read the developer docs",
+    "connection": "Ask about a connection",
+    "alt": "An Integration called Orders API with its recent Deliveries: delivered, delivered, retrying.",
+    "placeholder": "Integration and its Deliveries"
+  },
+  "team": {
+    "title": "Your whole team. No seat count.",
+    "text": "Invite colleagues as Admin or Member. Admins set up Forms and Integrations; Members upload, check and approve.",
+    "bullets": [
+      "Unlimited users on every plan",
+      "Several Organisations under one login",
+      "Each Organisation's data is kept apart"
+    ],
+    "alt": "The Members page with three people and a pending invitation.",
+    "placeholder": "Members"
+  },
+  "data": {
+    "title": "Your data, kept short.",
+    "text": "Stored in the EU and deleted 30 days after sending, unless you choose otherwise. An Admin can delete any Document right away.",
+    "bullets": [
+      "Retention set per Organisation",
+      "“Delete now” on any Document",
+      "A public list of who processes your data"
+    ],
+    "link": "Security & privacy",
+    "alt": "The Organisation's retention setting, and Delete now on a Document.",
+    "placeholder": "Retention settings"
+  },
+  "plans": {
+    "title": "Every plan includes everything.",
+    "text": "You only choose how many pages. Start with 20 free pages, no credit card.",
+    "includes": [
+      "Unlimited users",
+      "All Forms and Fields",
+      "Review and Approval",
+      "Integrations",
+      "Stored in the EU",
+      "30-day retention"
+    ],
+    "link": "See pricing"
+  },
+  "close": {
+    "title": "Stop retyping. Start with 20 pages.",
+    "text": "No credit card.",
+    "customer": "Already a customer?",
+    "login": "Log in",
+    "startFree": "Start free"
+  }
+}

@@ -6,6 +6,8 @@ import { NavLinks } from "./nav-links";
 import { Notifications } from "./notifications";
 import { UserMenu } from "./user-menu";
 
+// The header is mirrored in components/demo/demo-app-frame.tsx (the marketing
+// demo's app frame): update both.
 export default async function OrganisationLayout({
   children,
   params,

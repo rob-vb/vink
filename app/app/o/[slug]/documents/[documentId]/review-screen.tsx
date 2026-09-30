@@ -2,27 +2,28 @@
 
 import { useMutation, useQuery } from "convex/react";
 import { ConvexError } from "convex/values";
-import {
-  ArrowLeft,
-  Ban,
-  CircleAlert,
-  CircleCheck,
-  RotateCcw,
-  ShieldAlert,
-  TriangleAlert,
-} from "lucide-react";
+import { Ban, CircleAlert, RotateCcw, ShieldAlert, TriangleAlert } from "lucide-react";
 import dynamic from "next/dynamic";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { DeliveryRow, ResendButton } from "@/components/deliveries/delivery-log";
+import { ResendButton } from "@/components/deliveries/delivery-log";
+import {
+  ApprovalAlert,
+  ApproveBar,
+  DeliveriesSection,
+  FieldsToolbar,
+  HistorySection,
+  NothingLeftToReview,
+  ReviewColumns,
+  ReviewHeader,
+  type ReviewFilter,
+} from "@/components/documents/review-view";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
@@ -37,39 +38,15 @@ const PdfPane = dynamic(() => import("./pdf-pane"), {
   loading: () => <Skeleton className="h-full min-h-96 w-full" />,
 });
 
-const stateLabels = {
-  extracting: "Extracting",
-  needs_review: "Needs Review",
-  approved: "Approved",
-  extraction_failed: "Extraction Failed",
-  rejected: "Rejected",
-  deleted: "Deleted",
-} as const;
-
-const eventLabels = {
-  uploaded: "Uploaded",
-  extracted: "Extracted",
-  extraction_failed: "Extraction failed",
-  extraction_retried: "Extraction started again",
-  rejected: "Rejected",
-  reopened: "Reopened",
-  form_changed: "Form changed",
-  data_deleted: "Data deleted",
-  deleted: "Deleted",
-  corrected: "Corrected",
-  entry_added: "Entry added",
-  entry_removed: "Entry removed",
-  entry_restored: "Entry restored",
-  entries_confirmed: "Entries confirmed complete",
-  entries_unconfirmed: "Entries no longer confirmed",
-  approved: "Approved",
-} as const;
-
 const when = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" });
 
 /**
  * The review screen (review-screen prototype, variant A): the PDF on the left
  * and the Form's Fields on the right, stacked on mobile. Updates live.
+ *
+ * Its parts live in components/documents so the marketing demo (components/demo)
+ * renders the same screen with demo data; the PDF pane is mirrored there by
+ * components/demo/demo-pdf-pane.tsx. Update both.
  */
 export function ReviewScreen({
   organisationSlug,
@@ -89,7 +66,7 @@ export function ReviewScreen({
   const [urlFailed, setUrlFailed] = useState(false);
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<string | null>(null);
-  const [filter, setFilter] = useState<"all" | "needs_review">("all");
+  const [filter, setFilter] = useState<ReviewFilter>("all");
   const [approving, setApproving] = useState(false);
 
   const dataDeleted = document?.dataDeleted;
@@ -150,66 +127,57 @@ export function ReviewScreen({
 
   return (
     <main className="flex w-full flex-1 flex-col gap-4 px-4 py-4 md:px-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="-ml-2"
-            nativeButton={false}
-            render={<Link href={`/app/o/${organisationSlug}`} />}
-          >
-            <ArrowLeft />
-            Documents
-          </Button>
-          <div className="flex flex-wrap items-center gap-2">
-            <h1 className="truncate text-xl font-semibold">{document.filename}</h1>
-            <Badge variant={reviewing ? "default" : "secondary"}>{stateLabels[document.state]}</Badge>
-            {!document.jevVerified && (reviewing || document.state === "approved") && (
-              <Tooltip>
-                <TooltipTrigger render={<Badge variant="outline" className="cursor-help" />}>
-                  <ShieldAlert />
-                  Not verified by Jev
-                </TooltipTrigger>
-                <TooltipContent>
-                  Jev couldn&apos;t verify this Document, so it is never approved automatically.
-                </TooltipContent>
-              </Tooltip>
-            )}
-          </div>
-          <p className="text-sm text-muted-foreground">
-            {document.formName} v{document.formVersion} · {document.pageCount}{" "}
-            {document.pageCount === 1 ? "page" : "pages"}
-            {document.reviewThreshold !== null && <> · Review Threshold {threshold.toFixed(2)}</>}
-          </p>
-        </div>
-        {(reviewing || document.state === "extraction_failed" || deletable) && (
-          <div className="flex flex-wrap gap-2">
-            {(reviewing || document.state === "extraction_failed") && (
-              <>
-                <ChangeFormButton
-                  organisationSlug={organisationSlug}
-                  documentId={documentId}
-                  currentFormId={document.formId}
-                />
-                <RejectButton
+      <ReviewHeader
+        filename={document.filename}
+        state={document.state}
+        formName={document.formName}
+        formVersion={document.formVersion}
+        pageCount={document.pageCount}
+        reviewThreshold={document.reviewThreshold === null ? null : threshold}
+        backHref={`/app/o/${organisationSlug}`}
+        badges={
+          !document.jevVerified &&
+          (reviewing || document.state === "approved") && (
+            <Tooltip>
+              <TooltipTrigger render={<Badge variant="outline" className="cursor-help" />}>
+                <ShieldAlert />
+                Not verified by Jev
+              </TooltipTrigger>
+              <TooltipContent>
+                Jev couldn&apos;t verify this Document, so it is never approved automatically.
+              </TooltipContent>
+            </Tooltip>
+          )
+        }
+        actions={
+          (reviewing || document.state === "extraction_failed" || deletable) && (
+            <>
+              {(reviewing || document.state === "extraction_failed") && (
+                <>
+                  <ChangeFormButton
+                    organisationSlug={organisationSlug}
+                    documentId={documentId}
+                    currentFormId={document.formId}
+                  />
+                  <RejectButton
+                    organisationSlug={organisationSlug}
+                    documentId={documentId}
+                    filename={document.filename}
+                  />
+                </>
+              )}
+              {deletable && (
+                <DeleteButton
                   organisationSlug={organisationSlug}
                   documentId={documentId}
                   filename={document.filename}
+                  variant="outline"
                 />
-              </>
-            )}
-            {deletable && (
-              <DeleteButton
-                organisationSlug={organisationSlug}
-                documentId={documentId}
-                filename={document.filename}
-                variant="outline"
-              />
-            )}
-          </div>
-        )}
-      </div>
+              )}
+            </>
+          )
+        }
+      />
 
       {reviewing && document.doesNotFit && (
         <Alert className="border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
@@ -317,163 +285,89 @@ export function ReviewScreen({
         </Alert>
       )}
 
-      {document.approval && (
-        <Alert>
-          <CircleCheck />
-          <AlertTitle>Approved</AlertTitle>
-          <AlertDescription>
-            {document.approval.mode === "auto" ? "Automatically" : `By ${document.approval.by}`},{" "}
-            {when.format(document.approval.at)}.
-          </AlertDescription>
-        </Alert>
-      )}
+      {document.approval && <ApprovalAlert approval={document.approval} />}
 
-      <div className="grid flex-1 items-start gap-4 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
-        <div className="h-[55vh] lg:sticky lg:top-4 lg:h-[calc(100vh-7rem)]">
-          {document.dataDeleted ? (
-            <div className="flex h-full items-center justify-center rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
-              The PDF was deleted.
-            </div>
-          ) : url ? (
-            <PdfPane url={url} pageCount={document.pageCount} page={page} onPageChange={setPage} />
-          ) : urlFailed ? (
-            <div className="flex h-full items-center justify-center rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
-              The PDF couldn&apos;t be loaded.
-            </div>
-          ) : (
-            <Skeleton className="h-full" />
-          )}
-        </div>
-
-        <div className="flex min-w-0 flex-col gap-4">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 className="text-sm font-medium text-muted-foreground">Fields</h2>
-            <ToggleGroup
-              variant="outline"
-              size="sm"
-              value={[filter]}
-              onValueChange={(value) => value[0] && setFilter(value[0] as typeof filter)}
-            >
-              <ToggleGroupItem value="all">All fields</ToggleGroupItem>
-              <ToggleGroupItem value="needs_review">
-                Needs Review only
-                <Badge variant="secondary" className="tabular-nums">
-                  {left}
-                </Badge>
-              </ToggleGroupItem>
-            </ToggleGroup>
-          </div>
-
-          <div className="relative overflow-hidden rounded-lg border bg-card">
-            {document.state === "extracting" && (
-              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-background/80 p-6 text-center backdrop-blur-[1px]">
-                <Spinner />
-                <p className="text-sm font-medium">Vink is reading this Document</p>
-                <p className="text-xs text-muted-foreground">
-                  This can take up to a minute. The Fields fill in here when it&apos;s done.
-                </p>
+      <ReviewColumns
+        pdf={
+          <div className="h-[55vh] lg:sticky lg:top-4 lg:h-[calc(100vh-7rem)]">
+            {document.dataDeleted ? (
+              <div className="flex h-full items-center justify-center rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+                The PDF was deleted.
               </div>
-            )}
-            {document.state === "extracting" && document.fieldValues.length === 0 ? (
-              <div className="grid gap-3 p-4" aria-hidden>
-                {[0, 1, 2, 3].map((i) => (
-                  <Skeleton key={i} className="h-12" />
-                ))}
+            ) : url ? (
+              <PdfPane url={url} pageCount={document.pageCount} page={page} onPageChange={setPage} />
+            ) : urlFailed ? (
+              <div className="flex h-full items-center justify-center rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+                The PDF couldn&apos;t be loaded.
               </div>
-            ) : rows.length === 0 && lists.length === 0 ? (
-              <p className="p-6 text-center text-sm text-muted-foreground">
-                Nothing left to review.
-              </p>
             ) : (
-              rows.map((fieldValue) => (
-                <FieldRow
-                  key={fieldValue.id}
-                  organisationSlug={organisationSlug}
-                  fieldValue={fieldValue}
-                  threshold={threshold}
-                  disabled={!reviewing}
-                  selected={selected === fieldValue.id}
-                  onSelect={() => select(fieldValue.id, fieldValue.pages)}
-                />
-              ))
+              <Skeleton className="h-full" />
             )}
           </div>
+        }
+      >
+        <FieldsToolbar filter={filter} onFilterChange={setFilter} left={left} />
 
-          {lists.map((list) => (
-            <ListGroup
-              key={list.key}
-              organisationSlug={organisationSlug}
-              documentId={documentId}
-              list={list}
-              threshold={threshold}
-              disabled={!reviewing}
-              filter={filter}
-              selected={selected}
-              onSelect={select}
-            />
-          ))}
-
-          {reviewing && (
-            <div className="sticky bottom-4 z-20 flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-background p-3 shadow-md">
-              <p className="text-sm text-muted-foreground">
-                {left === 0
-                  ? "Everything is checked."
-                  : `${left} ${left === 1 ? "value needs" : "values need"} review before Approval.`}
+        <div className="relative overflow-hidden rounded-lg border bg-card">
+          {document.state === "extracting" && (
+            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-background/80 p-6 text-center backdrop-blur-[1px]">
+              <Spinner />
+              <p className="text-sm font-medium">Vink is reading this Document</p>
+              <p className="text-xs text-muted-foreground">
+                This can take up to a minute. The Fields fill in here when it&apos;s done.
               </p>
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  variant="outline"
-                  disabled={left > 0 || approving}
-                  onClick={() => approveThen(true)}
-                >
-                  Approve and next
-                </Button>
-                <Button disabled={left > 0 || approving} onClick={() => approveThen(false)}>
-                  {left > 0 ? `Approve (${left} left)` : "Approve and send"}
-                </Button>
-              </div>
             </div>
           )}
-
-          {document.deliveries.length > 0 && (
-            <section aria-labelledby="deliveries" className="overflow-hidden rounded-lg border">
-              <h2 id="deliveries" className="border-b px-4 py-3 text-sm font-medium">
-                Deliveries
-              </h2>
-              {document.deliveries.map((delivery) => (
-                <DeliveryRow
-                  key={delivery.id}
-                  delivery={delivery}
-                  title={delivery.integrationName}
-                  actions={
-                    isAdmin && <ResendButton organisationSlug={organisationSlug} delivery={delivery} />
-                  }
-                />
+          {document.state === "extracting" && document.fieldValues.length === 0 ? (
+            <div className="grid gap-3 p-4" aria-hidden>
+              {[0, 1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-12" />
               ))}
-            </section>
+            </div>
+          ) : rows.length === 0 && lists.length === 0 ? (
+            <NothingLeftToReview />
+          ) : (
+            rows.map((fieldValue) => (
+              <FieldRow
+                key={fieldValue.id}
+                organisationSlug={organisationSlug}
+                fieldValue={fieldValue}
+                threshold={threshold}
+                disabled={!reviewing}
+                selected={selected === fieldValue.id}
+                onSelect={() => select(fieldValue.id, fieldValue.pages)}
+              />
+            ))
           )}
-
-          <section aria-labelledby="history" className="rounded-lg border p-4">
-            <h2 id="history" className="mb-3 text-sm font-medium">
-              History
-            </h2>
-            <ol className="grid gap-2 text-sm">
-              {document.history.map((entry, i) => (
-                <li key={i} className="flex flex-wrap justify-between gap-x-4">
-                  <span>
-                    {eventLabels[entry.event]}
-                    {entry.detail && <span className="text-muted-foreground"> · {entry.detail}</span>}
-                    <span className="text-muted-foreground"> · {entry.by}</span>
-                  </span>
-                  <time className="text-muted-foreground tabular-nums" dateTime={new Date(entry.at).toISOString()}>
-                    {when.format(entry.at)}
-                  </time>
-                </li>
-              ))}
-            </ol>
-          </section>
         </div>
-      </div>
+
+        {lists.map((list) => (
+          <ListGroup
+            key={list.key}
+            organisationSlug={organisationSlug}
+            documentId={documentId}
+            list={list}
+            threshold={threshold}
+            disabled={!reviewing}
+            filter={filter}
+            selected={selected}
+            onSelect={select}
+          />
+        ))}
+
+        {reviewing && <ApproveBar left={left} approving={approving} onApprove={approveThen} />}
+
+        {document.deliveries.length > 0 && (
+          <DeliveriesSection
+            deliveries={document.deliveries}
+            actions={(delivery) =>
+              isAdmin && <ResendButton organisationSlug={organisationSlug} delivery={delivery} />
+            }
+          />
+        )}
+
+        <HistorySection history={document.history} />
+      </ReviewColumns>
     </main>
   );
 }

@@ -2,8 +2,9 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-/* `.light-island` keeps screenshots, product mocks and paper documents light in dark mode. */
-@custom-variant dark (&:is(.dark *):not(.light-island, .light-island *));
+/* `.light` and `.light-island` keep a subtree light in dark mode: screenshots,
+   product mocks, the app parts rendered on the Features page, paper documents. */
+@custom-variant dark (&:is(.dark *):not(:is(.light, .light *, .light-island, .light-island *)));
 
 @theme inline {
   --color-navy: var(--navy);
@@ -54,7 +55,8 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-:root {
+:root,
+.light {
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);

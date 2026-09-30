@@ -1,1 +1,181 @@
-{}
+{
+  "meta": {
+    "title": "Functies",
+    "description": "Hoe Vink elke pdf, getypt, gescand of handgeschreven, omzet in schone data voor je systemen: uploaden of mailen, AI-data-extractie naar je eigen velden, alleen controleren wat onzeker is, en goedgekeurde data gaat als JSON naar je systeem."
+  },
+  "hero": {
+    "eyebrow": "Functies",
+    "title": "Alles tussen de pdf en je systeem.",
+    "lede": "Vier stappen, van de pdf in je inbox tot de data in je systeem. Kijk hoe één document erdoorheen gaat en open daarna elke stap.",
+    "startFree": "Gratis starten",
+    "tryDemo": "Probeer de demo",
+    "note": "20 gratis pagina's. Geen creditcard."
+  },
+  "video": {
+    "caption": "Eén pdf erin, schone data eruit.",
+    "label": "Een video van 15 seconden: één pdf gaat Vink in en komt eruit als schone data."
+  },
+  "frames": {
+    "documents": "/app/o/kantoor-noord",
+    "invoice": "/app/o/kantoor-noord/documents/jd72q8vn",
+    "delivery": "/app/o/kantoor-noord/documents/jd7f4mx1",
+    "upload": "/app/o/kantoor-noord/forms/invoices",
+    "form": "/app/o/kantoor-noord/forms/invoices",
+    "integration": "/app/o/kantoor-noord/integrations",
+    "members": "/app/o/kantoor-noord/members",
+    "settings": "/app/o/kantoor-noord/settings"
+  },
+  "stops": {
+    "arrives": {
+      "label": "Het komt binnen",
+      "title": "Documenten naar binnen.",
+      "lede": "Upload een stapel of mail ze in. Elke pdf, getypt, gescand of handgeschreven."
+    },
+    "reads": {
+      "label": "Vink leest het",
+      "title": "Jouw velden, ingevuld vanaf de pagina.",
+      "lede": "Je zegt één keer wat je nodig hebt. Vink vindt het op elk document, hoe het er ook uitziet."
+    },
+    "check": {
+      "label": "Jij controleert",
+      "title": "Je controleert alleen wat onzeker is.",
+      "lede": "Vink markeert waar het niet zeker van is, en er gaat niets weg voordat iemand het goedkeurt."
+    },
+    "lands": {
+      "label": "Het komt aan",
+      "title": "Rechtstreeks in je systemen.",
+      "lede": "Goedgekeurde data gaat als schone JSON naar je systeem, met je eigen veldnamen."
+    },
+    "around": {
+      "label": "Eromheen",
+      "title": "Voor het hele team, en data niet langer dan nodig.",
+      "lede": "Iedereen die met de documenten werkt, op elk abonnement. En niets wordt langer bewaard dan nodig."
+    }
+  },
+  "intake": {
+    "title": "Upload het of mail het in.",
+    "text": "Sleep meerdere pdf's tegelijk naar binnen, of geef een Formulier een eigen e-mailadres en laat leveranciers, scanners of andere systemen documenten direct insturen.",
+    "bullets": [
+      "Meerdere pdf's in één keer, elk met eigen voortgang en foutmeldingen",
+      "Eén e-mailadres per Formulier, aangezet door een Admin",
+      "Recente e-mails laat zien wat er binnenkwam, en wat is geweigerd en waarom",
+      "Pdf's tot 20 pagina's per stuk"
+    ],
+    "otherSources": "Andere bronnen? Laat het ons weten.",
+    "alt": "Het uploadvenster met drie pdf's, waarvan één geweigerd omdat hij meer dan 20 pagina's heeft, naast het e-mailadres van een Formulier en de recente e-mails.",
+    "placeholder": "Uploadvenster en e-mailadres"
+  },
+  "anyPdf": {
+    "title": "Elke pdf. Ook handschrift.",
+    "text": "Getypt, gescand, gefaxt of met de hand ingevuld; één pagina of een bundel papieren. Alle pagina's van een document vullen één set waarden.",
+    "bullets": [
+      "Handschrift, stempels en doorgestreepte getallen",
+      "Tabellen worden lijsten: één regel per factuur- of bestelregel",
+      "Geen sjabloon per lay-out: de factuur van een nieuwe leverancier werkt meteen"
+    ],
+    "alt": "Vier documenten: een getypte factuur, een gescande pakbon van twee pagina's, een handgeschreven serviceverzoek en een gefaxt bestelformulier."
+  },
+  "fields": {
+    "title": "Jouw velden, geen sjabloon.",
+    "text": "Beschrijf in gewone woorden welke velden je nodig hebt, of upload één voorbeeld-pdf en Vink stelt ze voor. Jij past ze aan en slaat ze op.",
+    "bullets": [
+      "Tekst, getal, datum, ja/nee, keuze en lijst",
+      "Een korte beschrijving per veld stuurt het lezen",
+      "Pas een Formulier aan wanneer je wilt; elk Document houdt de versie waarmee het binnenkwam"
+    ],
+    "alt": "De Formulier-editor voor Facturen met zes velden, waarvan één een lijst, en de optie om velden voor te stellen vanuit een voorbeeld-pdf.",
+    "placeholder": "Formulier-editor"
+  },
+  "source": {
+    "title": "Elke waarde, met de bron erbij.",
+    "text": "Bij elke waarde zie je de tekst zoals die gelezen is en de pagina waar die vandaan komt. Klik erop en de pdf slaat die pagina open.",
+    "bullets": [
+      "„Gelezen op pagina N” bij elke waarde",
+      "Een zekerheid bij elke waarde, van 0 tot 1",
+      "Tegenstrijdige lezingen worden getoond, niet weggegokt"
+    ],
+    "alt": "Het controlescherm voor een demofactuur: links de pagina, rechts elk veld met wat er gelezen is, op welke pagina, en de zekerheid."
+  },
+  "review": {
+    "title": "Controleer alleen wat gemarkeerd is.",
+    "text": "Vink markeert een waarde als het onzeker is, als die niet bij het veld past, als een verplichte waarde ontbreekt of als twee lezingen elkaar tegenspreken. Bevestig hem of typ de juiste waarde.",
+    "bullets": [
+      "Een Controledrempel per Formulier, standaard 0,80",
+      "De reden naast elke markering",
+      "Jouw correcties worden nooit overschreven"
+    ],
+    "alt": "Een demopakbon met twee waarden om te controleren, elk met de reden en een knop om hem te bevestigen."
+  },
+  "approve": {
+    "title": "Niets gaat weg zonder goedkeuring.",
+    "text": "Iemand in je team keurt elk Document goed voordat het verstuurd wordt. Voor Formulieren die je vertrouwt zet je Auto-Send aan: een Document gaat dan vanzelf weg, maar alleen als er niets op te controleren is.",
+    "bullets": [
+      "Goedkeuren, of een leeg of verkeerd document afwijzen met een reden",
+      "Auto-Send stel je per Formulier in, en staat uit tot jij het aanzet",
+      "Bij elke Goedkeuring staat wie en wanneer"
+    ],
+    "alt": "Het tabblad Goedgekeurd op de Documentenpagina: een factuur die met de hand is goedgekeurd en een bon die via Auto-Send is verstuurd."
+  },
+  "demo": {
+    "eyebrow": "Probeer het · demodata",
+    "title": "De documenten van vanochtend. Werk ze weg.",
+    "text": "Er kwamen vijf documenten binnen, en één is al automatisch goedgekeurd. Open de andere, controleer wat Vink markeerde en keur goed. Dit is de app zelf, met demodata.",
+    "hint": "Klik op een waarde om naar de pagina te gaan. Werkt ook op je telefoon."
+  },
+  "deliver": {
+    "title": "Je systeem krijgt schone JSON.",
+    "text": "Goedgekeurde data gaat weg met je eigen veldnamen. Je ontwikkelaar koppelt één webhook, of wij bouwen de koppeling voor je.",
+    "bullets": [
+      "Ondertekende verzoeken, automatische nieuwe pogingen, opnieuw versturen met de hand",
+      "Test-verzending voordat je live gaat",
+      "Eén Koppeling kan meerdere Formulieren bedienen"
+    ],
+    "docs": "Lees de documentatie voor ontwikkelaars",
+    "connection": "Vraag naar een koppeling",
+    "alt": "Een Koppeling genaamd Orders API met de recente Leveringen: afgeleverd, afgeleverd, nieuwe poging.",
+    "placeholder": "Koppeling en Leveringen"
+  },
+  "team": {
+    "title": "Je hele team. Geen prijs per gebruiker.",
+    "text": "Nodig collega's uit als Admin of Lid. Admins richten Formulieren en Koppelingen in; Leden uploaden, controleren en keuren goed.",
+    "bullets": [
+      "Onbeperkt gebruikers op elk abonnement",
+      "Meerdere Organisaties onder één login",
+      "De data van elke Organisatie blijft gescheiden"
+    ],
+    "alt": "De Ledenpagina met drie mensen en een openstaande uitnodiging.",
+    "placeholder": "Leden"
+  },
+  "data": {
+    "title": "Je data, kort bewaard.",
+    "text": "Opgeslagen in de EU en 30 dagen na verzending verwijderd, tenzij je anders kiest. Een Admin kan elk Document direct verwijderen.",
+    "bullets": [
+      "Bewaartermijn per Organisatie in te stellen",
+      "„Nu verwijderen” bij elk Document",
+      "Een openbare lijst van wie je data verwerkt"
+    ],
+    "link": "Beveiliging en privacy",
+    "alt": "De bewaartermijn van de Organisatie, en Nu verwijderen bij een Document.",
+    "placeholder": "Bewaartermijn"
+  },
+  "plans": {
+    "title": "Elk abonnement bevat alles.",
+    "text": "Je kiest alleen hoeveel pagina's. Begin met 20 gratis pagina's, zonder creditcard.",
+    "includes": [
+      "Onbeperkt gebruikers",
+      "Alle Formulieren en velden",
+      "Controle en Goedkeuring",
+      "Koppelingen",
+      "Opgeslagen in de EU",
+      "30 dagen bewaartermijn"
+    ],
+    "link": "Bekijk de prijzen"
+  },
+  "close": {
+    "title": "Stop met overtikken. Begin met 20 pagina's.",
+    "text": "Geen creditcard.",
+    "customer": "Al klant?",
+    "login": "Inloggen",
+    "startFree": "Gratis starten"
+  }
+}
