@@ -1,10 +1,506 @@
+import { existsSync } from "node:fs";
+import { join } from "node:path";
+import { ArrowRight, Mail, Play, Upload } from "lucide-react";
+import type { Metadata } from "next";
 import { useTranslations } from "next-intl";
+import { getTranslations } from "next-intl/server";
+import type { ReactNode } from "react";
+import { Badge } from "@/components/ui/badge";
+import { buttonVariants } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ClosingCard, Faq, FounderBlock, StartFree, TrustRow } from "@/components/marketing/blocks";
+import { VinkMark } from "@/components/marketing/brand";
+import { CodeBlock, PostBar } from "@/components/marketing/code-block";
+import { JsonLd } from "@/components/marketing/json-ld";
+import { FieldsMock, ReviewScreenMock } from "@/components/marketing/review-mock";
+import { sampleDocument, sampleDocuments } from "@/components/marketing/sample-documents";
+import { ScreenshotFrame } from "@/components/marketing/screenshot-frame";
+import { Container, Eyebrow, SectionHeading } from "@/components/marketing/section";
+import { Link } from "@/i18n/navigation";
+import { isLocale, routing, type Locale } from "@/i18n/routing";
+import { custom, formatEuro, formatNumber, perPage, plans } from "@/lib/plans";
+import { sampleEnvelopeJson } from "@/lib/sample-payload";
+import { localeUrl, pageMetadata } from "@/lib/seo";
+import { absoluteUrl, FOUNDER_EMAIL } from "@/lib/site";
+import { cn } from "@/lib/utils";
 
-export default function Home() {
-  const t = useTranslations("home");
+function localeOf(value: string): Locale {
+  return isLocale(value) ? value : routing.defaultLocale;
+}
+
+export async function generateMetadata({ params }: PageProps<"/[locale]">): Promise<Metadata> {
+  const { locale } = await params;
+  return pageMetadata({ locale: localeOf(locale), path: "/", ns: "home", absoluteTitle: true });
+}
+
+const moreLink =
+  "inline-flex items-center gap-1.5 font-semibold text-foreground underline-offset-4 hover:underline [&_svg]:size-4";
+
+export default async function Home({ params }: PageProps<"/[locale]">) {
+  const locale = localeOf((await params).locale);
+  const t = await getTranslations({ locale, namespace: "home" });
   return (
-    <main className="mx-auto max-w-3xl p-8">
-      <h1 className="text-4xl font-semibold">{t("title")}</h1>
+    <main>
+      <JsonLd
+        data={[
+          {
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            name: "Vink",
+            url: absoluteUrl("/"),
+            logo: absoluteUrl("/vink_icon.svg"),
+            email: FOUNDER_EMAIL,
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            name: "Vink",
+            url: localeUrl(locale, "/"),
+            inLanguage: locale,
+            description: t("meta.description"),
+          },
+        ]}
+      />
+      <Hero />
+      <section className="border-y bg-panel py-5">
+        <Container>
+          <TrustRow />
+        </Container>
+      </section>
+      <Video />
+      <Journey />
+      <Connect />
+      <DataKeptShort />
+      <PricingRow locale={locale} />
+      <FounderAndFaq />
+      <ClosingCard location="home" />
     </main>
+  );
+}
+
+function Hero() {
+  const t = useTranslations("home.hero");
+  const tc = useTranslations("common.cta");
+  return (
+    <section className="overflow-hidden pt-12 pb-14 sm:pt-20 sm:pb-20">
+      <Container className="grid items-center gap-12 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-14">
+        <div>
+          <h1 className="text-[3.25rem] leading-[0.98] font-semibold tracking-[-0.035em] sm:text-7xl lg:text-[5.25rem]">
+            <span className="block">{t("document")}</span>
+            <span className="flex items-baseline gap-[0.14em]">
+              {t("vink")}
+              <VinkMark className="h-[0.6em] w-auto text-navy" />
+            </span>
+            <span className="block">{t("done")}</span>
+          </h1>
+          <p className="mt-6 max-w-[44ch] text-lg text-pretty text-muted-foreground">{t("subtitle")}</p>
+          <div className="mt-8 flex flex-wrap items-center gap-3">
+            <StartFree location="home-hero" size="xl" note={false} />
+            <a href="#video" className={buttonVariants({ variant: "outline", size: "lg", className: "h-11 px-4 text-base" })}>
+              <Play className="fill-current" />
+              {t("watch")}
+            </a>
+          </div>
+          <p className="mt-3 text-sm text-muted-foreground">{tc("freeNote")}</p>
+        </div>
+        <ScreenshotFrame
+          title="Needs Review · invoice-F-2026-0418.pdf"
+          bodyClassName="max-h-[790px] overflow-hidden [zoom:0.8] sm:[zoom:0.78]"
+        >
+          <ReviewScreenMock document={sampleDocument("invoice")} label={t("screenLabel")} />
+        </ScreenshotFrame>
+      </Container>
+    </section>
+  );
+}
+
+/**
+ * The 15-second video. TODO(video): Rob records it and adds
+ * public/video/vink-15s.mp4 (plus public/video/vink-15s.jpg as the poster);
+ * until then a labelled placeholder shows.
+ */
+function Video() {
+  const t = useTranslations("home.video");
+  const hasVideo = existsSync(join(process.cwd(), "public/video/vink-15s.mp4"));
+  const hasPoster = existsSync(join(process.cwd(), "public/video/vink-15s.jpg"));
+  return (
+    <section id="video" className="scroll-mt-20 py-16 sm:py-24">
+      <Container>
+        <SectionHeading title={t("title")} subtitle={t("subtitle")} center className="mb-10" />
+        <ScreenshotFrame title="Vink · 0:15" className="mx-auto max-w-4xl">
+          {hasVideo ? (
+            <video
+              className="aspect-video w-full bg-white"
+              src="/video/vink-15s.mp4"
+              poster={hasPoster ? "/video/vink-15s.jpg" : undefined}
+              controls
+              muted
+              playsInline
+              preload="metadata"
+              aria-label={t("label")}
+            />
+          ) : (
+            <div
+              data-todo="video public/video/vink-15s.mp4"
+              role="img"
+              aria-label={t("label")}
+              className="relative grid aspect-video place-items-center overflow-hidden bg-[#f5f7fa]"
+            >
+              <div className="absolute inset-0 grid grid-cols-[2fr_3fr] gap-4 p-6 opacity-40 blur-[1px]" aria-hidden>
+                <div className="[zoom:0.7]">{sampleDocument("deliveryNote").paper}</div>
+                <FieldsMock fields={sampleDocument("deliveryNote").fields.slice(0, 4)} stacked />
+              </div>
+              <div className="relative flex flex-col items-center gap-3">
+                <span className="grid size-16 place-items-center rounded-full bg-[#0f1e36] text-white shadow-lg">
+                  <Play className="size-6 translate-x-0.5 fill-current" />
+                </span>
+                <span className="rounded-full border border-dashed border-[#c5ccd6] bg-white px-3 py-1 font-mono text-[11px] tracking-wide text-[#5b6577] uppercase">
+                  0:15 · {t("placeholder")}
+                </span>
+              </div>
+            </div>
+          )}
+        </ScreenshotFrame>
+      </Container>
+    </section>
+  );
+}
+
+function Stop({
+  pin,
+  kicker,
+  title,
+  body,
+  extra,
+  visual,
+}: {
+  pin: ReactNode;
+  kicker: string;
+  title: string;
+  body: string;
+  extra?: ReactNode;
+  visual: ReactNode;
+}) {
+  return (
+    <li className="relative grid gap-8 pl-14 sm:pl-16 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.25fr)] lg:gap-12">
+      <span className="absolute top-0 left-0 grid size-10 place-items-center rounded-full border-[1.5px] border-foreground/80 bg-background font-mono text-sm font-medium">
+        {pin}
+      </span>
+      <div className="min-w-0">
+        <Eyebrow>{kicker}</Eyebrow>
+        <h3 className="mt-2 text-2xl font-semibold tracking-tight sm:text-[1.75rem]">{title}</h3>
+        <p className="mt-3 max-w-[46ch] text-muted-foreground">{body}</p>
+        {extra}
+      </div>
+      <div className="min-w-0">{visual}</div>
+    </li>
+  );
+}
+
+function Journey() {
+  const t = useTranslations("home");
+  const invoice = sampleDocument("invoice");
+  const delivery = sampleDocument("deliveryNote");
+  const checking = [
+    delivery.fields.find((f) => f.key === "customer_reference")!,
+    delivery.fields.find((f) => f.key === "pallets")!,
+    { ...delivery.fields.find((f) => f.key === "received_by")!, checked: true },
+  ];
+  return (
+    <section className="pb-16 sm:pb-24">
+      <Container>
+        <SectionHeading title={t("journey.title")} subtitle={t("journey.subtitle")} className="mb-14" />
+        <ol className="relative flex flex-col gap-20 before:absolute before:top-2 before:bottom-2 before:left-[19px] before:border-l before:border-dashed before:border-foreground/25">
+          <Stop
+            pin="1"
+            kicker={t("journey.arrives.kicker")}
+            title={t("journey.arrives.title")}
+            body={t("journey.arrives.body")}
+            extra={
+              <p className="mt-4 flex max-w-[46ch] gap-3 text-[15px]">
+                <span className="mt-0.5 flex shrink-0 gap-1 text-muted-foreground" aria-hidden>
+                  <Upload className="size-4" />
+                  <Mail className="size-4" />
+                </span>
+                {t("journey.arrives.intake")}
+              </p>
+            }
+            visual={
+              <div className="light-island rounded-2xl bg-panel p-4 sm:p-6">
+                <div className="grid grid-cols-3 gap-3 sm:gap-4">
+                  {(["invoice", "deliveryNote", "handwritten"] as const).map((id) => (
+                    <div key={id} className="[zoom:0.42] sm:[zoom:0.5]">
+                      {sampleDocument(id).paper}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            }
+          />
+          <Stop
+            pin="2"
+            kicker={t("journey.reads.kicker")}
+            title={t("journey.reads.title")}
+            body={t("journey.reads.body")}
+            extra={
+              <Link href="/features#demo" className={cn(moreLink, "mt-4")}>
+                {t("journey.reads.demo")}
+                <ArrowRight />
+              </Link>
+            }
+            visual={
+              <Tabs defaultValue="invoice" className="gap-4">
+                <TabsList aria-label={t("tabs.label")} className="h-auto flex-wrap">
+                  {sampleDocuments.map((doc) => (
+                    <TabsTrigger key={doc.id} value={doc.id} className="px-3">
+                      {t(`tabs.${doc.id}`)}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+                {sampleDocuments.map((doc) => (
+                  <TabsContent key={doc.id} value={doc.id} keepMounted className="data-hidden:hidden">
+                    <div className="light-island grid gap-4 rounded-2xl bg-panel p-4 sm:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] sm:p-5">
+                      <div className="mx-auto w-full max-w-60 [zoom:0.75] sm:max-w-none">{doc.paper}</div>
+                      <FieldsMock fields={doc.fields} stacked className="self-start" />
+                    </div>
+                  </TabsContent>
+                ))}
+              </Tabs>
+            }
+          />
+          <Stop
+            pin={<VinkMark className="h-4 w-auto text-navy" />}
+            kicker={t("journey.check.kicker")}
+            title={t("journey.check.title")}
+            body={t("journey.check.body")}
+            visual={
+              <ScreenshotFrame title={`Needs Review · ${delivery.file}`}>
+                <div className="p-3 sm:p-4">
+                  <FieldsMock fields={checking} />
+                </div>
+              </ScreenshotFrame>
+            }
+          />
+          <Stop
+            pin="4"
+            kicker={t("journey.lands.kicker")}
+            title={t("journey.lands.title")}
+            body={t("journey.lands.body")}
+            visual={<DeliveriesMock files={[invoice.file, delivery.file, sampleDocument("orderForm").file]} />}
+          />
+        </ol>
+      </Container>
+    </section>
+  );
+}
+
+/** Mirrors the app's Delivery rows (components/deliveries/delivery-log.tsx). */
+function DeliveriesMock({ files }: { files: string[] }) {
+  const rows = [
+    { file: files[0], note: "Approved by Anouk · 08:14", state: "Delivered" },
+    { file: files[1], note: "Auto-Send · 08:02", state: "Delivered" },
+    { file: files[2], note: "The receiver answered 503. Next try 08:53.", state: "Retrying" },
+  ];
+  return (
+    <ScreenshotFrame title="Integration · Orders API">
+      <div className="p-3 sm:p-4">
+        <section className="overflow-hidden rounded-lg border bg-card">
+          <p className="border-b px-4 py-3 text-sm font-medium">Deliveries</p>
+          {rows.map((row) => (
+            <div key={row.file} className="border-b px-4 py-2.5 last:border-b-0">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+                <span className="min-w-0 truncate font-medium">{row.file}</span>
+                <Badge
+                  variant="outline"
+                  className={
+                    row.state === "Delivered"
+                      ? "border-emerald-300 text-emerald-700"
+                      : "border-amber-300 text-amber-700"
+                  }
+                >
+                  {row.state}
+                </Badge>
+              </div>
+              <p className="mt-0.5 text-xs text-muted-foreground">{row.note}</p>
+            </div>
+          ))}
+        </section>
+      </div>
+    </ScreenshotFrame>
+  );
+}
+
+function Connect() {
+  const t = useTranslations("home.connect");
+  return (
+    <section className="border-y bg-panel/60 py-16 sm:py-24">
+      <Container>
+        <SectionHeading title={t("title")} subtitle={t("subtitle")} className="mb-10" />
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
+          <div className="flex min-w-0 flex-col gap-4 rounded-2xl border bg-card p-6 sm:p-8">
+            <Eyebrow>{t("dev.eyebrow")}</Eyebrow>
+            <h3 className="text-2xl font-semibold tracking-tight">{t("dev.title")}</h3>
+            <p className="text-muted-foreground">{t("dev.body")}</p>
+            <CodeBlock
+              code={sampleEnvelopeJson}
+              language="json"
+              header={<PostBar url="https://your-system.example/vink" />}
+              maxHeight="300px"
+            />
+            <Link href="/developers" className={moreLink}>
+              {t("dev.link")}
+              <ArrowRight />
+            </Link>
+          </div>
+          <div className="flex flex-col gap-4 rounded-2xl bg-[#0f1e36] p-6 text-white sm:p-8 dark:bg-[#13223c]">
+            <p className="font-mono text-xs font-medium tracking-[0.08em] text-white/70 uppercase">{t("service.eyebrow")}</p>
+            <h3 className="text-2xl font-semibold tracking-tight">{t("service.title")}</h3>
+            <p className="text-white/80">{t("service.body")}</p>
+            <ul className="flex flex-col gap-2 text-[15px] text-white/90">
+              {(["point1", "point2", "point3"] as const).map((key) => (
+                <li key={key} className="flex gap-2.5">
+                  <VinkMark className="mt-1 h-3 w-auto shrink-0 text-white" />
+                  {t(`service.${key}`)}
+                </li>
+              ))}
+            </ul>
+            <Link
+              href="/developers#integration-service"
+              className={buttonVariants({
+                size: "lg",
+                className: "mt-auto h-10 self-start bg-white px-4 !text-[#0f1e36] hover:bg-white/90",
+              })}
+            >
+              {t("service.cta")}
+            </Link>
+          </div>
+        </div>
+      </Container>
+    </section>
+  );
+}
+
+/** Mirrors the "Data retention" card in the app's Organisation settings. */
+function DataKeptShort() {
+  const t = useTranslations("home.data");
+  return (
+    <section className="py-16 sm:py-24">
+      <Container className="grid items-center gap-10 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:gap-14">
+        <div>
+          <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">{t("title")}</h2>
+          <p className="mt-3 max-w-[44ch] text-lg text-muted-foreground">{t("body")}</p>
+          <Link href="/security" className={cn(moreLink, "mt-5")}>
+            {t("link")}
+            <ArrowRight />
+          </Link>
+        </div>
+        <ScreenshotFrame title="Settings · Data retention">
+          <div className="p-4 sm:p-6">
+            <div className="rounded-xl border bg-card p-5 text-sm">
+              <p className="font-medium">Data retention</p>
+              <p className="mt-1 text-muted-foreground">
+                Vink deletes a Document&apos;s PDF, what it read and its values once they&apos;re no longer
+                needed. The Document&apos;s name, dates, history and Delivery log stay.
+              </p>
+              <div className="mt-4 flex flex-wrap items-end gap-3">
+                <div className="w-56">
+                  <p className="text-sm font-medium">Days after sending</p>
+                  <div className="mt-1.5 flex h-8 items-center rounded-lg border border-input px-2.5 tabular-nums">30</div>
+                  <p className="mt-1.5 text-xs text-muted-foreground">
+                    Counted from the last successful Delivery, or from Approval when nothing is sent.
+                  </p>
+                </div>
+              </div>
+              <p className="mt-4 mb-1 font-medium">Always</p>
+              <ul className="list-disc space-y-0.5 pl-5 text-muted-foreground">
+                <li>Documents never approved: 90 days after upload.</li>
+                <li>Rejected Documents: 30 days after Reject.</li>
+                <li>Unsaved Form Proposals: 7 days, with their sample PDF.</li>
+              </ul>
+            </div>
+          </div>
+        </ScreenshotFrame>
+      </Container>
+    </section>
+  );
+}
+
+function PricingRow({ locale }: { locale: Locale }) {
+  const t = useTranslations("home.pricing");
+  return (
+    <section className="pb-16 sm:pb-24">
+      <Container>
+        <SectionHeading title={t("title")} subtitle={t("subtitle")} className="mb-10" />
+        <div className="grid overflow-hidden rounded-2xl border sm:grid-cols-2 lg:grid-cols-4">
+          {plans.map((plan) => (
+            <div
+              key={plan.id}
+              className={cn(
+                "flex flex-col gap-1.5 border-b p-6 sm:border-r lg:border-b-0",
+                plan.highlighted && "bg-panel",
+              )}
+            >
+              <h3 className="flex items-center gap-2 text-[15px] font-semibold">
+                {plan.name}
+                {plan.highlighted && <Badge variant="secondary">{t("popular")}</Badge>}
+              </h3>
+              <p className="text-3xl font-semibold tracking-tight tabular-nums">
+                {formatEuro(plan.monthly, locale)}
+                <small className="text-sm font-medium text-muted-foreground">{t("perMonth")}</small>
+              </p>
+              <p className="font-mono text-sm">{t("pages", { count: formatNumber(plan.pages, locale) })}</p>
+              <p className="text-[13px] text-muted-foreground">
+                {t("perPage", { price: formatEuro(perPage(plan, "monthly"), locale, 3) })}
+              </p>
+            </div>
+          ))}
+          <div className="flex flex-col gap-1.5 p-6">
+            <h3 className="text-[15px] font-semibold">{custom.name}</h3>
+            <p className="text-3xl font-semibold tracking-tight tabular-nums">
+              <small className="mr-1 text-sm font-medium text-muted-foreground">{t("from")}</small>
+              {formatEuro(custom.fromMonthly, locale)}
+              <small className="text-sm font-medium text-muted-foreground">{t("perMonth")}</small>
+            </p>
+            <p className="font-mono text-sm">{t("customPages", { count: formatNumber(custom.fromPages, locale) })}</p>
+            <p className="text-[13px] text-muted-foreground">{t("customNote")}</p>
+          </div>
+        </div>
+        <div className="mt-5 flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground">
+          <span>{t("free")}</span>
+          <Link href="/pricing" className={moreLink}>
+            {t("link")}
+            <ArrowRight />
+          </Link>
+        </div>
+      </Container>
+    </section>
+  );
+}
+
+function FounderAndFaq() {
+  const t = useTranslations("home.faq");
+  const keys = ["wrong", "messy", "developer", "data", "templates"] as const;
+  return (
+    <section className="pb-8">
+      <Container className="grid gap-12 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:gap-16">
+        <FounderBlock className="lg:pt-2" />
+        <div>
+          <h2 className="mb-6 text-3xl font-semibold tracking-tight">{t("title")}</h2>
+          <Faq
+            items={keys.map((key) => ({
+              id: key,
+              question: t(`${key}.q`),
+              answer: t.rich(`${key}.a`, {
+                link: (chunks) => (
+                  <Link href="/security#subprocessors" className="font-medium text-foreground underline underline-offset-3">
+                    {chunks}
+                  </Link>
+                ),
+              }),
+            }))}
+          />
+        </div>
+      </Container>
+    </section>
   );
 }

@@ -1,1 +1,134 @@
-{}
+{
+  "meta": {
+    "title": "Beveiliging en privacy",
+    "description": "Waar Vink je documenten opslaat, hoe lang het ze bewaart, wie ze verwerkt en hoe toegang geregeld is. Opgeslagen in de EU, verwijderd 30 dagen na versturen."
+  },
+  "og": {
+    "title": "Je data, kort bewaard. Opgeslagen in de EU, verwijderd 30 dagen na versturen.",
+    "alt": "Beveiliging en privacy bij Vink. Opgeslagen in de EU, verwijderd 30 dagen na versturen."
+  },
+  "toc": {
+    "label": "Op deze pagina",
+    "summary": "Samenvatting",
+    "where": "Waar je data staat",
+    "retention": "Hoe lang we het bewaren",
+    "subprocessors": "Wie het verwerkt",
+    "access": "Toegang en accounts",
+    "transit": "Onderweg en opgeslagen",
+    "notYet": "Wat we nog niet hebben",
+    "report": "Een probleem melden"
+  },
+  "header": {
+    "eyebrow": "Beveiliging en privacy",
+    "title": "Je data, kort bewaard.",
+    "subtitle": "Eerst de korte versie, daarna de details die een IT- of inkoopbeoordelaar kan nagaan."
+  },
+  "summary": {
+    "title": "Samenvatting",
+    "eu": "Je documenten worden in de EU opgeslagen: de database in Ierland, de pdf's in Cloudflare R2 met EU-jurisdictie.",
+    "deleted": "De pdf en waarden van een document worden standaard 30 dagen na versturen verwijderd. Je Admin kan alles van 1 tot 365 dagen instellen.",
+    "approval": "Er gaat niets naar je systeem tot iemand het goedkeurt. Auto-Send staat standaard uit.",
+    "subprocessors": "Twee subverwerkers zitten in de Verenigde Staten. Hieronder staat precies wat ze ontvangen."
+  },
+  "where": {
+    "title": "Waar je data staat",
+    "app": "<b>De app</b> draait in Finland (Hetzner, Helsinki).",
+    "database": "<b>De database</b> staat in Ierland (Convex, AWS eu-west-1). Daarin staat alles behalve de pdf's.",
+    "pdfs": "<b>Pdf's</b> worden opgeslagen in Cloudflare R2 met EU-jurisdictie.",
+    "reading": "<b>Het lezen</b> gebeurt met Gemini op Vertex AI, in de EU-multiregio van Google Cloud.",
+    "us": "Het koppelen van de gelezen tekst aan je velden gebeurt bij TypeSafe in de Verenigde Staten, en inlogmails gaan via Resend in de Verenigde Staten. Zie <link>Wie het verwerkt</link>."
+  },
+  "retention": {
+    "title": "Hoe lang we het bewaren, en verwijderen",
+    "default": "<b>30 dagen na versturen</b>, standaard. Je Admin kan alles van 1 tot 365 dagen instellen.",
+    "neverApproved": "Documenten die nooit zijn goedgekeurd, worden 90 dagen na uploaden verwijderd.",
+    "rejected": "Afgewezen documenten worden 30 dagen na afwijzing verwijderd.",
+    "proposals": "Niet-opgeslagen formuliervoorstellen worden na 7 dagen verwijderd, met hun voorbeeld-pdf.",
+    "what": "Verwijderen haalt de pdf weg, wat Vink gelezen heeft, alle waarden en de Payload.",
+    "kept": "We houden een kort overzicht (bestandsnaam, wie het uploadde en goedkeurde, datums, bezorgstatus), nooit het document of de waarden.",
+    "now": "Een Admin kan elk document direct verwijderen, ook goedgekeurde. Openstaande nieuwe pogingen worden dan geannuleerd.",
+    "account": "Wil je je account of organisatie opheffen? Mail ons. We verwijderen alles binnen 30 dagen."
+  },
+  "subprocessors": {
+    "title": "Wie het verwerkt",
+    "intro": "Elke partij die met je data werkt, waarvoor, waar en wat ze ontvangt.",
+    "caption": "Subverwerkers",
+    "name": "Naam",
+    "purpose": "Doel",
+    "region": "Regio",
+    "data": "Data",
+    "rows": {
+      "hetzner": {
+        "purpose": "Hosting van de app",
+        "region": "Finland (EU)",
+        "data": "Al het verkeer gaat erdoorheen"
+      },
+      "convex": {
+        "purpose": "Database en backend",
+        "region": "Ierland (EU)",
+        "data": "Alles behalve pdf's"
+      },
+      "r2": {
+        "purpose": "Opslag van pdf's",
+        "region": "EU",
+        "data": "De pdf's"
+      },
+      "vertex": {
+        "purpose": "Het lezen van de pdf",
+        "region": "EU",
+        "data": "De pdf"
+      },
+      "typesafe": {
+        "purpose": "Gelezen tekst aan je velden koppelen",
+        "region": "Verenigde Staten",
+        "data": "De gelezen tekst. Mag logs bewaren onder <link>eigen voorwaarden</link>."
+      },
+      "resend": {
+        "purpose": "Inlog- en uitnodigingsmails",
+        "region": "Verenigde Staten",
+        "data": "E-mailadres en die mails"
+      },
+      "email": {
+        "purpose": "Documenten ontvangen die naar een Intake Address zijn gemaild",
+        "region": "Nog te bevestigen",
+        "data": "Mails naar een Intake Address, met hun pdf-bijlagen"
+      }
+    },
+    "transfers": "Doorgifte naar de Verenigde Staten gebeurt op basis van het EU-VS Data Privacy Framework of standaardcontractbepalingen."
+  },
+  "access": {
+    "title": "Toegang en accounts",
+    "isolation": "Elke organisatie ziet alleen haar eigen documenten. Elk verzoek wordt gecontroleerd tegen een lidmaatschap, en dat wordt gedekt door automatische tests.",
+    "roles": "Er zijn twee rollen, Admin en Member. Alleen Admins kunnen:",
+    "admin": {
+      "members": "leden uitnodigen en verwijderen, en rollen wijzigen",
+      "forms": "formulieren maken en wijzigen, inclusief Auto-Send en de Review Threshold",
+      "integrations": "Integrations toevoegen, wijzigen en verwijderen, en hun secrets zien",
+      "retention": "de naam en bewaartermijn van de organisatie wijzigen",
+      "delete": "documenten verwijderen en mislukte Deliveries opnieuw versturen"
+    },
+    "autoSend": "Auto-Send staat standaard uit. Een Admin zet het per formulier aan, en het verstuurt alleen documenten zonder onzekere waarden.",
+    "signIn": "Inloggen gaat met een e-maillink, die na 5 minuten verloopt, of met een wachtwoord. Sessies duren 7 dagen."
+  },
+  "transit": {
+    "title": "Onderweg en opgeslagen",
+    "https": "Alleen HTTPS, met HSTS.",
+    "links": "Links naar een pdf verlopen na 5 minuten.",
+    "endpoints": "Endpoints van Integrations moeten HTTPS gebruiken.",
+    "secrets": "Secrets van Integrations zijn versleuteld (AES-256-GCM) met een sleutel die buiten de database bewaard wordt.",
+    "rest": "Opgeslagen data wordt door de providers versleuteld.",
+    "signed": "Payloads worden ondertekend met HMAC-SHA256, met één secret per Integration en een tijdstempel tegen herhaling. Zie <link>Handtekening controleren</link>.",
+    "testSend": "Een test-send verstuurt alleen voorbeeldwaarden of een goedgekeurd document."
+  },
+  "notYet": {
+    "title": "Wat we nog niet hebben",
+    "certs": "Nog geen SOC 2- of ISO 27001-certificering.",
+    "twoFactor": "Nog geen tweestapsverificatie of SSO.",
+    "dpa": "Een verwerkersovereenkomst is op verzoek beschikbaar."
+  },
+  "report": {
+    "title": "Een probleem melden en contact",
+    "body": "Een beveiligingsprobleem gevonden? Mail <email></email>. We lezen elke melding en antwoorden je persoonlijk. Onze <securityTxt>security.txt</securityTxt> bevat dezelfde gegevens.",
+    "other": "Vragen over privacy, of de verwerkersovereenkomst nodig? <link>Neem contact op</link>."
+  }
+}

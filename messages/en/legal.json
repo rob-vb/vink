@@ -1,1 +1,31 @@
-{}
+{
+  "privacy": {
+    "meta": {
+      "title": "Privacy policy",
+      "description": "How Vink handles personal data on this website and in the app. The full privacy policy is being written and will replace this page."
+    },
+    "title": "Privacy policy",
+    "pending": "The full privacy policy is being written and will replace this page before launch. Until then, this is a short summary of what already holds.",
+    "points": {
+      "security": "Where documents are stored, how long they are kept and who processes them is described on the <security>Security & privacy</security> page, including the <subprocessors>list of subprocessors</subprocessors>.",
+      "contact": "Contact requests sent through this site are emailed to us and not stored on the site.",
+      "analytics": "Google Analytics only runs on the public website, and only after you accept statistics cookies. The app under /app never loads it. You can change your choice under Cookie settings.",
+      "cookies": "Two functional cookies need no consent: one remembers your language, one remembers your cookie choice.",
+      "questions": "Questions about your data? <contact>Contact us</contact>."
+    }
+  },
+  "terms": {
+    "meta": {
+      "title": "Terms",
+      "description": "The terms for using Vink. The full terms are being written and will replace this page before launch."
+    },
+    "title": "Terms",
+    "pending": "The full terms are being written and will replace this page before launch.",
+    "points": {
+      "plans": "Plans, prices and what counts as a page are described on the <pricing>Pricing</pricing> page. Prices are in EUR, excl. VAT.",
+      "custom": "Custom terms, a DPA and payment by invoice are available on the Custom plan.",
+      "questions": "Questions before you sign up? <contact>Contact us</contact>."
+    }
+  },
+  "updated": "Placeholder, pending legal text"
+}

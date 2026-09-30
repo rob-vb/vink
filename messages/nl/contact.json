@@ -1,1 +1,19 @@
-{}
+{
+  "meta": {
+    "title": "Contact",
+    "description": "Vragen over Vink, een Custom-abonnement, een verwerkersovereenkomst of betalen op factuur? Stuur een bericht en Rob antwoordt persoonlijk, meestal binnen één werkdag."
+  },
+  "header": {
+    "eyebrow": "Contact",
+    "title": "Praat met een mens.",
+    "subtitle": "Vragen over je documenten, een Custom-abonnement, een verwerkersovereenkomst of betalen op factuur. Rob leest elk bericht en antwoordt op je eigen e-mailadres."
+  },
+  "formTitle": "Stuur een bericht",
+  "direct": "Liever mailen? Schrijf naar <email></email>.",
+  "other": {
+    "title": "Zoek je iets anders?",
+    "integration": "Een koppeling met je systeem: zie de <link>koppelservice</link>.",
+    "security": "Een beveiligingsprobleem: zie <link>Een probleem melden</link>.",
+    "app": "Al klant: <link>inloggen</link>."
+  }
+}

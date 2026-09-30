@@ -1,1 +1,134 @@
-{}
+{
+  "meta": {
+    "title": "Security and privacy",
+    "description": "Where Vink stores your documents, how long it keeps them, who processes them and how access is controlled. Stored in the EU, deleted 30 days after sending."
+  },
+  "og": {
+    "title": "Your data, kept short. Stored in the EU, deleted 30 days after sending.",
+    "alt": "Vink security and privacy. Stored in the EU, deleted 30 days after sending."
+  },
+  "toc": {
+    "label": "On this page",
+    "summary": "Summary",
+    "where": "Where your data lives",
+    "retention": "How long we keep it",
+    "subprocessors": "Who processes it",
+    "access": "Access and accounts",
+    "transit": "In transit and at rest",
+    "notYet": "What we don't have yet",
+    "report": "Reporting a problem"
+  },
+  "header": {
+    "eyebrow": "Security & privacy",
+    "title": "Your data, kept short.",
+    "subtitle": "The short version first, then the details an IT or procurement reviewer can check."
+  },
+  "summary": {
+    "title": "Summary",
+    "eu": "Your documents are stored in the EU: the database in Ireland, the PDFs in Cloudflare R2 with EU jurisdiction.",
+    "deleted": "A Document's PDF and values are deleted 30 days after sending by default. Your Admin can set anywhere from 1 to 365 days.",
+    "approval": "Nothing is sent to your system until someone approves it. Auto-Send is off by default.",
+    "subprocessors": "Two subprocessors are in the United States. We list them below with exactly what they receive."
+  },
+  "where": {
+    "title": "Where your data lives",
+    "app": "<b>The app</b> runs in Finland (Hetzner, Helsinki).",
+    "database": "<b>The database</b> is in Ireland (Convex, AWS eu-west-1). It holds everything except the PDFs.",
+    "pdfs": "<b>PDFs</b> are stored in Cloudflare R2 with EU jurisdiction.",
+    "reading": "<b>Reading</b> happens with Gemini on Vertex AI, in Google Cloud's EU multi-region.",
+    "us": "Matching the read text to your Fields happens at TypeSafe in the United States, and sign-in emails go through Resend in the United States. See <link>Who processes it</link>."
+  },
+  "retention": {
+    "title": "How long we keep it, and deletion",
+    "default": "<b>30 days after sending</b> by default. Your Admin can set anywhere from 1 to 365 days.",
+    "neverApproved": "Documents never approved are deleted 90 days after upload.",
+    "rejected": "Rejected Documents are deleted 30 days after rejection.",
+    "proposals": "Unsaved Form Proposals are deleted after 7 days, with their sample PDF.",
+    "what": "Deletion removes the PDF, what Vink read, all values and the Payload.",
+    "kept": "We keep a short record (file name, who uploaded and approved it, dates, delivery status), never the document or its values.",
+    "now": "An Admin can delete any Document right away, approved ones included. Pending retries for it are cancelled.",
+    "account": "To close your account or Organisation, email us. We delete everything within 30 days."
+  },
+  "subprocessors": {
+    "title": "Who processes it",
+    "intro": "Every party that handles your data, what for, where, and what it receives.",
+    "caption": "Subprocessors",
+    "name": "Name",
+    "purpose": "Purpose",
+    "region": "Region",
+    "data": "Data",
+    "rows": {
+      "hetzner": {
+        "purpose": "Hosting the app",
+        "region": "Finland (EU)",
+        "data": "Passes through all traffic"
+      },
+      "convex": {
+        "purpose": "Database and backend",
+        "region": "Ireland (EU)",
+        "data": "Everything except PDFs"
+      },
+      "r2": {
+        "purpose": "PDF storage",
+        "region": "EU",
+        "data": "The PDFs"
+      },
+      "vertex": {
+        "purpose": "Reading the PDF",
+        "region": "EU",
+        "data": "The PDF"
+      },
+      "typesafe": {
+        "purpose": "Matching read text to your Fields",
+        "region": "United States",
+        "data": "The read text. May keep logs under <link>its own terms</link>."
+      },
+      "resend": {
+        "purpose": "Sign-in and invitation emails",
+        "region": "United States",
+        "data": "Email address and those emails"
+      },
+      "email": {
+        "purpose": "Receiving documents sent to an Intake Address",
+        "region": "To confirm",
+        "data": "Emails sent to an Intake Address, with their PDF attachments"
+      }
+    },
+    "transfers": "Transfers to the United States rely on the EU–US Data Privacy Framework or Standard Contractual Clauses."
+  },
+  "access": {
+    "title": "Access and accounts",
+    "isolation": "Each Organisation only sees its own Documents. Every request is checked against a Membership, and this is covered by automated tests.",
+    "roles": "There are two roles, Admin and Member. Only Admins can:",
+    "admin": {
+      "members": "invite and remove members, and change roles",
+      "forms": "create and change Forms, including Auto-Send and the Review Threshold",
+      "integrations": "add, change and remove Integrations, and see their secrets",
+      "retention": "change the Organisation's name and retention period",
+      "delete": "delete Documents and send failed Deliveries again"
+    },
+    "autoSend": "Auto-Send is off by default. An Admin turns it on per Form, and it only sends Documents with no unsure values.",
+    "signIn": "Sign-in is by email link, which expires after 5 minutes, or by password. Sessions last 7 days."
+  },
+  "transit": {
+    "title": "In transit and at rest",
+    "https": "HTTPS only, with HSTS.",
+    "links": "Links to a PDF expire after 5 minutes.",
+    "endpoints": "Integration endpoints must use HTTPS.",
+    "secrets": "Integration secrets are encrypted (AES-256-GCM) with a key kept outside the database.",
+    "rest": "Data at rest is encrypted by the providers.",
+    "signed": "Payloads are signed with HMAC-SHA256, with one secret per Integration and a timestamp against replays. See <link>Verify the signature</link>.",
+    "testSend": "A test-send only sends example values or an approved Document."
+  },
+  "notYet": {
+    "title": "What we don't have yet",
+    "certs": "No SOC 2 or ISO 27001 certification yet.",
+    "twoFactor": "No two-factor sign-in or SSO yet.",
+    "dpa": "A data processing agreement is available on request."
+  },
+  "report": {
+    "title": "Reporting a problem and contact",
+    "body": "Found a security problem? Email <email></email>. We read every report and reply to you directly. Our <securityTxt>security.txt</securityTxt> has the same details.",
+    "other": "Questions about privacy, or need the DPA? <link>Contact us</link>."
+  }
+}
