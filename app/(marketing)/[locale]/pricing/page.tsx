@@ -142,7 +142,7 @@ export default async function PricingPage({ params }: PageProps<"/[locale]/prici
       </section>
 
       <section className="py-16 sm:py-24">
-        <Container className="grid gap-10 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-16">
+        <Container className="grid grid-cols-[minmax(0,1fr)] gap-10 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-16">
           <div>
             <h2 className="text-3xl font-semibold tracking-tight">{t("pages.title")}</h2>
             <p className="mt-3 text-lg text-muted-foreground">{t("pages.body")}</p>

@@ -76,7 +76,7 @@ export function PricingCards() {
                 className={buttonVariants({
                   variant: plan.highlighted ? "default" : "outline",
                   size: "lg",
-                  className: cn("mt-7 h-10 w-full", !plan.highlighted && "border-foreground/25"),
+                  className: cn("mt-7 h-10 w-full", !plan.highlighted && "!border-foreground/25"),
                 })}
               >
                 {t("card.cta")}

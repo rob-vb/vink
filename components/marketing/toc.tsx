@@ -13,7 +13,7 @@ export function TocLayout({
   children: ReactNode;
 }) {
   return (
-    <Container className="grid gap-10 pb-8 lg:grid-cols-[13rem_minmax(0,1fr)] lg:gap-14">
+    <Container className="grid grid-cols-[minmax(0,1fr)] gap-10 pb-8 lg:grid-cols-[13rem_minmax(0,1fr)] lg:gap-14">
       <nav aria-label={label} className="lg:sticky lg:top-24 lg:self-start">
         <p className="font-mono text-xs font-medium tracking-[0.08em] text-muted-foreground uppercase">{label}</p>
         <ol className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-sm lg:flex-col lg:border-l">

@@ -44,7 +44,7 @@ function Paper({
   return (
     <div
       className={cn(
-        "relative aspect-[1/1.3] w-full overflow-hidden border border-[#d9dde3] bg-white p-5 text-[11px] leading-snug text-[#1d2433] shadow-[0_1px_2px_rgba(15,30,54,0.06),0_8px_24px_-12px_rgba(15,30,54,0.25)]",
+        "relative aspect-[1/1.414] w-full overflow-hidden border border-[#d9dde3] bg-white p-5 text-[11px] leading-snug text-[#1d2433] shadow-[0_1px_2px_rgba(15,30,54,0.06),0_8px_24px_-12px_rgba(15,30,54,0.25)]",
         variant === "scan" && "-rotate-[0.8deg] bg-[#f4f4f1] contrast-105 grayscale",
         variant === "fax" && "bg-[#f7f7f4] font-mono contrast-125 grayscale",
         className,

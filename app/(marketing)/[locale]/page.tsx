@@ -83,7 +83,7 @@ function Hero() {
   const tc = useTranslations("common.cta");
   return (
     <section className="overflow-hidden pt-12 pb-14 sm:pt-20 sm:pb-20">
-      <Container className="grid items-center gap-12 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-14">
+      <Container className="grid grid-cols-[minmax(0,1fr)] items-center gap-12 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-14">
         <div>
           <h1 className="text-[3.25rem] leading-[0.98] font-semibold tracking-[-0.035em] sm:text-7xl lg:text-[5.25rem]">
             <span className="block">{t("document")}</span>
@@ -96,7 +96,7 @@ function Hero() {
           <p className="mt-6 max-w-[44ch] text-lg text-pretty text-muted-foreground">{t("subtitle")}</p>
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <StartFree location="home-hero" size="xl" note={false} />
-            <a href="#video" className={buttonVariants({ variant: "outline", size: "lg", className: "h-11 px-4 text-base" })}>
+            <a href="#video" className={buttonVariants({ variant: "outline", size: "lg", className: "h-11 !border-border px-4 text-base" })}>
               <Play className="fill-current" />
               {t("watch")}
             </a>
@@ -182,7 +182,7 @@ function Stop({
   visual: ReactNode;
 }) {
   return (
-    <li className="relative grid gap-8 pl-14 sm:pl-16 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.25fr)] lg:gap-12">
+    <li className="relative grid grid-cols-[minmax(0,1fr)] gap-8 pl-14 sm:pl-16 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.25fr)] lg:gap-12">
       <span className="absolute top-0 left-0 grid size-10 place-items-center rounded-full border-[1.5px] border-foreground/80 bg-background font-mono text-sm font-medium">
         {pin}
       </span>
@@ -250,7 +250,7 @@ function Journey() {
             }
             visual={
               <Tabs defaultValue="invoice" className="gap-4">
-                <TabsList aria-label={t("tabs.label")} className="h-auto flex-wrap">
+                <TabsList aria-label={t("tabs.label")} className="!h-auto max-w-full flex-wrap justify-start">
                   {sampleDocuments.map((doc) => (
                     <TabsTrigger key={doc.id} value={doc.id} className="px-3">
                       {t(`tabs.${doc.id}`)}
@@ -336,7 +336,7 @@ function Connect() {
     <section className="border-y bg-panel/60 py-16 sm:py-24">
       <Container>
         <SectionHeading title={t("title")} subtitle={t("subtitle")} className="mb-10" />
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
           <div className="flex min-w-0 flex-col gap-4 rounded-2xl border bg-card p-6 sm:p-8">
             <Eyebrow>{t("dev.eyebrow")}</Eyebrow>
             <h3 className="text-2xl font-semibold tracking-tight">{t("dev.title")}</h3>
@@ -385,7 +385,7 @@ function DataKeptShort() {
   const t = useTranslations("home.data");
   return (
     <section className="py-16 sm:py-24">
-      <Container className="grid items-center gap-10 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:gap-14">
+      <Container className="grid grid-cols-[minmax(0,1fr)] items-center gap-10 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:gap-14">
         <div>
           <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">{t("title")}</h2>
           <p className="mt-3 max-w-[44ch] text-lg text-muted-foreground">{t("body")}</p>
@@ -482,7 +482,7 @@ function FounderAndFaq() {
   const keys = ["wrong", "messy", "developer", "data", "templates"] as const;
   return (
     <section className="pb-8">
-      <Container className="grid gap-12 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:gap-16">
+      <Container className="grid grid-cols-[minmax(0,1fr)] gap-12 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:gap-16">
         <FounderBlock className="lg:pt-2" />
         <div>
           <h2 className="mb-6 text-3xl font-semibold tracking-tight">{t("title")}</h2>

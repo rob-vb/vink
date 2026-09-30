@@ -27,7 +27,7 @@ export default async function ContactPage({ params }: PageProps<"/[locale]/conta
     <main className="pt-14 pb-20 sm:pt-20 sm:pb-28">
       <Container>
         <SectionHeading as="h1" eyebrow={t("header.eyebrow")} title={t("header.title")} subtitle={t("header.subtitle")} />
-        <div className="mt-12 grid gap-12 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)] lg:gap-16">
+        <div className="mt-12 grid grid-cols-[minmax(0,1fr)] gap-12 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)] lg:gap-16">
           <div>
             <h2 className="mb-4 text-xl font-semibold">{t("formTitle")}</h2>
             <RequestForm kind="contact" fallbackEmail={FOUNDER_EMAIL} />
