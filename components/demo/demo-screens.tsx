@@ -56,7 +56,11 @@ export function DemoLabels({ children }: { children: ReactNode }) {
     [locale],
   );
   return (
-    <DocumentsLabelsProvider labels={locale === "nl" ? dutchLabels : englishLabels} format={format}>
+    <DocumentsLabelsProvider
+      labels={locale === "nl" ? dutchLabels : englishLabels}
+      format={format}
+      heading="h2"
+    >
       {children}
     </DocumentsLabelsProvider>
   );

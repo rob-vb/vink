@@ -43,7 +43,7 @@ export function ReviewHeader({
   badges?: ReactNode;
   actions?: ReactNode;
 }) {
-  const { labels } = useDocumentsLabels();
+  const { labels, heading: Heading } = useDocumentsLabels();
   const t = labels.review;
   const reviewing = state === "needs_review";
   return (
@@ -67,7 +67,7 @@ export function ReviewHeader({
           </Button>
         )}
         <div className="flex flex-wrap items-center gap-2">
-          <h1 className="truncate text-xl font-semibold">{filename}</h1>
+          <Heading className="truncate text-xl font-semibold">{filename}</Heading>
           <Badge variant={reviewing ? "default" : "secondary"}>{t.states[state]}</Badge>
           {badges}
         </div>

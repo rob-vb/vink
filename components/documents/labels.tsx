@@ -209,22 +209,31 @@ export function documentsFormats(locale?: string, timeZone?: string): DocumentsF
 
 const appFormats = formats();
 
-const Context = createContext<{ labels: DocumentsLabels; format: DocumentsFormats }>({
+type Heading = "h1" | "h2";
+
+const Context = createContext<{ labels: DocumentsLabels; format: DocumentsFormats; heading: Heading }>({
   labels: englishLabels,
   format: appFormats,
+  heading: "h1",
 });
 
-/** Used by the demo only: other words, and a fixed locale and time zone so the static render matches. */
+/**
+ * Used by the demo only: other words, a fixed locale and time zone so the
+ * static render matches, and `h2` page headings inside a marketing page that
+ * has its own `h1`.
+ */
 export function DocumentsLabelsProvider({
   labels,
   format,
+  heading = "h1",
   children,
 }: {
   labels: DocumentsLabels;
   format: DocumentsFormats;
+  heading?: Heading;
   children: ReactNode;
 }) {
-  return <Context value={{ labels, format }}>{children}</Context>;
+  return <Context value={{ labels, format, heading }}>{children}</Context>;
 }
 
 export function useDocumentsLabels() {

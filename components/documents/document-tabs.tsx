@@ -10,11 +10,11 @@ export const listedStates = ["needs_review", "approved", "extraction_failed", "r
 
 /** The Documents page heading, with its controls (Upload, Email in, …) on the right. */
 export function DocumentsHeading({ actions }: { actions?: ReactNode }) {
-  const { labels } = useDocumentsLabels();
+  const { labels, heading: Heading } = useDocumentsLabels();
   return (
     <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
       <div>
-        <h1 className="text-xl font-semibold">{labels.documents.title}</h1>
+        <Heading className="text-xl font-semibold">{labels.documents.title}</Heading>
         <p className="text-sm text-muted-foreground">{labels.documents.subtitle}</p>
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
