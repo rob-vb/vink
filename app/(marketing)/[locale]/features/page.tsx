@@ -11,6 +11,7 @@ import { FeatureVideo } from "@/components/features/feature-video";
 import { PapersStill } from "@/components/features/papers-still";
 import { ScaledStill } from "@/components/features/scaled-still";
 import { Screenshot } from "@/components/features/screenshot";
+import { StartFreeLink } from "@/components/marketing/cta-links";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 import { isLocale, routing } from "@/i18n/routing";
@@ -20,9 +21,6 @@ export async function generateMetadata({ params }: PageProps<"/[locale]/features
   const { locale } = await params;
   return pageMetadata({ locale: isLocale(locale) ? locale : routing.defaultLocale, path: "/features", ns: "features" });
 }
-
-// Sign-up lives in the app, outside the marketing layout: a full page load.
-const SIGN_UP = "/app/sign-up";
 
 type Stop = "arrives" | "reads" | "check" | "lands" | "around";
 
@@ -87,7 +85,7 @@ export default async function FeaturesPage() {
         </h1>
         <p className="mt-6 max-w-2xl text-lg text-muted-foreground sm:text-xl">{t("hero.lede")}</p>
         <div className="mt-8 flex flex-wrap items-center gap-3">
-          <Button size="lg" nativeButton={false} render={<a href={SIGN_UP} />}>
+          <Button size="lg" nativeButton={false} render={<StartFreeLink location="features-hero" />}>
             {t("hero.startFree")}
           </Button>
           <Button size="lg" variant="outline" nativeButton={false} render={<a href="#demo" />}>
@@ -302,7 +300,7 @@ export default async function FeaturesPage() {
           <Button
             size="lg"
             nativeButton={false}
-            render={<a href={SIGN_UP} />}
+            render={<StartFreeLink location="features-closing" />}
             className="bg-white text-[#0F1E36] hover:bg-white/90"
           >
             {t("close.startFree")}

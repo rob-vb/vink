@@ -7,13 +7,15 @@ import type { ListedState } from "@/components/documents/labels";
 import type { ReviewFilter } from "@/components/documents/review-view";
 import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/sonner";
+import { StartFreeLink } from "@/components/marketing/cta-links";
+import { trackSignUpClick } from "@/lib/analytics";
+import { SIGN_UP_PATH } from "@/lib/site";
 import { DemoAppFrame } from "./demo-app-frame";
 import type { DemoDocumentId } from "./demo-papers";
 import { DemoDocumentsScreen, DemoLabels, DemoReviewScreen, type ReviewHandlers } from "./demo-screens";
 import { demoReducer, initialDocuments, valuesRead, type Locale } from "./demo-state";
 
 const TOASTER = "vink-demo";
-const SIGN_UP = "/app/sign-up";
 
 // When the visitor did something; only ever called from event handlers.
 const stamp = () => Date.now();
@@ -174,8 +176,10 @@ export function Demo() {
                         ? {
                             label: t("done.startFree"),
                             // The app has its own root layout: a full page load.
-                            // eslint-disable-next-line @next/next/no-location-assign-relative-destination
-                            onClick: () => window.location.assign(SIGN_UP),
+                            onClick: () => {
+                              trackSignUpClick("demo-upload");
+                              window.location.assign(SIGN_UP_PATH);
+                            },
                           }
                         : undefined,
                   })
@@ -213,7 +217,7 @@ export function Demo() {
               <p className="mt-4 text-sm text-muted-foreground">{t("done.body")}</p>
               <div className="mt-5 flex flex-wrap gap-2">
                 {/* The app has its own root layout: a full page load, not a client-side Link. */}
-                <Button nativeButton={false} render={<a href={SIGN_UP} />}>
+                <Button nativeButton={false} render={<StartFreeLink location="demo-done" />}>
                   {t("done.startFree")}
                 </Button>
                 <Button variant="outline" onClick={() => setClosed(true)}>

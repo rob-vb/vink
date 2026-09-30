@@ -13,7 +13,6 @@ const contentSecurityPolicy = [
   "font-src 'self'",
   "connect-src 'self' https://*.convex.cloud wss://*.convex.cloud https://*.convex.site https://*.r2.cloudflarestorage.com https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com",
   "worker-src 'self' blob:",
-  "frame-src 'self' https://www.youtube-nocookie.com",
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",

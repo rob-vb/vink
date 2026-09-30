@@ -62,7 +62,8 @@ export function SiteFooter() {
                   </LogInLink>
                 </li>
               )}
-              {column.title === t("footer.legal") && (
+              {/* Without GA there are no cookies to set, and no banner to reopen. */}
+              {column.title === t("footer.legal") && process.env.NEXT_PUBLIC_GA_ID && (
                 <li>
                   <CookieSettingsButton>{t("footer.cookieSettings")}</CookieSettingsButton>
                 </li>
