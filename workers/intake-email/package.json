@@ -1,0 +1,17 @@
+{
+  "name": "vink-intake-email",
+  "private": true,
+  "description": "Cloudflare Email Worker: hands emails sent to a Form's Intake Address to Vink.",
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "postal-mime": "^2.4.4"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250101.0",
+    "typescript": "^5",
+    "wrangler": "^4"
+  }
+}

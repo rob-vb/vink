@@ -1,0 +1,16 @@
+# Deploy with `npx wrangler deploy` from this folder (see README.md).
+name = "vink-intake-email"
+main = "src/index.ts"
+compatibility_date = "2026-09-01"
+
+[vars]
+# The Convex deployment's HTTP actions URL (…convex.site), without a trailing slash.
+CONVEX_SITE_URL = "https://REPLACE-ME.eu-west-1.convex.site"
+
+[[r2_buckets]]
+binding = "PDFS"
+# The same EU bucket the app uses for PDFs.
+bucket_name = "REPLACE-ME"
+
+# Secret, set with `npx wrangler secret put INTAKE_SECRET` (same value as the
+# Convex deployment's INTAKE_SECRET).
