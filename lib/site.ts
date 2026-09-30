@@ -4,3 +4,16 @@ export const SITE_URL = (process.env.SITE_URL ?? "http://localhost:3003").replac
 export function absoluteUrl(path: string): string {
   return `${SITE_URL}${path.startsWith("/") ? path : `/${path}`}`;
 }
+
+/** The site's host name, e.g. for GA's `cookie_domain` and default mailboxes. */
+export const SITE_HOST = new URL(SITE_URL).hostname;
+
+/** Rob's direct address, shown in the founder block on Home and Contact. */
+export const FOUNDER_EMAIL = process.env.FOUNDER_EMAIL ?? `rob@${SITE_HOST}`;
+
+/** Where security problems are reported (Security page, security.txt). */
+export const SECURITY_EMAIL = process.env.SECURITY_EMAIL ?? `security@${SITE_HOST}`;
+
+/** The product lives under its own root layout: links to it are plain `<a>`, never next/link. */
+export const APP_PATH = "/app";
+export const SIGN_UP_PATH = "/app/sign-up";

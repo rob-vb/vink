@@ -1,1 +1,105 @@
-{}
+{
+  "nav": {
+    "home": "Vink home",
+    "features": "Features",
+    "pricing": "Pricing",
+    "developers": "Developers",
+    "security": "Security",
+    "logIn": "Log in",
+    "openApp": "Open app",
+    "startFree": "Start free",
+    "menu": "Menu",
+    "openMenu": "Open menu",
+    "theme": "Switch between light and dark",
+    "language": "Language",
+    "skip": "Skip to content"
+  },
+  "languages": {
+    "en": "English",
+    "nl": "Nederlands"
+  },
+  "cta": {
+    "startFree": "Start free",
+    "freeNote": "20 free pages. No credit card."
+  },
+  "trust": {
+    "eu": "Stored in the EU",
+    "deleted": "Deleted 30 days after sending",
+    "approval": "Nothing sent without your approval"
+  },
+  "closing": {
+    "title": "Stop retyping. Start with 20 pages.",
+    "customer": "Already a customer?",
+    "logIn": "Log in"
+  },
+  "founder": {
+    "eyebrow": "Who's behind Vink",
+    "quote": "I built Vink after watching teams retype the same kinds of PDFs every day. If you're unsure whether it fits your documents, write to me. I read every email.",
+    "name": "Rob",
+    "role": "Founder of Vink",
+    "photoAlt": "Rob, founder of Vink"
+  },
+  "footer": {
+    "tagline": "Automated data entry for operations teams. Any PDF in, clean data out.",
+    "product": "Product",
+    "company": "Company",
+    "legal": "Legal",
+    "features": "Features",
+    "pricing": "Pricing",
+    "developers": "Developers",
+    "security": "Security & privacy",
+    "contact": "Contact",
+    "integration": "Integration service",
+    "logIn": "Log in",
+    "privacy": "Privacy policy",
+    "terms": "Terms",
+    "subprocessors": "Subprocessors",
+    "cookieSettings": "Cookie settings",
+    "rights": "© {year} Vink. Prices excl. VAT.",
+    "language": "Language"
+  },
+  "form": {
+    "name": "Name",
+    "email": "Work email",
+    "company": "Company",
+    "companyOptional": "Company (optional)",
+    "system": "Which system should it land in?",
+    "systemPlaceholder": "For example Exact Online, AFAS, a spreadsheet or your own database",
+    "documents": "What documents?",
+    "documentsPlaceholder": "For example purchase invoices and delivery notes",
+    "pagesPerMonth": "Roughly how many pages a month?",
+    "pagesChoose": "Choose a rough number",
+    "pages": {
+      "under300": "Fewer than 300",
+      "upTo1000": "300 to 1,000",
+      "upTo3000": "1,000 to 3,000",
+      "over3000": "More than 3,000",
+      "unsure": "Not sure yet"
+    },
+    "message": "Your message",
+    "note": "Anything else? (optional)",
+    "website": "Leave this field empty",
+    "submit": "Send",
+    "sending": "Sending",
+    "privacy": "We only use your details to reply. The request is emailed to us and not stored on the site.",
+    "sentTitle": "Thanks. Your message is on its way.",
+    "sentBody": "A person replies to {email}, usually within one working day.",
+    "sendAnother": "Send another message",
+    "errors": {
+      "name": "Fill in your name.",
+      "email": "Fill in a valid email address.",
+      "invalid": "Something in the form isn't right. Check the fields and try again.",
+      "rateLimited": "Too many messages from this connection. Try again in an hour, or email us directly.",
+      "failed": "Your message couldn't be sent. Try again, or email {email}."
+    }
+  },
+  "og": {
+    "features": {
+      "title": "Everything between the PDF and your system.",
+      "alt": "Vink features. Everything between the PDF and your system."
+    }
+  },
+  "frame": {
+    "screenshotPending": "Screenshot pending"
+  }
+}

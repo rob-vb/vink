@@ -1,1 +1,124 @@
-{}
+{
+  "meta": {
+    "title": "Developers: webhook, Payload en handtekening",
+    "description": "Hoe Vink goedgekeurde documentdata naar je systeem stuurt: de JSON-envelope, HMAC-SHA256-verificatie in Node, Python en PHP, nieuwe pogingen en test-send."
+  },
+  "og": {
+    "title": "Eén ondertekende webhook. Schone JSON, met je eigen velden als sleutels.",
+    "alt": "Vink voor developers. Eén ondertekende webhook met schone JSON, met je eigen velden als sleutels."
+  },
+  "toc": {
+    "label": "Op deze pagina",
+    "overview": "Overzicht",
+    "envelope": "Envelope",
+    "signature": "Handtekening controleren",
+    "delivery": "Bezorging en nieuwe pogingen",
+    "testSend": "Test-send",
+    "service": "Koppelservice"
+  },
+  "header": {
+    "eyebrow": "Developers",
+    "title": "Eén ondertekende webhook. Schone JSON, met je eigen velden als sleutels.",
+    "subtitle": "Als een document is goedgekeurd, stuurt Vink de data als één JSON-POST naar je endpoint. Op deze pagina staat alles wat je nodig hebt om de ontvanger te bouwen."
+  },
+  "overview": {
+    "title": "Overzicht",
+    "p1": "Een Integration is een HTTPS-endpoint dat je in Vink toevoegt en aan één of meer formulieren koppelt. Als een document van dat formulier wordt goedgekeurd, door een mens of door Auto-Send, stuurt Vink één Delivery naar elke gekoppelde Integration.",
+    "p2": "De body is de Payload: de waarden van het document met de velden van het formulier als sleutels, in een kleine envelope. Elk verzoek is ondertekend, zodat je ontvanger kan controleren dat het van Vink komt.",
+    "facts": {
+      "method": "Eén <code>POST</code> per Delivery, <code>Content-Type: application/json</code>",
+      "signed": "Ondertekend met HMAC-SHA256 in de header <code>X-Vink-Signature</code>",
+      "retries": "Ongeveer 8 uur lang opnieuw geprobeerd bij timeouts, 408, 429 en 5xx",
+      "atLeastOnce": "At-least-once: ontdubbel op <code>deliveryId</code>"
+    },
+    "reading": "Vink leest pdf's met Gemini op Vertex AI, EU-regio.",
+    "inboundTitle": "Documenten naar binnen krijgen",
+    "inbound": "Documenten komen vandaag via de app binnen: upload meerdere pdf's tegelijk, of mail ze in. Geen code? Laat een systeem mailen naar het Intake Address van het formulier, en elke pdf-bijlage wordt een document. Er is nog geen upload-API. Heb je die nodig? <link>Laat het ons weten</link>."
+  },
+  "envelope": {
+    "title": "Envelope",
+    "intro": "Dit is een echte Payload van een demoformulier Invoices, met een lijstveld voor de factuurregels. De sleutels onder <code>data</code> zijn je eigen veldsleutels, dus elk formulier heeft zijn eigen vorm.",
+    "rules": {
+      "title": "Drie regels waar je parser op kan rekenen",
+      "present": "Elke sleutel is er altijd, ook bij optionele velden.",
+      "null": "<code>null</code> betekent geen waarde.",
+      "empty": "<code>[]</code> betekent een lijst zonder regels."
+    },
+    "table": {
+      "key": "Sleutel",
+      "meaning": "Betekenis",
+      "event": "Altijd <code>document.approved</code>.",
+      "deliveryId": "Uniek per Delivery. Blijft gelijk als een Delivery opnieuw wordt geprobeerd of opnieuw verstuurd, dus gebruik het om te ontdubbelen.",
+      "test": "<code>true</code> bij een test-send, <code>false</code> bij een echte Delivery.",
+      "document": "Het id van het document, de bestandsnaam en wanneer het is geüpload (ISO 8601, UTC).",
+      "form": "Het id van het formulier en de formulierversie waarmee het document is gelezen.",
+      "approval": "<code>manual</code> of <code>auto</code> (Auto-Send), het id van de gebruiker die goedkeurde (<code>null</code> bij Auto-Send) en wanneer.",
+      "data": "De waarden, per veld. Getallen zijn getallen, datums zijn <code>YYYY-MM-DD</code>, ja/nee-velden zijn booleans en lijsten zijn arrays van objecten."
+    }
+  },
+  "signature": {
+    "title": "Handtekening controleren",
+    "intro": "Elk verzoek heeft een header met een tijdstempel en een HMAC-SHA256-handtekening. Elke Integration heeft een eigen secret dat begint met <code>whsec_</code>. Je vindt het bij de Integration in de app.",
+    "steps": {
+      "title": "Zo controleer je een verzoek",
+      "parse": "Splits de header op komma's en lees <code>t</code> (Unix-seconden) en <code>v1</code> (hex).",
+      "sign": "Bereken HMAC-SHA256 met je secret over de string <code>'{t}.{rawBody}'</code>: de tijdstempel, een punt en de ruwe body precies zoals ontvangen.",
+      "compare": "Vergelijk je uitkomst met <code>v1</code> met een vergelijking in constante tijd.",
+      "time": "Weiger het verzoek als <code>t</code> meer dan 5 minuten van je eigen klok afwijkt. Zo kan een onderschept verzoek niet opnieuw worden afgespeeld."
+    },
+    "raw": "Gebruik de ruwe bytes van de body. Als je de JSON parset en opnieuw serialiseert, veranderen witruimte en volgorde, en klopt de handtekening niet meer.",
+    "tabs": "Voorbeelden van de controle"
+  },
+  "delivery": {
+    "title": "Bezorging en nieuwe pogingen",
+    "intro": "Vink wacht maximaal 15 seconden op je antwoord.",
+    "table": {
+      "answer": "Jouw antwoord",
+      "result": "Wat Vink doet",
+      "ok": "Elke 2xx",
+      "okResult": "Bezorgd.",
+      "retry": "Timeout, netwerkfout, 408, 429 of 5xx",
+      "retryResult": "Opnieuw geprobeerd na ongeveer 1 minuut, 5 minuten, 30 minuten, 2 uur en 6 uur: 6 pogingen in ongeveer 8 uur.",
+      "fail": "Elke andere 4xx",
+      "failResult": "Meteen mislukt. Een Admin kan een mislukte Delivery opnieuw versturen vanuit de app."
+    },
+    "retryAfter": "Een <code>Retry-After</code>-header (seconden of een HTTP-datum) wordt gerespecteerd, tot 24 uur.",
+    "redirects": "Redirects worden niet gevolgd. Je endpoint moet HTTPS gebruiken.",
+    "atLeastOnce": "Bezorging is at-least-once. Dezelfde Delivery kan twee keer aankomen, bijvoorbeeld als je ontvanger hem opsloeg maar een timeout gaf voordat hij antwoordde. Bewaar <code>deliveryId</code> en sla een Delivery over die je al hebt verwerkt.",
+    "headersTitle": "Headers",
+    "headers": "Je kunt eigen headers aan een Integration toevoegen, zoals een API-sleutel of Basic auth. Markeer een header als geheim en de waarde wordt versleuteld opgeslagen en daarna alleen gemaskeerd getoond. Vink zet <code>Content-Type</code> en <code>X-Vink-Signature</code> zelf.",
+    "screenshot": "De bezorgstatus van een document in Vink, met een nieuwe poging"
+  },
+  "testSend": {
+    "title": "Test-send",
+    "body": "Stuur vanuit een Integration een test naar je endpoint voordat er een echt document weggaat. Kies voorbeeldwaarden voor elk veld, of lege waarden zodat je ontvanger <code>null</code> en <code>[]</code> ziet. Je kunt ook een goedgekeurd document opnieuw als test versturen.",
+    "flag": "Een test heeft <code>\"test\": true</code>, is net zo ondertekend als een echte en is nooit een Delivery: hij wordt niet opnieuw geprobeerd en staat niet in de bezorglog van een document. Het antwoord van je endpoint zie je meteen.",
+    "screenshot": "Een Integration in Vink met de uitkomst van een test-send"
+  },
+  "service": {
+    "title": "Koppelservice",
+    "lead": "Geen developer, of geen tijd? Rob bouwt de koppeling voor je.",
+    "body": "Een eenmalige klus, nooit onderdeel van een abonnement. Rob schrijft de ontvanger die de Payload in je systeem zet, of dat nu een ERP, boekhoudpakket, spreadsheet of database is, en richt samen met jou je formulieren in.",
+    "includes": {
+      "title": "Wat je krijgt",
+      "receiver": "Een ontvanger die de handtekening controleert en de data in je systeem zet",
+      "forms": "Je formulieren en velden samen ingericht, getest op je eigen documenten",
+      "hosting": "Jij host het, of Rob host het op verzoek voor een vast bedrag per maand",
+      "changes": "Onderhoud en aanpassingen later, per klus gefactureerd"
+    },
+    "need": {
+      "title": "Wat we van je nodig hebben",
+      "system": "In welk systeem de data moet komen, en toegang tot een testomgeving",
+      "documents": "Een paar voorbeelddocumenten",
+      "contact": "Eén persoon die weet hoe de data gebruikt wordt"
+    },
+    "price": "Vanaf €950 per koppeling, excl. btw",
+    "priceNote": "Een vaste prijs, afgesproken voordat we beginnen.",
+    "formTitle": "Vraag naar een koppeling",
+    "formBody": "Vertel ons iets over je systeem en documenten. Rob antwoordt persoonlijk."
+  },
+  "code": {
+    "copy": "Kopiëren",
+    "copied": "Gekopieerd"
+  }
+}

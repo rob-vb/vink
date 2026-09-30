@@ -1,1 +1,127 @@
-{}
+{
+  "meta": {
+    "title": "Pricing",
+    "description": "Every Vink plan includes everything: unlimited users, all Forms and Fields, review and webhooks. Choose how many pages. From €49 a month, 20 free pages to start."
+  },
+  "og": {
+    "title": "Every plan includes everything. You only choose how many pages.",
+    "alt": "Vink pricing. Every plan includes everything. You only choose how many pages."
+  },
+  "header": {
+    "eyebrow": "Pricing",
+    "title": "Every plan includes everything. You only choose how many pages.",
+    "subtitle": "Prices in EUR, excl. VAT. + VAT where applicable."
+  },
+  "billing": {
+    "label": "Billing",
+    "monthly": "Monthly",
+    "annual": "Annual",
+    "discount": "−20%"
+  },
+  "card": {
+    "perMonth": "/month",
+    "billedMonthly": "billed monthly",
+    "billedAnnually": "{total} billed annually",
+    "pages": "{count} pages a month",
+    "perPage": "{price} per page",
+    "popular": "Most popular",
+    "cta": "Start free",
+    "vat": "excl. VAT"
+  },
+  "plans": {
+    "starter": "For a team that handles a few documents a day.",
+    "team": "For a team that processes documents every hour.",
+    "business": "For departments with a steady stream of paperwork."
+  },
+  "free": "Start with 20 free pages. No credit card.",
+  "custom": {
+    "name": "Custom",
+    "title": "More than 3,000 pages a month, or need a DPA and payment by invoice?",
+    "body": "From {price} a month, billed annually. A volume price, custom terms and a service level agreed with you.",
+    "chips": {
+      "volume": "3,000+ pages a month",
+      "dpa": "DPA",
+      "invoice": "Payment by invoice",
+      "terms": "Custom terms",
+      "sla": "SLA"
+    },
+    "cta": "Talk to us"
+  },
+  "includes": {
+    "title": "Every plan includes",
+    "users": {
+      "title": "Unlimited users",
+      "body": "Invite the whole team. No seat count."
+    },
+    "forms": {
+      "title": "All Forms and Fields",
+      "body": "As many Forms as you need, with your own Fields and Lists."
+    },
+    "review": {
+      "title": "Review and Approval",
+      "body": "Check what's unsure, approve, or let Auto-Send handle the sure ones."
+    },
+    "integrations": {
+      "title": "Integrations (webhook)",
+      "body": "Signed JSON to your system, with retries and a test-send."
+    },
+    "eu": {
+      "title": "Stored in the EU",
+      "body": "Database and PDFs are stored in the EU. See who processes what."
+    },
+    "retention": {
+      "title": "30-day retention",
+      "body": "Deleted 30 days after sending by default. You can shorten it."
+    }
+  },
+  "pages": {
+    "title": "What counts as a page",
+    "body": "One page of a PDF is one page. It counts once, when Vink accepts the PDF for reading.",
+    "invoice": "An invoice",
+    "invoiceCount": "1 to 2 pages",
+    "delivery": "A delivery note",
+    "deliveryCount": "1 page",
+    "contract": "A 10-page contract",
+    "contractCount": "10 pages",
+    "free": "A retry after a failed read, or moving a Document to another Form, is free."
+  },
+  "faq": {
+    "title": "Questions about pricing",
+    "users": {
+      "q": "Do you charge per user?",
+      "a": "No. Every plan has unlimited users. You pay for pages, not seats."
+    },
+    "page": {
+      "q": "What is a page?",
+      "a": "One page of a PDF. A Document counts its pages once, when Vink accepts it for reading. Retries after a failed read are free."
+    },
+    "runOut": {
+      "q": "What happens when our pages run out?",
+      "a": "A new PDF that doesn't fit your remaining pages is refused at upload, with a clear message. Everything already uploaded keeps working. You can upgrade, or add a top-up of €10 per 100 pages that lasts until the end of the billing period."
+    },
+    "rollover": {
+      "q": "Do unused pages roll over?",
+      "a": "No. Your pages renew at the start of each billing period, and unused pages expire."
+    },
+    "vat": {
+      "q": "Are prices with or without VAT?",
+      "a": "All prices are in EUR, excl. VAT. VAT is added where applicable."
+    },
+    "cancel": {
+      "q": "Can we cancel?",
+      "a": "Yes. Monthly plans stop at the end of the month, annual plans at the end of the year. The 20 free pages need no card and have no end date."
+    },
+    "data": {
+      "q": "Where does our data live?",
+      "a": "Stored in the EU and deleted 30 days after sending by default. The <link>Security page</link> lists every subprocessor and its region."
+    },
+    "intake": {
+      "q": "How do documents get in?",
+      "a": "Upload several PDFs at once in the app, or email them to a Form's own address. Each PDF attachment becomes a Document. PDFs of up to 20 pages. Other sources? <link>Tell us</link>."
+    }
+  },
+  "jsonld": {
+    "description": "Vink reads PDFs, typed, scanned or handwritten, and turns them into clean JSON for your systems. People only check the values Vink isn't sure about.",
+    "offer": "{count} pages a month, billed monthly, excl. VAT"
+  }
+}

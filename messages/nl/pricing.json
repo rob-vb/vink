@@ -1,1 +1,127 @@
-{}
+{
+  "meta": {
+    "title": "Prijzen",
+    "description": "Elk abonnement van Vink bevat alles: onbeperkt gebruikers, alle formulieren en velden, controle en webhooks. Je kiest hoeveel pagina's. Vanaf €49 per maand, 20 pagina's gratis."
+  },
+  "og": {
+    "title": "Elk abonnement bevat alles. Je kiest alleen hoeveel pagina's.",
+    "alt": "Prijzen van Vink. Elk abonnement bevat alles. Je kiest alleen hoeveel pagina's."
+  },
+  "header": {
+    "eyebrow": "Prijzen",
+    "title": "Elk abonnement bevat alles. Je kiest alleen hoeveel pagina's.",
+    "subtitle": "Prijzen in euro, excl. btw. + btw waar van toepassing."
+  },
+  "billing": {
+    "label": "Facturering",
+    "monthly": "Maandelijks",
+    "annual": "Jaarlijks",
+    "discount": "−20%"
+  },
+  "card": {
+    "perMonth": "/maand",
+    "billedMonthly": "maandelijks gefactureerd",
+    "billedAnnually": "{total} per jaar gefactureerd",
+    "pages": "{count} pagina's per maand",
+    "perPage": "{price} per pagina",
+    "popular": "Meest gekozen",
+    "cta": "Gratis starten",
+    "vat": "excl. btw"
+  },
+  "plans": {
+    "starter": "Voor een team dat een paar documenten per dag verwerkt.",
+    "team": "Voor een team dat elk uur documenten verwerkt.",
+    "business": "Voor afdelingen met een vaste stroom papierwerk."
+  },
+  "free": "Begin met 20 gratis pagina's. Geen creditcard nodig.",
+  "custom": {
+    "name": "Custom",
+    "title": "Meer dan 3.000 pagina's per maand, of een verwerkersovereenkomst en betalen op factuur nodig?",
+    "body": "Vanaf {price} per maand, jaarlijks gefactureerd. Een volumeprijs, eigen voorwaarden en een serviceniveau dat we met je afspreken.",
+    "chips": {
+      "volume": "3.000+ pagina's per maand",
+      "dpa": "Verwerkersovereenkomst",
+      "invoice": "Betalen op factuur",
+      "terms": "Eigen voorwaarden",
+      "sla": "SLA"
+    },
+    "cta": "Neem contact op"
+  },
+  "includes": {
+    "title": "Elk abonnement bevat",
+    "users": {
+      "title": "Onbeperkt gebruikers",
+      "body": "Nodig het hele team uit. Geen aantal plekken."
+    },
+    "forms": {
+      "title": "Alle formulieren en velden",
+      "body": "Zoveel formulieren als je nodig hebt, met je eigen velden en lijsten."
+    },
+    "review": {
+      "title": "Controle en goedkeuring",
+      "body": "Controleer wat onzeker is, keur goed, of laat Auto-Send de zekere afhandelen."
+    },
+    "integrations": {
+      "title": "Koppelingen (webhook)",
+      "body": "Ondertekende JSON naar je systeem, met nieuwe pogingen en een test-send."
+    },
+    "eu": {
+      "title": "Opgeslagen in de EU",
+      "body": "Database en pdf's worden in de EU opgeslagen. Zie wie wat verwerkt."
+    },
+    "retention": {
+      "title": "30 dagen bewaartermijn",
+      "body": "Standaard 30 dagen na versturen verwijderd. Je kunt het korter maken."
+    }
+  },
+  "pages": {
+    "title": "Wat telt als een pagina",
+    "body": "Eén pagina van een pdf is één pagina. Die telt één keer, wanneer Vink de pdf accepteert om te lezen.",
+    "invoice": "Een factuur",
+    "invoiceCount": "1 tot 2 pagina's",
+    "delivery": "Een pakbon",
+    "deliveryCount": "1 pagina",
+    "contract": "Een contract van 10 pagina's",
+    "contractCount": "10 pagina's",
+    "free": "Opnieuw proberen na een mislukte lezing, of een document naar een ander formulier verplaatsen, is gratis."
+  },
+  "faq": {
+    "title": "Vragen over prijzen",
+    "users": {
+      "q": "Betalen we per gebruiker?",
+      "a": "Nee. Elk abonnement heeft onbeperkt gebruikers. Je betaalt voor pagina's, niet voor plekken."
+    },
+    "page": {
+      "q": "Wat is een pagina?",
+      "a": "Eén pagina van een pdf. Een document telt zijn pagina's één keer, wanneer Vink het accepteert om te lezen. Opnieuw proberen na een mislukte lezing is gratis."
+    },
+    "runOut": {
+      "q": "Wat gebeurt er als onze pagina's op zijn?",
+      "a": "Een nieuwe pdf die niet in je resterende pagina's past, wordt bij het uploaden geweigerd, met een duidelijke melding. Alles wat al geüpload is blijft werken. Je kunt upgraden, of een aanvulling nemen van €10 per 100 pagina's die geldt tot het einde van de factuurperiode."
+    },
+    "rollover": {
+      "q": "Schuiven ongebruikte pagina's door?",
+      "a": "Nee. Je pagina's worden aan het begin van elke factuurperiode vernieuwd, en ongebruikte pagina's vervallen."
+    },
+    "vat": {
+      "q": "Zijn de prijzen inclusief of exclusief btw?",
+      "a": "Alle prijzen zijn in euro, excl. btw. Btw komt erbij waar van toepassing."
+    },
+    "cancel": {
+      "q": "Kunnen we opzeggen?",
+      "a": "Ja. Een maandabonnement stopt aan het einde van de maand, een jaarabonnement aan het einde van het jaar. De 20 gratis pagina's vragen geen creditcard en verlopen niet."
+    },
+    "data": {
+      "q": "Waar staat onze data?",
+      "a": "Opgeslagen in de EU en standaard 30 dagen na versturen verwijderd. De <link>beveiligingspagina</link> noemt elke subverwerker en zijn regio."
+    },
+    "intake": {
+      "q": "Hoe komen documenten binnen?",
+      "a": "Upload meerdere pdf's tegelijk in de app, of mail ze naar het eigen adres van een formulier. Elke pdf-bijlage wordt een document. Pdf's tot 20 pagina's. Andere bronnen? <link>Laat het ons weten</link>."
+    }
+  },
+  "jsonld": {
+    "description": "Vink leest pdf's, getypt, gescand of handgeschreven, en maakt er schone JSON van voor jouw systemen. Mensen controleren alleen de waarden waar Vink twijfelt.",
+    "offer": "{count} pagina's per maand, maandelijks gefactureerd, excl. btw"
+  }
+}

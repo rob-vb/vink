@@ -1,1 +1,31 @@
-{}
+{
+  "privacy": {
+    "meta": {
+      "title": "Privacybeleid",
+      "description": "Hoe Vink omgaat met persoonsgegevens op deze website en in de app. Het volledige privacybeleid wordt geschreven en vervangt deze pagina."
+    },
+    "title": "Privacybeleid",
+    "pending": "Het volledige privacybeleid wordt geschreven en vervangt deze pagina voor de lancering. Tot die tijd staat hier kort wat nu al geldt.",
+    "points": {
+      "security": "Waar documenten worden opgeslagen, hoe lang ze bewaard worden en wie ze verwerkt, staat op de pagina <security>Beveiliging en privacy</security>, inclusief de <subprocessors>lijst van subverwerkers</subprocessors>.",
+      "contact": "Contactaanvragen via deze site worden naar ons gemaild en niet op de site bewaard.",
+      "analytics": "Google Analytics draait alleen op de publieke website, en alleen nadat je statistiekcookies accepteert. De app onder /app laadt het nooit. Je kunt je keuze aanpassen via Cookie-instellingen.",
+      "cookies": "Twee functionele cookies hebben geen toestemming nodig: één onthoudt je taal, één onthoudt je cookiekeuze.",
+      "questions": "Vragen over je gegevens? <contact>Neem contact op</contact>."
+    }
+  },
+  "terms": {
+    "meta": {
+      "title": "Voorwaarden",
+      "description": "De voorwaarden voor het gebruik van Vink. De volledige voorwaarden worden geschreven en vervangen deze pagina voor de lancering."
+    },
+    "title": "Voorwaarden",
+    "pending": "De volledige voorwaarden worden geschreven en vervangen deze pagina voor de lancering.",
+    "points": {
+      "plans": "Abonnementen, prijzen en wat als pagina telt, staan op de pagina <pricing>Prijzen</pricing>. Prijzen zijn in euro, excl. btw.",
+      "custom": "Eigen voorwaarden, een verwerkersovereenkomst en betalen op factuur zijn mogelijk met het Custom-abonnement.",
+      "questions": "Vragen voordat je je aanmeldt? <contact>Neem contact op</contact>."
+    }
+  },
+  "updated": "Tijdelijke tekst, juridische tekst volgt"
+}

@@ -1,0 +1,255 @@
+import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
+import type { ReactNode } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { VinkMark } from "@/components/marketing/brand";
+import { CodeBlock, PostBar } from "@/components/marketing/code-block";
+import { RequestForm } from "@/components/marketing/request-form";
+import { Screenshot } from "@/components/marketing/screenshot-frame";
+import { Container, InlineCode, SectionHeading } from "@/components/marketing/section";
+import { DocSection, TocLayout } from "@/components/marketing/toc";
+import { isLocale, routing, type Locale } from "@/i18n/routing";
+import { sampleEnvelopeJson } from "@/lib/sample-payload";
+import { pageMetadata } from "@/lib/seo";
+import { FOUNDER_EMAIL } from "@/lib/site";
+import { signatureHeaderExample, verifySnippets } from "@/lib/verify-snippets";
+
+function localeOf(value: string): Locale {
+  return isLocale(value) ? value : routing.defaultLocale;
+}
+
+export async function generateMetadata({ params }: PageProps<"/[locale]/developers">): Promise<Metadata> {
+  const { locale } = await params;
+  return pageMetadata({ locale: localeOf(locale), path: "/developers", ns: "developers" });
+}
+
+const sections = [
+  { id: "overview", key: "overview" },
+  { id: "envelope", key: "envelope" },
+  { id: "verify-signature", key: "signature" },
+  { id: "delivery", key: "delivery" },
+  { id: "test-send", key: "testSend" },
+  { id: "integration-service", key: "service" },
+] as const;
+
+const rich = {
+  code: (chunks: ReactNode) => <InlineCode>{chunks}</InlineCode>,
+  b: (chunks: ReactNode) => <b>{chunks}</b>,
+};
+
+function Bullets({ items }: { items: ReactNode[] }) {
+  return (
+    <ul className="flex flex-col gap-2">
+      {items.map((item, i) => (
+        <li key={i} className="flex gap-2.5">
+          <VinkMark className="mt-1.5 h-2.5 w-auto shrink-0 text-navy" />
+          <span>{item}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+export default async function DevelopersPage({ params }: PageProps<"/[locale]/developers">) {
+  const locale = localeOf((await params).locale);
+  const t = await getTranslations({ locale, namespace: "developers" });
+  const tc = await getTranslations({ locale, namespace: "common" });
+  const copyLabels = { copy: t("code.copy"), copied: t("code.copied") };
+
+  const envelopeKeys = ["event", "deliveryId", "test", "document", "form", "approval", "data"] as const;
+
+  return (
+    <main>
+      <section className="pt-14 pb-12 sm:pt-20 sm:pb-16">
+        <Container>
+          <SectionHeading
+            as="h1"
+            eyebrow={t("header.eyebrow")}
+            title={t("header.title")}
+            subtitle={t("header.subtitle")}
+            className="max-w-3xl"
+          />
+        </Container>
+      </section>
+
+      <TocLayout
+        label={t("toc.label")}
+        items={sections.map((s) => ({ id: s.id, label: t(`toc.${s.key}`) }))}
+      >
+        <DocSection id="overview" title={t("overview.title")}>
+          <p>{t("overview.p1")}</p>
+          <p>{t("overview.p2")}</p>
+          <div className="rounded-xl border bg-card p-5 text-foreground">
+            <Bullets
+              items={(["method", "signed", "retries", "atLeastOnce"] as const).map((key) =>
+                t.rich(`overview.facts.${key}`, rich),
+              )}
+            />
+          </div>
+          <p>{t("overview.reading")}</p>
+          <h3 className="mt-2 text-lg font-semibold text-foreground">{t("overview.inboundTitle")}</h3>
+          <p>
+            {t.rich("overview.inbound", {
+              ...rich,
+              link: (chunks) => (
+                <a href="#integration-service" className="font-medium text-foreground underline underline-offset-3">
+                  {chunks}
+                </a>
+              ),
+            })}
+          </p>
+        </DocSection>
+
+        <DocSection id="envelope" title={t("envelope.title")}>
+          <p>{t.rich("envelope.intro", rich)}</p>
+          <CodeBlock
+            code={sampleEnvelopeJson}
+            language="json"
+            header={<PostBar url="https://your-system.example/vink" />}
+            copyLabels={copyLabels}
+          />
+          <div className="rounded-xl border bg-card p-5">
+            <h3 className="font-semibold text-foreground">{t("envelope.rules.title")}</h3>
+            <div className="mt-3 text-foreground">
+              <Bullets
+                items={(["present", "null", "empty"] as const).map((key) => t.rich(`envelope.rules.${key}`, rich))}
+              />
+            </div>
+          </div>
+          <div className="overflow-x-auto rounded-xl border">
+            <table className="w-full min-w-[34rem] text-left text-sm">
+              <thead className="bg-muted/60 text-foreground">
+                <tr>
+                  <th scope="col" className="px-4 py-2.5 font-semibold">{t("envelope.table.key")}</th>
+                  <th scope="col" className="px-4 py-2.5 font-semibold">{t("envelope.table.meaning")}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {envelopeKeys.map((key) => (
+                  <tr key={key}>
+                    <td className="px-4 py-3 align-top font-mono text-[13px] text-foreground">{key}</td>
+                    <td className="px-4 py-3">{t.rich(`envelope.table.${key}`, rich)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </DocSection>
+
+        <DocSection id="verify-signature" title={t("signature.title")}>
+          <p>{t.rich("signature.intro", rich)}</p>
+          <CodeBlock code={signatureHeaderExample} language="text" />
+          <h3 className="mt-2 text-lg font-semibold text-foreground">{t("signature.steps.title")}</h3>
+          <ol className="flex list-decimal flex-col gap-2 pl-5 marker:font-mono marker:text-foreground">
+            {(["parse", "sign", "compare", "time"] as const).map((key) => (
+              <li key={key} className="pl-1">
+                {t.rich(`signature.steps.${key}`, rich)}
+              </li>
+            ))}
+          </ol>
+          <p className="rounded-lg border-l-2 border-amber-500 bg-amber-50 px-4 py-3 text-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+            {t("signature.raw")}
+          </p>
+          <Tabs defaultValue="node" className="gap-3">
+            <TabsList aria-label={t("signature.tabs")}>
+              {verifySnippets.map((snippet) => (
+                <TabsTrigger key={snippet.id} value={snippet.id} className="px-3">
+                  {snippet.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+            {verifySnippets.map((snippet) => (
+              <TabsContent key={snippet.id} value={snippet.id} keepMounted className="data-hidden:hidden">
+                <CodeBlock
+                  code={snippet.code}
+                  language={snippet.language}
+                  header={snippet.label}
+                  copyLabels={copyLabels}
+                />
+              </TabsContent>
+            ))}
+          </Tabs>
+        </DocSection>
+
+        <DocSection id="delivery" title={t("delivery.title")}>
+          <p>{t("delivery.intro")}</p>
+          <div className="overflow-x-auto rounded-xl border">
+            <table className="w-full min-w-[34rem] text-left text-sm">
+              <thead className="bg-muted/60 text-foreground">
+                <tr>
+                  <th scope="col" className="px-4 py-2.5 font-semibold">{t("delivery.table.answer")}</th>
+                  <th scope="col" className="px-4 py-2.5 font-semibold">{t("delivery.table.result")}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {(["ok", "retry", "fail"] as const).map((key) => (
+                  <tr key={key}>
+                    <td className="px-4 py-3 align-top font-medium text-foreground">{t(`delivery.table.${key}`)}</td>
+                    <td className="px-4 py-3">{t(`delivery.table.${key}Result`)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p>{t.rich("delivery.retryAfter", rich)}</p>
+          <p>{t.rich("delivery.redirects", rich)}</p>
+          <p>{t.rich("delivery.atLeastOnce", rich)}</p>
+          <h3 className="mt-2 text-lg font-semibold text-foreground">{t("delivery.headersTitle")}</h3>
+          <p>{t.rich("delivery.headers", rich)}</p>
+          <Screenshot
+            name="delivery-retry"
+            title="Vink · Document · Deliveries"
+            alt={t("delivery.screenshot")}
+            pendingLabel={tc("frame.screenshotPending")}
+            className="mt-2"
+          />
+        </DocSection>
+
+        <DocSection id="test-send" title={t("testSend.title")}>
+          <p>{t.rich("testSend.body", rich)}</p>
+          <p>{t.rich("testSend.flag", rich)}</p>
+          <Screenshot
+            name="integration-test-send"
+            title="Vink · Integrations"
+            alt={t("testSend.screenshot")}
+            pendingLabel={tc("frame.screenshotPending")}
+            className="mt-2"
+          />
+        </DocSection>
+
+        <DocSection id="integration-service" title={t("service.title")}>
+          <p className="text-lg text-foreground">{t("service.lead")}</p>
+          <p>{t("service.body")}</p>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="rounded-xl border bg-card p-5">
+              <h3 className="font-semibold text-foreground">{t("service.includes.title")}</h3>
+              <div className="mt-3 text-sm">
+                <Bullets
+                  items={(["receiver", "forms", "hosting", "changes"] as const).map((key) =>
+                    t(`service.includes.${key}`),
+                  )}
+                />
+              </div>
+            </div>
+            <div className="rounded-xl border bg-card p-5">
+              <h3 className="font-semibold text-foreground">{t("service.need.title")}</h3>
+              <div className="mt-3 text-sm">
+                <Bullets
+                  items={(["system", "documents", "contact"] as const).map((key) => t(`service.need.${key}`))}
+                />
+              </div>
+            </div>
+          </div>
+          <div className="rounded-xl bg-[#0f1e36] px-6 py-5 text-white dark:bg-[#13223c]">
+            <p className="text-2xl font-semibold tracking-tight">{t("service.price")}</p>
+            <p className="mt-1 text-white/75">{t("service.priceNote")}</p>
+          </div>
+          <h3 className="mt-4 text-xl font-semibold text-foreground">{t("service.formTitle")}</h3>
+          <p>{t("service.formBody")}</p>
+          <RequestForm kind="integration" fallbackEmail={FOUNDER_EMAIL} />
+        </DocSection>
+      </TocLayout>
+      <div className="h-16 sm:h-24" />
+    </main>
+  );
+}
