@@ -4,7 +4,7 @@ import { ConvexError, v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { DataModel, Doc, Id } from "./_generated/dataModel";
 import { internalMutation, internalQuery, type MutationCtx, type QueryCtx } from "./_generated/server";
-import { checkUpload, createDocument } from "./documents";
+import { checkUpload, claimUpload, createDocument } from "./documents";
 import { extractionPool } from "./extraction";
 import { insertForm, saveVersion } from "./forms";
 import { orgAction, orgMutation, orgQuery } from "./lib/functions";
@@ -86,6 +86,7 @@ export const insert = internalMutation({
       }
     }
     const proposalId = await ctx.db.insert("formProposals", { ...args, state: "reading" });
+    await claimUpload(ctx, args.key);
     await startProposal(ctx, proposalId);
     return { proposalId };
   },

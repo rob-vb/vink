@@ -373,6 +373,17 @@ export default defineSchema({
     at: v.number(),
   }).index("by_documentId", ["documentId"]),
 
+  // An upload URL handed out by `documents.generateUploadUrl`, until its PDF
+  // becomes a Document or a Form Proposal sample. One still here after 24
+  // hours is an orphan: the daily cleanup deletes its R2 object.
+  uploads: defineTable({
+    organisationId: v.id("organisations"),
+    key: v.string(),
+    issuedAt: v.number(),
+  })
+    .index("by_key", ["key"])
+    .index("by_issuedAt", ["issuedAt"]),
+
   // How many Documents an Organisation has in each state, for the list's tabs.
   // Kept in step by every state change, so the tabs never scan Documents.
   documentCounts: defineTable({

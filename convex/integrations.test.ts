@@ -283,7 +283,7 @@ test("a test-send can leave optional values empty, to show null and []", async (
   });
 });
 
-test("a test-send with a processed Document sends that Document's Payload, corrections included", async () => {
+test("a test-send with an Approved Document sends that Document's Payload, corrections included", async () => {
   const t = newBackend();
   const { user, organisationSlug, formId, create } = await acme(t);
   const { integrationId } = await create();
@@ -303,9 +303,10 @@ test("a test-send with a processed Document sends that Document's Payload, corre
     fieldValueId: document.fieldValues[1].id,
     value: 9800,
   });
+  await user.mutation(api.review.approve, { organisationSlug, documentId });
 
   expect(await user.query(api.integrations.testDocuments, { organisationSlug, formId })).toEqual([
-    { id: documentId, filename: "werkorder.pdf", state: "needs_review" },
+    { id: documentId, filename: "werkorder.pdf", state: "approved" },
   ]);
   await user.action(api.integrations.testSend, {
     organisationSlug,
@@ -320,6 +321,30 @@ test("a test-send with a processed Document sends that Document's Payload, corre
     document: { id: documentId, filename: "werkorder.pdf" },
     data: { licensePlate: "NWA30E", mileageKm: 9800, tyreChanges: [] },
   });
+});
+
+test("a Document still in Needs Review is never test-sent: unchecked data doesn't leave", async () => {
+  const t = newBackend();
+  const { user, organisationSlug, formId, create } = await acme(t);
+  const { integrationId } = await create();
+  fakePipeline.replay({
+    reading: { vehicle: { licensePlate: "NWA-30-E", _pages: [1] } },
+    matches: { licensePlate: { path: "vehicle.licensePlate", probability: 0.4 } },
+    fills: { licensePlate: "NWA30E" },
+  });
+  const documentId = (await uploadAndExtract(t, user, organisationSlug, formId)) as Id<"documents">;
+
+  expect(await user.query(api.integrations.testDocuments, { organisationSlug, formId })).toEqual([]);
+  await expect(
+    user.action(api.integrations.testSend, {
+      organisationSlug,
+      integrationId,
+      formId,
+      mode: "examples",
+      documentId,
+    }),
+  ).rejects.toThrow("Only an Approved Document can be test-sent");
+  expect(fakeHttp.requests).toEqual([]);
 });
 
 test("a test-send reports an error answer and an unreachable receiver inline", async () => {

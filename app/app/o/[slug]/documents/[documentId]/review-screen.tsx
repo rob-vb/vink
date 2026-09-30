@@ -109,6 +109,9 @@ export function ReviewScreen({
 
   const threshold = document.reviewThreshold ?? 0.8;
   const reviewing = document.state === "needs_review";
+  // Delete now; a Rejected Document has it in its Rejected notice.
+  const deletable =
+    isAdmin && !document.dataDeleted && document.state !== "rejected" && document.state !== "deleted";
   const left = document.needsReviewCount;
   const rows =
     filter === "all"
@@ -180,18 +183,30 @@ export function ReviewScreen({
             {document.reviewThreshold !== null && <> · Review Threshold {threshold.toFixed(2)}</>}
           </p>
         </div>
-        {(reviewing || document.state === "extraction_failed") && (
+        {(reviewing || document.state === "extraction_failed" || deletable) && (
           <div className="flex flex-wrap gap-2">
-            <ChangeFormButton
-              organisationSlug={organisationSlug}
-              documentId={documentId}
-              currentFormId={document.formId}
-            />
-            <RejectButton
-              organisationSlug={organisationSlug}
-              documentId={documentId}
-              filename={document.filename}
-            />
+            {(reviewing || document.state === "extraction_failed") && (
+              <>
+                <ChangeFormButton
+                  organisationSlug={organisationSlug}
+                  documentId={documentId}
+                  currentFormId={document.formId}
+                />
+                <RejectButton
+                  organisationSlug={organisationSlug}
+                  documentId={documentId}
+                  filename={document.filename}
+                />
+              </>
+            )}
+            {deletable && (
+              <DeleteButton
+                organisationSlug={organisationSlug}
+                documentId={documentId}
+                filename={document.filename}
+                variant="outline"
+              />
+            )}
           </div>
         )}
       </div>
@@ -241,7 +256,7 @@ export function ReviewScreen({
                 {!document.dataDeleted && (
                   <ReopenButton organisationSlug={organisationSlug} documentId={documentId} />
                 )}
-                {isAdmin && (
+                {isAdmin && !document.dataDeleted && (
                   <DeleteButton
                     organisationSlug={organisationSlug}
                     documentId={documentId}
@@ -293,8 +308,11 @@ export function ReviewScreen({
           <AlertTitle>Data deleted</AlertTitle>
           <AlertDescription>
             Its PDF, what Vink read and its values were deleted on{" "}
-            {when.format(document.dataDeletedAt)} under the Organisation&apos;s retention. Only this
-            record, its history and its Delivery log are kept.
+            {when.format(document.dataDeletedAt)}
+            {document.dataDeletedBy
+              ? ` by ${document.dataDeletedBy}.`
+              : " under the Organisation's retention."}{" "}
+            Only this record, its history and its Delivery log are kept.
           </AlertDescription>
         </Alert>
       )}
