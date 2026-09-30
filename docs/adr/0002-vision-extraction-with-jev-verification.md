@@ -6,7 +6,7 @@ An Extraction sends the whole PDF (every page, plus its text layer when there is
 
 ## Consequences
 
-- TypeSafe becomes the only subprocessor outside the EU (US, with SCCs). Jev receives only short text per Field and never the PDF. An Admin can switch Jev off per Organisation.
+- TypeSafe becomes the only subprocessor outside the EU (US, with SCCs). Jev receives only short text per Field and never the PDF. (Correction 2026-09-30: a per-Organisation switch to turn Jev off was planned here but never built, and is not part of launch.)
 - When Jev fails or is switched off, the Extraction still succeeds. A Document without a Jev result is never approved automatically.
 - List completeness is checked in code. The model first reports what is on each page, and every List entry cites its source pages. That check does not rely on the model's own confidence.
 - Which model to use (Gemini Flash or Claude) is configuration with a pinned version. The API pipeline benchmark picks it.
