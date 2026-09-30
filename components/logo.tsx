@@ -1,12 +1,15 @@
-import { FileText } from "lucide-react";
+import Image from "next/image";
+import { cn } from "@/lib/utils";
 
-export function Logo() {
+export function Logo({ className }: { className?: string }) {
   return (
-    <span className="flex items-center gap-2 font-medium">
-      <span className="flex size-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
-        <FileText className="size-4" />
-      </span>
-      Vink
-    </span>
+    <Image
+      src="/vink_icon.svg"
+      alt="Vink"
+      width={518}
+      height={363}
+      priority
+      className={cn("h-6 w-auto", className)}
+    />
   );
 }
