@@ -75,7 +75,7 @@ export const revoke = orgMutation({
 export const send = internalAction({
   args: { email: v.string(), organisationName: v.string(), token: v.string() },
   handler: async (_ctx, { email, organisationName, token }) => {
-    const url = `${process.env.SITE_URL}/invite/${token}`;
+    const url = `${process.env.SITE_URL}/app/invite/${token}`;
     await sendEmail({
       to: email,
       subject: `You're invited to ${organisationName} on Vink`,
