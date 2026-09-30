@@ -189,6 +189,35 @@ export default defineSchema({
     fields: v.optional(v.array(v.object({ field, ticked: v.boolean() }))),
   }).index("by_organisationId", ["organisationId"]),
 
+  // A Form's Intake Address: `<token>@<INBOUND_DOMAIN>`. At most one per Form;
+  // replacing it deletes the row, so the old token stops at once.
+  intakeAddresses: defineTable({
+    organisationId: v.id("organisations"),
+    formId: v.id("forms"),
+    token: v.string(),
+    // The last "Emails to [Form] are being refused" mail to its Admins: at most one a day.
+    outOfPagesAlertAt: v.optional(v.number()),
+  })
+    .index("by_token", ["token"])
+    .index("by_formId", ["formId"]),
+
+  // "Recent emails": what happened to each email sent to a Form's Intake
+  // Address, per attachment. The last 50 per Form are kept.
+  intakeEmails: defineTable({
+    organisationId: v.id("organisations"),
+    formId: v.id("forms"),
+    from: v.string(),
+    receivedAt: v.number(),
+    attachments: v.array(
+      v.object({
+        filename: v.string(),
+        outcome: v.union(v.literal("created"), v.literal("refused")),
+        // Why it was refused; `null` for a created Document.
+        reason: v.union(v.string(), v.null()),
+      }),
+    ),
+  }).index("by_formId", ["formId"]),
+
   // A PDF processed against the Form Version that was current at upload.
   documents: defineTable({
     organisationId: v.id("organisations"),

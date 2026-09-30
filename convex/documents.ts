@@ -49,6 +49,15 @@ export async function checkUpload(
   if (!key.startsWith(`${organisationId}/`)) {
     throw new ConvexError("Forbidden");
   }
+  return await checkPdf(ctx, key);
+}
+
+/**
+ * What every way in (upload, Intake Address) checks before a PDF is accepted:
+ * it arrived, is readable and has at most 20 pages. Returns its page count; a
+ * refused PDF is removed from storage.
+ */
+export async function checkPdf(ctx: ActionCtx, key: string) {
   const bytes = await pdfStore.read(key);
   if (bytes === null) {
     throw new ConvexError("The upload didn't arrive. Try again.");

@@ -8,6 +8,7 @@ import { requireAdmin } from "../../organisation";
 import { toDraft } from "../draft";
 import { FormEditor } from "../form-editor";
 import { FormSettings } from "../form-settings";
+import { IntakePanel } from "../intake-panel";
 
 export const metadata: Metadata = { title: "Form · Vink" };
 
@@ -38,13 +39,15 @@ export default async function FormPage({
       form={{ id: form.id, version: form.version }}
       initial={toDraft(form)}
       settings={
-        <FormSettings
-          // Rendered on the server and handed over as a prop, so React checks it for a key.
-          key="settings"
-          organisationSlug={slug}
-          formId={form.id}
-          initial={{ reviewThreshold: form.reviewThreshold, autoSend: form.autoSend }}
-        />
+        // Rendered on the server and handed over as a prop, so React checks it for a key.
+        <div key="settings" className="flex flex-col gap-6">
+          <FormSettings
+            organisationSlug={slug}
+            formId={form.id}
+            initial={{ reviewThreshold: form.reviewThreshold, autoSend: form.autoSend }}
+          />
+          <IntakePanel organisationSlug={slug} formId={form.id} isAdmin />
+        </div>
       }
     />
   );

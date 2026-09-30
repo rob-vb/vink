@@ -20,6 +20,7 @@ import { api } from "@/convex/_generated/api";
 import { cn } from "cn";
 import { PagesLeft, PagesWarning } from "../pages-usage";
 import { DocumentTable } from "./document-table";
+import { EmailInDialog } from "./email-in-dialog";
 import { UploadDialog } from "./upload-dialog";
 
 // Extracting has its own page: those Documents need nothing from anyone yet.
@@ -108,6 +109,7 @@ export function DocumentList({
               {extracting ?? "–"}
             </Badge>
           </Button>
+          <EmailInDialog organisationSlug={organisationSlug} forms={forms} isAdmin={isAdmin} />
           <UploadDialog organisationSlug={organisationSlug} forms={forms} />
         </div>
       </div>
