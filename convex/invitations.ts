@@ -1,7 +1,7 @@
 import { ConvexError, v } from "convex/values";
 import { internal } from "./_generated/api";
 import { internalAction, type QueryCtx } from "./_generated/server";
-import { sendEmail } from "./email";
+import { escapeHtml, sendEmail } from "./email";
 import { orgMutation, userMutation, userQuery } from "./lib/functions";
 import { role } from "./schema";
 
@@ -173,6 +173,3 @@ async function hash(token: string) {
   return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-function escapeHtml(text: string) {
-  return text.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
-}

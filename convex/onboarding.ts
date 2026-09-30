@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { internalAction, type MutationCtx } from "./_generated/server";
-import { sendEmail } from "./email";
+import { escapeHtml, sendEmail } from "./email";
 import { userMutation } from "./lib/functions";
 import { initialPages } from "./pages";
 
@@ -60,9 +60,6 @@ export const notifyNewOrganisation = internalAction({
   },
 });
 
-function escapeHtml(text: string) {
-  return text.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
-}
 
 async function uniqueSlug(ctx: MutationCtx, name: string) {
   const base =

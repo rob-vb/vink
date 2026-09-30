@@ -8,6 +8,8 @@
 // matches. Every other caller shares one bucket, `UNPROXIED`, which keeps
 // the per-IP limits from being dodged by going around the Next app.
 
+import { sameSecret } from "./secrets";
+
 export const CLIENT_IP_HEADER = "x-vink-client-ip";
 export const PROXY_SECRET_HEADER = "x-vink-proxy-secret";
 
@@ -17,12 +19,6 @@ export const UNPROXIED = "0.0.0.0";
 const IPV4 = /^(?:(?:25[0-5]|2[0-4]\d|1?\d?\d)\.){3}(?:25[0-5]|2[0-4]\d|1?\d?\d)$/;
 const IPV6 = /^[0-9a-f:.]+$/i;
 
-function sameSecret(a: string, b: string) {
-  if (a.length !== b.length) return false;
-  let diff = 0;
-  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
-  return diff === 0;
-}
 
 /** Whether the request carries this deployment's proxy secret. */
 export function fromNextApp(headers: Headers) {

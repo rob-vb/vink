@@ -463,3 +463,25 @@ test("several PDFs uploaded at once: a refused one never blocks the others", asy
   expect(await documentCount(t)).toBe(3);
   expect(await usage(user, slug)).toMatchObject({ remaining: 4 });
 });
+
+test("a period ending on the 31st keeps its day: Jan 31, Feb 28, Mar 31", async () => {
+  const t = newBackend();
+  const { user, slug } = await freshSignUp(t);
+  const oid = await organisationId(t, slug);
+  vi.setSystemTime(new Date("2027-01-15T09:00:00Z"));
+  await t.mutation(internal.pages.setPlan, {
+    organisationId: oid,
+    plan: "starter",
+    allowance: 300,
+    periodEndsAt: new Date("2027-01-31T00:00:00Z").getTime(),
+  });
+
+  const resets = [];
+  for (const now of ["2027-01-31T01:00:00Z", "2027-02-28T01:00:00Z"]) {
+    vi.setSystemTime(new Date(now));
+    await t.mutation(internal.pages.advancePeriods, {});
+    resets.push(new Date((await usage(user, slug)).resetsAt!).toISOString());
+  }
+
+  expect(resets).toEqual(["2027-02-28T00:00:00.000Z", "2027-03-31T00:00:00.000Z"]);
+});

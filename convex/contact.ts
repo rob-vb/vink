@@ -7,7 +7,7 @@
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { httpAction, internalMutation, type MutationCtx } from "./_generated/server";
-import { sendEmail } from "./email";
+import { escapeHtml, sendEmail } from "./email";
 import { fromNextApp, trustedClientIp } from "./lib/clientIp";
 import { filledHoneypot, HONEYPOT_FIELD } from "./lib/signUpGuard";
 
@@ -70,11 +70,7 @@ function parse(input: unknown): Request | "invalid" | "invalid_email" {
   return request;
 }
 
-const ENTITIES: Record<string, string> = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
 
-function escapeHtml(text: string) {
-  return text.replace(/[&<>"']/g, (c) => ENTITIES[c]);
-}
 
 function mailOf(request: Request) {
   const rows: Array<[string, string | undefined]> = [

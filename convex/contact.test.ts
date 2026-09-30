@@ -76,7 +76,7 @@ test("a request is emailed once to CONTACT_TO, with Reply-To set to the visitor"
     expect(mail.html).toContain(value);
   }
   // What the visitor typed is shown, never run as HTML.
-  expect(mail.html).toContain("&lt;straight&gt;");
+  expect(mail.html).toContain("&#60;straight&#62;");
   expect(mail.html).not.toContain("<straight>");
 });
 

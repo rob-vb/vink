@@ -32,3 +32,8 @@ export async function sendEmail(input: {
     throw new Error(`Resend rejected the email: ${response.status}`);
   }
 }
+
+/** For user-supplied text inside an email's HTML. */
+export function escapeHtml(text: string) {
+  return text.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+}

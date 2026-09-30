@@ -10,11 +10,13 @@ import {
   internalMutation,
   internalQuery,
   type MutationCtx,
+  type QueryCtx,
 } from "./_generated/server";
 import { checkPdf } from "./documents";
-import { sendEmail } from "./email";
+import { escapeHtml, sendEmail } from "./email";
 import { orgMutation, orgQuery } from "./lib/functions";
 import { pdfStore } from "./lib/pdfStore";
+import { sameSecret } from "./lib/secrets";
 
 const RECENT_EMAILS = 50;
 const ALERT_EVERY = 24 * 60 * 60 * 1000;
@@ -32,7 +34,7 @@ function newToken() {
   return Array.from(bytes, (b) => alphabet[b % alphabet.length]).join("");
 }
 
-async function ownForm(ctx: MutationCtx, organisationId: Id<"organisations">, formId: Id<"forms">) {
+async function ownForm(ctx: QueryCtx, organisationId: Id<"organisations">, formId: Id<"forms">) {
   const form = await ctx.db.get(formId);
   if (form === null || form.organisationId !== organisationId) {
     throw new ConvexError("Form not found");
@@ -49,10 +51,7 @@ function addressOf(token: string) {
 export const get = orgQuery({
   args: { formId: v.id("forms") },
   handler: async (ctx, { formId }) => {
-    const form = await ctx.db.get(formId);
-    if (form === null || form.organisationId !== ctx.organisationId) {
-      throw new ConvexError("Form not found");
-    }
+    await ownForm(ctx, ctx.organisationId, formId);
     const intake = await ctx.db
       .query("intakeAddresses")
       .withIndex("by_formId", (q) => q.eq("formId", formId))
@@ -200,9 +199,6 @@ export const alertOutOfPages = internalAction({
   },
 });
 
-function escapeHtml(text: string) {
-  return text.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
-}
 
 function reasonOf(error: unknown) {
   if (!(error instanceof ConvexError)) throw error;
@@ -280,7 +276,7 @@ export const receive = internalAction({
 export const email = httpAction(async (ctx, request) => {
   const secret = process.env.INTAKE_SECRET;
   const given = request.headers.get("Authorization")?.replace(/^Bearer /, "") ?? "";
-  if (!secret || !(await sameSecret(given, secret))) {
+  if (!secret || !sameSecret(given, secret)) {
     return new Response("Unauthorized", { status: 401 });
   }
   let body: unknown;
@@ -310,13 +306,3 @@ export const email = httpAction(async (ctx, request) => {
   return Response.json({ attachments: result.attachments });
 });
 
-/** Compares in constant time, via HMAC, so the secret can't be guessed byte by byte. */
-async function sameSecret(a: string, b: string) {
-  const key = await crypto.subtle.generateKey({ name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
-  const [ha, hb] = await Promise.all(
-    [a, b].map(async (s) => new Uint8Array(await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(s)))),
-  );
-  let diff = 0;
-  for (let i = 0; i < ha.length; i++) diff |= ha[i] ^ hb[i];
-  return diff === 0;
-}

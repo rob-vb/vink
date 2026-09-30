@@ -30,8 +30,12 @@ function isUnlimited(pages: Pages) {
   return pages.plan === "internal_unlimited";
 }
 
+function allowanceLeft(pages: Pages) {
+  return Math.max(0, pages.allowance - pages.allowanceUsed);
+}
+
 function remainingOf(pages: Pages) {
-  return pages.free + Math.max(0, pages.allowance - pages.allowanceUsed) + pages.topUp;
+  return pages.free + allowanceLeft(pages) + pages.topUp;
 }
 
 /**
@@ -82,7 +86,7 @@ export async function chargePages(
     return taken;
   };
   const fromFree = take(pages.free);
-  const fromAllowance = take(Math.max(0, pages.allowance - pages.allowanceUsed));
+  const fromAllowance = take(allowanceLeft(pages));
   const fromTopUp = take(pages.topUp);
   await ctx.db.patch(organisationId, {
     pages: {
@@ -110,7 +114,7 @@ export const usage = orgQuery({
       used: pages.used,
       freePages: pages.free,
       allowance: pages.allowance,
-      allowanceLeft: Math.max(0, pages.allowance - pages.allowanceUsed),
+      allowanceLeft: allowanceLeft(pages),
       topUpPages: pages.topUp,
       resetsAt: pages.periodEndsAt,
       warning: !unlimited && total > 0 && pages.used / total >= 0.8,
@@ -138,8 +142,9 @@ export const setPlan = internalMutation({
   },
   handler: async (ctx, { organisationId, plan, allowance, periodEndsAt }) => {
     const pages = await ownPages(ctx, organisationId);
+    const anchorDay = periodEndsAt === null ? undefined : new Date(periodEndsAt).getUTCDate();
     await ctx.db.patch(organisationId, {
-      pages: { ...pages, plan, allowance, allowanceUsed: 0, periodEndsAt, used: 0 },
+      pages: { ...pages, plan, allowance, allowanceUsed: 0, periodEndsAt, anchorDay, used: 0 },
     });
   },
 });
@@ -162,11 +167,15 @@ export const setFreePages = internalMutation({
   },
 });
 
-function nextPeriodEnd(periodEndsAt: number, now: number) {
-  let end = new Date(periodEndsAt);
+/** The first period end after `now`, a month at a time, on the anchor day or the month's last day. */
+function nextPeriodEnd(periodEndsAt: number, now: number, anchorDay: number) {
+  const end = new Date(periodEndsAt);
   while (end.getTime() <= now) {
-    end = new Date(end);
-    end.setUTCMonth(end.getUTCMonth() + 1);
+    const year = end.getUTCFullYear();
+    const month = end.getUTCMonth() + 1;
+    const lastDay = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+    end.setUTCDate(1);
+    end.setUTCFullYear(year, month, Math.min(anchorDay, lastDay));
   }
   return end.getTime();
 }
@@ -193,7 +202,11 @@ export const advancePeriods = internalMutation({
           allowanceUsed: 0,
           topUp: 0,
           used: 0,
-          periodEndsAt: nextPeriodEnd(pages.periodEndsAt!, now),
+          periodEndsAt: nextPeriodEnd(
+            pages.periodEndsAt!,
+            now,
+            pages.anchorDay ?? new Date(pages.periodEndsAt!).getUTCDate(),
+          ),
         },
       });
     }

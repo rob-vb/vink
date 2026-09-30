@@ -109,6 +109,9 @@ export default defineSchema({
         // When the period ends: the allowance renews and Top-ups expire.
         // `null` without a period (no Plan, or internal unlimited).
         periodEndsAt: v.union(v.number(), v.null()),
+        // The day of the month periods end on, so a period ending on the 31st
+        // ends on the 28th in February and on the 31st again in March.
+        anchorDay: v.optional(v.number()),
         topUp: v.number(),
         free: v.number(),
         // Every Page charged this period (without a period: ever), for the 80% warning.
