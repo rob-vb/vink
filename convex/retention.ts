@@ -1,11 +1,12 @@
 // Retention (spec, Retention): a daily cleanup deletes data, R2 objects
 // included, and keeps metadata, history and Delivery logs. It also deletes
-// uploads that never became a Document.
+// uploads that never became a Document, and forgets contact-form rate limits.
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { internalMutation, type MutationCtx } from "./_generated/server";
 import { moveTo } from "./lib/documentStates";
 import { pdfStore } from "./lib/pdfStore";
+import { forgetOldContactRequests } from "./contact";
 import { deleteProposal } from "./formProposals";
 import { retentionDaysOf } from "./organisations";
 import { deleteData } from "./rejection";
@@ -114,6 +115,7 @@ export const run = internalMutation({
   handler: async (ctx) => {
     const now = Date.now();
     let more = await cleanOrphanUploads(ctx, now);
+    more = (await forgetOldContactRequests(ctx, now)) || more;
     for (const organisation of await ctx.db.query("organisations").take(1000)) {
       more = (await cleanOrganisation(ctx, organisation, now)) || more;
     }

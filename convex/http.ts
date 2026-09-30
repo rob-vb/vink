@@ -1,6 +1,7 @@
 import { httpRouter } from "convex/server";
 import { httpAction } from "./_generated/server";
 import { createAuth } from "./auth";
+import { submit } from "./contact";
 import { withTrustedClientIp } from "./lib/clientIp";
 
 const http = httpRouter();
@@ -28,5 +29,8 @@ http.route({
     Response.redirect(`${process.env.CONVEX_SITE_URL}/api/auth/convex/.well-known/openid-configuration`),
   ),
 });
+
+// The marketing site's contact form, forwarded by the Next app (app/api/contact).
+http.route({ path: "/contact", method: "POST", handler: submit });
 
 export default http;
