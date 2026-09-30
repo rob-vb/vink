@@ -15,7 +15,12 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
 
 const ZOOMS = [0.75, 1, 1.25, 1.5, 2, 3];
 
-/** The PDF, one page at a time, with page n/N and zoom. Zoom matters for handwriting. */
+/**
+ * The PDF, one page at a time, with page n/N and zoom. Zoom matters for handwriting.
+ *
+ * Mirrored in components/demo/demo-pdf-pane.tsx (the marketing demo draws its
+ * paper pages without react-pdf): update both.
+ */
 export default function PdfPane({
   url,
   pageCount,

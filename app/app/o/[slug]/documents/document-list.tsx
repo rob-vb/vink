@@ -15,7 +15,8 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DocumentStateTabs, DocumentsHeading } from "@/components/documents/document-tabs";
+import { englishLabels, type ListedState } from "@/components/documents/labels";
 import { api } from "@/convex/_generated/api";
 import { cn } from "cn";
 import { PagesLeft, PagesWarning } from "../pages-usage";
@@ -23,16 +24,8 @@ import { DocumentTable } from "./document-table";
 import { EmailInDialog } from "./email-in-dialog";
 import { UploadDialog } from "./upload-dialog";
 
-// Extracting has its own page: those Documents need nothing from anyone yet.
-const tabs = [
-  { state: "needs_review", label: "Needs Review", empty: "Nothing is waiting for review." },
-  { state: "approved", label: "Approved", empty: "No Documents have been approved yet." },
-  { state: "extraction_failed", label: "Failed", empty: "No Extractions have failed." },
-  { state: "rejected", label: "Rejected", empty: "No Documents have been rejected." },
-] as const;
-
-type State = (typeof tabs)[number]["state"];
-
+// The heading, tabs and table are shared with the marketing demo
+// (components/documents, used by components/demo): a change here shows up there.
 export function DocumentList({
   organisationSlug,
   organisationName,
@@ -42,7 +35,7 @@ export function DocumentList({
   organisationName: string;
   isAdmin: boolean;
 }) {
-  const [state, setState] = useState<State>("needs_review");
+  const [state, setState] = useState<ListedState>("needs_review");
   const forms = useQuery(api.forms.list, { organisationSlug });
   const list = useQuery(api.documents.list, { organisationSlug, state });
   if (forms === undefined) {
@@ -84,61 +77,41 @@ export function DocumentList({
     );
   }
 
-  const tab = tabs.find((t) => t.state === state)!;
   const extracting = list?.counts.extracting;
 
   return (
     <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8 md:px-6">
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-semibold">Documents</h1>
-          <p className="text-sm text-muted-foreground">
-            Status updates arrive here as soon as they happen.
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <PagesLeft organisationSlug={organisationSlug} />
-          <Button
-            variant="outline"
-            nativeButton={false}
-            render={<Link href={`/app/o/${organisationSlug}/documents/extracting`} />}
-          >
-            <LoaderCircle className={cn(extracting ? "animate-spin" : "text-muted-foreground")} />
-            Extracting
-            <Badge variant="secondary" className="tabular-nums">
-              {extracting ?? "–"}
-            </Badge>
-          </Button>
-          <EmailInDialog organisationSlug={organisationSlug} forms={forms} isAdmin={isAdmin} />
-          <UploadDialog organisationSlug={organisationSlug} forms={forms} />
-        </div>
-      </div>
+      <DocumentsHeading
+        actions={
+          <>
+            <PagesLeft organisationSlug={organisationSlug} />
+            <Button
+              variant="outline"
+              nativeButton={false}
+              render={<Link href={`/app/o/${organisationSlug}/documents/extracting`} />}
+            >
+              <LoaderCircle className={cn(extracting ? "animate-spin" : "text-muted-foreground")} />
+              Extracting
+              <Badge variant="secondary" className="tabular-nums">
+                {extracting ?? "–"}
+              </Badge>
+            </Button>
+            <EmailInDialog organisationSlug={organisationSlug} forms={forms} isAdmin={isAdmin} />
+            <UploadDialog organisationSlug={organisationSlug} forms={forms} />
+          </>
+        }
+      />
 
       {isAdmin && <PagesWarning organisationSlug={organisationSlug} />}
 
-      <Tabs value={state} onValueChange={(value) => setState(value as State)}>
-        {/* Scrolls sideways on a narrow screen, without a visible scrollbar. The padding
-            keeps the active tab's underline inside, so there is nothing to scroll down to. */}
-        <div className="-mx-4 overflow-x-auto overflow-y-hidden px-4 pb-1 [scrollbar-width:none] md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden">
-          <TabsList variant="line">
-            {tabs.map((t) => (
-              <TabsTrigger key={t.state} value={t.state}>
-                {t.label}
-                <Badge variant="secondary" className="tabular-nums">
-                  {list?.counts[t.state] ?? "–"}
-                </Badge>
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </div>
-      </Tabs>
+      <DocumentStateTabs value={state} onValueChange={setState} counts={list?.counts} />
 
       <div className="mt-4">
         <DocumentTable
           organisationSlug={organisationSlug}
           documents={list?.documents}
           retryable={state === "extraction_failed"}
-          empty={tab.empty}
+          empty={englishLabels.documents.empty[state]}
         />
       </div>
     </main>
