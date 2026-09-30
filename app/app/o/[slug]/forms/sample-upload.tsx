@@ -1,12 +1,12 @@
 "use client";
 
 import { useAction, useMutation } from "convex/react";
-import { ConvexError } from "convex/values";
 import { FileUp } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type DragEvent, useState } from "react";
 import { Spinner } from "@/components/ui/spinner";
 import { api } from "@/convex/_generated/api";
+import { errorText } from "@/lib/convex-error";
 import type { Id } from "@/convex/_generated/dataModel";
 import { cn } from "@/lib/utils";
 
@@ -47,7 +47,7 @@ export function SampleUpload({
       const { proposalId } = await create({ organisationSlug, key, filename: file.name, formId });
       router.push(`/app/o/${organisationSlug}/forms/proposals/${proposalId}`);
     } catch (e) {
-      setError(e instanceof ConvexError ? String(e.data) : "The upload didn't work. Try again.");
+      setError(errorText(e, "The upload didn't work. Try again."));
       setUploading(null);
     }
   }

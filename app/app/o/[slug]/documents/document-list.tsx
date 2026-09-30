@@ -18,6 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { api } from "@/convex/_generated/api";
 import { cn } from "cn";
+import { PagesLeft, PagesWarning } from "../pages-usage";
 import { DocumentTable } from "./document-table";
 import { UploadDialog } from "./upload-dialog";
 
@@ -94,7 +95,8 @@ export function DocumentList({
             Status updates arrive here as soon as they happen.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <PagesLeft organisationSlug={organisationSlug} />
           <Button
             variant="outline"
             nativeButton={false}
@@ -109,6 +111,8 @@ export function DocumentList({
           <UploadDialog organisationSlug={organisationSlug} forms={forms} />
         </div>
       </div>
+
+      {isAdmin && <PagesWarning organisationSlug={organisationSlug} />}
 
       <Tabs value={state} onValueChange={(value) => setState(value as State)}>
         {/* Scrolls sideways on a narrow screen, without a visible scrollbar. The padding

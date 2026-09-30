@@ -438,3 +438,28 @@ test("Rob is emailed about every new Organisation, with the email domain", async
   expect(mail?.subject).toContain("Kantoor Noord");
   expect(mail?.html).toContain("kantoornoord.nl");
 });
+
+test("several PDFs uploaded at once: a refused one never blocks the others", async () => {
+  const t = newBackend();
+  const { user, slug, formId } = await freshSignUp(t);
+  const outcomes = [];
+  for (const pages of [4, 21, 10, 9, 2]) {
+    outcomes.push(
+      await upload(user, slug, formId, pages).then(
+        () => "created",
+        (e: ConvexError<string | { message: string }>) =>
+          typeof e.data === "string" ? e.data : e.data.message,
+      ),
+    );
+  }
+
+  expect(outcomes).toEqual([
+    "created",
+    "This PDF has 21 pages. Vink reads up to 20 pages per Document.",
+    "created",
+    "You have 6 pages left; this PDF has 9.",
+    "created",
+  ]);
+  expect(await documentCount(t)).toBe(3);
+  expect(await usage(user, slug)).toMatchObject({ remaining: 4 });
+});

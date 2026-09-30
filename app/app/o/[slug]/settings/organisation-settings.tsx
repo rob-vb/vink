@@ -10,6 +10,7 @@ import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/convex/_generated/api";
+import { PagesCard } from "./pages-card";
 
 function failed(error: unknown) {
   toast.error(error instanceof ConvexError ? String(error.data) : "That didn't save. Try again.");
@@ -29,6 +30,8 @@ function Settings({
 
   return (
     <div className="flex flex-col gap-6">
+      <PagesCard organisationSlug={organisationSlug} />
+
       <Card>
         <CardHeader>
           <CardTitle>Organisation</CardTitle>
