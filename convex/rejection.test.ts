@@ -151,15 +151,13 @@ test("an approved Document can't be rejected", async () => {
   await user.mutation(api.review.approve, on);
 
   await expect(user.mutation(api.rejection.reject, on)).rejects.toThrow("This Document is approved");
-  await expect(user.mutation(api.rejection.remove, on)).rejects.toThrow("This Document is approved");
 });
 
-test("only a Rejected Document can be reopened or deleted", async () => {
+test("only a Rejected Document can be reopened", async () => {
   const t = newBackend();
   const { user, on } = await uploaded(t);
 
   await expect(user.mutation(api.rejection.reopen, on)).rejects.toThrow("Only a Rejected Document");
-  await expect(user.mutation(api.rejection.remove, on)).rejects.toThrow("Only a Rejected Document");
 });
 
 test("a Member can't delete a Document", async () => {

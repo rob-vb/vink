@@ -1,0 +1,117 @@
+{
+  "meta": {
+    "title": "Vink: AI-data-extractie uit documenten voor operationele teams",
+    "description": "Vink leest elke pdf, getypt, gescand of handgeschreven, en maakt er schone data van voor jouw systemen. Jij controleert alleen waar Vink twijfelt. 20 pagina's gratis."
+  },
+  "og": {
+    "title": "Document. Vink. Klaar.",
+    "alt": "Vink. Document. Vink. Klaar. Elke pdf erin, schone data eruit."
+  },
+  "hero": {
+    "document": "Document.",
+    "vink": "Vink.",
+    "done": "Klaar.",
+    "subtitle": "Vink leest elke pdf, getypt, gescand of handgeschreven, en maakt er schone data van voor jouw systemen. Jij controleert alleen waar Vink twijfelt.",
+    "watch": "Bekijk 15 seconden",
+    "screenLabel": "Het controlescherm van Vink met één waarde die gecontroleerd moet worden"
+  },
+  "video": {
+    "title": "Eén pdf erin, schone data eruit.",
+    "subtitle": "Vijftien seconden, zonder knippen.",
+    "placeholder": "Opname volgt",
+    "label": "Een opname van 15 seconden waarin één pdf door Vink gaat"
+  },
+  "journey": {
+    "title": "Wat er met één document gebeurt.",
+    "subtitle": "Vier stops, van de pdf op je bureau tot de data in je systeem. Jij stapt pas in bij de derde.",
+    "arrives": {
+      "kicker": "Het komt binnen",
+      "title": "Elke pdf. Zelfs handschrift.",
+      "body": "Getypt, gescand of handgeschreven, één pagina of een stapel papieren. Geen templates om te bouwen.",
+      "intake": "Upload het of mail het in. Sleep meerdere pdf's tegelijk, of geef een formulier een eigen e-mailadres. Pdf-bijlagen, tot 20 pagina's per stuk."
+    },
+    "reads": {
+      "kicker": "Vink leest het",
+      "title": "Elke waarde, met zijn bron.",
+      "body": "Bij elke waarde zie je wat er gelezen is en op welke pagina. De meeste documenten zijn binnen een minuut klaar.",
+      "demo": "Probeer de demo"
+    },
+    "check": {
+      "kicker": "Jij controleert",
+      "title": "Je controleert alleen waar Vink twijfelt.",
+      "body": "Bij elke waarde zie je wat er gelezen is en op welke pagina. Vink markeert waar het niet zeker van is, en er gaat niets weg tot jij het goedkeurt."
+    },
+    "lands": {
+      "kicker": "Het komt aan",
+      "title": "Direct in je systemen.",
+      "body": "Goedgekeurde data gaat als schone JSON naar je systeem, en Auto-Send handelt de documenten af waar Vink zeker van is."
+    }
+  },
+  "tabs": {
+    "label": "Voorbeelddocumenten",
+    "invoice": "Factuur",
+    "deliveryNote": "Pakbon",
+    "handwritten": "Handgeschreven formulier",
+    "orderForm": "Bestelformulier"
+  },
+  "connect": {
+    "title": "Twee manieren om te koppelen.",
+    "subtitle": "Je developer koppelt één webhook, of wij bouwen de koppeling voor je.",
+    "dev": {
+      "eyebrow": "Je developer",
+      "title": "Eén ondertekende webhook.",
+      "body": "JSON met je eigen velden als sleutels, een HMAC-handtekening, nieuwe pogingen en een test-send.",
+      "link": "Lees de developerdocumentatie"
+    },
+    "service": {
+      "eyebrow": "Geen developer",
+      "title": "Wij koppelen het voor je.",
+      "body": "Vertel ons welk systeem je data moet bereiken. Rob bouwt en test de koppeling, voor een vaste prijs die we vooraf afspreken.",
+      "point1": "Je ERP, boekhoudpakket, spreadsheet of database",
+      "point2": "Getest met je eigen documenten",
+      "point3": "Eén prijs, afgesproken voordat we beginnen",
+      "cta": "Vraag naar een koppeling"
+    }
+  },
+  "data": {
+    "title": "Je data, kort bewaard.",
+    "body": "Opgeslagen in de EU en 30 dagen na versturen verwijderd. Je ziet precies wie het verwerkt.",
+    "link": "Beveiliging en privacy"
+  },
+  "pricing": {
+    "title": "Elk abonnement bevat alles.",
+    "subtitle": "Je kiest alleen hoeveel pagina's. Prijzen excl. btw.",
+    "perMonth": "/mnd",
+    "from": "vanaf",
+    "pages": "{count} pagina's",
+    "customPages": "{count}+ pagina's",
+    "perPage": "{price} per pagina",
+    "customNote": "Verwerkersovereenkomst, factuur, volumeprijs",
+    "popular": "Meest gekozen",
+    "free": "Begin met 20 gratis pagina's. Geen creditcard nodig.",
+    "link": "Bekijk prijzen"
+  },
+  "faq": {
+    "title": "Wat teams als eerste vragen.",
+    "wrong": {
+      "q": "Wat als Vink iets verkeerd leest?",
+      "a": "Je ziet elke waarde waar Vink niet zeker van is, met wat er gelezen is en op welke pagina. Er wordt niets verstuurd tot iemand het goedkeurt."
+    },
+    "messy": {
+      "q": "Onze documenten zijn rommelig, of handgeschreven.",
+      "a": "Probeer het op je eigen documenten. De eerste 20 pagina's zijn gratis, zonder creditcard."
+    },
+    "developer": {
+      "q": "We hebben geen developer.",
+      "a": "Wij bouwen de koppeling met je systeem voor je. Dat is een betaalde dienst met een prijs die we vooraf afspreken."
+    },
+    "data": {
+      "q": "Waar gaat onze data naartoe?",
+      "a": "Het wordt opgeslagen in de EU en 30 dagen na versturen verwijderd. We publiceren de <link>volledige lijst van wie het verwerkt</link>."
+    },
+    "templates": {
+      "q": "Moet ik templates instellen?",
+      "a": "Nee. Beschrijf je velden, of laat Vink ze voorstellen op basis van één voorbeeld. Daarna koppelt Vink elk nieuw document zelf aan je velden, welke opmaak het ook heeft. Vink leest pdf's tot 20 pagina's."
+    }
+  }
+}

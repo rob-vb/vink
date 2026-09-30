@@ -1,0 +1,11 @@
+import type { Metadata } from "next";
+import { ExtractingList } from "./extracting-list";
+
+export const metadata: Metadata = { title: "Extracting · Vink" };
+
+export default async function ExtractingPage({
+  params,
+}: PageProps<"/app/o/[slug]/documents/extracting">) {
+  const { slug } = await params;
+  return <ExtractingList organisationSlug={slug} />;
+}

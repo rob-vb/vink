@@ -12,6 +12,7 @@ import { deliveriesOf } from "./deliveries";
 import { startExtraction } from "./extraction";
 import { countIn } from "./lib/documentStates";
 import { orgAction, orgMutation, orgQuery } from "./lib/functions";
+import { chargePages } from "./pages";
 import { pdfStore } from "./lib/pdfStore";
 import type { FlatField } from "./lib/pipeline";
 import {
@@ -31,9 +32,20 @@ export const generateUploadUrl = orgMutation({
   args: {},
   handler: async (ctx) => {
     const key = `${ctx.organisationId}/${crypto.randomUUID()}`;
+    // Recorded so an upload that never becomes a Document is deleted (retention.ts).
+    await ctx.db.insert("uploads", { organisationId: ctx.organisationId, key, issuedAt: Date.now() });
     return { key, url: await pdfStore.uploadUrl(key) };
   },
 });
+
+/** The upload under `key` is in use (a Document or a Form Proposal sample): no longer an orphan. */
+export async function claimUpload(ctx: MutationCtx, key: string) {
+  const upload = await ctx.db
+    .query("uploads")
+    .withIndex("by_key", (q) => q.eq("key", key))
+    .unique();
+  if (upload !== null) await ctx.db.delete(upload._id);
+}
 
 /**
  * Checks an uploaded PDF: issued to this Organisation, arrived, readable and
@@ -48,6 +60,15 @@ export async function checkUpload(
   if (!key.startsWith(`${organisationId}/`)) {
     throw new ConvexError("Forbidden");
   }
+  return await checkPdf(ctx, key);
+}
+
+/**
+ * What every way in (upload, Intake Address) checks before a PDF is accepted:
+ * it arrived, is readable and has at most 20 pages. Returns its page count; a
+ * refused PDF is removed from storage.
+ */
+export async function checkPdf(ctx: ActionCtx, key: string) {
   const bytes = await pdfStore.read(key);
   if (bytes === null) {
     throw new ConvexError("The upload didn't arrive. Try again.");
@@ -103,6 +124,7 @@ export const insert = internalMutation({
     uploaderEmail: v.string(),
   },
   handler: async (ctx, args) => {
+    await chargePages(ctx, args.organisationId, args.pageCount);
     await createDocument(ctx, args);
   },
 });
@@ -138,6 +160,7 @@ export async function createDocument(
     formVersion: form.version,
     state: "extracting",
   });
+  await claimUpload(ctx, document.key);
   await ctx.db.insert("documentEvents", {
     organisationId: document.organisationId,
     documentId,
@@ -249,6 +272,11 @@ export const get = orgQuery({
       rejection: rejectionOf(document),
       dataDeleted: document.dataDeletedAt !== undefined,
       dataDeletedAt: document.dataDeletedAt ?? null,
+      // The Admin who deleted it now; `null` when retention did, or nobody.
+      dataDeletedBy:
+        document.dataDeletedAt === undefined
+          ? null
+          : (events.findLast((e) => e.event === "deleted")?.byEmail ?? null),
       approval: document.approval
         ? { mode: document.approval.mode, by: document.approval.byEmail, at: document.approval.at }
         : null,

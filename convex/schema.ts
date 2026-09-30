@@ -77,6 +77,15 @@ export const review = v.object({
   at: v.number(),
 });
 
+export const planName = v.union(
+  v.literal("starter"),
+  v.literal("team"),
+  v.literal("business"),
+  v.literal("custom"),
+  // For Rob's own and test Organisations: never refuses, never on the site.
+  v.literal("internal_unlimited"),
+);
+
 // Every table except `organisations` itself carries an indexed `organisationId`.
 export default defineSchema({
   organisations: defineTable({
@@ -85,7 +94,34 @@ export default defineSchema({
     // Days a Document's data is kept after its last successful Delivery
     // (or its Approval, with no Integration). 30 when unset.
     retentionDays: v.optional(v.number()),
-  }).index("by_slug", ["slug"]),
+    // The user who created it, so only a user's first Organisation gets Free
+    // Pages. Unset for Organisations created before Plans.
+    createdBy: v.optional(v.string()),
+    // Its Plan and Pages (see pages.ts). Unset for Organisations created
+    // before Plans, which count as the internal unlimited Plan.
+    pages: v.optional(
+      v.object({
+        // `null`: no Plan, only Free Pages.
+        plan: v.union(planName, v.null()),
+        // Pages per period, and how many of them this period has used.
+        allowance: v.number(),
+        allowanceUsed: v.number(),
+        // When the period ends: the allowance renews and Top-ups expire.
+        // `null` without a period (no Plan, or internal unlimited).
+        periodEndsAt: v.union(v.number(), v.null()),
+        // The day of the month periods end on, so a period ending on the 31st
+        // ends on the 28th in February and on the 31st again in March.
+        anchorDay: v.optional(v.number()),
+        topUp: v.number(),
+        free: v.number(),
+        // Every Page charged this period (without a period: ever), for the 80% warning.
+        used: v.number(),
+      }),
+    ),
+  })
+    .index("by_slug", ["slug"])
+    .index("by_createdBy", ["createdBy"])
+    .index("by_periodEndsAt", ["pages.periodEndsAt"]),
 
   memberships: defineTable({
     organisationId: v.id("organisations"),
@@ -155,6 +191,35 @@ export default defineSchema({
     textLayer: v.optional(v.array(v.object({ page: v.number(), text: v.string() }))),
     fields: v.optional(v.array(v.object({ field, ticked: v.boolean() }))),
   }).index("by_organisationId", ["organisationId"]),
+
+  // A Form's Intake Address: `<token>@<INBOUND_DOMAIN>`. At most one per Form;
+  // replacing it deletes the row, so the old token stops at once.
+  intakeAddresses: defineTable({
+    organisationId: v.id("organisations"),
+    formId: v.id("forms"),
+    token: v.string(),
+    // The last "Emails to [Form] are being refused" mail to its Admins: at most one a day.
+    outOfPagesAlertAt: v.optional(v.number()),
+  })
+    .index("by_token", ["token"])
+    .index("by_formId", ["formId"]),
+
+  // "Recent emails": what happened to each email sent to a Form's Intake
+  // Address, per attachment. The last 50 per Form are kept.
+  intakeEmails: defineTable({
+    organisationId: v.id("organisations"),
+    formId: v.id("forms"),
+    from: v.string(),
+    receivedAt: v.number(),
+    attachments: v.array(
+      v.object({
+        filename: v.string(),
+        outcome: v.union(v.literal("created"), v.literal("refused")),
+        // Why it was refused; `null` for a created Document.
+        reason: v.union(v.string(), v.null()),
+      }),
+    ),
+  }).index("by_formId", ["formId"]),
 
   // A PDF processed against the Form Version that was current at upload.
   documents: defineTable({
@@ -372,6 +437,28 @@ export default defineSchema({
     byEmail: v.string(),
     at: v.number(),
   }).index("by_documentId", ["documentId"]),
+
+  // An upload URL handed out by `documents.generateUploadUrl`, until its PDF
+  // becomes a Document or a Form Proposal sample. One still here after 24
+  // hours is an orphan: the daily cleanup deletes its R2 object.
+  uploads: defineTable({
+    organisationId: v.id("organisations"),
+    key: v.string(),
+    issuedAt: v.number(),
+  })
+    .index("by_key", ["key"])
+    .index("by_issuedAt", ["issuedAt"]),
+
+  // Contact-form requests per visitor, for the rate limit only: a keyed hash
+  // of the IP and the request times of the last hour. The requests themselves
+  // are emailed and never stored. Outside any Organisation.
+  contactRateLimits: defineTable({
+    ipHash: v.string(),
+    times: v.array(v.number()),
+    lastAt: v.number(),
+  })
+    .index("by_ipHash", ["ipHash"])
+    .index("by_lastAt", ["lastAt"]),
 
   // How many Documents an Organisation has in each state, for the list's tabs.
   // Kept in step by every state change, so the tabs never scan Documents.

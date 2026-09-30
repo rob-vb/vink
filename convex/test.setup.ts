@@ -1,8 +1,9 @@
 /// <reference types="vite/client" />
 import workpool from "@convex-dev/workpool/test";
 import { convexTest } from "convex-test";
+import { createHmac } from "node:crypto";
 import { PDFDocument } from "pdf-lib";
-import { vi } from "vitest";
+import { expect, vi } from "vitest";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import type {
@@ -41,12 +42,32 @@ export function asUser(t: Backend, userId: string) {
   return t.withIdentity({ subject: userId, email: `${userId}@example.com` });
 }
 
-/** A user signs up and gets their own Organisation; returns them and its slug. */
-export async function signUp(t: Backend, userId: string, organisationName: string) {
+/**
+ * A user signs up and gets their own Organisation; returns them and its slug.
+ * The Organisation is put on the internal unlimited Plan so Pages never get in
+ * a test's way; pass `plan: null` to keep what a real sign-up gets (Free Pages).
+ */
+export async function signUp(
+  t: Backend,
+  userId: string,
+  organisationName: string,
+  { plan = "internal_unlimited" }: { plan?: "internal_unlimited" | null } = {},
+) {
   const user = asUser(t, userId);
   const { slug } = await user.mutation(api.onboarding.createOrganisation, {
     name: organisationName,
   });
+  if (plan !== null) {
+    await t.run(async (ctx) => {
+      const organisation = (await ctx.db
+        .query("organisations")
+        .withIndex("by_slug", (q) => q.eq("slug", slug))
+        .unique())!;
+      await ctx.db.patch(organisation._id, {
+        pages: { ...organisation.pages!, plan, periodEndsAt: null },
+      });
+    });
+  }
   return { user, slug };
 }
 
@@ -307,3 +328,17 @@ export const fakeHttp = {
     return { status: next.status, body: next.body ?? "", retryAfter: next.retryAfter ?? null };
   },
 };
+
+/**
+ * What a receiver does with `X-Vink-Signature: t=<unix seconds>,v1=<hex>`:
+ * recompute HMAC-SHA256 over `"{t}.{rawBody}"` with the Integration's secret.
+ * Returns the signed time, in seconds.
+ */
+export function expectSignedBy(secret: string, request: { headers: Record<string, string>; body: string }) {
+  const header = request.headers["X-Vink-Signature"];
+  const match = /^t=(\d+),v1=([0-9a-f]{64})$/.exec(header ?? "");
+  expect(match, `not a t=…,v1=… signature: ${header}`).not.toBeNull();
+  const [, t, v1] = match!;
+  expect(v1).toBe(createHmac("sha256", secret).update(`${t}.${request.body}`).digest("hex"));
+  return Number(t);
+}

@@ -9,7 +9,8 @@
     "lint": "eslint",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "eval": "node --env-file-if-exists=.env.eval --import tsx scripts/eval/run.ts"
+    "eval": "node --env-file-if-exists=.env.eval --import tsx scripts/eval/run.ts",
+    "smoke": "tsx scripts/smoke.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
@@ -24,8 +25,10 @@
     "cn": "^0.4.0",
     "convex": "^1.46.0",
     "convex-helpers": "^0.1.124",
+    "disposable-email-domains-js": "^1.26.0",
     "lucide-react": "^1.48.0",
     "next": "16.3.6",
+    "next-intl": "~4.14.7",
     "next-themes": "^0.4.6",
     "pdf-lib": "^1.17.1",
     "react": "19.2.8",

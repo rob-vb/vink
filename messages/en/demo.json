@@ -1,0 +1,46 @@
+{
+  "frame": {
+    "label": "Vink demo with demo data",
+    "organisation": "Kantoor Noord",
+    "documents": "Documents",
+    "forms": "Forms",
+    "integrations": "Integrations",
+    "members": "Members",
+    "demoData": "Demo data",
+    "startOver": "Start over"
+  },
+  "heading": {
+    "pagesLeft": "480 pages left",
+    "extracting": "Extracting",
+    "emailIn": "Email in",
+    "upload": "Upload PDFs"
+  },
+  "pane": {
+    "previous": "Previous page",
+    "next": "Next page",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out"
+  },
+  "toast": {
+    "approved": "{filename} is approved.",
+    "nothingElse": "Nothing else needs review.",
+    "ownAccount": "Uploading and emailing documents in work in your own account.",
+    "extracting": "Nothing is being read right now. New documents show here while Vink reads them."
+  },
+  "delivery": {
+    "integration": "Sent to your system"
+  },
+  "done": {
+    "eyebrow": "Needs Review is empty",
+    "title": "Five documents in. Nothing retyped.",
+    "time": "your time",
+    "checked": "values you checked",
+    "read": "values Vink read",
+    "seconds": "{s}s",
+    "minutes": "{m}m {s}s",
+    "body": "Now try it on your own documents. 20 free pages. No credit card.",
+    "startFree": "Start free",
+    "lookAround": "Look around",
+    "startOver": "Start over"
+  }
+}

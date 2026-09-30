@@ -4,11 +4,12 @@ import { ConvexError, v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { DataModel, Doc, Id } from "./_generated/dataModel";
 import { internalMutation, internalQuery, type MutationCtx, type QueryCtx } from "./_generated/server";
-import { checkUpload, createDocument } from "./documents";
+import { checkUpload, claimUpload, createDocument } from "./documents";
 import { extractionPool } from "./extraction";
 import { insertForm, saveVersion } from "./forms";
 import { orgAction, orgMutation, orgQuery } from "./lib/functions";
 import { pdfStore } from "./lib/pdfStore";
+import { chargePages } from "./pages";
 import type { FlatField, ListField } from "./lib/pipeline";
 import { field } from "./schema";
 
@@ -56,15 +57,20 @@ export const create = orgAction({
   handler: async (ctx, { key, filename, formId }): Promise<{ proposalId: Id<"formProposals"> }> => {
     const pageCount = await checkUpload(ctx, ctx.organisationId, key);
     const identity = (await ctx.auth.getUserIdentity())!;
-    return await ctx.runMutation(internal.formProposals.insert, {
-      organisationId: ctx.organisationId,
-      createdBy: ctx.userId,
-      createdByEmail: identity.email?.toLowerCase() ?? "",
-      key,
-      filename,
-      pageCount,
-      formId,
-    });
+    try {
+      return await ctx.runMutation(internal.formProposals.insert, {
+        organisationId: ctx.organisationId,
+        createdBy: ctx.userId,
+        createdByEmail: identity.email?.toLowerCase() ?? "",
+        key,
+        filename,
+        pageCount,
+        formId,
+      });
+    } catch (error) {
+      await pdfStore.remove(ctx, key);
+      throw error;
+    }
   },
 });
 
@@ -85,7 +91,11 @@ export const insert = internalMutation({
         throw new ConvexError("Form not found");
       }
     }
+    // The sample is read like a Document, so its Pages count now; saving it
+    // as the Form's first Document later costs nothing more.
+    await chargePages(ctx, args.organisationId, args.pageCount);
     const proposalId = await ctx.db.insert("formProposals", { ...args, state: "reading" });
+    await claimUpload(ctx, args.key);
     await startProposal(ctx, proposalId);
     return { proposalId };
   },

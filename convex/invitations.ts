@@ -1,7 +1,7 @@
 import { ConvexError, v } from "convex/values";
 import { internal } from "./_generated/api";
 import { internalAction, type QueryCtx } from "./_generated/server";
-import { sendEmail } from "./email";
+import { escapeHtml, sendEmail } from "./email";
 import { orgMutation, userMutation, userQuery } from "./lib/functions";
 import { role } from "./schema";
 
@@ -75,7 +75,7 @@ export const revoke = orgMutation({
 export const send = internalAction({
   args: { email: v.string(), organisationName: v.string(), token: v.string() },
   handler: async (_ctx, { email, organisationName, token }) => {
-    const url = `${process.env.SITE_URL}/invite/${token}`;
+    const url = `${process.env.SITE_URL}/app/invite/${token}`;
     await sendEmail({
       to: email,
       subject: `You're invited to ${organisationName} on Vink`,
@@ -173,6 +173,3 @@ async function hash(token: string) {
   return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-function escapeHtml(text: string) {
-  return text.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
-}

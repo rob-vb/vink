@@ -34,6 +34,26 @@ _Avoid_: template, template agent, form suggestion
 An incoming file (PDF) to be processed against one Form. All its pages together fill one set of Field Values; a PDF is never split into several Documents.
 _Avoid_: upload, file
 
+**Intake Address**:
+An email address that belongs to one Form: each PDF attached to an email sent to it becomes a Document of that Form. Anyone who knows the address can send to it, so it is treated as a secret: an Admin switches it on and can replace it, which stops the old address at once. Vink never replies to the sender; an attachment that is not a PDF, too long, or over the Organisation's Pages is refused and creates no Document.
+_Avoid_: inbox, mailbox, email-in address
+
+**Page**:
+One page of a PDF that Vink reads. It is the unit in which an Organisation's usage and Plans are measured, so a 10-page Document counts as ten. A Page counts once, when Vink accepts the PDF for reading (a Document or a Form Proposal sample); a retry, a move to another Form, or the sample becoming a Document does not count again.
+_Avoid_: credit, unit
+
+**Plan**:
+What an Organisation pays for: a number of Pages per billing period. Every Plan has the same features and unlimited users; unused Pages expire at the end of the period. When the Pages run out, new uploads are refused until the Organisation upgrades or buys a Top-up.
+_Avoid_: tier, subscription, package
+
+**Free Pages**:
+A one-time number of Pages given to the first Organisation a user creates, to try Vink before choosing a Plan. They never renew or expire.
+_Avoid_: trial, free tier, free plan
+
+**Top-up**:
+Extra Pages bought once on top of a Plan, valid until the end of the current billing period.
+_Avoid_: add-on, overage
+
 **Extraction**:
 One run that turns a Document into Field Values for its Form Version, in four steps: Read, Match, Fill and verify. It can fail (Extraction Failed) and then be started again by hand; a new run never overwrites a user's corrections.
 _Avoid_: OCR, parse, scan
@@ -70,7 +90,7 @@ _Avoid_: Auto-Send Threshold, auto-approve
 The go-ahead that a Document's Field Values are correct — given by a user, or automatically through Auto-Send. It sends the Payload to every Integration attached to the Form; with no Integration attached, nothing is sent.
 
 **Rejected**:
-End state of a Document that a user has ruled unusable (blank, unreadable, or not this kind of document) before Approval. A Rejected Document is never approved or sent, stays visible in the Document list with who rejected it, when and an optional reason, and can be reopened while its PDF is still kept. Only an Admin can delete a Rejected Document outright.
+End state of a Document that a user has ruled unusable (blank, unreadable, or not this kind of document) before Approval. A Rejected Document is never approved or sent, stays visible in the Document list with who rejected it, when and an optional reason, and can be reopened while its PDF is still kept. An Admin can delete any Document's data outright, Rejected or not.
 _Avoid_: declined, archived, deleted
 
 **Payload**:
@@ -88,7 +108,9 @@ _Avoid_: webhook call, send
 
 - An **Extraction** writes one **Reading** per **Document**; **Match** and **Fill** turn it into **Field Values** for the Document's **Form Version**
 - An **Organisation** owns its **Forms**, **Integrations** and **Documents**; users reach them only through a **Membership**
-- A **Document** is processed against exactly one **Form**, chosen by the user at intake
+- An **Organisation** has at most one **Plan**; without one it runs on its **Free Pages**, if it got any
+- A **Document** is processed against exactly one **Form**, chosen by the user at upload or by the **Intake Address** it was sent to
+- A **Form** has at most one **Intake Address**
 - A **Form** has many **Fields**; each **Document** yields one **Field Value** per **Field** (per sub-Field per entry for a **List Field**)
 - A **Field Value** below the Form's **Review Threshold** is **Needs Review**. So is a required Field without a value, and a value that doesn't fit its Field's type.
 - **Auto-Send** approves a **Document** only when none of its **Field Values** is **Needs Review**

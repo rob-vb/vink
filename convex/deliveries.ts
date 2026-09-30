@@ -122,7 +122,9 @@ export const recordAttempt = internalMutation({
   },
   handler: async (ctx, { id, attempt, retryAfter }) => {
     const delivery = (await ctx.db.get(id))!;
-    // Settled meanwhile (e.g. its Integration was removed): keep the log only.
+    // Settled meanwhile (e.g. its Integration was removed, or its Document
+    // deleted): keep the log only, and no response body once the data is gone.
+    if (delivery.envelope === undefined) attempt = { ...attempt, body: null };
     const attempts = [...delivery.attempts, attempt];
     if (delivery.state !== "pending" && delivery.state !== "retrying") {
       await ctx.db.patch(id, { attempts });
@@ -159,8 +161,28 @@ export const recordAttempt = internalMutation({
         : outcome.reason;
     await ctx.db.patch(id, { attempts, state: "failed", failureReason: reason, nextAttemptAt: undefined });
     await notifyFailed(ctx, delivery);
+    await startClockIfAllFailed(ctx, delivery.documentId);
   },
 });
+
+/**
+ * When every Delivery of a Document has ended failed, its retention clock
+ * starts at the last attempt, so its data isn't kept forever. A later
+ * successful re-send moves the clock on.
+ */
+async function startClockIfAllFailed(ctx: MutationCtx, documentId: Id<"documents">) {
+  const document = await ctx.db.get(documentId);
+  if (document === null || document.dataDeletedAt !== undefined) return;
+  const deliveries = await ctx.db
+    .query("deliveries")
+    .withIndex("by_documentId", (q) => q.eq("documentId", documentId))
+    .take(100);
+  if (deliveries.some((d) => d.state !== "failed")) return;
+  const lastAttempt = Math.max(0, ...deliveries.flatMap((d) => d.attempts.map((a) => a.at)));
+  await ctx.db.patch(documentId, {
+    retentionClockAt: Math.max(document.retentionClockAt ?? 0, lastAttempt || Date.now()),
+  });
+}
 
 async function notifyFailed(ctx: MutationCtx, delivery: Doc<"deliveries">) {
   const document = await ctx.db.get(delivery.documentId);
@@ -221,6 +243,7 @@ export async function failOpenDeliveries(
       integrationRemoved: true,
       nextAttemptAt: undefined,
     });
+    await startClockIfAllFailed(ctx, delivery.documentId);
   }
 }
 

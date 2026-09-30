@@ -1,0 +1,124 @@
+{
+  "meta": {
+    "title": "Developers: webhook, Payload and signature",
+    "description": "How Vink sends approved document data to your system: the JSON envelope, HMAC-SHA256 signature verification in Node, Python and PHP, retries and test-send."
+  },
+  "og": {
+    "title": "One signed webhook. Clean JSON, keyed by your own Fields.",
+    "alt": "Vink for developers. One signed webhook with clean JSON, keyed by your own Fields."
+  },
+  "toc": {
+    "label": "On this page",
+    "overview": "Overview",
+    "envelope": "Envelope",
+    "signature": "Verify the signature",
+    "delivery": "Delivery and retries",
+    "testSend": "Test-send",
+    "service": "Integration service"
+  },
+  "header": {
+    "eyebrow": "Developers",
+    "title": "One signed webhook. Clean JSON, keyed by your own Fields.",
+    "subtitle": "When a Document is approved, Vink sends its data to your endpoint as one JSON POST. This page is everything you need to build the receiver."
+  },
+  "overview": {
+    "title": "Overview",
+    "p1": "An Integration is an HTTPS endpoint you add in Vink and attach to one or more Forms. When a Document of that Form is approved, by a person or by Auto-Send, Vink sends one Delivery to each attached Integration.",
+    "p2": "The body is the Payload: the Document's values keyed by the Form's own Fields, inside a small envelope. Every request is signed, so your receiver can check that Vink sent it.",
+    "facts": {
+      "method": "One <code>POST</code> per Delivery, <code>Content-Type: application/json</code>",
+      "signed": "Signed with HMAC-SHA256 in the <code>X-Vink-Signature</code> header",
+      "retries": "Retried for about 8 hours on timeouts, 408, 429 and 5xx",
+      "atLeastOnce": "At-least-once: deduplicate on <code>deliveryId</code>"
+    },
+    "reading": "Vink reads PDFs with Gemini on Vertex AI, EU region.",
+    "inboundTitle": "Getting documents in",
+    "inbound": "Documents come in through the app today: upload several PDFs at once, or email them in. No code? Point any system's email at the Form's Intake Address, and each PDF attachment becomes a Document. There is no upload API yet. Need one? <link>Tell us</link>."
+  },
+  "envelope": {
+    "title": "Envelope",
+    "intro": "This is a real Payload from a demo Form called Invoices, with a List Field for the invoice lines. The keys under <code>data</code> are your own Field keys, so every Form has its own shape.",
+    "rules": {
+      "title": "Three rules your parser can rely on",
+      "present": "Every key is always present, including optional Fields.",
+      "null": "<code>null</code> means no value.",
+      "empty": "<code>[]</code> means a List without entries."
+    },
+    "table": {
+      "key": "Key",
+      "meaning": "Meaning",
+      "event": "Always <code>document.approved</code>.",
+      "deliveryId": "Unique per Delivery. It stays the same when a Delivery is retried or sent again, so use it to deduplicate.",
+      "test": "<code>true</code> for a test-send, <code>false</code> for a real Delivery.",
+      "document": "The Document's id, its file name and when it was uploaded (ISO 8601, UTC).",
+      "form": "The Form's id and the Form Version the Document was read with.",
+      "approval": "<code>manual</code> or <code>auto</code> (Auto-Send), the approving user's id (<code>null</code> for Auto-Send) and when it was approved.",
+      "data": "The values, keyed by Field. Numbers are numbers, dates are <code>YYYY-MM-DD</code>, yes/no Fields are booleans and Lists are arrays of objects."
+    }
+  },
+  "signature": {
+    "title": "Verify the signature",
+    "intro": "Each request carries a header with a timestamp and an HMAC-SHA256 signature. Every Integration has its own secret, starting with <code>whsec_</code>. You find it on the Integration in the app.",
+    "steps": {
+      "title": "To verify a request",
+      "parse": "Split the header on commas and read <code>t</code> (Unix seconds) and <code>v1</code> (hex).",
+      "sign": "Compute HMAC-SHA256 with your secret over the string <code>'{t}.{rawBody}'</code>: the timestamp, a dot, and the raw request body exactly as received.",
+      "compare": "Compare your result with <code>v1</code> using a constant-time comparison.",
+      "time": "Reject the request if <code>t</code> is more than 5 minutes away from your clock. This stops a captured request from being replayed."
+    },
+    "raw": "Use the raw body bytes. Parsing and re-serialising the JSON changes whitespace and key order, and the signature no longer matches.",
+    "tabs": "Verification examples"
+  },
+  "delivery": {
+    "title": "Delivery and retries",
+    "intro": "Vink waits up to 15 seconds for your answer.",
+    "table": {
+      "answer": "Your answer",
+      "result": "What Vink does",
+      "ok": "Any 2xx",
+      "okResult": "Delivered.",
+      "retry": "Timeout, network error, 408, 429 or 5xx",
+      "retryResult": "Tried again after about 1 minute, 5 minutes, 30 minutes, 2 hours and 6 hours: 6 attempts over roughly 8 hours.",
+      "fail": "Any other 4xx",
+      "failResult": "Failed right away. An Admin can send a failed Delivery again from the app."
+    },
+    "retryAfter": "A <code>Retry-After</code> header (seconds or an HTTP date) is honoured, up to 24 hours.",
+    "redirects": "Redirects are not followed. Your endpoint must use HTTPS.",
+    "atLeastOnce": "Delivery is at-least-once. The same Delivery can arrive twice, for example when your receiver saved it but timed out before answering. Store <code>deliveryId</code> and skip one you have already handled.",
+    "headersTitle": "Headers",
+    "headers": "You can add your own headers to an Integration, such as an API key or Basic auth. Mark a header as secret and its value is stored encrypted and only shown masked afterwards. Vink sets <code>Content-Type</code> and <code>X-Vink-Signature</code> itself.",
+    "screenshot": "A Document's Delivery status in Vink, showing a retry"
+  },
+  "testSend": {
+    "title": "Test-send",
+    "body": "From an Integration, send a test to your endpoint before any real Document goes out. Choose example values for every Field, or empty values so your receiver sees <code>null</code> and <code>[]</code>. You can also send an approved Document again as a test.",
+    "flag": "A test carries <code>\"test\": true</code>, is signed like a real one and is never a Delivery: it isn't retried and doesn't appear in a Document's Delivery log. The answer from your endpoint is shown right away.",
+    "screenshot": "An Integration in Vink with the result of a test-send"
+  },
+  "service": {
+    "title": "Integration service",
+    "lead": "No developer, or no time? Rob builds the connection for you.",
+    "body": "A one-off build, never part of a plan. Rob writes the receiver that takes the Payload into your system, whether that is an ERP, an accounting package, a spreadsheet or a database, and sets up your Forms with you.",
+    "includes": {
+      "title": "What you get",
+      "receiver": "A receiver that verifies the signature and writes the data into your system",
+      "forms": "Your Forms and Fields set up with you, tested on your own documents",
+      "hosting": "You host it, or Rob hosts it for a monthly fee on request",
+      "changes": "Maintenance and changes later, billed per job"
+    },
+    "need": {
+      "title": "What we need from you",
+      "system": "Which system the data should land in, and access to a test environment",
+      "documents": "A few example documents",
+      "contact": "One person who knows how the data is used"
+    },
+    "price": "From €950 per connection, excl. VAT",
+    "priceNote": "A fixed price, agreed before we start.",
+    "formTitle": "Ask about a connection",
+    "formBody": "Tell us a little about your system and documents. Rob replies personally."
+  },
+  "code": {
+    "copy": "Copy",
+    "copied": "Copied"
+  }
+}

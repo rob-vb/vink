@@ -1,6 +1,9 @@
 import { v } from "convex/values";
-import type { MutationCtx } from "./_generated/server";
+import { internal } from "./_generated/api";
+import { internalAction, type MutationCtx } from "./_generated/server";
+import { escapeHtml, sendEmail } from "./email";
 import { userMutation } from "./lib/functions";
+import { initialPages } from "./pages";
 
 /**
  * The last step of sign-up: the new user becomes Admin of a new Organisation.
@@ -19,16 +22,44 @@ export const createOrganisation = userMutation({
     }
 
     const slug = await uniqueSlug(ctx, name);
-    const organisationId = await ctx.db.insert("organisations", { name, slug });
+    const organisationId = await ctx.db.insert("organisations", {
+      name,
+      slug,
+      createdBy: ctx.userId,
+      pages: await initialPages(ctx, ctx.userId),
+    });
     await ctx.db.insert("memberships", {
       organisationId,
       userId: ctx.userId,
       email: ctx.email,
       role: "admin",
     });
+    await ctx.scheduler.runAfter(0, internal.onboarding.notifyNewOrganisation, {
+      name,
+      email: ctx.email,
+    });
     return { slug };
   },
 });
+
+/**
+ * Tells Rob about every new Organisation, to spot abuse and follow up. Sent to
+ * SIGNUP_NOTIFY_TO; nothing is sent when it isn't set.
+ */
+export const notifyNewOrganisation = internalAction({
+  args: { name: v.string(), email: v.string() },
+  handler: async (_ctx, { name, email }) => {
+    const to = process.env.SIGNUP_NOTIFY_TO;
+    if (!to) return;
+    const domain = email.split("@")[1] ?? "";
+    await sendEmail({
+      to,
+      subject: `New Organisation: ${name}`,
+      html: `<p>${escapeHtml(name)} was just created by ${escapeHtml(email)}.</p><p>Email domain: <strong>${escapeHtml(domain)}</strong></p>`,
+    });
+  },
+});
+
 
 async function uniqueSlug(ctx: MutationCtx, name: string) {
   const base =

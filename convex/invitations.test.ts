@@ -33,7 +33,7 @@ async function inviteTokenSentTo(t: Backend, to: string) {
   await t.finishAllScheduledFunctions(vi.runAllTimers);
   const mail = sent.findLast((mail) => mail.to.includes(to));
   expect(mail, `no mail to ${to}`).toBeDefined();
-  const link = mail!.html.match(/https:\/\/vink\.test\/invite\/([\w-]+)/);
+  const link = mail!.html.match(/https:\/\/vink\.test\/app\/invite\/([\w-]+)/);
   expect(link, "no invite link in the mail").not.toBeNull();
   return link![1];
 }

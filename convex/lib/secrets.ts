@@ -45,3 +45,15 @@ export async function decryptSecret(sealed: string) {
 export function masked(plain: string) {
   return plain.length <= 8 ? "••••••••" : `••••••••${plain.slice(-4)}`;
 }
+
+/**
+ * Compares a given secret with the expected one in time that doesn't depend
+ * on where they differ, or on the expected secret's length.
+ */
+export function sameSecret(given: string, expected: string) {
+  let diff = given.length ^ expected.length;
+  for (let i = 0; i < given.length; i++) {
+    diff |= given.charCodeAt(i) ^ expected.charCodeAt(i % Math.max(expected.length, 1));
+  }
+  return diff === 0;
+}

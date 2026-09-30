@@ -4,6 +4,8 @@ export async function sendEmail(input: {
   to: string;
   subject: string;
   html: string;
+  /** Where a reply goes, e.g. the visitor who sent a contact request. */
+  replyTo?: string;
 }): Promise<void> {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
@@ -22,10 +24,16 @@ export async function sendEmail(input: {
       to: [input.to],
       subject: input.subject,
       html: input.html,
+      ...(input.replyTo && { reply_to: input.replyTo }),
     }),
   });
 
   if (!response.ok) {
     throw new Error(`Resend rejected the email: ${response.status}`);
   }
+}
+
+/** For user-supplied text inside an email's HTML. */
+export function escapeHtml(text: string) {
+  return text.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 }

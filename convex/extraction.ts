@@ -116,6 +116,8 @@ export const saveReading = internalMutation({
   },
   handler: async (ctx, { documentId, json, textLayer }) => {
     const document = (await ctx.db.get(documentId))!;
+    // Deleted meanwhile (Delete now): nothing it read is kept.
+    if (document.state !== "extracting") return;
     await ctx.db.insert("readings", {
       organisationId: document.organisationId,
       documentId,

@@ -1,0 +1,117 @@
+{
+  "meta": {
+    "title": "Vink: AI document data extraction for operations teams",
+    "description": "Vink reads any PDF, typed, scanned or handwritten, and turns it into clean data for your systems. You only check what it isn't sure about. 20 free pages."
+  },
+  "og": {
+    "title": "Document. Vink. Done.",
+    "alt": "Vink. Document. Vink. Done. Any PDF in, clean data out."
+  },
+  "hero": {
+    "document": "Document.",
+    "vink": "Vink.",
+    "done": "Done.",
+    "subtitle": "Vink reads any PDF, typed, scanned or handwritten, and turns it into clean data for your systems. You only check what it isn't sure about.",
+    "watch": "Watch 15 seconds",
+    "screenLabel": "The Vink review screen with one value that needs review"
+  },
+  "video": {
+    "title": "One PDF in, clean data out.",
+    "subtitle": "Fifteen seconds, no cuts.",
+    "placeholder": "Recording pending",
+    "label": "A 15-second recording of one PDF going through Vink"
+  },
+  "journey": {
+    "title": "What happens to one document.",
+    "subtitle": "Four stops, from the PDF on your desk to the data in your system. You only step in at the third.",
+    "arrives": {
+      "kicker": "It arrives",
+      "title": "Any PDF. Even handwriting.",
+      "body": "Typed, scanned or handwritten, one page or a bundle of papers. No templates to build.",
+      "intake": "Upload it or email it in. Drop several PDFs at once, or give a Form its own email address. PDF attachments, up to 20 pages each."
+    },
+    "reads": {
+      "kicker": "Vink reads it",
+      "title": "Every value, with its source.",
+      "body": "Each value shows what was read and on which page. Most documents are done in under a minute.",
+      "demo": "Try the demo"
+    },
+    "check": {
+      "kicker": "You check",
+      "title": "You only check what's unsure.",
+      "body": "Every value shows what was read and on which page. Vink flags what it isn't sure about, and nothing goes out until you approve it."
+    },
+    "lands": {
+      "kicker": "It lands",
+      "title": "Straight into your systems.",
+      "body": "Approved data goes to your system as clean JSON, and Auto-Send handles the documents Vink is sure about."
+    }
+  },
+  "tabs": {
+    "label": "Example documents",
+    "invoice": "Invoice",
+    "deliveryNote": "Delivery note",
+    "handwritten": "Handwritten form",
+    "orderForm": "Order form"
+  },
+  "connect": {
+    "title": "Two ways to connect it.",
+    "subtitle": "Your developer connects one webhook, or we build the connection for you.",
+    "dev": {
+      "eyebrow": "Your developer",
+      "title": "One signed webhook.",
+      "body": "JSON keyed by your own Fields, an HMAC signature, retries and a test-send.",
+      "link": "Read the developer docs"
+    },
+    "service": {
+      "eyebrow": "No developer",
+      "title": "We connect it for you.",
+      "body": "Tell us which system your data needs to reach. Rob builds and tests the connection, for a fixed price agreed up front.",
+      "point1": "Your ERP, accounting package, spreadsheet or database",
+      "point2": "Tested with your own documents",
+      "point3": "One price, agreed before we start",
+      "cta": "Ask about a connection"
+    }
+  },
+  "data": {
+    "title": "Your data, kept short.",
+    "body": "Stored in the EU and deleted 30 days after sending. You see exactly who processes it.",
+    "link": "Security and privacy"
+  },
+  "pricing": {
+    "title": "Every plan includes everything.",
+    "subtitle": "You only choose how many pages. Prices excl. VAT.",
+    "perMonth": "/mo",
+    "from": "from",
+    "pages": "{count} pages",
+    "customPages": "{count}+ pages",
+    "perPage": "{price} per page",
+    "customNote": "DPA, invoice, volume price",
+    "popular": "Most popular",
+    "free": "Start with 20 free pages. No credit card.",
+    "link": "See pricing"
+  },
+  "faq": {
+    "title": "Questions teams ask first.",
+    "wrong": {
+      "q": "What if Vink reads something wrong?",
+      "a": "You see every value Vink isn't sure about, with what it read and on which page. Nothing is sent until someone approves it."
+    },
+    "messy": {
+      "q": "Our documents are messy, or handwritten.",
+      "a": "Try it on your own documents. The first 20 pages are free, no credit card needed."
+    },
+    "developer": {
+      "q": "We don't have a developer.",
+      "a": "We'll build the connection to your system for you. It's a paid service with a price agreed up front."
+    },
+    "data": {
+      "q": "Where does our data go?",
+      "a": "It's stored in the EU and deleted 30 days after sending. We publish the <link>full list of who processes it</link>."
+    },
+    "templates": {
+      "q": "Do I need to set up templates?",
+      "a": "No. Describe your fields, or let Vink propose them from one example. After that, Vink matches every new document to your fields by itself, whatever the layout. It reads PDFs of up to 20 pages."
+    }
+  }
+}

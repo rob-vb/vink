@@ -2,9 +2,16 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-@custom-variant dark (&:is(.dark *));
+/* `.light` and `.light-island` keep a subtree light in dark mode: screenshots,
+   product mocks, the app parts rendered on the Features page, paper documents. */
+@custom-variant dark (&:is(.dark *):not(:is(.light, .light *, .light-island, .light-island *)));
 
 @theme inline {
+  --color-navy: var(--navy);
+  --color-check: var(--check);
+  --color-panel: var(--panel);
+  --color-code: var(--code);
+  --color-code-foreground: var(--code-foreground);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
@@ -48,7 +55,8 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-:root {
+:root,
+.light {
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -127,4 +135,79 @@
   html {
     @apply font-sans;
   }
+}
+/* Marketing site: white and navy (#0F1E36, the logo colour). Scoped to the
+   marketing root layout's <body>, so the app keeps its own tokens. */
+.marketing {
+  --background: #ffffff;
+  --foreground: #111a2b;
+  --card: #ffffff;
+  --card-foreground: #111a2b;
+  --popover: #ffffff;
+  --popover-foreground: #111a2b;
+  --primary: #0f1e36;
+  --primary-foreground: #ffffff;
+  --secondary: #f5f7fa;
+  --secondary-foreground: #111a2b;
+  --muted: #f5f7fa;
+  --muted-foreground: #5b6577;
+  --accent: #eef1f5;
+  --accent-foreground: #111a2b;
+  --border: #e2e6ec;
+  --input: #d5dbe3;
+  --ring: #8a9ab3;
+  --navy: #0f1e36;
+  --check: #2bc016;
+  --panel: #f5f7fa;
+  --code: #0f1e36;
+  --code-foreground: #d8e1ee;
+}
+
+.dark .marketing {
+  --background: #0b1220;
+  --foreground: #e8edf5;
+  --card: #111a2b;
+  --card-foreground: #e8edf5;
+  --popover: #111a2b;
+  --popover-foreground: #e8edf5;
+  --primary: #e8edf5;
+  --primary-foreground: #0f1e36;
+  --secondary: #16213a;
+  --secondary-foreground: #e8edf5;
+  --muted: #111a2b;
+  --muted-foreground: #9aa6b8;
+  --accent: #1a2742;
+  --accent-foreground: #e8edf5;
+  --border: #233149;
+  --input: #2c3c58;
+  --ring: #5b6f92;
+  --navy: #e8edf5;
+  --panel: #111a2b;
+  --code: #060b14;
+  --code-foreground: #d8e1ee;
+  color-scheme: dark;
+}
+
+/* The app's own light tokens, for faithful product mocks inside a dark page. */
+.light-island {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --panel: #eef1f5;
+  color-scheme: light;
+  color: var(--foreground);
 }
