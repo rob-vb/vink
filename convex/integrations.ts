@@ -256,7 +256,11 @@ export const testSendInput = internalQuery({
     if (documentId) {
       const document = await ctx.db.get(documentId);
       if (document === null || document.formId !== formId || document.dataDeletedAt !== undefined) {
-        throw new ConvexError("Choose a processed Document of this Form");
+        throw new ConvexError("Choose an Approved Document of this Form");
+      }
+      // Unchecked values never leave Vink, not even in a test.
+      if (document.state !== "approved") {
+        throw new ConvexError("Only an Approved Document can be test-sent");
       }
       envelope = envelopeOf({
         deliveryId: `test_${crypto.randomUUID()}`,
@@ -311,27 +315,21 @@ export const testSend = orgAction({
   },
 });
 
-/** Processed Documents of a Form that a test-send can use, newest first. */
+/** Approved Documents of a Form, with their data, that a test-send can use; newest first. */
 export const testDocuments = orgQuery({
   role: "admin",
   args: { formId: v.id("forms") },
   handler: async (ctx, { formId }) => {
     await ownForm(ctx, ctx.organisationId, formId);
-    const documents = [];
-    for (const state of ["needs_review", "approved"] as const) {
-      documents.push(
-        ...(await ctx.db
-          .query("documents")
-          .withIndex("by_organisationId_and_state", (q) =>
-            q.eq("organisationId", ctx.organisationId).eq("state", state),
-          )
-          .order("desc")
-          .take(100)),
-      );
-    }
-    return documents
-      .filter((d) => d.formId === formId)
-      .sort((a, b) => b._creationTime - a._creationTime)
+    const approved = await ctx.db
+      .query("documents")
+      .withIndex("by_organisationId_and_state", (q) =>
+        q.eq("organisationId", ctx.organisationId).eq("state", "approved"),
+      )
+      .order("desc")
+      .take(200);
+    return approved
+      .filter((d) => d.formId === formId && d.dataDeletedAt === undefined)
       .slice(0, 20)
       .map((d) => ({ id: d._id, filename: d.filename, state: d.state }));
   },

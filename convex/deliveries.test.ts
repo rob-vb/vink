@@ -1,8 +1,8 @@
-import { createHmac } from "node:crypto";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import {
+  expectSignedBy,
   fakeHttp,
   fakePdfStore,
   fakePipeline,
@@ -188,7 +188,7 @@ test("the envelope carries the Payload with every key: null, [], ISO dates, choi
 
 test("each request is signed over its raw body with the Integration's secret, next to its static headers", async () => {
   const t = newBackend();
-  const { user, organisationSlug, integrationIds } = await approvedWith(t, 1);
+  const { user, organisationSlug, integrationIds, read } = await approvedWith(t, 1);
   const { secret } = await user.query(api.integrations.signingSecret, {
     organisationSlug,
     integrationId: integrationIds[0],
@@ -198,8 +198,29 @@ test("each request is signed over its raw body with the Integration's secret, ne
   expect(request.headers).toMatchObject({
     Authorization: "Bearer token-1",
     "Content-Type": "application/json",
-    "X-Vink-Signature": `sha256=${createHmac("sha256", secret).update(request.body).digest("hex")}`,
   });
+  const signedAt = expectSignedBy(secret, request);
+  const sentAt = (await read()).deliveries[0].attempts[0].at;
+  expect(signedAt).toBe(Math.floor(sentAt / 1000));
+});
+
+test("a captured request replayed later still carries its original time, so a receiver can refuse it", async () => {
+  const t = newBackend();
+  const { user, organisationSlug, integrationIds, read } = await approvedWith(t, 1, [{ status: 400 }]);
+  const { secret } = await user.query(api.integrations.signingSecret, {
+    organisationSlug,
+    integrationId: integrationIds[0],
+  });
+  const [delivery] = (await read()).deliveries;
+  vi.setSystemTime(Date.now() + 10 * 60 * 1000);
+
+  await user.mutation(api.deliveries.resend, { organisationSlug, id: delivery.id });
+  await t.finishAllScheduledFunctions(vi.runAllTimers);
+
+  const [first, second] = fakeHttp.requests;
+  expect(second.body).toBe(first.body);
+  expect(expectSignedBy(secret, second) - expectSignedBy(secret, first)).toBeGreaterThanOrEqual(600);
+  expect(second.headers["X-Vink-Signature"]).not.toBe(first.headers["X-Vink-Signature"]);
 });
 
 test("a 2xx answer delivers the Delivery and logs the attempt", async () => {

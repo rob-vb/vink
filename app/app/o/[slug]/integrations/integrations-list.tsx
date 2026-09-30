@@ -230,7 +230,10 @@ export function IntegrationsList({ organisationSlug }: { organisationSlug: strin
                     <p className="font-medium">Signing secret</p>
                     <p className="text-muted-foreground">
                       Every request carries an <code className="font-mono">X-Vink-Signature</code>{" "}
-                      header: HMAC-SHA256 of the body with this secret.
+                      header,{" "}
+                      <code className="font-mono">t=&lt;unix time&gt;,v1=&lt;hex&gt;</code>: HMAC-SHA256
+                      of <code className="font-mono">{"{t}.{body}"}</code> with this secret. Refuse a
+                      request whose <code className="font-mono">t</code> is more than 5 minutes old.
                     </p>
                     <SigningSecret organisationSlug={organisationSlug} integrationId={integration.id} />
                   </div>

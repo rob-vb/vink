@@ -80,13 +80,14 @@ function Settings({
                 id="retention-days"
                 type="number"
                 min={1}
-                max={3650}
+                max={365}
                 inputMode="numeric"
                 value={days}
                 onChange={(e) => setDays(e.target.value)}
               />
               <FieldDescription>
-                Counted from the last successful Delivery, or from Approval when nothing is sent.
+                1 to 365. Counted from the last successful Delivery, from Approval when nothing
+                is sent, or from the last attempt when every Delivery failed.
               </FieldDescription>
             </Field>
             <Button type="submit" variant="outline" disabled={days === String(initial.retentionDays)}>

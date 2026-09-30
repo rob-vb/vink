@@ -112,23 +112,34 @@ export function ReopenButton({ organisationSlug, documentId }: Omit<Target, "fil
   );
 }
 
-/** Admin only: deletes the PDF and its data for good, leaving the metadata. */
-export function DeleteButton({ organisationSlug, documentId, filename }: Target) {
+/**
+ * Delete now, Admin only: deletes the PDF and its data for good, Approved
+ * included, and cancels Deliveries not yet sent. The short record stays.
+ */
+export function DeleteButton({
+  organisationSlug,
+  documentId,
+  filename,
+  variant = "destructive",
+}: Target & { variant?: "destructive" | "outline" }) {
   const remove = useMutation(api.rejection.remove);
   const [open, setOpen] = useState(false);
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
-      <AlertDialogTrigger render={<Button variant="destructive" size="sm" />}>
+      <AlertDialogTrigger
+        render={<Button variant={variant} size={variant === "outline" ? "default" : "sm"} />}
+      >
         <Trash2 />
-        Delete
+        Delete now
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Delete {filename} for good?</AlertDialogTitle>
           <AlertDialogDescription>
-            The PDF, what Vink read and every value are deleted now and can&apos;t be
-            brought back. Only the filename, dates and history stay, with a &quot;Deleted by
-            you&quot; line.
+            The PDF, what Vink read, every value and your system&apos;s replies are deleted now and
+            can&apos;t be brought back. Deliveries that haven&apos;t gone out yet are cancelled.
+            Only the filename, who uploaded and approved it, the dates, the history and the
+            Delivery status stay, with a &quot;Deleted by you&quot; line.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -136,10 +147,13 @@ export function DeleteButton({ organisationSlug, documentId, filename }: Target)
           <AlertDialogAction
             variant="destructive"
             onClick={() =>
-              remove({ organisationSlug, documentId }).then(() => setOpen(false), failed)
+              remove({ organisationSlug, documentId }).then(() => {
+                setOpen(false);
+                toast.success(`${filename} is deleted.`);
+              }, failed)
             }
           >
-            Delete
+            Delete now
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

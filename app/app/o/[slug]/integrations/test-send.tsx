@@ -15,7 +15,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
 import {
   Select,
   SelectContent,
@@ -140,6 +140,10 @@ export function TestSendButton({
                 ))}
               </SelectContent>
             </Select>
+            <FieldDescription>
+              Dummy data, or an Approved Document of this Form. Documents still in review are never
+              sent.
+            </FieldDescription>
           </Field>
           {source === EXAMPLE && (
             <ToggleGroup

@@ -1,9 +1,9 @@
-import { createHmac } from "node:crypto";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import {
   addMembership,
+  expectSignedBy,
   fakeHttp,
   fakePdfStore,
   fakePipeline,
@@ -121,9 +121,7 @@ test("a 5xx is retried after about a minute, with the same deliveryId and a fres
   expect(fakeHttp.requests).toHaveLength(2);
   for (const request of fakeHttp.requests) {
     expect(JSON.parse(request.body).deliveryId).toBe(waiting.deliveryId);
-    expect(request.headers["X-Vink-Signature"]).toBe(
-      `sha256=${createHmac("sha256", secret).update(request.body).digest("hex")}`,
-    );
+    expectSignedBy(secret, request);
   }
 });
 

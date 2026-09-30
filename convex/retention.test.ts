@@ -235,5 +235,115 @@ test("an Admin sets the days after Delivery; a Member can't", async () => {
   ).rejects.toThrow("Forbidden");
   await expect(
     user.mutation(api.organisations.updateRetention, { organisationSlug, retentionDays: 0 }),
-  ).rejects.toThrow("from 1 to 3650 days");
+  ).rejects.toThrow("from 1 to 365 days");
+  await expect(
+    user.mutation(api.organisations.updateRetention, { organisationSlug, retentionDays: 366 }),
+  ).rejects.toThrow("from 1 to 365 days");
+  await user.mutation(api.organisations.updateRetention, { organisationSlug, retentionDays: 365 });
+  expect((await user.query(api.organisations.settings, { organisationSlug })).retentionDays).toBe(365);
+});
+
+test("when every Delivery ends failed, the days count from the last attempt, so the data isn't kept forever", async () => {
+  const t = newBackend();
+  const { user, organisationSlug, formId, upload } = await acme(t);
+  await user.mutation(api.organisations.updateRetention, { organisationSlug, retentionDays: 7 });
+  for (const name of ["Fleet", "Ledger"]) {
+    const { integrationId } = await user.mutation(api.integrations.create, {
+      organisationSlug,
+      name,
+      url: `https://${name.toLowerCase()}.example.com/in`,
+      headers: [],
+    });
+    await user.mutation(api.integrations.attach, { organisationSlug, integrationId, formId });
+  }
+  const { key, on, read } = await upload();
+  // Fleet refuses at once; Ledger is down, and is retried until it gives up.
+  fakeHttp.answer({ status: 400 }, ...Array.from({ length: 6 }, () => ({ status: 503 })));
+  await user.mutation(api.review.approve, on);
+  await t.finishAllScheduledFunctions(vi.runAllTimers);
+  const deliveries = (await read()).deliveries;
+  expect(deliveries.map((d) => d.state)).toEqual(["failed", "failed"]);
+  const lastAttempt = Math.max(...deliveries.flatMap((d) => d.attempts.map((a) => a.at)));
+
+  vi.setSystemTime(lastAttempt + 6 * DAY);
+  await t.mutation(internal.retention.run, {});
+  expect(fakePdfStore.objects.has(key)).toBe(true);
+
+  vi.setSystemTime(lastAttempt + 8 * DAY);
+  await t.mutation(internal.retention.run, {});
+  expect(fakePdfStore.objects.has(key)).toBe(false);
+  expect(await read()).toMatchObject({ state: "approved", dataDeleted: true });
+});
+
+test("while one Delivery is still retrying, a failed one doesn't start the clock", async () => {
+  const t = newBackend();
+  const { user, organisationSlug, formId, upload } = await acme(t);
+  await user.mutation(api.organisations.updateRetention, { organisationSlug, retentionDays: 1 });
+  for (const name of ["Fleet", "Ledger"]) {
+    const { integrationId } = await user.mutation(api.integrations.create, {
+      organisationSlug,
+      name,
+      url: `https://${name.toLowerCase()}.example.com/in`,
+      headers: [],
+    });
+    await user.mutation(api.integrations.attach, { organisationSlug, integrationId, formId });
+  }
+  const { key, on, read } = await upload();
+  fakeHttp.answer({ status: 400 }, { status: 503 });
+  await user.mutation(api.review.approve, on);
+  // Only the first attempts: Ledger now waits about a minute to retry.
+  await vi.advanceTimersByTimeAsync(0);
+  await t.finishInProgressScheduledFunctions();
+
+  expect((await read()).deliveries.map((d) => d.state)).toEqual(["failed", "retrying"]);
+
+  vi.setSystemTime(Date.now() + 2 * DAY);
+  await t.mutation(internal.retention.run, {});
+  expect(fakePdfStore.objects.has(key)).toBe(true);
+});
+
+test("a retention above 365 days, set before the maximum, counts as 365 and is clamped by the migration", async () => {
+  const t = newBackend();
+  const { user, organisationSlug, upload } = await acme(t);
+  await t.run(async (ctx) => {
+    const organisation = (await ctx.db.query("organisations").first())!;
+    await ctx.db.patch(organisation._id, { retentionDays: 3650 });
+  });
+  expect((await user.query(api.organisations.settings, { organisationSlug })).retentionDays).toBe(365);
+  const { key, on } = await upload();
+  await user.mutation(api.review.approve, on);
+
+  await daysLater(t, 364);
+  expect(fakePdfStore.objects.has(key)).toBe(true);
+  await daysLater(t, 2);
+  expect(fakePdfStore.objects.has(key)).toBe(false);
+
+  await t.mutation(internal.organisations.clampRetention, {});
+  const stored = await t.run(async (ctx) => (await ctx.db.query("organisations").first())!.retentionDays);
+  expect(stored).toBe(365);
+});
+
+test("an upload that never became a Document is deleted after 24 hours; used uploads stay", async () => {
+  const t = newBackend();
+  const { user, organisationSlug, upload } = await acme(t);
+  const orphan = await user.mutation(api.documents.generateUploadUrl, { organisationSlug });
+  putToUploadUrl(orphan.url, await pdfWithPages(1));
+  const document = await upload();
+  const sample = await user.mutation(api.documents.generateUploadUrl, { organisationSlug });
+  putToUploadUrl(sample.url, await pdfWithPages(1));
+  await user.action(api.formProposals.create, { organisationSlug, key: sample.key, filename: "voorbeeld.pdf" });
+  await t.finishAllScheduledFunctions(vi.runAllTimers);
+
+  vi.setSystemTime(Date.now() + 23 * 60 * 60 * 1000);
+  await t.mutation(internal.retention.run, {});
+  expect(fakePdfStore.objects.has(orphan.key)).toBe(true);
+  const fresh = await user.mutation(api.documents.generateUploadUrl, { organisationSlug });
+  putToUploadUrl(fresh.url, await pdfWithPages(1));
+
+  vi.setSystemTime(Date.now() + 2 * 60 * 60 * 1000);
+  await t.mutation(internal.retention.run, {});
+  expect(fakePdfStore.objects.has(orphan.key)).toBe(false);
+  expect(fakePdfStore.objects.has(fresh.key)).toBe(true);
+  expect(fakePdfStore.objects.has(document.key)).toBe(true);
+  expect(fakePdfStore.objects.has(sample.key)).toBe(true);
 });

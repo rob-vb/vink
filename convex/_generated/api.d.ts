@@ -10,6 +10,7 @@
 
 import type * as auth from "../auth.js";
 import type * as changeForm from "../changeForm.js";
+import type * as contact from "../contact.js";
 import type * as crons from "../crons.js";
 import type * as deliveries from "../deliveries.js";
 import type * as documents from "../documents.js";
@@ -23,6 +24,7 @@ import type * as intake from "../intake.js";
 import type * as integrations from "../integrations.js";
 import type * as invitations from "../invitations.js";
 import type * as lib_backoff from "../lib/backoff.js";
+import type * as lib_clientIp from "../lib/clientIp.js";
 import type * as lib_confidence from "../lib/confidence.js";
 import type * as lib_documentPayload from "../lib/documentPayload.js";
 import type * as lib_documentStates from "../lib/documentStates.js";
@@ -44,6 +46,7 @@ import type * as lib_reader from "../lib/reader.js";
 import type * as lib_reading from "../lib/reading.js";
 import type * as lib_reviewState from "../lib/reviewState.js";
 import type * as lib_secrets from "../lib/secrets.js";
+import type * as lib_signUpGuard from "../lib/signUpGuard.js";
 import type * as lib_signing from "../lib/signing.js";
 import type * as lib_usage from "../lib/usage.js";
 import type * as lib_verifier from "../lib/verifier.js";
@@ -66,6 +69,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   changeForm: typeof changeForm;
+  contact: typeof contact;
   crons: typeof crons;
   deliveries: typeof deliveries;
   documents: typeof documents;
@@ -79,6 +83,7 @@ declare const fullApi: ApiFromModules<{
   integrations: typeof integrations;
   invitations: typeof invitations;
   "lib/backoff": typeof lib_backoff;
+  "lib/clientIp": typeof lib_clientIp;
   "lib/confidence": typeof lib_confidence;
   "lib/documentPayload": typeof lib_documentPayload;
   "lib/documentStates": typeof lib_documentStates;
@@ -100,6 +105,7 @@ declare const fullApi: ApiFromModules<{
   "lib/reading": typeof lib_reading;
   "lib/reviewState": typeof lib_reviewState;
   "lib/secrets": typeof lib_secrets;
+  "lib/signUpGuard": typeof lib_signUpGuard;
   "lib/signing": typeof lib_signing;
   "lib/usage": typeof lib_usage;
   "lib/verifier": typeof lib_verifier;

@@ -1,8 +1,9 @@
 /// <reference types="vite/client" />
 import workpool from "@convex-dev/workpool/test";
 import { convexTest } from "convex-test";
+import { createHmac } from "node:crypto";
 import { PDFDocument } from "pdf-lib";
-import { vi } from "vitest";
+import { expect, vi } from "vitest";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import type {
@@ -327,3 +328,17 @@ export const fakeHttp = {
     return { status: next.status, body: next.body ?? "", retryAfter: next.retryAfter ?? null };
   },
 };
+
+/**
+ * What a receiver does with `X-Vink-Signature: t=<unix seconds>,v1=<hex>`:
+ * recompute HMAC-SHA256 over `"{t}.{rawBody}"` with the Integration's secret.
+ * Returns the signed time, in seconds.
+ */
+export function expectSignedBy(secret: string, request: { headers: Record<string, string>; body: string }) {
+  const header = request.headers["X-Vink-Signature"];
+  const match = /^t=(\d+),v1=([0-9a-f]{64})$/.exec(header ?? "");
+  expect(match, `not a t=…,v1=… signature: ${header}`).not.toBeNull();
+  const [, t, v1] = match!;
+  expect(v1).toBe(createHmac("sha256", secret).update(`${t}.${request.body}`).digest("hex"));
+  return Number(t);
+}

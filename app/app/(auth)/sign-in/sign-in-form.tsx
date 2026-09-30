@@ -53,7 +53,11 @@ export function SignInForm({
     });
     setPending(null);
     if (error) {
-      setError(error.message ?? "We couldn't send the link. Try again.");
+      setError(
+        error.status === 429 && error.message?.startsWith("Too many requests")
+          ? "Too many attempts from here. Wait a few minutes and try again."
+          : (error.message ?? "We couldn't send the link. Try again."),
+      );
       return;
     }
     setLinkSentTo(email);
@@ -69,7 +73,14 @@ export function SignInForm({
     const { error } = await authClient.signIn.email({ email, password });
     if (error) {
       setPending(null);
-      setError("That email and password don't match.");
+      if (error.code === "EMAIL_NOT_VERIFIED") {
+        // Better Auth has just mailed a fresh verification link.
+        setError("Verify your email first. We've sent you a new link.");
+      } else if (error.status === 429) {
+        setError("Too many attempts from here. Wait a few minutes and try again.");
+      } else {
+        setError("That email and password don't match.");
+      }
       return;
     }
     router.push(next ?? "/app");

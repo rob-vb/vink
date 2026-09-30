@@ -1,17 +1,21 @@
 // Retention (spec, Retention): a daily cleanup deletes data, R2 objects
-// included, and keeps metadata, history and Delivery logs.
+// included, and keeps metadata, history and Delivery logs. It also deletes
+// uploads that never became a Document, and forgets contact-form rate limits.
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { internalMutation, type MutationCtx } from "./_generated/server";
 import { moveTo } from "./lib/documentStates";
+import { pdfStore } from "./lib/pdfStore";
+import { forgetOldContactRequests } from "./contact";
 import { deleteProposal } from "./formProposals";
-import { DEFAULT_RETENTION_DAYS } from "./organisations";
+import { retentionDaysOf } from "./organisations";
 import { deleteData } from "./rejection";
 
 const DAY = 24 * 60 * 60 * 1000;
 const NEVER_APPROVED_DAYS = 90;
 const REJECTED_DAYS = 30;
 const PROPOSAL_DAYS = 7;
+const ORPHAN_UPLOAD_HOURS = 24;
 
 // Per rule and Organisation in one run; a full batch runs the cleanup again.
 const BATCH = 50;
@@ -30,10 +34,11 @@ async function logged(ctx: MutationCtx, document: Doc<"documents">, detail: stri
 
 async function cleanOrganisation(ctx: MutationCtx, organisation: Doc<"organisations">, now: number) {
   const organisationId: Id<"organisations"> = organisation._id;
-  const days = organisation.retentionDays ?? DEFAULT_RETENTION_DAYS;
+  const days = retentionDaysOf(organisation);
   let full = false;
 
-  // Approved: N days after the last successful Delivery (or the Approval).
+  // Approved: N days after the last successful Delivery (or the Approval, or
+  // the last attempt when every Delivery failed).
   const sent = await ctx.db
     .query("documents")
     .withIndex("by_organisationId_and_retentionClockAt", (q) =>
@@ -91,12 +96,26 @@ async function cleanOrganisation(ctx: MutationCtx, organisation: Doc<"organisati
   return full;
 }
 
+/** Deletes uploaded PDFs that never became a Document or a Form Proposal sample. */
+async function cleanOrphanUploads(ctx: MutationCtx, now: number) {
+  const orphans = await ctx.db
+    .query("uploads")
+    .withIndex("by_issuedAt", (q) => q.lt("issuedAt", now - ORPHAN_UPLOAD_HOURS * 60 * 60 * 1000))
+    .take(BATCH);
+  for (const upload of orphans) {
+    await pdfStore.remove(ctx, upload.key);
+    await ctx.db.delete(upload._id);
+  }
+  return orphans.length === BATCH;
+}
+
 /** The daily cleanup (see crons.ts). */
 export const run = internalMutation({
   args: {},
   handler: async (ctx) => {
     const now = Date.now();
-    let more = false;
+    let more = await cleanOrphanUploads(ctx, now);
+    more = (await forgetOldContactRequests(ctx, now)) || more;
     for (const organisation of await ctx.db.query("organisations").take(1000)) {
       more = (await cleanOrganisation(ctx, organisation, now)) || more;
     }
