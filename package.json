@@ -9,7 +9,8 @@
     "lint": "eslint",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "eval": "node --env-file-if-exists=.env.eval --import tsx scripts/eval/run.ts"
+    "eval": "node --env-file-if-exists=.env.eval --import tsx scripts/eval/run.ts",
+    "smoke": "tsx scripts/smoke.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
