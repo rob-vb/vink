@@ -88,7 +88,7 @@ export const englishLabels = {
       rejected: "Rejected",
       deleted: "Deleted",
     } satisfies Record<DocumentState, string>,
-    pageCount: (n: number) => (n === 1 ? "page" : "pages"),
+    pageCount: (n: number): string => (n === 1 ? "page" : "pages"),
     reviewThreshold: "Review Threshold",
     approved: "Approved",
     approvedBy: (mode: "auto" | "manual", by: string | null) =>
