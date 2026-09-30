@@ -12,9 +12,18 @@ import { ClosingCard, Faq, FounderBlock, StartFree, TrustRow } from "@/component
 import { VinkMark } from "@/components/marketing/brand";
 import { CodeBlock, PostBar } from "@/components/marketing/code-block";
 import { JsonLd } from "@/components/marketing/json-ld";
-import { FieldsMock, ReviewScreenMock } from "@/components/marketing/review-mock";
-import { sampleDocument, sampleDocuments } from "@/components/marketing/sample-documents";
+import { seedDocuments } from "@/components/demo/demo-data";
+import type { DemoDocumentId } from "@/components/demo/demo-papers";
+import { ReviewStill } from "@/components/demo/demo-stills";
+import {
+  CheckStill,
+  DocumentFieldsStill,
+  PapersRow,
+  ReviewFrameTitle,
+  VideoBackdrop,
+} from "@/components/demo/home-stills";
 import { ScreenshotFrame } from "@/components/marketing/screenshot-frame";
+import { ScaledStill } from "@/components/features/scaled-still";
 import { Container, Eyebrow, SectionHeading } from "@/components/marketing/section";
 import { Link } from "@/i18n/navigation";
 import { isLocale, routing, type Locale } from "@/i18n/routing";
@@ -103,11 +112,10 @@ function Hero() {
           </div>
           <p className="mt-3 text-sm text-muted-foreground">{tc("freeNote")}</p>
         </div>
-        <ScreenshotFrame
-          title="Needs Review · invoice-F-2026-0418.pdf"
-          bodyClassName="max-h-[790px] overflow-hidden [zoom:0.8] sm:[zoom:0.78]"
-        >
-          <ReviewScreenMock document={sampleDocument("invoice")} label={t("screenLabel")} />
+        <ScreenshotFrame title={<ReviewFrameTitle documentId="invoice" />}>
+          <ScaledStill width={840} label={t("screenLabel")} className="aspect-[4/5] sm:aspect-[16/15]">
+            <ReviewStill documentId="invoice" />
+          </ScaledStill>
         </ScreenshotFrame>
       </Container>
     </section>
@@ -146,9 +154,8 @@ function Video() {
               aria-label={t("label")}
               className="relative grid aspect-video place-items-center overflow-hidden bg-[#f5f7fa]"
             >
-              <div className="absolute inset-0 grid grid-cols-[2fr_3fr] gap-4 p-6 opacity-40 blur-[1px]" aria-hidden>
-                <div className="[zoom:0.7]">{sampleDocument("deliveryNote").paper}</div>
-                <FieldsMock fields={sampleDocument("deliveryNote").fields.slice(0, 4)} stacked />
+              <div className="absolute inset-0 opacity-40 blur-[1px]" aria-hidden>
+                <VideoBackdrop label={t("label")} className="size-full" />
               </div>
               <div className="relative flex flex-col items-center gap-3">
                 <span className="grid size-16 place-items-center rounded-full bg-[#0f1e36] text-white shadow-lg">
@@ -197,15 +204,18 @@ function Stop({
   );
 }
 
+/** Stop 2's example tabs, each one of the demo's Documents. */
+const exampleTabs = [
+  { tab: "invoice", documentId: "invoice" },
+  { tab: "deliveryNote", documentId: "delivery" },
+  { tab: "handwritten", documentId: "service" },
+  { tab: "orderForm", documentId: "order" },
+] as const satisfies ReadonlyArray<{ tab: string; documentId: DemoDocumentId }>;
+
+const filename = (id: DemoDocumentId) => seedDocuments.find((d) => d.id === id)!.filename;
+
 function Journey() {
   const t = useTranslations("home");
-  const invoice = sampleDocument("invoice");
-  const delivery = sampleDocument("deliveryNote");
-  const checking = [
-    delivery.fields.find((f) => f.key === "customer_reference")!,
-    delivery.fields.find((f) => f.key === "pallets")!,
-    { ...delivery.fields.find((f) => f.key === "received_by")!, checked: true },
-  ];
   return (
     <section className="pb-16 sm:pb-24">
       <Container>
@@ -227,13 +237,7 @@ function Journey() {
             }
             visual={
               <div className="light-island rounded-2xl bg-panel p-4 sm:p-6">
-                <div className="grid grid-cols-3 gap-3 sm:gap-4">
-                  {(["invoice", "deliveryNote", "handwritten"] as const).map((id) => (
-                    <div key={id} className="[zoom:0.42] sm:[zoom:0.5]">
-                      {sampleDocument(id).paper}
-                    </div>
-                  ))}
-                </div>
+                <PapersRow documentIds={["invoice", "delivery", "service"]} label={t("journey.arrives.title")} />
               </div>
             }
           />
@@ -251,17 +255,16 @@ function Journey() {
             visual={
               <Tabs defaultValue="invoice" className="gap-4">
                 <TabsList aria-label={t("tabs.label")} className="!h-auto max-w-full flex-wrap justify-start">
-                  {sampleDocuments.map((doc) => (
-                    <TabsTrigger key={doc.id} value={doc.id} className="px-3">
-                      {t(`tabs.${doc.id}`)}
+                  {exampleTabs.map(({ tab }) => (
+                    <TabsTrigger key={tab} value={tab} className="px-3">
+                      {t(`tabs.${tab}`)}
                     </TabsTrigger>
                   ))}
                 </TabsList>
-                {sampleDocuments.map((doc) => (
-                  <TabsContent key={doc.id} value={doc.id} keepMounted className="data-hidden:hidden">
-                    <div className="light-island grid gap-4 rounded-2xl bg-panel p-4 sm:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] sm:p-5">
-                      <div className="mx-auto w-full max-w-60 [zoom:0.75] sm:max-w-none">{doc.paper}</div>
-                      <FieldsMock fields={doc.fields} stacked className="self-start" />
+                {exampleTabs.map(({ tab, documentId }) => (
+                  <TabsContent key={tab} value={tab} keepMounted className="data-hidden:hidden">
+                    <div className="light-island rounded-2xl bg-panel p-4 sm:p-5">
+                      <DocumentFieldsStill documentId={documentId} label={t(`tabs.${tab}`)} />
                     </div>
                   </TabsContent>
                 ))}
@@ -274,10 +277,8 @@ function Journey() {
             title={t("journey.check.title")}
             body={t("journey.check.body")}
             visual={
-              <ScreenshotFrame title={`Needs Review · ${delivery.file}`}>
-                <div className="p-3 sm:p-4">
-                  <FieldsMock fields={checking} />
-                </div>
+              <ScreenshotFrame title={<ReviewFrameTitle documentId="delivery" />}>
+                <CheckStill label={t("journey.check.title")} />
               </ScreenshotFrame>
             }
           />
@@ -286,7 +287,7 @@ function Journey() {
             kicker={t("journey.lands.kicker")}
             title={t("journey.lands.title")}
             body={t("journey.lands.body")}
-            visual={<DeliveriesMock files={[invoice.file, delivery.file, sampleDocument("orderForm").file]} />}
+            visual={<DeliveriesMock files={(["invoice", "delivery", "order"] as const).map(filename)} />}
           />
         </ol>
       </Container>
