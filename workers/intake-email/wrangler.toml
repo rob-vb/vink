@@ -5,12 +5,13 @@ compatibility_date = "2026-09-01"
 
 [vars]
 # The Convex deployment's HTTP actions URL (…convex.site), without a trailing slash.
-CONVEX_SITE_URL = "https://REPLACE-ME.eu-west-1.convex.site"
+CONVEX_SITE_URL = "https://spotted-parakeet-30.eu-west-1.convex.site"
 
 [[r2_buckets]]
 binding = "PDFS"
-# The same EU bucket the app uses for PDFs.
-bucket_name = "REPLACE-ME"
+# The same EU bucket the app uses for PDFs (prod).
+bucket_name = "docuhelper"
+jurisdiction = "eu"
 
-# Secret, set with `npx wrangler secret put INTAKE_SECRET` (same value as the
-# Convex deployment's INTAKE_SECRET).
+# Secret, set with `npx wrangler secret put INTAKE_SECRET < .intake-secret`
+# (same value as the Convex deployment's INTAKE_SECRET; the file is gitignored).

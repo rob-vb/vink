@@ -4,9 +4,12 @@
     "module": "ES2022",
     "moduleResolution": "Bundler",
     "strict": true,
+    "skipLibCheck": true,
     "noEmit": true,
     "lib": ["ES2022"],
     "types": ["@cloudflare/workers-types"]
   },
-  "include": ["src"]
+  "include": ["src"],
+  // map.test.ts runs under the repo's vitest, not in the Worker.
+  "exclude": ["src/**/*.test.ts"]
 }

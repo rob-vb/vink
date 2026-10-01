@@ -45,3 +45,7 @@ next-env.d.ts
 .next-live/
 *.swp
 /.next-smoke/
+
+# The intake Worker's shared secret (workers/intake-email)
+.intake-secret
+workers/intake-email/node_modules/
