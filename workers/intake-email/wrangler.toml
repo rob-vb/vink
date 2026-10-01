@@ -2,6 +2,8 @@
 name = "vink-intake-email"
 main = "src/index.ts"
 compatibility_date = "2026-09-01"
+# Email only: no public workers.dev URL.
+workers_dev = false
 
 [vars]
 # The Convex deployment's HTTP actions URL (…convex.site), without a trailing slash.
