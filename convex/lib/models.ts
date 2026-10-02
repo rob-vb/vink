@@ -24,10 +24,18 @@ function requireEnv(name: string) {
 }
 
 /**
- * Gemini on Vertex AI in the EU multi-region. GOOGLE_VERTEX_CREDENTIALS holds
- * a service account's JSON key; its project is the one billed.
+ * Gemini through the LiteLLM gateway when LITELLM_URL is set (it holds the
+ * Vertex credentials; LITELLM_API_KEY is this app's virtual key), else Gemini
+ * on Vertex AI in the EU multi-region. GOOGLE_VERTEX_CREDENTIALS holds a
+ * service account's JSON key; its project is the one billed.
  */
 function vertex() {
+  if (process.env.LITELLM_URL) {
+    return new GoogleGenAI({
+      apiKey: requireEnv("LITELLM_API_KEY"),
+      httpOptions: { baseUrl: process.env.LITELLM_URL },
+    });
+  }
   const credentials = JSON.parse(requireEnv("GOOGLE_VERTEX_CREDENTIALS"));
   return new GoogleGenAI({
     vertexai: true,
