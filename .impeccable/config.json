@@ -1,0 +1,44 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "cramped-padding",
+        "value": "*",
+        "files": [
+          ".scratch/vink-marketing/prototypes/homepage-variants.src.html"
+        ],
+        "createdAt": "2026-09-30T05:29:45.404Z",
+        "reason": "agent: static scan misses .wrap padding-inline and section padding-block; headless renders at 1280/400 show inset text"
+      },
+      {
+        "rule": "low-contrast",
+        "value": "*",
+        "files": [
+          ".scratch/vink-marketing/prototypes/homepage-variants.src.html"
+        ],
+        "createdAt": "2026-09-30T05:29:45.412Z",
+        "reason": "agent: scanner pairs dark-theme tokens with light backgrounds; per-theme renders read fine; the one real case (POST badge) was fixed"
+      },
+      {
+        "rule": "all-caps-body",
+        "value": "*",
+        "files": [
+          ".scratch/vink-marketing/prototypes/demo-variants.src.html"
+        ],
+        "createdAt": "2026-09-30T09:05:05.152Z",
+        "reason": "Claude: throwaway prototype; uppercase is only short eyebrow/sidebar labels and mock paper-document titles (fixtures imitating real invoices/fax forms)"
+      },
+      {
+        "rule": "cramped-padding",
+        "value": "*",
+        "files": [
+          ".scratch/vink-marketing/prototypes/demo-variants.src.html"
+        ],
+        "createdAt": "2026-09-30T09:05:05.162Z",
+        "reason": "Claude: throwaway prototype; compact badges/chips deliberately mirror the real app's shadcn Badge and xs Button sizes in field-row.tsx"
+      }
+    ]
+  }
+}
