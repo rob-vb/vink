@@ -1,5 +1,6 @@
-// Serves the Claude bridge (bridge.ts) on 127.0.0.1; nginx exposes it at
-// https://docuhelper.robvb.com/claude-bridge/. Runs under pm2 (ecosystem.config.cjs).
+// Serves the Claude bridge (bridge.ts) on 127.0.0.1. Runs under pm2 (ecosystem.config.cjs).
+// Prod runs on Vertex, so nginx no longer exposes it; to use it again, give it a
+// DNS-only host (a Reading outlasts Cloudflare's 100 s proxy limit).
 //
 // Needs CLAUDE_BRIDGE_SECRET (in .env), the same value as on the Convex
 // deployment, and a signed-in `claude` CLI on this box.

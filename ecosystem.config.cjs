@@ -1,4 +1,4 @@
-// pm2 apps for https://docuhelper.robvb.com. scripts/deploy.sh reloads them.
+// pm2 apps for https://vink.page. scripts/deploy.sh reloads them.
 module.exports = {
   apps: [
     {
