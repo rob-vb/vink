@@ -1,7 +1,6 @@
 "use client";
 
 import { useMutation } from "convex/react";
-import { ConvexError } from "convex/values";
 import {
   ArrowLeft,
   Asterisk,
@@ -21,6 +20,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -58,6 +58,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { cn } from "cn";
+import { useErrorText } from "../../../error-text";
 import {
   allProblems,
   type Draft,
@@ -99,6 +100,9 @@ type Props = {
  * Settings, with the name and description and the Form's review settings.
  */
 export function FormEditor({ organisationSlug, form, initial, settings, proposal }: Props) {
+  const t = useTranslations("appForms.editor");
+  const tForms = useTranslations("appForms");
+  const errorText = useErrorText();
   const router = useRouter();
   const create = useMutation(api.forms.create);
   const save = useMutation(api.forms.save);
@@ -221,12 +225,12 @@ export function FormEditor({ organisationSlug, form, initial, settings, proposal
       if (form && proposal) {
         const { version } = await saveSuggestions({ organisationSlug, proposalId: proposal.id, ...content });
         setSaved(draft);
-        toast.success(`Saved as version ${version}`);
+        toast.success(t("savedAsVersion", { version }));
         router.replace(`/app/o/${organisationSlug}/forms/${form.id}`);
       } else if (form) {
         const { version } = await save({ organisationSlug, formId: form.id, ...content });
         setSaved(draft);
-        toast.success(`Saved as version ${version}`);
+        toast.success(t("savedAsVersion", { version }));
       } else if (proposal) {
         const { formId, documentId } = await saveProposal({
           organisationSlug,
@@ -236,17 +240,19 @@ export function FormEditor({ organisationSlug, form, initial, settings, proposal
         });
         setSaved(draft);
         toast.success(
-          documentId ? `Form created. ${proposal.filename} is being read as its first Document.` : "Form created as version 1",
+          documentId
+            ? t("createdWithSample", { filename: proposal.filename })
+            : t("created"),
         );
         router.replace(`/app/o/${organisationSlug}/forms/${formId}`);
       } else {
         const { formId } = await create({ organisationSlug, ...content });
         setSaved(draft);
-        toast.success("Form created as version 1");
+        toast.success(t("created"));
         router.replace(`/app/o/${organisationSlug}/forms/${formId}`);
       }
     } catch (error) {
-      toast.error(error instanceof ConvexError ? String(error.data) : "Couldn't save the Form");
+      toast.error(errorText(error, t("saveFailed")));
     } finally {
       setSaving(false);
     }
@@ -254,13 +260,13 @@ export function FormEditor({ organisationSlug, form, initial, settings, proposal
 
   // Why Save is disabled, or what saving will do.
   const status = unnamed
-    ? "Name the Form in Settings"
+    ? t("nameInSettings")
     : invalidFields > 0
-      ? `${invalidFields} ${invalidFields === 1 ? "Field needs" : "Fields need"} fixing`
+      ? t("fieldsNeedFixing", { count: invalidFields })
       : dirty || proposal
         ? form
-          ? `Saving creates version ${form.version + 1}`
-          : "Unsaved"
+          ? t("savingCreates", { version: form.version + 1 })
+          : t("unsaved")
         : null;
 
   return (
@@ -270,14 +276,14 @@ export function FormEditor({ organisationSlug, form, initial, settings, proposal
           <Button
             variant="ghost"
             size="icon"
-            aria-label="Back to Forms"
+            aria-label={t("back")}
             nativeButton={false}
             render={<Link href={`/app/o/${organisationSlug}/forms`} />}
           >
             <ArrowLeft />
           </Button>
           <h1 className="truncate text-xl font-semibold">
-            {form ? saved.name : draft.name.trim() || "New Form"}
+            {form ? saved.name : draft.name.trim() || t("newForm")}
           </h1>
           {form && <Badge variant="outline">v{form.version}</Badge>}
         </div>
@@ -286,15 +292,12 @@ export function FormEditor({ organisationSlug, form, initial, settings, proposal
             <Dialog>
               <DialogTrigger render={<Button variant="outline" />}>
                 <Sparkles />
-                Suggest Fields from PDF
+                {t("suggest")}
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Suggest Fields from a PDF</DialogTitle>
-                  <DialogDescription>
-                    For a supplier whose documents show more than this Form has. Vink reads
-                    the sample and proposes only what the Form can&apos;t place yet.
-                  </DialogDescription>
+                  <DialogTitle>{t("suggestTitle")}</DialogTitle>
+                  <DialogDescription>{t("suggestDescription")}</DialogDescription>
                 </DialogHeader>
                 <SampleUpload organisationSlug={organisationSlug} formId={form.id} />
               </DialogContent>
@@ -312,7 +315,7 @@ export function FormEditor({ organisationSlug, form, initial, settings, proposal
           )}
           <Button onClick={() => void onSave()} disabled={saving || invalid || (form && !proposal && !dirty)}>
             {saving && <Spinner />}
-            {form ? "Save" : "Create Form"}
+            {form ? t("save") : t("create")}
           </Button>
         </div>
       </div>
@@ -320,15 +323,15 @@ export function FormEditor({ organisationSlug, form, initial, settings, proposal
       <Tabs value={tab} onValueChange={setTab} className="gap-4">
         <TabsList variant="line">
           <TabsTrigger value="fields">
-            Fields
+            {t("fieldsTab")}
             <Badge variant="secondary" className="tabular-nums">
               {draft.fields.length}
             </Badge>
-            {invalidFields > 0 && <ProblemDot label="Some Fields need fixing" />}
+            {invalidFields > 0 && <ProblemDot label={t("fieldsProblem")} />}
           </TabsTrigger>
           <TabsTrigger value="settings">
-            Settings
-            {unnamed && <ProblemDot label="The Form needs a name" />}
+            {t("settingsTab")}
+            {unnamed && <ProblemDot label={t("settingsProblem")} />}
           </TabsTrigger>
         </TabsList>
 
@@ -341,8 +344,8 @@ export function FormEditor({ organisationSlug, form, initial, settings, proposal
                   <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     type="search"
-                    aria-label="Search Fields"
-                    placeholder="Search Fields"
+                    aria-label={t("search")}
+                    placeholder={t("search")}
                     className="pl-8"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
@@ -351,12 +354,12 @@ export function FormEditor({ organisationSlug, form, initial, settings, proposal
                 <Tooltip>
                   <TooltipTrigger
                     render={
-                      <Button variant="outline" size="icon" aria-label="Add Field" onClick={addField} />
+                      <Button variant="outline" size="icon" aria-label={t("addField")} onClick={addField} />
                     }
                   >
                     <Plus />
                   </TooltipTrigger>
-                  <TooltipContent>Add Field</TooltipContent>
+                  <TooltipContent>{t("addField")}</TooltipContent>
                 </Tooltip>
               </div>
               <div
@@ -371,7 +374,7 @@ export function FormEditor({ organisationSlug, form, initial, settings, proposal
               >
                 {draft.fields.length > 0 && visible.length === 0 && (
                   <p className="px-2 py-6 text-center text-sm text-muted-foreground">
-                    No Field matches &ldquo;{query.trim()}&rdquo;.
+                    {t("noMatch", { query: query.trim() })}
                   </p>
                 )}
                 <ul className="flex flex-col gap-0.5">
@@ -380,7 +383,7 @@ export function FormEditor({ organisationSlug, form, initial, settings, proposal
                       {row(field)}
                       {field.type === "list" && (
                         <ul
-                          aria-label={`Sub-Fields of ${field.label || "Untitled"}`}
+                          aria-label={t("subFieldsOf", { label: field.label || tForms("untitled") })}
                           className="my-0.5 ml-4 flex flex-col gap-0.5 border-l pl-2"
                         >
                           {subs.map((sub) => (
@@ -395,7 +398,7 @@ export function FormEditor({ organisationSlug, form, initial, settings, proposal
                                 onClick={() => addSubField(field)}
                               >
                                 <Plus />
-                                Add sub-Field
+                                {t("addSubField")}
                               </Button>
                             </li>
                           )}
@@ -412,7 +415,7 @@ export function FormEditor({ organisationSlug, form, initial, settings, proposal
                     onClick={addField}
                   >
                     <Plus />
-                    Add Field
+                    {t("addField")}
                   </Button>
                 )}
               </div>
@@ -427,7 +430,9 @@ export function FormEditor({ organisationSlug, form, initial, settings, proposal
                   <div className="flex items-center gap-2 border-b py-2 pr-2 pl-4">
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium">
-                        {selected.label || <span className="text-muted-foreground">Untitled</span>}
+                        {selected.label || (
+                          <span className="text-muted-foreground">{tForms("untitled")}</span>
+                        )}
                       </p>
                       <p className="truncate font-mono text-xs text-muted-foreground">
                         {selected.key}
@@ -436,7 +441,7 @@ export function FormEditor({ organisationSlug, form, initial, settings, proposal
                     <Button
                       variant="ghost"
                       size="icon-sm"
-                      aria-label="Previous Field"
+                      aria-label={t("previous")}
                       disabled={position <= 0}
                       onClick={() => step(-1)}
                     >
@@ -445,7 +450,7 @@ export function FormEditor({ organisationSlug, form, initial, settings, proposal
                     <Button
                       variant="ghost"
                       size="icon-sm"
-                      aria-label="Next Field"
+                      aria-label={t("next")}
                       disabled={position < 0 || position >= order.length - 1}
                       onClick={() => step(1)}
                     >
@@ -456,11 +461,11 @@ export function FormEditor({ organisationSlug, form, initial, settings, proposal
                       size="sm"
                       className="text-destructive"
                       disabled={selected.locked}
-                      title={selected.locked ? "Locked while an Integration is attached" : undefined}
+                      title={selected.locked ? t("locked") : undefined}
                       onClick={() => removeSelected(selected)}
                     >
                       <Trash2 />
-                      Remove
+                      {t("remove")}
                     </Button>
                   </div>
                   <div className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6">
@@ -479,16 +484,13 @@ export function FormEditor({ organisationSlug, form, initial, settings, proposal
               ) : (
                 <Empty className="flex-1">
                   <EmptyHeader>
-                    <EmptyTitle>No Field selected</EmptyTitle>
-                    <EmptyDescription>
-                      Add a Field for each piece of data you want from the document:
-                      a license plate, a date, an amount.
-                    </EmptyDescription>
+                    <EmptyTitle>{t("noneSelected")}</EmptyTitle>
+                    <EmptyDescription>{t("noneSelectedDescription")}</EmptyDescription>
                   </EmptyHeader>
                   <EmptyContent>
                     <Button variant="outline" onClick={addField}>
                       <Plus />
-                      Add Field
+                      {t("addField")}
                     </Button>
                   </EmptyContent>
                 </Empty>
@@ -501,29 +503,25 @@ export function FormEditor({ organisationSlug, form, initial, settings, proposal
         <TabsContent value="settings" keepMounted className="flex max-w-2xl flex-col gap-6">
           <section className="rounded-lg border p-4 md:p-6">
             <FieldSet>
-              <FieldLegend>General</FieldLegend>
-              <FieldDescription>
-                {form
-                  ? "Part of the Form Version: Save at the top makes a new version with these."
-                  : "Saved with the Form when you create it."}
-              </FieldDescription>
+              <FieldLegend>{t("general")}</FieldLegend>
+              <FieldDescription>{form ? t("generalVersioned") : t("generalNew")}</FieldDescription>
               <FieldGroup>
                 <Field>
-                  <FieldLabel htmlFor="form-name">Name</FieldLabel>
+                  <FieldLabel htmlFor="form-name">{t("name")}</FieldLabel>
                   <Input
                     id="form-name"
                     value={draft.name}
-                    placeholder="Tyre service report"
+                    placeholder={t("namePlaceholder")}
                     autoFocus={unnamed}
                     onChange={(e) => setDraft({ ...draft, name: e.target.value })}
                   />
                 </Field>
                 <Field>
-                  <FieldLabel htmlFor="form-description">Description</FieldLabel>
+                  <FieldLabel htmlFor="form-description">{t("description")}</FieldLabel>
                   <Textarea
                     id="form-description"
                     value={draft.description}
-                    placeholder="Optional. Which documents this Form is for."
+                    placeholder={t("descriptionPlaceholder")}
                     className="min-h-16"
                     onChange={(e) => setDraft({ ...draft, description: e.target.value })}
                   />
@@ -536,11 +534,11 @@ export function FormEditor({ organisationSlug, form, initial, settings, proposal
                       onCheckedChange={(checked) => setProcessSample(checked === true)}
                     />
                     <FieldContent>
-                      <FieldLabel htmlFor="process-sample">Also process this sample as a Document</FieldLabel>
+                      <FieldLabel htmlFor="process-sample">{t("processSample")}</FieldLabel>
                       <FieldDescription>
-                        {processSample
-                          ? `${proposal.filename} becomes this Form's first Document, from what Vink already read.`
-                          : `${proposal.filename} and what Vink read from it are deleted when you create the Form.`}
+                        {t(processSample ? "processSampleOn" : "processSampleOff", {
+                          filename: proposal.filename,
+                        })}
                       </FieldDescription>
                     </FieldContent>
                   </Field>
@@ -572,7 +570,7 @@ function FieldRow({
   invalid: boolean;
   onSelect: () => void;
 }) {
-  const type = fieldTypes.find((t) => t.value === field.type)!;
+  const t = useTranslations("appForms");
   const Icon = typeIcons[field.type];
   return (
     <button
@@ -588,13 +586,13 @@ function FieldRow({
     >
       <Icon
         className={cn("size-4 shrink-0", !invalid && "text-muted-foreground")}
-        aria-label={type.label}
+        aria-label={t(`types.${field.type}`)}
       />
       <span className="min-w-0 flex-1 truncate">
-        {field.label || <span className="text-muted-foreground">Untitled</span>}
+        {field.label || <span className="text-muted-foreground">{t("untitled")}</span>}
       </span>
       {field.required && (
-        <Asterisk className="size-3 shrink-0 text-destructive" aria-label="Required" />
+        <Asterisk className="size-3 shrink-0 text-destructive" aria-label={t("editor.required")} />
       )}
     </button>
   );

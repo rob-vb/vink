@@ -1,6 +1,7 @@
 "use client";
 
 import { Plus, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
   Field,
@@ -23,7 +24,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { keyFromLabel } from "@/convex/lib/fieldKeys";
-import { type DraftField, type FieldType, fieldTypes } from "./draft";
+import { type DraftField, type FieldProblem, type FieldType, fieldTypes } from "./draft";
 
 export function FieldDetail({
   field,
@@ -40,10 +41,12 @@ export function FieldDetail({
   /** A sub-Field is offered every type but List. */
   types: typeof fieldTypes;
   otherKeys: string[];
-  problems: string[];
+  problems: FieldProblem[];
   onChange: (field: DraftField) => void;
   onAddSubField: () => void;
 }) {
+  const t = useTranslations("appForms");
+  const items = types.map((type) => ({ value: type, label: t(`types.${type}`) }));
   const set = (patch: Partial<DraftField>) => onChange({ ...field, ...patch });
   const setOption = (index: number, patch: Partial<DraftField["options"][number]>) =>
     set({
@@ -54,18 +57,19 @@ export function FieldDetail({
     <div className="flex flex-col gap-6">
       {parent && (
         <p className="text-sm text-muted-foreground">
-          Sub-Field of{" "}
-          <span className="font-medium text-foreground">{parent.label || "Untitled"}</span>.
-          Every entry of the List has one.
+          {t.rich("field.subFieldOf", {
+            label: parent.label || t("untitled"),
+            parent: (chunks) => <span className="font-medium text-foreground">{chunks}</span>,
+          })}
         </p>
       )}
       <FieldGroup>
         <Field>
-          <FieldLabel htmlFor="field-label">Label</FieldLabel>
+          <FieldLabel htmlFor="field-label">{t("field.label")}</FieldLabel>
           <Input
             id="field-label"
             value={field.label}
-            placeholder="Kenteken"
+            placeholder={t("field.labelPlaceholder")}
             autoFocus={field.label === ""}
             onChange={(e) => {
               const label = e.target.value;
@@ -76,11 +80,11 @@ export function FieldDetail({
               );
             }}
           />
-          <FieldDescription>Shown to your team. Any language.</FieldDescription>
+          <FieldDescription>{t("field.labelDescription")}</FieldDescription>
         </Field>
 
         <Field>
-          <FieldLabel htmlFor="field-key">Key</FieldLabel>
+          <FieldLabel htmlFor="field-key">{t("field.key")}</FieldLabel>
           <Input
             id="field-key"
             className="font-mono"
@@ -91,10 +95,8 @@ export function FieldDetail({
             onChange={(e) => set({ key: e.target.value.trim(), keyFollowsLabel: false })}
           />
           <FieldDescription>
-            The name in the Payload your system receives, in camelCase.
-            {field.locked && (
-              <> Locked while an Integration is attached, so your system keeps receiving it.</>
-            )}
+            {t("field.keyDescription")}
+            {field.locked && <> {t("field.keyLocked")}</>}
             {!field.locked && !field.keyFollowsLabel && field.label.trim() !== "" && (
               <>
                 {" "}
@@ -105,7 +107,7 @@ export function FieldDetail({
                     set({ key: keyFromLabel(field.label, otherKeys), keyFollowsLabel: true })
                   }
                 >
-                  Derive from label
+                  {t("field.deriveKey")}
                 </button>
               </>
             )}
@@ -113,9 +115,9 @@ export function FieldDetail({
         </Field>
 
         <Field>
-          <FieldLabel htmlFor="field-type">Type</FieldLabel>
+          <FieldLabel htmlFor="field-type">{t("field.type")}</FieldLabel>
           <Select
-            items={types}
+            items={items}
             value={field.type}
             disabled={field.locked && field.type === "list"}
             onValueChange={(type) => type && set({ type: type as FieldType })}
@@ -124,9 +126,9 @@ export function FieldDetail({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {types.map((t) => (
-                <SelectItem key={t.value} value={t.value}>
-                  {t.label}
+              {items.map((item) => (
+                <SelectItem key={item.value} value={item.value}>
+                  {item.label}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -134,17 +136,14 @@ export function FieldDetail({
         </Field>
 
         <Field>
-          <FieldLabel htmlFor="field-description">Description</FieldLabel>
+          <FieldLabel htmlFor="field-description">{t("field.description")}</FieldLabel>
           <Textarea
             id="field-description"
             value={field.description}
-            placeholder="Other words the paper may use, e.g. delivery date, Lieferdatum, date de livraison"
+            placeholder={t("field.descriptionPlaceholder")}
             onChange={(e) => set({ description: e.target.value })}
           />
-          <FieldDescription>
-            Optional. Synonyms and other languages help Vink find this Field
-            on differently worded documents.
-          </FieldDescription>
+          <FieldDescription>{t("field.descriptionHelp")}</FieldDescription>
         </Field>
 
         <Field orientation="horizontal">
@@ -154,13 +153,13 @@ export function FieldDetail({
             onCheckedChange={(required) => set({ required })}
           />
           <FieldContent>
-            <FieldLabel htmlFor="field-required">Required</FieldLabel>
+            <FieldLabel htmlFor="field-required">{t("field.required")}</FieldLabel>
             <FieldDescription>
               {field.type === "list"
-                ? "A Document without at least one entry always needs review before it is sent."
+                ? t("field.requiredList")
                 : parent
-                  ? "An entry without it always needs review before the Document is sent."
-                  : "A Document without it always needs review before it is sent."}
+                  ? t("field.requiredSubField")
+                  : t("field.requiredField")}
             </FieldDescription>
           </FieldContent>
         </Field>
@@ -168,25 +167,22 @@ export function FieldDetail({
 
       {field.type === "choice" && (
         <FieldSet>
-          <FieldLegend>Options</FieldLegend>
-          <FieldDescription>
-            The value is what your system receives. The description lists what the
-            paper may say instead: synonyms, abbreviations, other languages.
-          </FieldDescription>
+          <FieldLegend>{t("field.options")}</FieldLegend>
+          <FieldDescription>{t("field.optionsDescription")}</FieldDescription>
           <div className="flex flex-col gap-2">
             {field.options.map((option, i) => (
               <div key={i} className="flex items-start gap-2">
                 <div className="grid flex-1 gap-2 sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
                   <Input
-                    aria-label={`Option ${i + 1} value`}
+                    aria-label={t("field.optionValue", { number: i + 1 })}
                     className="font-mono"
                     placeholder="winter"
                     value={option.value}
                     onChange={(e) => setOption(i, { value: e.target.value })}
                   />
                   <Input
-                    aria-label={`Option ${i + 1} description`}
-                    placeholder="Optional: winterband, M+S, 3PMSF"
+                    aria-label={t("field.optionDescription", { number: i + 1 })}
+                    placeholder={t("field.optionDescriptionPlaceholder")}
                     value={option.description}
                     onChange={(e) => setOption(i, { description: e.target.value })}
                   />
@@ -194,7 +190,7 @@ export function FieldDetail({
                 <Button
                   variant="ghost"
                   size="icon"
-                  aria-label={`Remove option ${i + 1}`}
+                  aria-label={t("field.removeOption", { number: i + 1 })}
                   onClick={() => set({ options: field.options.filter((_, j) => j !== i) })}
                 >
                   <X />
@@ -210,7 +206,7 @@ export function FieldDetail({
               }
             >
               <Plus />
-              Add option
+              {t("field.addOption")}
             </Button>
           </div>
         </FieldSet>
@@ -218,22 +214,21 @@ export function FieldDetail({
 
       {field.type === "list" && (
         <FieldSet>
-          <FieldLegend>Sub-Fields</FieldLegend>
+          <FieldLegend>{t("field.subFields")}</FieldLegend>
           <FieldDescription>
-            A List holds one entry per item on the document, for example per changed
-            tyre or per invoice line. Each entry has these sub-Fields.
+            {t("field.subFieldsDescription")}
             {field.fields.length > 0 &&
-              ` This List has ${field.fields.length}; select one in the Field list to edit it.`}
+              ` ${t("field.subFieldsCount", { count: field.fields.length })}`}
           </FieldDescription>
           <Button variant="outline" size="sm" className="self-start" onClick={onAddSubField}>
             <Plus />
-            Add sub-Field
+            {t("field.addSubField")}
           </Button>
         </FieldSet>
       )}
 
       {problems.length > 0 && (
-        <FieldError errors={problems.map((message) => ({ message }))} />
+        <FieldError errors={problems.map((problem) => ({ message: t(`problems.${problem}`) }))} />
       )}
     </div>
   );

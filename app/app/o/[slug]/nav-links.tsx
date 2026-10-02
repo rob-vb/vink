@@ -2,20 +2,22 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { cn } from "cn";
 
 /** The top nav's links; the one for the current section is marked active. */
 export function NavLinks({ slug, isAdmin }: { slug: string; isAdmin: boolean }) {
+  const t = useTranslations("app.shell.nav");
   const pathname = usePathname();
   const base = `/app/o/${slug}`;
   const links = [
     // Documents is the Organisation's home page.
-    { href: base, label: "Documents", active: pathname === base || pathname.startsWith(`${base}/documents`) },
+    { href: base, label: t("documents"), active: pathname === base || pathname.startsWith(`${base}/documents`) },
     ...(isAdmin
       ? [
-          { href: `${base}/forms`, label: "Forms" },
-          { href: `${base}/integrations`, label: "Integrations" },
-          { href: `${base}/members`, label: "Members" },
+          { href: `${base}/forms`, label: t("forms") },
+          { href: `${base}/integrations`, label: t("integrations") },
+          { href: `${base}/members`, label: t("members") },
         ].map((link) => ({
           ...link,
           active: pathname === link.href || pathname.startsWith(`${link.href}/`),

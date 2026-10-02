@@ -1,0 +1,42 @@
+{
+  "title": "Members",
+  "intro": "Admins manage Forms, Integrations and Members. Members upload, review and approve Documents.",
+  "email": "Email",
+  "role": "Role",
+  "actions": "Actions",
+  "you": "You",
+  "roleOf": "Role of {email}",
+  "remove": "Remove",
+  "revoke": "Revoke",
+  "cancel": "Cancel",
+  "pending": "Pending invitations ({count})",
+  "expires": "Expires",
+  "nowRole": "{email} is now {role, select, admin {an Admin} other {a Member}}",
+  "removed": "{email} was removed",
+  "revoked": "The invitation for {email} was revoked",
+  "roleNotChanged": "We couldn't change the role.",
+  "failed": "That didn't work. Try again.",
+  "revokeTitle": "Revoke invitation?",
+  "removeTitle": "Remove Member?",
+  "revokeDescription": "The link sent to {email} stops working.",
+  "removeDescription": "{email} loses access to this Organisation at once.",
+  "problems": {
+    "LastAdmin": "An Organisation needs at least one Admin.",
+    "AlreadyMember": "That address already has a Membership here.",
+    "InvalidEmail": "Enter a valid email address.",
+    "MembershipNotFound": "That Membership no longer exists.",
+    "InvitationNotFound": "That Invitation no longer exists."
+  },
+  "invite": {
+    "open": "Invite",
+    "title": "Invite a colleague",
+    "description": "They get an email with a link that works for 7 days.",
+    "email": "Email",
+    "emailPlaceholder": "colleague@company.com",
+    "role": "Role",
+    "cancel": "Cancel",
+    "send": "Send invitation",
+    "sent": "Invitation sent to {email}",
+    "notSent": "We couldn't send the invitation."
+  }
+}

@@ -1,8 +1,12 @@
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import { requireAdmin } from "../../organisation";
 import { NewForm } from "./new-form";
 
-export const metadata: Metadata = { title: "New Form · Vink" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("appForms.new");
+  return { title: t("metaTitle") };
+}
 
 export default async function NewFormPage({
   params,

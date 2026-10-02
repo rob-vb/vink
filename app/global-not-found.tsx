@@ -7,19 +7,19 @@ import "./globals.css";
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Page not found · Vink",
+  title: "Pagina niet gevonden · Vink",
   robots: { index: false },
 };
 
 export default function GlobalNotFound() {
   return (
-    <html lang="en" className={`${geistSans.variable} h-full antialiased`}>
+    <html lang="nl" className={`${geistSans.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col items-center justify-center gap-6 p-8 text-center">
         <Logo className="h-8" />
-        <h1 className="text-2xl font-semibold">This page does not exist.</h1>
-        <p className="text-muted-foreground">The link may be old, or the address has a typo.</p>
+        <h1 className="text-2xl font-semibold">Deze pagina bestaat niet.</h1>
+        <p className="text-muted-foreground">De link is misschien oud, of er zit een typefout in het adres.</p>
         <Link href="/" className="underline underline-offset-4">
-          Go to the homepage
+          Naar de homepage
         </Link>
       </body>
     </html>

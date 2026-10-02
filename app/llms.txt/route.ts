@@ -1,5 +1,5 @@
 import { custom, formatEuro, formatNumber, FREE_PAGES, plans } from "@/lib/plans";
-import { absoluteUrl } from "@/lib/site";
+import { localeUrl } from "@/lib/seo";
 
 // A small English fact sheet for AI assistants (ticket 14). Built once at
 // build time from the same plan data as the Pricing page.
@@ -33,13 +33,13 @@ export function GET() {
     "",
     "## Links",
     "",
-    `- [Home](${absoluteUrl("/")})`,
-    `- [Features](${absoluteUrl("/features")})`,
-    `- [Pricing](${absoluteUrl("/pricing")})`,
-    `- [Developers: Payload, signature, retries](${absoluteUrl("/developers")})`,
-    `- [Security and privacy, subprocessors](${absoluteUrl("/security")})`,
-    `- [Contact](${absoluteUrl("/contact")})`,
-    `- [Dutch site](${absoluteUrl("/nl")})`,
+    `- [Home](${localeUrl("en", "/")})`,
+    `- [Features](${localeUrl("en", "/features")})`,
+    `- [Pricing](${localeUrl("en", "/pricing")})`,
+    `- [Developers: Payload, signature, retries](${localeUrl("en", "/developers")})`,
+    `- [Security and privacy, subprocessors](${localeUrl("en", "/security")})`,
+    `- [Contact](${localeUrl("en", "/contact")})`,
+    `- [Dutch site](${localeUrl("nl", "/")})`,
     "",
   ];
   return new Response(lines.join("\n"), {

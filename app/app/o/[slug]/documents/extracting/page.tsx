@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import { ExtractingList } from "./extracting-list";
 
-export const metadata: Metadata = { title: "Extracting · Vink" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("appDocuments.extracting");
+  return { title: t("metaTitle") };
+}
 
 export default async function ExtractingPage({
   params,

@@ -2,11 +2,12 @@
 
 import { useMutation } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
-import { ConvexError } from "convex/values";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { ListGroupView } from "@/components/documents/list-group-view";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
+import { useErrorText } from "../../../../error-text";
 import { FieldRow } from "./field-row";
 
 type ListView = FunctionReturnType<typeof api.documents.get>["lists"][number];
@@ -34,6 +35,8 @@ export function ListGroup({
   selected: string | null;
   onSelect: (id: string, pages: number[]) => void;
 }) {
+  const t = useTranslations("appDocuments");
+  const errorText = useErrorText();
   const addEntry = useMutation(api.review.addEntry);
   const removeEntry = useMutation(api.review.removeEntry);
   const restoreEntry = useMutation(api.review.restoreEntry);
@@ -45,7 +48,7 @@ export function ListGroup({
     try {
       await action();
     } catch (error) {
-      toast.error(error instanceof ConvexError ? String(error.data) : "That didn't work. Try again.");
+      toast.error(errorText(error, t("tryAgain")));
     }
   }
 

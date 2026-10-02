@@ -1,8 +1,10 @@
 "use client";
 
 import { useAction, useMutation } from "convex/react";
+import type { ConvexError } from "convex/values";
 import { CircleCheck, FileUp, Upload, X } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useState, type DragEvent, type FormEvent } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -28,8 +30,9 @@ import {
 import { Spinner } from "@/components/ui/spinner";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
-import { errorText, isOutOfPages } from "@/lib/convex-error";
+import { isOutOfPages } from "@/lib/convex-error";
 import { cn } from "@/lib/utils";
+import { useErrorText } from "../../../error-text";
 import { UpgradeButton } from "../pages-usage";
 
 type Form = { id: Id<"forms">; name: string };
@@ -74,6 +77,8 @@ export function UploadDialog({
   organisationSlug: string;
   forms: Form[];
 }) {
+  const t = useTranslations("appDocuments");
+  const errorText = useErrorText();
   const router = useRouter();
   const generateUploadUrl = useMutation(api.documents.generateUploadUrl);
   const create = useAction(api.documents.create);
@@ -104,7 +109,7 @@ export function UploadDialog({
         file,
         status: isPdf(file) ? "ready" : "failed",
         progress: 0,
-        error: isPdf(file) ? null : "Not a PDF.",
+        error: isPdf(file) ? null : t("upload.notPdf"),
         outOfPages: false,
       }),
     );
@@ -126,10 +131,14 @@ export function UploadDialog({
       update(item.id, { status: "done", progress: 100 });
       return true;
     } catch (error) {
+      const outOfPages = isOutOfPages(error);
       update(item.id, {
         status: "failed",
-        error: errorText(error, "We couldn't upload this PDF. Try again."),
-        outOfPages: isOutOfPages(error),
+        // Out of Pages carries its numbers, so the sentence is built here in the app's language.
+        error: outOfPages
+          ? t("upload.outOfPages", (error as ConvexError<{ remaining: number; needed: number }>).data)
+          : errorText(error, t("upload.failed")),
+        outOfPages,
       });
       return false;
     }
@@ -148,10 +157,10 @@ export function UploadDialog({
     }
     setUploading(false);
     if (uploaded === 0) return;
-    toast.success(uploaded === 1 ? "1 PDF uploaded" : `${uploaded} PDFs uploaded`, {
-      description: "Vink is reading them now.",
+    toast.success(t("upload.uploaded", { count: uploaded }), {
+      description: t("upload.readingNow"),
       action: {
-        label: "View",
+        label: t("upload.view"),
         onClick: () => router.push(`/app/o/${organisationSlug}/documents/extracting`),
       },
     });
@@ -170,29 +179,26 @@ export function UploadDialog({
         render={
           <Button>
             <Upload />
-            Upload PDFs
+            {t("upload.button")}
           </Button>
         }
       />
       <DialogContent className="sm:max-w-lg">
         <form onSubmit={onSubmit} className="flex min-w-0 flex-col gap-6">
           <DialogHeader>
-            <DialogTitle>Upload PDFs</DialogTitle>
-            <DialogDescription>
-              Each PDF becomes its own Document. Vink fills the Form you choose from all of
-              its pages.
-            </DialogDescription>
+            <DialogTitle>{t("upload.title")}</DialogTitle>
+            <DialogDescription>{t("upload.description")}</DialogDescription>
           </DialogHeader>
           <FieldGroup>
             <Field>
-              <FieldLabel htmlFor="upload-form">Form</FieldLabel>
+              <FieldLabel htmlFor="upload-form">{t("form")}</FieldLabel>
               <Select
                 items={formItems}
                 value={formId}
                 onValueChange={(value) => setFormId(value as Id<"forms"> | null)}
               >
                 <SelectTrigger id="upload-form" className="w-full">
-                  <SelectValue placeholder="Choose a Form" />
+                  <SelectValue placeholder={t("chooseForm")} />
                 </SelectTrigger>
                 <SelectContent>
                   {formItems.map((f) => (
@@ -204,7 +210,7 @@ export function UploadDialog({
               </Select>
             </Field>
             <Field>
-              <FieldLabel htmlFor="upload-file">PDFs</FieldLabel>
+              <FieldLabel htmlFor="upload-file">{t("upload.pdfs")}</FieldLabel>
               <label
                 htmlFor="upload-file"
                 onDragOver={(e) => {
@@ -221,9 +227,11 @@ export function UploadDialog({
               >
                 <FileUp className="mb-1 size-5 text-muted-foreground" />
                 <span>
-                  Drop PDFs here, or <span className="font-medium underline">browse</span>
+                  {t.rich("upload.drop", {
+                    browse: (chunks) => <span className="font-medium underline">{chunks}</span>,
+                  })}
                 </span>
-                <span className="text-muted-foreground">Up to 20 pages each</span>
+                <span className="text-muted-foreground">{t("upload.limit")}</span>
                 <input
                   id="upload-file"
                   type="file"
@@ -257,11 +265,11 @@ export function UploadDialog({
             <DialogClose
               render={<Button type="button" variant="outline" disabled={uploading} />}
             >
-              {items.some((item) => item.status === "done") ? "Close" : "Cancel"}
+              {items.some((item) => item.status === "done") ? t("upload.close") : t("cancel")}
             </DialogClose>
             <Button type="submit" disabled={uploading || ready === 0 || !formId}>
               {uploading && <Spinner />}
-              {ready > 1 ? `Upload ${ready} PDFs` : "Upload"}
+              {t("upload.submit", { count: ready })}
             </Button>
           </DialogFooter>
         </form>
@@ -279,6 +287,7 @@ function FileRow({
   disabled: boolean;
   onRemove: () => void;
 }) {
+  const t = useTranslations("appDocuments.upload");
   return (
     <li className="flex flex-col gap-2 rounded-lg border px-3 py-2 text-sm">
       <div className="flex items-center gap-3">
@@ -294,7 +303,7 @@ function FileRow({
             type="button"
             variant="ghost"
             size="icon-sm"
-            aria-label={`Remove ${item.file.name}`}
+            aria-label={t("remove", { filename: item.file.name })}
             disabled={disabled}
             onClick={onRemove}
           >
@@ -302,7 +311,7 @@ function FileRow({
           </Button>
         )}
       </div>
-      {item.status === "uploading" && <Progress value={item.progress} aria-label="Upload progress" />}
+      {item.status === "uploading" && <Progress value={item.progress} aria-label={t("progress")} />}
       {item.error && (
         <div className="flex items-center justify-between gap-3">
           <p role="alert" className="text-destructive">

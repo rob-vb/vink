@@ -3,6 +3,7 @@
 import { useQuery } from "convex/react";
 import { FileStack, LoaderCircle } from "lucide-react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,7 +17,7 @@ import {
 } from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DocumentStateTabs, DocumentsHeading } from "@/components/documents/document-tabs";
-import { englishLabels, type ListedState } from "@/components/documents/labels";
+import { useDocumentsLabels, type ListedState } from "@/components/documents/labels";
 import { api } from "@/convex/_generated/api";
 import { cn } from "cn";
 import { PagesLeft, PagesWarning } from "../pages-usage";
@@ -35,6 +36,8 @@ export function DocumentList({
   organisationName: string;
   isAdmin: boolean;
 }) {
+  const t = useTranslations("appDocuments.list");
+  const { labels } = useDocumentsLabels();
   const [state, setState] = useState<ListedState>("needs_review");
   const forms = useQuery(api.forms.list, { organisationSlug });
   const list = useQuery(api.documents.list, { organisationSlug, state });
@@ -55,12 +58,8 @@ export function DocumentList({
             <EmptyMedia variant="icon">
               <FileStack />
             </EmptyMedia>
-            <EmptyTitle>Welcome to {organisationName}</EmptyTitle>
-            <EmptyDescription>
-              {isAdmin
-                ? "Set up a Form for each kind of document you receive, and Vink will fill it from your PDFs."
-                : "An Admin first sets up a Form for each kind of document you receive. Then you can upload PDFs here."}
-            </EmptyDescription>
+            <EmptyTitle>{t("welcome", { organisation: organisationName })}</EmptyTitle>
+            <EmptyDescription>{isAdmin ? t("adminIntro") : t("memberIntro")}</EmptyDescription>
           </EmptyHeader>
           {isAdmin && (
             <EmptyContent>
@@ -68,7 +67,7 @@ export function DocumentList({
                 nativeButton={false}
                 render={<Link href={`/app/o/${organisationSlug}/forms`} />}
               >
-                Go to Forms
+                {t("goToForms")}
               </Button>
             </EmptyContent>
           )}
@@ -91,7 +90,7 @@ export function DocumentList({
               render={<Link href={`/app/o/${organisationSlug}/documents/extracting`} />}
             >
               <LoaderCircle className={cn(extracting ? "animate-spin" : "text-muted-foreground")} />
-              Extracting
+              {t("extracting")}
               <Badge variant="secondary" className="tabular-nums">
                 {extracting ?? "–"}
               </Badge>
@@ -111,7 +110,7 @@ export function DocumentList({
           organisationSlug={organisationSlug}
           documents={list?.documents}
           retryable={state === "extraction_failed"}
-          empty={englishLabels.documents.empty[state]}
+          empty={labels.documents.empty[state]}
         />
       </div>
     </main>

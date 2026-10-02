@@ -1,12 +1,13 @@
 "use client";
 
 import { useMutation } from "convex/react";
-import { ConvexError } from "convex/values";
 import type { FunctionReturnType } from "convex/server";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { DocumentTableView } from "@/components/documents/document-table-view";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
+import { useErrorText } from "../../../error-text";
 
 type Listed = FunctionReturnType<typeof api.documents.list>["documents"];
 
@@ -28,6 +29,8 @@ export function DocumentTable({
   retryable?: boolean;
   empty: string;
 }) {
+  const t = useTranslations("appDocuments");
+  const errorText = useErrorText();
   const retry = useMutation(api.extraction.retry);
 
   return (
@@ -38,9 +41,7 @@ export function DocumentTable({
       href={(id) => `/app/o/${organisationSlug}/documents/${id}`}
       onRetry={(id) =>
         retry({ organisationSlug, documentId: id as Id<"documents"> }).catch((error) =>
-          toast.error(
-            error instanceof ConvexError ? String(error.data) : "The retry didn't start. Try again.",
-          ),
+          toast.error(errorText(error, t("retryFailed"))),
         )
       }
     />

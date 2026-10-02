@@ -1,10 +1,10 @@
 "use client";
 
 import { useMutation, useQuery } from "convex/react";
-import { ConvexError } from "convex/values";
 import { MailWarning, Users } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,10 +13,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
 import { api } from "@/convex/_generated/api";
 import { authClient } from "@/lib/auth-client";
-
-const roleNames = { admin: "Admin", member: "Member" } as const;
+import { useErrorText } from "../../../error-text";
 
 export function AcceptInvitation({ token }: { token: string }) {
+  const t = useTranslations("app.auth.invite");
+  const tRoles = useTranslations("app.roles");
+  const errorText = useErrorText();
   const router = useRouter();
   const invitation = useQuery(api.invitations.preview, { token });
   const accept = useMutation(api.invitations.accept);
@@ -32,9 +34,7 @@ export function AcceptInvitation({ token }: { token: string }) {
       router.replace(`/app/o/${slug}`);
     } catch (error) {
       setAccepting(false);
-      setError(
-        error instanceof ConvexError ? String(error.data) : "We couldn't accept the invitation.",
-      );
+      setError(errorText(error, t("notAccepted")));
     }
   }
 
@@ -57,41 +57,44 @@ export function AcceptInvitation({ token }: { token: string }) {
 
   const home = (
     <Button variant="outline" nativeButton={false} render={<Link href="/app" />}>
-      Open Vink
+      {t("openVink")}
     </Button>
   );
 
   switch (invitation.status) {
     case "notFound":
       return (
-        <Problem title="This invitation doesn't exist" actions={home}>
-          The link may be incomplete, or the invitation was withdrawn or replaced by a newer one.
-          Ask an Admin to invite you again.
+        <Problem title={t("notFoundTitle")} actions={home}>
+          {t("notFound")}
         </Problem>
       );
     case "used":
       return (
-        <Problem title="This invitation was already used" actions={home}>
-          It was accepted before, so it can&apos;t be used again.
+        <Problem title={t("usedTitle")} actions={home}>
+          {t("used")}
         </Problem>
       );
     case "expired":
       return (
-        <Problem title="This invitation has expired" actions={home}>
-          Invitations work for 7 days. Ask an Admin of {invitation.organisationName} for a new one.
+        <Problem title={t("expiredTitle")} actions={home}>
+          {t("expired", { organisation: invitation.organisationName })}
         </Problem>
       );
     case "anotherEmail":
       return (
         <Problem
-          title="This invitation is for another address"
+          title={t("anotherEmailTitle")}
           actions={
-            <Button onClick={() => void switchAccount()}>Sign in as {invitation.email}</Button>
+            <Button onClick={() => void switchAccount()}>
+              {t("signInAs", { email: invitation.email })}
+            </Button>
           }
         >
-          It was sent to <strong className="text-foreground">{invitation.email}</strong>, but
-          you&apos;re signed in as{" "}
-          <strong className="text-foreground">{session?.user.email ?? "someone else"}</strong>.
+          {t.rich("anotherEmail", {
+            email: invitation.email,
+            current: session?.user.email ?? t("someoneElse"),
+            strong: (chunks) => <strong className="text-foreground">{chunks}</strong>,
+          })}
         </Problem>
       );
     case "open":
@@ -99,19 +102,24 @@ export function AcceptInvitation({ token }: { token: string }) {
         <Card>
           <CardHeader className="text-center">
             <Users className="mx-auto mb-2 size-8 text-muted-foreground" />
-            <CardTitle className="text-xl">Join {invitation.organisationName}</CardTitle>
+            <CardTitle className="text-xl">
+              {t("join", { organisation: invitation.organisationName })}
+            </CardTitle>
             <CardDescription>
-              {invitation.invitedBy ?? "An Admin"} invited you as {roleNames[invitation.role]}.
+              {t("invitedBy", {
+                inviter: invitation.invitedBy ?? t("anAdmin"),
+                role: tRoles(invitation.role),
+              })}
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
             {error && <FieldError>{error}</FieldError>}
             <Button onClick={() => void onAccept()} disabled={accepting}>
               {accepting && <Spinner />}
-              Accept invitation
+              {t("accept")}
             </Button>
             <p className="text-center text-sm text-muted-foreground">
-              Signed in as {invitation.email}
+              {t("signedInAs", { email: invitation.email })}
             </p>
           </CardContent>
         </Card>

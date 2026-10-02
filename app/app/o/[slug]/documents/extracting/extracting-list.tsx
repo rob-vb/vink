@@ -3,12 +3,14 @@
 import { useQuery } from "convex/react";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { api } from "@/convex/_generated/api";
 import { DocumentTable } from "../document-table";
 
 /** The Documents Vink is reading right now. Each leaves the list when its Extraction ends. */
 export function ExtractingList({ organisationSlug }: { organisationSlug: string }) {
+  const t = useTranslations("appDocuments.extracting");
   const list = useQuery(api.documents.list, { organisationSlug, state: "extracting" });
 
   return (
@@ -22,18 +24,15 @@ export function ExtractingList({ organisationSlug }: { organisationSlug: string 
           render={<Link href={`/app/o/${organisationSlug}`} />}
         >
           <ArrowLeft />
-          Documents
+          {t("back")}
         </Button>
-        <h1 className="text-xl font-semibold">Extracting</h1>
-        <p className="text-sm text-muted-foreground">
-          Vink is reading these now. Each moves to Needs Review or Approved when it is
-          done, or to Failed.
-        </p>
+        <h1 className="text-xl font-semibold">{t("title")}</h1>
+        <p className="text-sm text-muted-foreground">{t("description")}</p>
       </div>
       <DocumentTable
         organisationSlug={organisationSlug}
         documents={list?.documents}
-        empty="Nothing is being read right now."
+        empty={t("empty")}
       />
     </main>
   );

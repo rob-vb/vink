@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery } from "convex/react";
+import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { useState } from "react";
 import {
@@ -34,15 +35,19 @@ import {
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { InviteDialog } from "./invite-dialog";
-import { describeProblem, roles, type Role } from "./roles";
+import { useDescribeProblem, useRoles, type Role } from "./roles";
 
 type Confirming =
   | { kind: "remove"; membershipId: Id<"memberships">; email: string }
   | { kind: "revoke"; invitationId: Id<"invitations">; email: string };
 
-const dateFormat = new Intl.DateTimeFormat(undefined, { dateStyle: "medium" });
-
 export function MembersList({ organisationSlug }: { organisationSlug: string }) {
+  const t = useTranslations("appMembers");
+  const tRoles = useTranslations("app.roles");
+  const locale = useLocale();
+  const roles = useRoles();
+  const describeProblem = useDescribeProblem();
+  const dateFormat = new Intl.DateTimeFormat(locale === "nl" ? "nl-NL" : "en-GB", { dateStyle: "medium" });
   const data = useQuery(api.memberships.list, { organisationSlug });
   const changeRole = useMutation(api.memberships.changeRole);
   const remove = useMutation(api.memberships.remove);
@@ -59,9 +64,9 @@ export function MembersList({ organisationSlug }: { organisationSlug: string }) 
   async function onChangeRole(membershipId: Id<"memberships">, email: string, role: Role) {
     try {
       await changeRole({ organisationSlug, membershipId, role });
-      toast.success(`${email} is now ${role === "admin" ? "an Admin" : "a Member"}`);
+      toast.success(t("nowRole", { email, role }));
     } catch (error) {
-      toast.error(describeProblem(error, "We couldn't change the role."));
+      toast.error(describeProblem(error, t("roleNotChanged")));
     }
   }
 
@@ -70,13 +75,13 @@ export function MembersList({ organisationSlug }: { organisationSlug: string }) 
     try {
       if (confirming.kind === "remove") {
         await remove({ organisationSlug, membershipId: confirming.membershipId });
-        toast.success(`${confirming.email} was removed`);
+        toast.success(t("removed", { email: confirming.email }));
       } else {
         await revoke({ organisationSlug, invitationId: confirming.invitationId });
-        toast.success(`The invitation for ${confirming.email} was revoked`);
+        toast.success(t("revoked", { email: confirming.email }));
       }
     } catch (error) {
-      toast.error(describeProblem(error, "That didn't work. Try again."));
+      toast.error(describeProblem(error, t("failed")));
     } finally {
       setConfirmOpen(false);
     }
@@ -86,11 +91,8 @@ export function MembersList({ organisationSlug }: { organisationSlug: string }) 
     <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8 md:px-6">
       <div className="mb-6 flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold">Members</h1>
-          <p className="text-sm text-muted-foreground">
-            Admins manage Forms, Integrations and Members. Members upload, review and approve
-            Documents.
-          </p>
+          <h1 className="text-xl font-semibold">{t("title")}</h1>
+          <p className="text-sm text-muted-foreground">{t("intro")}</p>
         </div>
         <InviteDialog organisationSlug={organisationSlug} />
       </div>
@@ -106,10 +108,10 @@ export function MembersList({ organisationSlug }: { organisationSlug: string }) 
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Email</TableHead>
-                  <TableHead className="w-36">Role</TableHead>
+                  <TableHead>{t("email")}</TableHead>
+                  <TableHead className="w-36">{t("role")}</TableHead>
                   <TableHead className="w-24">
-                    <span className="sr-only">Actions</span>
+                    <span className="sr-only">{t("actions")}</span>
                   </TableHead>
                 </TableRow>
               </TableHeader>
@@ -119,14 +121,12 @@ export function MembersList({ organisationSlug }: { organisationSlug: string }) 
                     <TableCell className="max-w-0 w-full">
                       <div className="flex items-center gap-2">
                         <span className="truncate">{member.email || "—"}</span>
-                        {member.isYou && <Badge variant="secondary">You</Badge>}
+                        {member.isYou && <Badge variant="secondary">{t("you")}</Badge>}
                       </div>
                     </TableCell>
                     <TableCell>
                       {member.isYou ? (
-                        <Badge variant="outline">
-                          {member.role === "admin" ? "Admin" : "Member"}
-                        </Badge>
+                        <Badge variant="outline">{tRoles(member.role)}</Badge>
                       ) : (
                         <Select
                           items={roles}
@@ -140,7 +140,7 @@ export function MembersList({ organisationSlug }: { organisationSlug: string }) 
                           <SelectTrigger
                             size="sm"
                             className="w-28"
-                            aria-label={`Role of ${member.email}`}
+                            aria-label={t("roleOf", { email: member.email })}
                           >
                             <SelectValue />
                           </SelectTrigger>
@@ -168,7 +168,7 @@ export function MembersList({ organisationSlug }: { organisationSlug: string }) 
                             })
                           }
                         >
-                          Remove
+                          {t("remove")}
                         </Button>
                       )}
                     </TableCell>
@@ -181,17 +181,17 @@ export function MembersList({ organisationSlug }: { organisationSlug: string }) 
           {data.invitations.length > 0 && (
             <section>
               <h2 className="mb-3 text-sm font-medium">
-                Pending invitations ({data.invitations.length})
+                {t("pending", { count: data.invitations.length })}
               </h2>
               <div className="overflow-hidden rounded-lg border">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Email</TableHead>
-                      <TableHead className="w-36">Role</TableHead>
-                      <TableHead className="hidden w-36 sm:table-cell">Expires</TableHead>
+                      <TableHead>{t("email")}</TableHead>
+                      <TableHead className="w-36">{t("role")}</TableHead>
+                      <TableHead className="hidden w-36 sm:table-cell">{t("expires")}</TableHead>
                       <TableHead className="w-24">
-                        <span className="sr-only">Actions</span>
+                        <span className="sr-only">{t("actions")}</span>
                       </TableHead>
                     </TableRow>
                   </TableHeader>
@@ -202,9 +202,7 @@ export function MembersList({ organisationSlug }: { organisationSlug: string }) 
                           {invitation.email}
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline">
-                            {invitation.role === "admin" ? "Admin" : "Member"}
-                          </Badge>
+                          <Badge variant="outline">{tRoles(invitation.role)}</Badge>
                         </TableCell>
                         <TableCell className="hidden text-muted-foreground sm:table-cell">
                           {dateFormat.format(invitation.expiresAt)}
@@ -221,7 +219,7 @@ export function MembersList({ organisationSlug }: { organisationSlug: string }) 
                               })
                             }
                           >
-                            Revoke
+                            {t("revoke")}
                           </Button>
                         </TableCell>
                       </TableRow>
@@ -238,18 +236,18 @@ export function MembersList({ organisationSlug }: { organisationSlug: string }) 
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {confirming?.kind === "revoke" ? "Revoke invitation?" : "Remove Member?"}
+              {confirming?.kind === "revoke" ? t("revokeTitle") : t("removeTitle")}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {confirming?.kind === "revoke"
-                ? `The link sent to ${confirming.email} stops working.`
-                : `${confirming?.email} loses access to this Organisation at once.`}
+                ? t("revokeDescription", { email: confirming.email })
+                : t("removeDescription", { email: confirming?.email ?? "" })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
             <AlertDialogAction variant="destructive" onClick={() => void onConfirm()}>
-              {confirming?.kind === "revoke" ? "Revoke" : "Remove"}
+              {confirming?.kind === "revoke" ? t("revoke") : t("remove")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

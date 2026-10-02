@@ -1,8 +1,12 @@
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import { DocumentList } from "./documents/document-list";
 import { getOrganisation } from "./organisation";
 
-export const metadata: Metadata = { title: "Documents · Vink" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("app.titles");
+  return { title: t("documents") };
+}
 
 export default async function OrganisationHome({ params }: PageProps<"/app/o/[slug]">) {
   const { slug } = await params;

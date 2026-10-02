@@ -1,6 +1,7 @@
 "use client";
 
 import { MailCheck } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -24,24 +25,26 @@ export function CheckInbox({
   /** A sign-in link (5 minutes), or the link that verifies a password sign-up (1 hour). */
   purpose?: "sign-in" | "verify";
 }) {
+  const t = useTranslations("app.auth.checkInbox");
   return (
     <Card>
       <CardHeader className="text-center">
         <MailCheck className="mx-auto mb-2 size-8 text-muted-foreground" />
-        <CardTitle className="text-xl">Check your email</CardTitle>
+        <CardTitle className="text-xl">{t("title")}</CardTitle>
         <CardDescription>
-          We sent a link to <span className="font-medium text-foreground">{email}</span>.{" "}
-          {purpose === "verify"
-            ? "Open it to verify your email and finish creating your account. It expires in 1 hour."
-            : "Open it on this device to continue. It expires in 5 minutes."}
+          {t.rich("sent", {
+            email,
+            b: (chunks) => <span className="font-medium text-foreground">{chunks}</span>,
+          })}{" "}
+          {purpose === "verify" ? t("verify") : t("signIn")}
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-2">
         <Button variant="outline" onClick={onResend} disabled={resending}>
-          Send it again
+          {t("resend")}
         </Button>
         <Button variant="ghost" onClick={onChangeEmail}>
-          Use a different email
+          {t("changeEmail")}
         </Button>
       </CardContent>
     </Card>

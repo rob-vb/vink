@@ -2,10 +2,11 @@
 
 import { useMutation } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
-import { ConvexError } from "convex/values";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { FieldRowView } from "@/components/documents/field-row-view";
 import { api } from "@/convex/_generated/api";
+import { useErrorText } from "../../../../error-text";
 
 export { ConfidenceBar } from "@/components/documents/field-row-view";
 
@@ -35,6 +36,8 @@ export function FieldRow({
   selected: boolean;
   onSelect: () => void;
 }) {
+  const t = useTranslations("appDocuments");
+  const errorText = useErrorText();
   const correct = useMutation(api.review.correct);
   const check = useMutation(api.review.check);
   const undo = useMutation(api.review.undo);
@@ -51,9 +54,7 @@ export function FieldRow({
       onCorrect={(value) => correct({ ...on, value })}
       onCheck={() => check(on)}
       onUndo={() => undo(on)}
-      onError={(error) =>
-        toast.error(error instanceof ConvexError ? String(error.data) : "That didn't work. Try again.")
-      }
+      onError={(error) => toast.error(errorText(error, t("tryAgain")))}
     />
   );
 }

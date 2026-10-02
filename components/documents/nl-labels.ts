@@ -5,9 +5,9 @@ function pagesLabel(pages: number[]) {
 }
 
 /**
- * The app's Documents page and review screen in Dutch, for the demo on /nl only.
- * The app itself is English; the English words are `englishLabels` in
- * components/documents/labels.tsx, the source these follow.
+ * The Documents page and review screen in Dutch, for the app and the Dutch demo.
+ * The English words are `englishLabels` in components/documents/labels.tsx,
+ * the source these follow.
  */
 export const dutchLabels: DocumentsLabels = {
   documents: {

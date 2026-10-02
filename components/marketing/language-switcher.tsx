@@ -2,21 +2,19 @@
 
 import { useLocale } from "next-intl";
 import { usePathname } from "@/i18n/navigation";
+import { rememberLocale } from "@/i18n/remember";
 import { routing, type Locale } from "@/i18n/routing";
 import { cn } from "@/lib/utils";
 
 // No browser-language detection anywhere: the visitor picks, and the choice
-// is kept in NEXT_LOCALE for a year (the app may read it later).
-function remember(locale: Locale) {
-  document.cookie = `NEXT_LOCALE=${locale}; Path=/; Max-Age=31536000; SameSite=Lax`;
-}
+// is kept in NEXT_LOCALE for a year, which the app reads too.
 
 function hrefFor(locale: Locale, pathname: string) {
   if (locale === routing.defaultLocale) return pathname;
   return pathname === "/" ? `/${locale}` : `/${locale}${pathname}`;
 }
 
-/** EN / NL, linking to the same page in the other language. */
+/** NL / EN, linking to the same page in the other language. */
 export function LanguageSwitcher({
   labels,
   label,
@@ -25,7 +23,7 @@ export function LanguageSwitcher({
 }: {
   labels: Record<Locale, string>;
   label: string;
-  /** "English · Nederlands" in the footer, "EN · NL" in the nav. */
+  /** "Nederlands · English" in the footer, "NL · EN" in the nav. */
   long?: boolean;
   className?: string;
 }) {
@@ -44,7 +42,7 @@ export function LanguageSwitcher({
             aria-current={active ? "true" : undefined}
             title={labels[locale]}
             onClick={(event) => {
-              remember(locale);
+              rememberLocale(locale);
               if (window.location.hash) {
                 event.preventDefault();
                 window.location.assign(hrefFor(locale, pathname) + window.location.hash);

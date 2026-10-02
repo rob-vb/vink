@@ -1,6 +1,7 @@
 "use client";
 
 import { Mail } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -32,6 +33,7 @@ export function EmailInDialog({
   forms: Array<{ id: Id<"forms">; name: string }>;
   isAdmin: boolean;
 }) {
+  const t = useTranslations("appDocuments");
   const [formId, setFormId] = useState<Id<"forms"> | null>(forms[0]?.id ?? null);
   const items = forms.map((f) => ({ value: f.id, label: f.name }));
   return (
@@ -40,26 +42,24 @@ export function EmailInDialog({
         render={
           <Button variant="outline">
             <Mail />
-            Email in
+            {t("emailIn.button")}
           </Button>
         }
       />
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-xl">
         <DialogHeader>
-          <DialogTitle>Email documents in</DialogTitle>
-          <DialogDescription>
-            Each Form can have its own email address. PDFs sent there become Documents of that Form.
-          </DialogDescription>
+          <DialogTitle>{t("emailIn.title")}</DialogTitle>
+          <DialogDescription>{t("emailIn.description")}</DialogDescription>
         </DialogHeader>
         <Field>
-          <FieldLabel htmlFor="email-in-form">Form</FieldLabel>
+          <FieldLabel htmlFor="email-in-form">{t("form")}</FieldLabel>
           <Select
             items={items}
             value={formId}
             onValueChange={(value) => setFormId(value as Id<"forms"> | null)}
           >
             <SelectTrigger id="email-in-form" className="w-full">
-              <SelectValue placeholder="Choose a Form" />
+              <SelectValue placeholder={t("chooseForm")} />
             </SelectTrigger>
             <SelectContent>
               {items.map((f) => (

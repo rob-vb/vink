@@ -1,0 +1,104 @@
+{
+  "tryAgain": "Dat is niet gelukt. Probeer het opnieuw.",
+  "retryFailed": "De nieuwe poging is niet gestart. Probeer het opnieuw.",
+  "cancel": "Annuleren",
+  "chooseForm": "Kies een Formulier",
+  "form": "Formulier",
+  "list": {
+    "welcome": "Welkom bij {organisation}",
+    "adminIntro": "Maak een Formulier voor elke soort document die je ontvangt, en Vink vult het in vanuit je pdf's.",
+    "memberIntro": "Een Admin maakt eerst een Formulier voor elke soort document die je ontvangt. Daarna kun je hier pdf's uploaden.",
+    "goToForms": "Naar Formulieren",
+    "extracting": "Wordt gelezen"
+  },
+  "emailIn": {
+    "button": "Per e-mail",
+    "title": "Documenten per e-mail insturen",
+    "description": "Elk Formulier kan een eigen e-mailadres hebben. Pdf's die je daarheen stuurt, worden Documenten van dat Formulier."
+  },
+  "upload": {
+    "button": "PDF's uploaden",
+    "title": "PDF's uploaden",
+    "description": "Elke pdf wordt een eigen Document. Vink vult het Formulier dat je kiest vanuit alle pagina's.",
+    "pdfs": "PDF's",
+    "drop": "Sleep pdf's hierheen, of <browse>kies bestanden</browse>",
+    "limit": "Maximaal 20 pagina's per pdf",
+    "notPdf": "Geen pdf.",
+    "failed": "We konden deze pdf niet uploaden. Probeer het opnieuw.",
+    "outOfPages": "Je hebt nog {remaining} {remaining, plural, one {pagina} other {pagina's}}; deze pdf heeft er {needed}.",
+    "uploaded": "{count, plural, one {# pdf geüpload} other {# pdf's geüpload}}",
+    "readingNow": "Vink leest ze nu.",
+    "view": "Bekijken",
+    "close": "Sluiten",
+    "submit": "{count, plural, =0 {Uploaden} =1 {Uploaden} other {# pdf's uploaden}}",
+    "remove": "{filename} verwijderen",
+    "progress": "Uploadvoortgang"
+  },
+  "extracting": {
+    "metaTitle": "Wordt gelezen · Vink",
+    "back": "Documenten",
+    "title": "Wordt gelezen",
+    "description": "Vink leest deze nu. Als het klaar is, gaat elk Document naar Te controleren of Goedgekeurd, of naar Mislukt.",
+    "empty": "Er wordt nu niets gelezen."
+  },
+  "review": {
+    "metaTitle": "Controleren · Vink",
+    "notVerified": "Niet geverifieerd door Jev",
+    "notVerifiedTip": "Jev kon dit Document niet verifiëren, dus het wordt nooit automatisch goedgekeurd.",
+    "approvedToast": "{filename} is goedgekeurd.",
+    "nothingElse": "Er is niets meer te controleren.",
+    "approvalFailed": "Goedkeuren is niet gelukt. Probeer het opnieuw.",
+    "doesNotFit": "Past niet bij dit Formulier",
+    "doesNotFitText": "Van de verplichte Velden van {form} zijn er te weinig op gevonden. Misschien is het bij het verkeerde Formulier geüpload, of is het geen bruikbaar Document.",
+    "rejected": "Afgewezen",
+    "rejectedAndDeleted": "Afgewezen en verwijderd",
+    "rejectedBy": "Door {name}, {date}",
+    "gone": "De pdf en de gegevens zijn weg; alleen dit record en de geschiedenis blijven bewaard.",
+    "failedTitle": "Vink kon dit Document niet lezen",
+    "failedText": "Vink heeft het vier keer geprobeerd. Meestal is dit een tijdelijke storing, dus probeer het opnieuw. Als er al een Reading is opgeslagen, gaat de nieuwe poging daar verder en wordt de pdf niet opnieuw gelezen.",
+    "retry": "Opnieuw proberen",
+    "dataDeleted": "Gegevens verwijderd",
+    "dataDeletedBy": "De pdf, wat Vink las en de waarden zijn op {date} verwijderd door {name}. Alleen dit record, de geschiedenis en het leveringslog blijven bewaard.",
+    "dataDeletedRetention": "De pdf, wat Vink las en de waarden zijn op {date} verwijderd volgens de bewaartermijn van de Organisatie. Alleen dit record, de geschiedenis en het leveringslog blijven bewaard.",
+    "pdfDeleted": "De pdf is verwijderd.",
+    "pdfFailed": "De pdf kon niet worden geladen.",
+    "reading": "Vink leest dit Document",
+    "readingText": "Dit kan tot een minuut duren. De Velden worden hier ingevuld zodra het klaar is."
+  },
+  "changeForm": {
+    "button": "Formulier wijzigen",
+    "title": "Het Formulier wijzigen",
+    "description": "Vink vult het nieuwe Formulier met wat het al op de pdf heeft gelezen. Alleen als het de pdf nog niet heeft gelezen, leest het de pdf opnieuw.",
+    "newForm": "Nieuw Formulier",
+    "noOtherForms": "Geen andere Formulieren",
+    "lost": "{count, plural, one {# correctie gaat verloren.} other {# correcties gaan verloren.}}",
+    "dropped": "De waarden voor het huidige Formulier vervallen."
+  },
+  "reject": {
+    "button": "Afwijzen",
+    "title": "Dit Document afwijzen?",
+    "description": "{filename} wordt nooit goedgekeurd of verstuurd. Het blijft in de lijst Afgewezen staan, en je kunt het heropenen zolang de pdf bewaard wordt.",
+    "reason": "Reden (optioneel)",
+    "placeholder": "Lege scan, onleesbaar, geen werkbon…",
+    "reasonHelp": "Je team ziet dit naast het Document.",
+    "submit": "Document afwijzen",
+    "toast": "{filename} is afgewezen.",
+    "reopen": "Heropenen"
+  },
+  "delete": {
+    "button": "Nu verwijderen",
+    "title": "{filename} definitief verwijderen?",
+    "description": "De pdf, wat Vink las, elke waarde en de antwoorden van je systeem worden nu verwijderd en zijn niet terug te halen. Leveringen die nog niet zijn verstuurd, worden geannuleerd. Alleen de bestandsnaam, wie het uploadde en goedkeurde, de datums, de geschiedenis en de leveringsstatus blijven bewaard, met de regel \"Verwijderd door jou\".",
+    "toast": "{filename} is verwijderd."
+  },
+  "pdf": {
+    "previous": "Vorige pagina",
+    "next": "Volgende pagina",
+    "zoomIn": "Inzoomen",
+    "zoomOut": "Uitzoomen",
+    "failed": "De pdf kan hier niet worden getoond."
+  },
+  "delivery": {
+    "sendAgain": "Opnieuw versturen"
+  }
+}

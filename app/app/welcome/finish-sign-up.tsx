@@ -2,12 +2,14 @@
 
 import { useConvexAuth, useMutation } from "convex/react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useEffect, useRef } from "react";
 import { Spinner } from "@/components/ui/spinner";
 import { api } from "@/convex/_generated/api";
 
 /** Makes the new user Admin of their Organisation, then opens it. */
 export function FinishSignUp({ organisation }: { organisation: string }) {
+  const t = useTranslations("app.welcome");
   const router = useRouter();
   const { isAuthenticated, isLoading } = useConvexAuth();
   const createOrganisation = useMutation(api.onboarding.createOrganisation);
@@ -29,7 +31,7 @@ export function FinishSignUp({ organisation }: { organisation: string }) {
   return (
     <main className="flex flex-1 items-center justify-center gap-2 text-muted-foreground">
       <Spinner />
-      Setting up your Organisation…
+      {t("settingUp")}
     </main>
   );
 }

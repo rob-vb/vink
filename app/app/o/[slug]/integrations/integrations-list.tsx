@@ -1,9 +1,9 @@
 "use client";
 
 import { useMutation, useQuery } from "convex/react";
-import { ConvexError } from "convex/values";
 import { Copy, Eye, Pencil, Plug, Plus, Trash2, X } from "lucide-react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 import {
@@ -39,12 +39,9 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
+import { useErrorText } from "../../../error-text";
 import { IntegrationDialog } from "./integration-dialog";
 import { TestSendButton } from "./test-send";
-
-function failed(error: unknown) {
-  toast.error(error instanceof ConvexError ? String(error.data) : "That didn't work. Try again.");
-}
 
 function SigningSecret({
   organisationSlug,
@@ -53,6 +50,7 @@ function SigningSecret({
   organisationSlug: string;
   integrationId: Id<"integrations">;
 }) {
+  const t = useTranslations("appIntegrations");
   const [shown, setShown] = useState(false);
   const secret = useQuery(
     api.integrations.signingSecret,
@@ -68,16 +66,16 @@ function SigningSecret({
           variant="ghost"
           size="xs"
           onClick={() =>
-            navigator.clipboard.writeText(secret.secret).then(() => toast.success("Copied."))
+            navigator.clipboard.writeText(secret.secret).then(() => toast.success(t("copied")))
           }
         >
           <Copy />
-          Copy
+          {t("copy")}
         </Button>
       ) : (
         <Button variant="ghost" size="xs" onClick={() => setShown(true)}>
           <Eye />
-          Reveal
+          {t("reveal")}
         </Button>
       )}
     </div>
@@ -91,9 +89,10 @@ function RecentDeliveries({
   organisationSlug: string;
   integrationId: Id<"integrations">;
 }) {
+  const t = useTranslations("appIntegrations");
   const deliveries = useQuery(api.deliveries.forIntegration, { organisationSlug, integrationId });
   if (deliveries === undefined || deliveries.length === 0) {
-    return <p className="text-muted-foreground">Nothing sent yet.</p>;
+    return <p className="text-muted-foreground">{t("nothingSent")}</p>;
   }
   return (
     <div className="overflow-hidden rounded-md border">
@@ -119,6 +118,9 @@ function RecentDeliveries({
 
 /** The Organisation's Integrations, the Forms each is attached to, and a test-send. */
 export function IntegrationsList({ organisationSlug }: { organisationSlug: string }) {
+  const t = useTranslations("appIntegrations");
+  const errorText = useErrorText();
+  const failed = (error: unknown) => toast.error(errorText(error, t("tryAgain")));
   const integrations = useQuery(api.integrations.list, { organisationSlug });
   const forms = useQuery(api.forms.list, { organisationSlug });
   const attach = useMutation(api.integrations.attach);
@@ -128,7 +130,7 @@ export function IntegrationsList({ organisationSlug }: { organisationSlug: strin
   const newButton = (
     <Button>
       <Plus />
-      New Integration
+      {t("new")}
     </Button>
   );
 
@@ -136,10 +138,8 @@ export function IntegrationsList({ organisationSlug }: { organisationSlug: strin
     <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8 md:px-6">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold">Integrations</h1>
-          <p className="text-sm text-muted-foreground">
-            Where approved Documents go. Attach an Integration to the Forms it should receive.
-          </p>
+          <h1 className="text-xl font-semibold">{t("title")}</h1>
+          <p className="text-sm text-muted-foreground">{t("intro")}</p>
         </div>
         <IntegrationDialog organisationSlug={organisationSlug} trigger={newButton} />
       </div>
@@ -152,11 +152,8 @@ export function IntegrationsList({ organisationSlug }: { organisationSlug: strin
             <EmptyMedia variant="icon">
               <Plug />
             </EmptyMedia>
-            <EmptyTitle>No Integrations yet</EmptyTitle>
-            <EmptyDescription>
-              Without one, approving a Document just marks it approved. Add your system&apos;s
-              endpoint to have Vink send the data there.
-            </EmptyDescription>
+            <EmptyTitle>{t("emptyTitle")}</EmptyTitle>
+            <EmptyDescription>{t("emptyDescription")}</EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
             <IntegrationDialog organisationSlug={organisationSlug} trigger={newButton} />
@@ -180,7 +177,7 @@ export function IntegrationsList({ organisationSlug }: { organisationSlug: strin
                       organisationSlug={organisationSlug}
                       integration={integration}
                       trigger={
-                        <Button variant="ghost" size="icon-sm" aria-label={`Edit ${integration.name}`}>
+                        <Button variant="ghost" size="icon-sm" aria-label={t("edit", { name: integration.name })}>
                           <Pencil />
                         </Button>
                       }
@@ -188,27 +185,25 @@ export function IntegrationsList({ organisationSlug }: { organisationSlug: strin
                     <AlertDialog>
                       <AlertDialogTrigger
                         render={
-                          <Button variant="ghost" size="icon-sm" aria-label={`Delete ${integration.name}`} />
+                          <Button variant="ghost" size="icon-sm" aria-label={t("delete", { name: integration.name })} />
                         }
                       >
                         <Trash2 />
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
-                          <AlertDialogTitle>Delete {integration.name}?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            It is detached from its Forms, and nothing is sent to it anymore.
-                          </AlertDialogDescription>
+                          <AlertDialogTitle>{t("deleteTitle", { name: integration.name })}</AlertDialogTitle>
+                          <AlertDialogDescription>{t("deleteDescription")}</AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
                           <AlertDialogAction
                             variant="destructive"
                             onClick={() =>
                               remove({ organisationSlug, integrationId: integration.id }).catch(failed)
                             }
                           >
-                            Delete
+                            {t("deleteConfirm")}
                           </AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>
@@ -227,21 +222,21 @@ export function IntegrationsList({ organisationSlug }: { organisationSlug: strin
                     </dl>
                   )}
                   <div className="flex flex-col gap-1">
-                    <p className="font-medium">Signing secret</p>
+                    <p className="font-medium">{t("signingSecret")}</p>
                     <p className="text-muted-foreground">
-                      Every request carries an <code className="font-mono">X-Vink-Signature</code>{" "}
-                      header,{" "}
-                      <code className="font-mono">t=&lt;unix time&gt;,v1=&lt;hex&gt;</code>: HMAC-SHA256
-                      of <code className="font-mono">{"{t}.{body}"}</code> with this secret. Refuse a
-                      request whose <code className="font-mono">t</code> is more than 5 minutes old.
+                      {t.rich("signingSecretText", {
+                        format: `t=<${t("unixTime")}>,v1=<hex>`,
+                        signed: "{t}.{body}",
+                        code: (chunks) => <code className="font-mono">{chunks}</code>,
+                      })}
                     </p>
                     <SigningSecret organisationSlug={organisationSlug} integrationId={integration.id} />
                   </div>
                   <div className="flex flex-col gap-2">
-                    <p className="font-medium">Forms</p>
+                    <p className="font-medium">{t("forms")}</p>
                     <div className="flex flex-wrap items-center gap-2">
                       {integration.forms.length === 0 && (
-                        <span className="text-muted-foreground">Not attached to any Form yet.</span>
+                        <span className="text-muted-foreground">{t("notAttached")}</span>
                       )}
                       {integration.forms.map((form) => (
                         <Badge key={form.id} variant="secondary" className="gap-1 pr-1">
@@ -249,7 +244,7 @@ export function IntegrationsList({ organisationSlug }: { organisationSlug: strin
                           <button
                             type="button"
                             className="rounded-full p-0.5 hover:bg-foreground/10"
-                            aria-label={`Detach ${form.name}`}
+                            aria-label={t("detach", { form: form.name })}
                             onClick={() =>
                               detach({ organisationSlug, integrationId: integration.id, formId: form.id }).catch(
                                 failed,
@@ -273,8 +268,8 @@ export function IntegrationsList({ organisationSlug }: { organisationSlug: strin
                             }).catch(failed)
                           }
                         >
-                          <SelectTrigger size="sm" aria-label={`Attach ${integration.name} to a Form`}>
-                            <SelectValue placeholder="Attach to a Form" />
+                          <SelectTrigger size="sm" aria-label={t("attachLabel", { name: integration.name })}>
+                            <SelectValue placeholder={t("attach")} />
                           </SelectTrigger>
                           <SelectContent>
                             {unattached.map((f) => (
@@ -286,13 +281,10 @@ export function IntegrationsList({ organisationSlug }: { organisationSlug: strin
                         </Select>
                       )}
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      An attached Form&apos;s keys are locked. Documents approved before attaching
-                      aren&apos;t sent.
-                    </p>
+                    <p className="text-xs text-muted-foreground">{t("lockedNote")}</p>
                   </div>
                   <div className="flex flex-col gap-2">
-                    <p className="font-medium">Recent Deliveries</p>
+                    <p className="font-medium">{t("recentDeliveries")}</p>
                     <RecentDeliveries
                       organisationSlug={organisationSlug}
                       integrationId={integration.id}

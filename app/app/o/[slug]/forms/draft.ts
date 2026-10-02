@@ -27,17 +27,22 @@ export type DraftField = {
 
 export type Draft = { name: string; description: string; fields: DraftField[] };
 
-export const fieldTypes: { value: FieldType; label: string }[] = [
-  { value: "text", label: "Text" },
-  { value: "number", label: "Number" },
-  { value: "date", label: "Date" },
-  { value: "boolean", label: "Yes / no" },
-  { value: "choice", label: "Choice" },
-  { value: "list", label: "List" },
-];
+/** In the editor's order; their names are `appForms.types.<type>`. */
+export const fieldTypes: FieldType[] = ["text", "number", "date", "boolean", "choice", "list"];
 
 /** A sub-Field can be any type but a list. */
-export const subFieldTypes = fieldTypes.filter((t) => t.value !== "list");
+export const subFieldTypes = fieldTypes.filter((t) => t !== "list");
+
+/** What can be wrong with a Field; the words are `appForms.problems.<problem>`. */
+export type FieldProblem =
+  | "label"
+  | "key"
+  | "duplicate"
+  | "duplicateSub"
+  | "noOptions"
+  | "emptyOption"
+  | "sharedOption"
+  | "noSubFields";
 
 export function newField(taken: string[]): DraftField {
   return {
@@ -133,37 +138,37 @@ function toBase(f: DraftField) {
 export function fieldProblems(
   field: DraftField,
   siblings: DraftField[],
-  duplicate = "Another Field already uses this key.",
+  duplicate: FieldProblem = "duplicate",
 ) {
-  const problems: string[] = [];
-  if (field.label.trim() === "") problems.push("Add a label.");
+  const problems: FieldProblem[] = [];
+  if (field.label.trim() === "") problems.push("label");
   if (!isValidKey(field.key)) {
-    problems.push("A key is camelCase letters and digits, starting with a lowercase letter.");
+    problems.push("key");
   } else if (siblings.some((f) => f.id !== field.id && f.key === field.key)) {
     problems.push(duplicate);
   }
   if (field.type === "choice") {
     const values = field.options.map((o) => o.value.trim());
-    if (values.length === 0) problems.push("Add at least one option.");
-    if (values.some((v) => v === "")) problems.push("Every option needs a value.");
-    if (new Set(values).size !== values.length) problems.push("Two options share a value.");
+    if (values.length === 0) problems.push("noOptions");
+    if (values.some((v) => v === "")) problems.push("emptyOption");
+    if (new Set(values).size !== values.length) problems.push("sharedOption");
   }
   if (field.type === "list" && field.fields.length === 0) {
-    problems.push("Add at least one sub-Field.");
+    problems.push("noSubFields");
   }
   return problems;
 }
 
 /** Every Field and sub-Field, each with the siblings its key must differ from. */
 export function allProblems(fields: DraftField[]) {
-  const problems = new Map<string, string[]>();
+  const problems = new Map<string, FieldProblem[]>();
   for (const field of fields) {
     problems.set(field.id, fieldProblems(field, fields));
     if (field.type !== "list") continue;
     for (const sub of field.fields) {
       problems.set(
         sub.id,
-        fieldProblems(sub, field.fields, "Another sub-Field of this List already uses this key."),
+        fieldProblems(sub, field.fields, "duplicateSub"),
       );
     }
   }

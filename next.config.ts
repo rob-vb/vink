@@ -29,7 +29,7 @@ const securityHeaders = [
 ];
 
 const OG_IMAGE = "(?:.*/)?opengraph-image";
-// Paths that never get the /en rewrite: the product, the API, Next internals,
+// Paths that never get the /nl rewrite: the product, the API, Next internals,
 // locale-prefixed paths and files (anything with a dot, like /robots.txt).
 const NOT_MARKETING = "(?:app|api|_next|en|nl)(?:/|$)|.*\\..*";
 
@@ -65,18 +65,18 @@ const nextConfig: NextConfig = {
       { source: "/sign-up", destination: "/app/sign-up", permanent: true },
       { source: "/welcome", destination: "/app/welcome", permanent: true },
       { source: "/o/:path*", destination: "/app/o/:path*", permanent: true },
-      // English has no prefix: /en/x is only an internal path.
-      { source: "/en", destination: "/", permanent: true },
-      { source: `/en/:path((?!${OG_IMAGE}).*)`, destination: "/:path", permanent: true },
+      // Dutch has no prefix: /nl/x is only an internal path.
+      { source: "/nl", destination: "/", permanent: true },
+      { source: `/nl/:path((?!${OG_IMAGE}).*)`, destination: "/:path", permanent: true },
     ];
   },
   async rewrites() {
-    // English lives at `/`: every marketing path without a locale is served from
-    // the prerendered /en tree. No browser-language detection anywhere.
+    // Dutch lives at `/`: every marketing path without a locale is served from
+    // the prerendered /nl tree. No browser-language detection anywhere.
     return {
       beforeFiles: [
-        { source: "/", destination: "/en" },
-        { source: `/:path((?!${NOT_MARKETING}).+)`, destination: "/en/:path" },
+        { source: "/", destination: "/nl" },
+        { source: `/:path((?!${NOT_MARKETING}).+)`, destination: "/nl/:path" },
       ],
     };
   },

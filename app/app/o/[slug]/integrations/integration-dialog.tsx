@@ -1,8 +1,8 @@
 "use client";
 
 import { useMutation } from "convex/react";
-import { ConvexError } from "convex/values";
 import { Plus, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { type ReactElement, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
+import { useErrorText } from "../../../error-text";
 
 type Header = { name: string; value: string; secret: boolean; stored: boolean };
 
@@ -45,6 +46,8 @@ export function IntegrationDialog({
   integration?: IntegrationValues;
   trigger: ReactElement;
 }) {
+  const t = useTranslations("appIntegrations.dialog");
+  const errorText = useErrorText();
   const create = useMutation(api.integrations.create);
   const update = useMutation(api.integrations.update);
   const [open, setOpen] = useState(false);
@@ -97,7 +100,7 @@ export function IntegrationDialog({
       }
       setOpen(false);
     } catch (error) {
-      toast.error(error instanceof ConvexError ? String(error.data) : "That didn't save. Try again.");
+      toast.error(errorText(error, t("notSaved")));
     } finally {
       setPending(false);
     }
@@ -109,24 +112,21 @@ export function IntegrationDialog({
       <DialogContent className="sm:max-w-xl">
         <form onSubmit={submit} className="flex flex-col gap-6">
           <DialogHeader>
-            <DialogTitle>{integration ? "Edit Integration" : "New Integration"}</DialogTitle>
-            <DialogDescription>
-              Vink POSTs each approved Document&apos;s Payload here as JSON, signed with this
-              Integration&apos;s own secret.
-            </DialogDescription>
+            <DialogTitle>{integration ? t("editTitle") : t("newTitle")}</DialogTitle>
+            <DialogDescription>{t("description")}</DialogDescription>
           </DialogHeader>
           <FieldGroup>
             <Field>
-              <FieldLabel htmlFor="integration-name">Name</FieldLabel>
+              <FieldLabel htmlFor="integration-name">{t("name")}</FieldLabel>
               <Input
                 id="integration-name"
                 value={name}
-                placeholder="Fleet system"
+                placeholder={t("namePlaceholder")}
                 onChange={(e) => setName(e.target.value)}
               />
             </Field>
             <Field>
-              <FieldLabel htmlFor="integration-url">Endpoint URL</FieldLabel>
+              <FieldLabel htmlFor="integration-url">{t("url")}</FieldLabel>
               <Input
                 id="integration-url"
                 className="font-mono"
@@ -135,30 +135,28 @@ export function IntegrationDialog({
                 spellCheck={false}
                 onChange={(e) => setUrl(e.target.value.trim())}
               />
-              <FieldDescription>Must start with https://.</FieldDescription>
+              <FieldDescription>{t("urlHint")}</FieldDescription>
             </Field>
             <div className="flex flex-col gap-3">
               <div>
-                <p className="text-sm font-medium">Headers</p>
-                <p className="text-sm text-muted-foreground">
-                  For an API key, Bearer or Basic auth. Secret values are stored encrypted.
-                </p>
+                <p className="text-sm font-medium">{t("headers")}</p>
+                <p className="text-sm text-muted-foreground">{t("headersHint")}</p>
               </div>
               {headers.map((header, i) => (
                 <div key={i} className="grid gap-2 rounded-md border p-3 sm:grid-cols-[1fr_1fr_auto]">
                   <Input
-                    aria-label={`Header ${i + 1} name`}
+                    aria-label={t("headerName", { n: i + 1 })}
                     className="font-mono"
                     placeholder="Authorization"
                     value={header.name}
                     onChange={(e) => setHeader(i, { name: e.target.value })}
                   />
                   <Input
-                    aria-label={`Header ${i + 1} value`}
+                    aria-label={t("headerValue", { n: i + 1 })}
                     className="font-mono"
                     type={header.secret ? "password" : "text"}
                     autoComplete="off"
-                    placeholder={header.stored ? "Unchanged" : "Bearer …"}
+                    placeholder={header.stored ? t("unchanged") : "Bearer …"}
                     value={header.value}
                     onChange={(e) => setHeader(i, { value: e.target.value })}
                   />
@@ -171,14 +169,14 @@ export function IntegrationDialog({
                         onCheckedChange={(secret) => setHeader(i, { secret })}
                       />
                       <Label htmlFor={`header-${i}-secret`} className="text-sm">
-                        Secret
+                        {t("secret")}
                       </Label>
                     </div>
                     <Button
                       type="button"
                       variant="ghost"
                       size="icon-sm"
-                      aria-label={`Remove header ${i + 1}`}
+                      aria-label={t("removeHeader", { n: i + 1 })}
                       onClick={() => setHeaders(headers.filter((_, j) => j !== i))}
                     >
                       <X />
@@ -196,14 +194,14 @@ export function IntegrationDialog({
                 }
               >
                 <Plus />
-                Add header
+                {t("addHeader")}
               </Button>
             </div>
           </FieldGroup>
           <DialogFooter>
-            <DialogClose render={<Button type="button" variant="outline" />}>Cancel</DialogClose>
+            <DialogClose render={<Button type="button" variant="outline" />}>{t("cancel")}</DialogClose>
             <Button type="submit" disabled={pending}>
-              {integration ? "Save" : "Create Integration"}
+              {integration ? t("save") : t("create")}
             </Button>
           </DialogFooter>
         </form>

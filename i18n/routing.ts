@@ -1,11 +1,13 @@
 import { defineRouting } from "next-intl/routing";
 
-// English lives at `/`, Dutch at `/nl`. No browser-language redirect, and the
-// language switcher writes its own year-long NEXT_LOCALE cookie (see
-// components/marketing/language-switcher.tsx), so next-intl's cookie is off.
+// Dutch lives at `/`, English at `/en`. No browser-language redirect, and the
+// language switchers write their own year-long NEXT_LOCALE cookie (see
+// i18n/remember.ts), so next-intl's cookie is off. The app has no prefix and
+// reads that cookie instead (i18n/request.ts).
 export const routing = defineRouting({
-  locales: ["en", "nl"],
-  defaultLocale: "en",
+  // This order is the language switcher's order.
+  locales: ["nl", "en"],
+  defaultLocale: "nl",
   localePrefix: "as-needed",
   localeDetection: false,
   localeCookie: false,

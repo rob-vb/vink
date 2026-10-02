@@ -1,8 +1,8 @@
 "use client";
 
 import { useMutation } from "convex/react";
-import { ConvexError } from "convex/values";
 import { Ban, RotateCcw, Trash2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 import {
@@ -31,9 +31,14 @@ import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
+import { useErrorText } from "../../../../error-text";
 
-function failed(error: unknown) {
-  toast.error(error instanceof ConvexError ? String(error.data) : "That didn't work. Try again.");
+function useFailed() {
+  const t = useTranslations("appDocuments");
+  const errorText = useErrorText();
+  return (error: unknown) => {
+    toast.error(errorText(error, t("tryAgain")));
+  };
 }
 
 type Target = { organisationSlug: string; documentId: Id<"documents">; filename: string };
@@ -45,6 +50,8 @@ export function RejectButton({
   filename,
   size = "default",
 }: Target & { size?: "default" | "sm" }) {
+  const t = useTranslations("appDocuments");
+  const failed = useFailed();
   const reject = useMutation(api.rejection.reject);
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState("");
@@ -55,7 +62,7 @@ export function RejectButton({
     try {
       await reject({ organisationSlug, documentId, reason: reason.trim() || undefined });
       setOpen(false);
-      toast.success(`${filename} is rejected.`);
+      toast.success(t("reject.toast", { filename }));
     } catch (error) {
       failed(error);
     } finally {
@@ -67,30 +74,27 @@ export function RejectButton({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger render={<Button variant="outline" size={size} />}>
         <Ban />
-        Reject
+        {t("reject.button")}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Reject this Document?</DialogTitle>
-          <DialogDescription>
-            {filename} will never be approved or sent. It stays in the Rejected list, and you can
-            reopen it while its PDF is kept.
-          </DialogDescription>
+          <DialogTitle>{t("reject.title")}</DialogTitle>
+          <DialogDescription>{t("reject.description", { filename })}</DialogDescription>
         </DialogHeader>
         <Field>
-          <FieldLabel htmlFor="reject-reason">Reason (optional)</FieldLabel>
+          <FieldLabel htmlFor="reject-reason">{t("reject.reason")}</FieldLabel>
           <Textarea
             id="reject-reason"
             value={reason}
             onChange={(event) => setReason(event.target.value)}
-            placeholder="Blank scan, unreadable, not a work order…"
+            placeholder={t("reject.placeholder")}
           />
-          <FieldDescription>Shown to your team next to the Document.</FieldDescription>
+          <FieldDescription>{t("reject.reasonHelp")}</FieldDescription>
         </Field>
         <DialogFooter>
-          <DialogClose render={<Button variant="outline" />}>Cancel</DialogClose>
+          <DialogClose render={<Button variant="outline" />}>{t("cancel")}</DialogClose>
           <Button variant="destructive" disabled={pending} onClick={submit}>
-            Reject Document
+            {t("reject.submit")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -99,6 +103,8 @@ export function RejectButton({
 }
 
 export function ReopenButton({ organisationSlug, documentId }: Omit<Target, "filename">) {
+  const t = useTranslations("appDocuments");
+  const failed = useFailed();
   const reopen = useMutation(api.rejection.reopen);
   return (
     <Button
@@ -107,7 +113,7 @@ export function ReopenButton({ organisationSlug, documentId }: Omit<Target, "fil
       onClick={() => reopen({ organisationSlug, documentId }).catch(failed)}
     >
       <RotateCcw />
-      Reopen
+      {t("reject.reopen")}
     </Button>
   );
 }
@@ -122,6 +128,8 @@ export function DeleteButton({
   filename,
   variant = "destructive",
 }: Target & { variant?: "destructive" | "outline" }) {
+  const t = useTranslations("appDocuments");
+  const failed = useFailed();
   const remove = useMutation(api.rejection.remove);
   const [open, setOpen] = useState(false);
   return (
@@ -130,30 +138,25 @@ export function DeleteButton({
         render={<Button variant={variant} size={variant === "outline" ? "default" : "sm"} />}
       >
         <Trash2 />
-        Delete now
+        {t("delete.button")}
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Delete {filename} for good?</AlertDialogTitle>
-          <AlertDialogDescription>
-            The PDF, what Vink read, every value and your system&apos;s replies are deleted now and
-            can&apos;t be brought back. Deliveries that haven&apos;t gone out yet are cancelled.
-            Only the filename, who uploaded and approved it, the dates, the history and the
-            Delivery status stay, with a &quot;Deleted by you&quot; line.
-          </AlertDialogDescription>
+          <AlertDialogTitle>{t("delete.title", { filename })}</AlertDialogTitle>
+          <AlertDialogDescription>{t("delete.description")}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
           <AlertDialogAction
             variant="destructive"
             onClick={() =>
               remove({ organisationSlug, documentId }).then(() => {
                 setOpen(false);
-                toast.success(`${filename} is deleted.`);
+                toast.success(t("delete.toast", { filename }));
               }, failed)
             }
           >
-            Delete now
+            {t("delete.button")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

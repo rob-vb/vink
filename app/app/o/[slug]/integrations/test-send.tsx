@@ -2,8 +2,8 @@
 
 import { useAction, useQuery } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
-import { ConvexError } from "convex/values";
 import { CircleCheck, CircleX, Send } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { cn } from "cn";
+import { useErrorText } from "../../../error-text";
 
 type Result = FunctionReturnType<typeof api.integrations.testSend>;
 
@@ -46,6 +47,8 @@ export function TestSendButton({
   integrationId: Id<"integrations">;
   forms: Array<{ id: Id<"forms">; name: string }>;
 }) {
+  const t = useTranslations("appIntegrations.test");
+  const errorText = useErrorText();
   const [open, setOpen] = useState(false);
   const [formId, setFormId] = useState<Id<"forms"> | null>(forms[0]?.id ?? null);
   const [mode, setMode] = useState<"examples" | "empty">("examples");
@@ -59,7 +62,7 @@ export function TestSendButton({
   );
   const formItems = forms.map((f) => ({ value: f.id, label: f.name }));
   const sourceItems = [
-    { value: EXAMPLE, label: "Dummy data from the Form" },
+    { value: EXAMPLE, label: t("dummy") },
     ...(documents ?? []).map((d) => ({ value: d.id, label: d.filename })),
   ];
 
@@ -82,7 +85,7 @@ export function TestSendButton({
         ok: false,
         status: null,
         body: null,
-        error: error instanceof ConvexError ? String(error.data) : "The test didn't go out.",
+        error: errorText(error, t("notSent")),
       });
     } finally {
       setPending(false);
@@ -93,19 +96,18 @@ export function TestSendButton({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger render={<Button variant="outline" size="sm" disabled={forms.length === 0} />}>
         <Send />
-        Send test
+        {t("button")}
       </DialogTrigger>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Send a test</DialogTitle>
+          <DialogTitle>{t("title")}</DialogTitle>
           <DialogDescription>
-            Posts a signed envelope marked <code className="font-mono">&quot;test&quot;: true</code>,
-            so your receiver can check the format. It isn&apos;t a Delivery.
+            {t.rich("description", { code: (chunks) => <code className="font-mono">{chunks}</code> })}
           </DialogDescription>
         </DialogHeader>
         <FieldGroup>
           <Field>
-            <FieldLabel htmlFor="test-form">Form</FieldLabel>
+            <FieldLabel htmlFor="test-form">{t("form")}</FieldLabel>
             <Select
               items={formItems}
               value={formId}
@@ -115,7 +117,7 @@ export function TestSendButton({
               }}
             >
               <SelectTrigger id="test-form" className="w-full">
-                <SelectValue placeholder="Choose a Form" />
+                <SelectValue placeholder={t("chooseForm")} />
               </SelectTrigger>
               <SelectContent>
                 {formItems.map((f) => (
@@ -127,7 +129,7 @@ export function TestSendButton({
             </Select>
           </Field>
           <Field>
-            <FieldLabel htmlFor="test-source">Data</FieldLabel>
+            <FieldLabel htmlFor="test-source">{t("data")}</FieldLabel>
             <Select items={sourceItems} value={source} onValueChange={(v) => setSource(v ?? EXAMPLE)}>
               <SelectTrigger id="test-source" className="w-full">
                 <SelectValue />
@@ -140,10 +142,7 @@ export function TestSendButton({
                 ))}
               </SelectContent>
             </Select>
-            <FieldDescription>
-              Dummy data, or an Approved Document of this Form. Documents still in review are never
-              sent.
-            </FieldDescription>
+            <FieldDescription>{t("dataHint")}</FieldDescription>
           </Field>
           {source === EXAMPLE && (
             <ToggleGroup
@@ -152,14 +151,14 @@ export function TestSendButton({
               value={[mode]}
               onValueChange={(value) => value[0] && setMode(value[0] as typeof mode)}
             >
-              <ToggleGroupItem value="examples">Example values</ToggleGroupItem>
-              <ToggleGroupItem value="empty">Optional values empty</ToggleGroupItem>
+              <ToggleGroupItem value="examples">{t("examples")}</ToggleGroupItem>
+              <ToggleGroupItem value="empty">{t("empty")}</ToggleGroupItem>
             </ToggleGroup>
           )}
         </FieldGroup>
         <Button onClick={send} disabled={formId === null || pending} className="w-fit">
           {pending ? <Spinner /> : <Send />}
-          Send test
+          {t("button")}
         </Button>
         {result && (
           <div
@@ -179,7 +178,7 @@ export function TestSendButton({
               )}
               {result.status !== null ? (
                 <>
-                  Response status <Badge variant="outline">{result.status}</Badge>
+                  {t("status")} <Badge variant="outline">{result.status}</Badge>
                 </>
               ) : (
                 result.error
@@ -187,7 +186,7 @@ export function TestSendButton({
             </p>
             {result.body !== null && (
               <pre className="max-h-48 overflow-auto rounded bg-background p-2 font-mono text-xs whitespace-pre-wrap break-all">
-                {result.body || "(empty body)"}
+                {result.body || t("emptyBody")}
               </pre>
             )}
           </div>

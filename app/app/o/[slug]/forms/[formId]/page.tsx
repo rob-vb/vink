@@ -1,5 +1,6 @@
 import { ConvexError } from "convex/values";
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
@@ -10,7 +11,10 @@ import { FormEditor } from "../form-editor";
 import { FormSettings } from "../form-settings";
 import { IntakePanel } from "../intake-panel";
 
-export const metadata: Metadata = { title: "Form · Vink" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("appForms.editor");
+  return { title: t("metaTitle") };
+}
 
 export default async function FormPage({
   params,

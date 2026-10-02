@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation } from "convex/react";
-import { ConvexError } from "convex/values";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
+import { useErrorText } from "../../../error-text";
 
 /** Form settings live outside the Form Version, so saving them doesn't make one. */
 export function FormSettings({
@@ -30,6 +31,8 @@ export function FormSettings({
   formId: Id<"forms">;
   initial: { reviewThreshold: number; autoSend: boolean };
 }) {
+  const t = useTranslations("appForms.settings");
+  const errorText = useErrorText();
   const updateSettings = useMutation(api.forms.updateSettings);
   const [saved, setSaved] = useState(initial);
   const [threshold, setThreshold] = useState(String(initial.reviewThreshold));
@@ -45,9 +48,9 @@ export function FormSettings({
     try {
       await updateSettings({ organisationSlug, formId, reviewThreshold, autoSend });
       setSaved({ reviewThreshold, autoSend });
-      toast.success("Settings saved");
+      toast.success(t("saved"));
     } catch (error) {
-      toast.error(error instanceof ConvexError ? String(error.data) : "Couldn't save the settings");
+      toast.error(errorText(error, t("saveFailed")));
     } finally {
       setSaving(false);
     }
@@ -56,14 +59,11 @@ export function FormSettings({
   return (
     <section className="rounded-lg border p-4 md:p-6">
       <FieldSet>
-        <FieldLegend>Review &amp; sending</FieldLegend>
-        <FieldDescription>
-          Saved on their own, with the button below, and not part of a Form Version. They
-          apply to Extractions that finish after you save them.
-        </FieldDescription>
+        <FieldLegend>{t("legend")}</FieldLegend>
+        <FieldDescription>{t("description")}</FieldDescription>
         <FieldGroup>
           <Field>
-            <FieldLabel htmlFor="review-threshold">Review Threshold</FieldLabel>
+            <FieldLabel htmlFor="review-threshold">{t("reviewThreshold")}</FieldLabel>
             <Input
               id="review-threshold"
               type="number"
@@ -76,19 +76,13 @@ export function FormSettings({
               aria-invalid={!valid}
               onChange={(e) => setThreshold(e.target.value)}
             />
-            <FieldDescription>
-              From 0 to 1. A value whose confidence is below it needs review.
-            </FieldDescription>
+            <FieldDescription>{t("reviewThresholdDescription")}</FieldDescription>
           </Field>
           <Field orientation="horizontal">
             <Switch id="auto-send" checked={autoSend} onCheckedChange={setAutoSend} />
             <FieldContent>
-              <FieldLabel htmlFor="auto-send">Auto-Send</FieldLabel>
-              <FieldDescription>
-                Approve and send a Document by itself right after it is read, when nothing
-                on it needs review, Jev has verified it, it fits this Form and nobody has
-                changed it. Applies to Documents read from now on.
-              </FieldDescription>
+              <FieldLabel htmlFor="auto-send">{t("autoSend")}</FieldLabel>
+              <FieldDescription>{t("autoSendDescription")}</FieldDescription>
             </FieldContent>
           </Field>
         </FieldGroup>
@@ -99,7 +93,7 @@ export function FormSettings({
           onClick={() => void onSave()}
         >
           {saving && <Spinner />}
-          Save settings
+          {t("save")}
         </Button>
       </FieldSet>
     </section>

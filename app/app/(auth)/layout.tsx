@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Logo } from "@/components/logo";
+import { LanguageToggle } from "../language-switcher";
 
 export default function AuthLayout({ children }: LayoutProps<"/app">) {
   return (
@@ -8,6 +9,7 @@ export default function AuthLayout({ children }: LayoutProps<"/app">) {
         <Logo className="h-8" />
       </Link>
       <div className="w-full max-w-sm">{children}</div>
+      <LanguageToggle />
     </main>
   );
 }

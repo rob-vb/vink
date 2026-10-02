@@ -1,32 +1,37 @@
 "use client";
 
 import { useQuery } from "convex/react";
+import { useLocale, useTranslations } from "next-intl";
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/convex/_generated/api";
 import { formatResetDate, UpgradeButton } from "../pages-usage";
 
+// Plan names are product names and stay as they are; only "Internal" is a word.
 const planNames = {
   starter: "Starter",
   team: "Team",
   business: "Business",
   custom: "Custom",
-  internal_unlimited: "Internal",
 } as const;
 
 /** The Organisation's Plan and the Pages it has left. */
 export function PagesCard({ organisationSlug }: { organisationSlug: string }) {
+  const t = useTranslations("appSettings.pages");
+  const locale = useLocale();
   const usage = useQuery(api.pages.usage, { organisationSlug });
   if (usage === undefined) return <Skeleton className="h-36" />;
-  const plan = usage.plan ? planNames[usage.plan] : "No Plan";
+  const plan =
+    usage.plan === null
+      ? t("noPlan")
+      : usage.plan === "internal_unlimited"
+        ? t("internal")
+        : planNames[usage.plan];
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Pages</CardTitle>
-        <CardDescription>
-          Every page of a PDF Vink reads counts once, when it&apos;s uploaded. Retries and moving a
-          Document to another Form are free.
-        </CardDescription>
+        <CardTitle>{t("title")}</CardTitle>
+        <CardDescription>{t("description")}</CardDescription>
         {!usage.unlimited && (
           <CardAction>
             <UpgradeButton />
@@ -35,41 +40,38 @@ export function PagesCard({ organisationSlug }: { organisationSlug: string }) {
       </CardHeader>
       <CardContent className="flex flex-col gap-3 text-sm">
         <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-1">
-          <dt className="text-muted-foreground">Plan</dt>
+          <dt className="text-muted-foreground">{t("plan")}</dt>
           <dd>{plan}</dd>
           {usage.remaining !== null && (
             <>
-              <dt className="text-muted-foreground">Pages left</dt>
+              <dt className="text-muted-foreground">{t("left")}</dt>
               <dd className="tabular-nums">{usage.remaining}</dd>
             </>
           )}
           {usage.plan !== null && !usage.unlimited && (
             <>
-              <dt className="text-muted-foreground">This period</dt>
+              <dt className="text-muted-foreground">{t("period")}</dt>
               <dd className="tabular-nums">
-                {usage.allowanceLeft} of {usage.allowance} left
-                {usage.topUpPages > 0 && `, plus ${usage.topUpPages} Top-up pages`}
+                {t("periodLeft", { left: usage.allowanceLeft, allowance: usage.allowance })}
+                {usage.topUpPages > 0 && t("topUp", { pages: usage.topUpPages })}
               </dd>
             </>
           )}
           {usage.freePages > 0 && (
             <>
-              <dt className="text-muted-foreground">Free pages</dt>
+              <dt className="text-muted-foreground">{t("free")}</dt>
               <dd className="tabular-nums">{usage.freePages}</dd>
             </>
           )}
           {usage.resetsAt !== null && (
             <>
-              <dt className="text-muted-foreground">Resets</dt>
-              <dd>{formatResetDate(usage.resetsAt)}. Unused pages don&apos;t roll over.</dd>
+              <dt className="text-muted-foreground">{t("resets")}</dt>
+              <dd>{t("resetsOn", { date: formatResetDate(usage.resetsAt, locale) })}</dd>
             </>
           )}
         </dl>
         {usage.plan === null && usage.freePages === 0 && usage.remaining === 0 && (
-          <p className="text-muted-foreground">
-            Free pages come once, with the first Organisation someone creates. This Organisation
-            has none, so choose a Plan to upload PDFs.
-          </p>
+          <p className="text-muted-foreground">{t("noneFree")}</p>
         )}
       </CardContent>
     </Card>

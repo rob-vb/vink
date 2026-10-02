@@ -3,6 +3,7 @@
 import { useQuery } from "convex/react";
 import { Check, ChevronsUpDown } from "lucide-react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -16,6 +17,7 @@ import { api } from "@/convex/_generated/api";
 
 /** The active Organisation is the one in the URL; switching changes the slug. */
 export function OrganisationSwitcher({ slug, name }: { slug: string; name: string }) {
+  const t = useTranslations("app");
   const organisations = useQuery(api.organisations.mine);
 
   return (
@@ -30,7 +32,7 @@ export function OrganisationSwitcher({ slug, name }: { slug: string; name: strin
       />
       <DropdownMenuContent align="start" className="w-64">
         <DropdownMenuGroup>
-          <DropdownMenuLabel>Organisations</DropdownMenuLabel>
+          <DropdownMenuLabel>{t("shell.organisations")}</DropdownMenuLabel>
           {(organisations ?? [{ slug, name, role: null }]).map((organisation) => (
             <DropdownMenuItem
               key={organisation.slug}
@@ -40,7 +42,7 @@ export function OrganisationSwitcher({ slug, name }: { slug: string; name: strin
               <span className="flex-1 truncate">{organisation.name}</span>
               {organisation.role && (
                 <span className="text-xs text-muted-foreground">
-                  {organisation.role === "admin" ? "Admin" : "Member"}
+                  {t(`roles.${organisation.role}`)}
                 </span>
               )}
             </DropdownMenuItem>

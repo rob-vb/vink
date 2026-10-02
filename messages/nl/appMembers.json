@@ -1,0 +1,42 @@
+{
+  "title": "Leden",
+  "intro": "Admins beheren Formulieren, Koppelingen en Leden. Leden uploaden, controleren en keuren Documenten goed.",
+  "email": "E-mailadres",
+  "role": "Rol",
+  "actions": "Acties",
+  "you": "Jij",
+  "roleOf": "Rol van {email}",
+  "remove": "Verwijderen",
+  "revoke": "Intrekken",
+  "cancel": "Annuleren",
+  "pending": "Openstaande uitnodigingen ({count})",
+  "expires": "Verloopt",
+  "nowRole": "{email} is nu {role, select, admin {Admin} other {Lid}}",
+  "removed": "{email} is verwijderd",
+  "revoked": "De uitnodiging voor {email} is ingetrokken",
+  "roleNotChanged": "We konden de rol niet wijzigen.",
+  "failed": "Dat lukte niet. Probeer het opnieuw.",
+  "revokeTitle": "Uitnodiging intrekken?",
+  "removeTitle": "Lid verwijderen?",
+  "revokeDescription": "De link die naar {email} is gestuurd, werkt dan niet meer.",
+  "removeDescription": "{email} verliest meteen toegang tot deze Organisatie.",
+  "problems": {
+    "LastAdmin": "Een Organisatie heeft minstens één Admin nodig.",
+    "AlreadyMember": "Dat adres heeft hier al een Lidmaatschap.",
+    "InvalidEmail": "Vul een geldig e-mailadres in.",
+    "MembershipNotFound": "Dat Lidmaatschap bestaat niet meer.",
+    "InvitationNotFound": "Die Uitnodiging bestaat niet meer."
+  },
+  "invite": {
+    "open": "Uitnodigen",
+    "title": "Nodig een collega uit",
+    "description": "Je collega krijgt een e-mail met een link die 7 dagen werkt.",
+    "email": "E-mailadres",
+    "emailPlaceholder": "collega@bedrijf.nl",
+    "role": "Rol",
+    "cancel": "Annuleren",
+    "send": "Uitnodiging versturen",
+    "sent": "Uitnodiging verstuurd naar {email}",
+    "notSent": "We konden de uitnodiging niet versturen."
+  }
+}

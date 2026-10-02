@@ -1,6 +1,7 @@
 "use client";
 
 import { FilePlus2, Sparkles } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,6 +16,7 @@ export function NewForm({
   organisationSlug: string;
   startBlank: boolean;
 }) {
+  const t = useTranslations("appForms.new");
   const [blank, setBlank] = useState(startBlank);
   if (blank) {
     return (
@@ -23,21 +25,16 @@ export function NewForm({
   }
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-8 md:px-6">
-      <h1 className="mb-1 text-xl font-semibold">New Form</h1>
-      <p className="mb-6 text-sm text-muted-foreground">
-        One Form per kind of document you receive: a tyre report, a work order, an invoice.
-      </p>
+      <h1 className="mb-1 text-xl font-semibold">{t("title")}</h1>
+      <p className="mb-6 text-sm text-muted-foreground">{t("description")}</p>
       <div className="grid gap-4 md:grid-cols-[3fr_2fr]">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Sparkles className="size-4" />
-              From a sample PDF
+              {t("fromSample")}
             </CardTitle>
-            <CardDescription>
-              Vink reads one example and proposes the Fields. You untick what you don&apos;t
-              need and adjust the rest.
-            </CardDescription>
+            <CardDescription>{t("fromSampleDescription")}</CardDescription>
           </CardHeader>
           <CardContent>
             <SampleUpload organisationSlug={organisationSlug} />
@@ -47,13 +44,13 @@ export function NewForm({
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <FilePlus2 className="size-4" />
-              Blank
+              {t("blank")}
             </CardTitle>
-            <CardDescription>Add every Field yourself.</CardDescription>
+            <CardDescription>{t("blankDescription")}</CardDescription>
           </CardHeader>
           <CardContent>
             <Button variant="outline" onClick={() => setBlank(true)}>
-              Start blank
+              {t("startBlank")}
             </Button>
           </CardContent>
         </Card>

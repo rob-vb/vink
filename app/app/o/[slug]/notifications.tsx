@@ -3,18 +3,36 @@
 import { useMutation, useQuery } from "convex/react";
 import { Bell } from "lucide-react";
 import Link from "next/link";
+import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { api } from "@/convex/_generated/api";
 import { cn } from "cn";
 
-const when = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" });
+// Convex stores a notification's text in English; this is the one kind there is.
+const deliveryFailed = /^(.*) couldn't be delivered to (.*)$/s;
 
 /** Admins' in-app notifications, such as a Delivery that failed. */
 export function Notifications({ organisationSlug }: { organisationSlug: string }) {
   const unread = useQuery(api.notifications.unreadCount, { organisationSlug });
   const notifications = useQuery(api.notifications.list, { organisationSlug });
   const markAllRead = useMutation(api.notifications.markAllRead);
+  const t = useTranslations("app.notifications");
+  const locale = useLocale();
+  const when = new Intl.DateTimeFormat(locale === "nl" ? "nl-NL" : "en-GB", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
+
+  function text(english: string) {
+    const match = english.match(deliveryFailed);
+    if (!match) return english;
+    const [, document, integration] = match;
+    return t("deliveryFailed", {
+      document: document === "A Document" ? t("aDocument") : document,
+      integration,
+    });
+  }
 
   return (
     <Popover>
@@ -24,7 +42,7 @@ export function Notifications({ organisationSlug }: { organisationSlug: string }
             variant="ghost"
             size="icon-sm"
             className="relative"
-            aria-label={unread ? `Notifications, ${unread} unread` : "Notifications"}
+            aria-label={t("label", { unread: unread ?? 0 })}
           />
         }
       >
@@ -37,15 +55,15 @@ export function Notifications({ organisationSlug }: { organisationSlug: string }
       </PopoverTrigger>
       <PopoverContent align="end" className="w-80 p-0">
         <div className="flex items-center justify-between border-b px-3 py-2">
-          <p className="text-sm font-medium">Notifications</p>
+          <p className="text-sm font-medium">{t("title")}</p>
           {unread ? (
             <Button variant="ghost" size="xs" onClick={() => markAllRead({ organisationSlug })}>
-              Mark all as read
+              {t("markAllRead")}
             </Button>
           ) : null}
         </div>
         {notifications === undefined || notifications.length === 0 ? (
-          <p className="p-4 text-center text-sm text-muted-foreground">Nothing new.</p>
+          <p className="p-4 text-center text-sm text-muted-foreground">{t("empty")}</p>
         ) : (
           <ul className="max-h-80 overflow-auto">
             {notifications.map((n) => (
@@ -61,7 +79,7 @@ export function Notifications({ organisationSlug }: { organisationSlug: string }
                     )}
                   />
                   <span>
-                    <span className={cn(!n.read && "font-medium")}>{n.text}</span>
+                    <span className={cn(!n.read && "font-medium")}>{text(n.text)}</span>
                     <span className="block text-xs text-muted-foreground">{when.format(n.at)}</span>
                   </span>
                 </Link>

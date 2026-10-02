@@ -1,10 +1,10 @@
 "use client";
 
 import { useMutation, useQuery } from "convex/react";
-import { ConvexError } from "convex/values";
 import { Ban, CircleAlert, RotateCcw, ShieldAlert, TriangleAlert } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ResendButton } from "@/components/deliveries/delivery-log";
@@ -19,6 +19,7 @@ import {
   ReviewHeader,
   type ReviewFilter,
 } from "@/components/documents/review-view";
+import { useDocumentsLabels } from "@/components/documents/labels";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
+import { useErrorText } from "../../../../error-text";
 import { FieldRow } from "./field-row";
 import { ListGroup } from "./list-group";
 import { ChangeFormButton } from "./change-form";
@@ -37,8 +39,6 @@ const PdfPane = dynamic(() => import("./pdf-pane"), {
   ssr: false,
   loading: () => <Skeleton className="h-full min-h-96 w-full" />,
 });
-
-const when = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" });
 
 /**
  * The review screen (review-screen prototype, variant A): the PDF on the left
@@ -57,6 +57,9 @@ export function ReviewScreen({
   documentId: Id<"documents">;
   isAdmin: boolean;
 }) {
+  const t = useTranslations("appDocuments");
+  const errorText = useErrorText();
+  const { format } = useDocumentsLabels();
   const router = useRouter();
   const document = useQuery(api.documents.get, { organisationSlug, documentId });
   const pdfUrl = useMutation(api.documents.pdfUrl);
@@ -111,15 +114,15 @@ export function ReviewScreen({
     setApproving(true);
     try {
       const { nextDocumentId } = await approve({ organisationSlug, documentId });
-      toast.success(`${document!.filename} is approved.`);
+      toast.success(t("review.approvedToast", { filename: document!.filename }));
       if (next && nextDocumentId) {
         router.push(`/app/o/${organisationSlug}/documents/${nextDocumentId}`);
       } else if (next) {
-        toast.info("Nothing else needs review.");
+        toast.info(t("review.nothingElse"));
         router.push(`/app/o/${organisationSlug}`);
       }
     } catch (error) {
-      toast.error(error instanceof ConvexError ? String(error.data) : "Approval didn't work. Try again.");
+      toast.error(errorText(error, t("review.approvalFailed")));
     } finally {
       setApproving(false);
     }
@@ -141,11 +144,9 @@ export function ReviewScreen({
             <Tooltip>
               <TooltipTrigger render={<Badge variant="outline" className="cursor-help" />}>
                 <ShieldAlert />
-                Not verified by Jev
+                {t("review.notVerified")}
               </TooltipTrigger>
-              <TooltipContent>
-                Jev couldn&apos;t verify this Document, so it is never approved automatically.
-              </TooltipContent>
+              <TooltipContent>{t("review.notVerifiedTip")}</TooltipContent>
             </Tooltip>
           )
         }
@@ -182,12 +183,9 @@ export function ReviewScreen({
       {reviewing && document.doesNotFit && (
         <Alert className="border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
           <TriangleAlert />
-          <AlertTitle>Does not fit this Form</AlertTitle>
+          <AlertTitle>{t("review.doesNotFit")}</AlertTitle>
           <AlertDescription className="text-amber-900/80 dark:text-amber-200/80">
-            <p>
-              Too few of {document.formName}&apos;s required Fields were found on it. It may have
-              been uploaded against the wrong Form, or not be a usable Document.
-            </p>
+            <p>{t("review.doesNotFitText", { form: document.formName })}</p>
             <div className="mt-2 flex flex-wrap gap-2">
               <ChangeFormButton
                 organisationSlug={organisationSlug}
@@ -210,15 +208,18 @@ export function ReviewScreen({
         <Alert>
           <Ban />
           <AlertTitle>
-            {document.state === "deleted" ? "Rejected and deleted" : "Rejected"}
+            {document.state === "deleted" ? t("review.rejectedAndDeleted") : t("review.rejected")}
           </AlertTitle>
           <AlertDescription>
             <p>
-              By {document.rejection.by}, {when.format(document.rejection.at)}
+              {t("review.rejectedBy", {
+                name: document.rejection.by,
+                date: format.dateTime(document.rejection.at),
+              })}
               {document.rejection.reason ? <>: &ldquo;{document.rejection.reason}&rdquo;</> : "."}
             </p>
             {document.state === "deleted" ? (
-              <p>Its PDF and data are gone; only this record and its history are kept.</p>
+              <p>{t("review.gone")}</p>
             ) : (
               <div className="mt-2 flex flex-wrap gap-2">
                 {!document.dataDeleted && (
@@ -240,13 +241,9 @@ export function ReviewScreen({
       {document.state === "extraction_failed" && (
         <Alert variant="destructive">
           <CircleAlert />
-          <AlertTitle>Vink couldn&apos;t read this Document</AlertTitle>
+          <AlertTitle>{t("review.failedTitle")}</AlertTitle>
           <AlertDescription>
-            <p>
-              It tried four times. This is usually a passing outage, so try again. When a
-              Reading was stored, the retry picks up from there and doesn&apos;t read the PDF
-              again.
-            </p>
+            <p>{t("review.failedText")}</p>
             {document.extractionError && (
               <p className="line-clamp-2 font-mono text-xs break-all opacity-80">
                 {document.extractionError}
@@ -257,14 +254,12 @@ export function ReviewScreen({
               className="mt-2"
               onClick={() =>
                 retry({ organisationSlug, documentId }).catch((error) =>
-                  toast.error(
-                    error instanceof ConvexError ? String(error.data) : "The retry didn't start. Try again.",
-                  ),
+                  toast.error(errorText(error, t("retryFailed"))),
                 )
               }
             >
               <RotateCcw />
-              Retry
+              {t("review.retry")}
             </Button>
           </AlertDescription>
         </Alert>
@@ -273,14 +268,14 @@ export function ReviewScreen({
       {document.dataDeletedAt !== null && !document.rejection && (
         <Alert>
           <CircleAlert />
-          <AlertTitle>Data deleted</AlertTitle>
+          <AlertTitle>{t("review.dataDeleted")}</AlertTitle>
           <AlertDescription>
-            Its PDF, what Vink read and its values were deleted on{" "}
-            {when.format(document.dataDeletedAt)}
             {document.dataDeletedBy
-              ? ` by ${document.dataDeletedBy}.`
-              : " under the Organisation's retention."}{" "}
-            Only this record, its history and its Delivery log are kept.
+              ? t("review.dataDeletedBy", {
+                  date: format.dateTime(document.dataDeletedAt),
+                  name: document.dataDeletedBy,
+                })
+              : t("review.dataDeletedRetention", { date: format.dateTime(document.dataDeletedAt) })}
           </AlertDescription>
         </Alert>
       )}
@@ -292,13 +287,13 @@ export function ReviewScreen({
           <div className="h-[55vh] lg:sticky lg:top-4 lg:h-[calc(100vh-7rem)]">
             {document.dataDeleted ? (
               <div className="flex h-full items-center justify-center rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
-                The PDF was deleted.
+                {t("review.pdfDeleted")}
               </div>
             ) : url ? (
               <PdfPane url={url} pageCount={document.pageCount} page={page} onPageChange={setPage} />
             ) : urlFailed ? (
               <div className="flex h-full items-center justify-center rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
-                The PDF couldn&apos;t be loaded.
+                {t("review.pdfFailed")}
               </div>
             ) : (
               <Skeleton className="h-full" />
@@ -312,10 +307,8 @@ export function ReviewScreen({
           {document.state === "extracting" && (
             <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-background/80 p-6 text-center backdrop-blur-[1px]">
               <Spinner />
-              <p className="text-sm font-medium">Vink is reading this Document</p>
-              <p className="text-xs text-muted-foreground">
-                This can take up to a minute. The Fields fill in here when it&apos;s done.
-              </p>
+              <p className="text-sm font-medium">{t("review.reading")}</p>
+              <p className="text-xs text-muted-foreground">{t("review.readingText")}</p>
             </div>
           )}
           {document.state === "extracting" && document.fieldValues.length === 0 ? (

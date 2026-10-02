@@ -21,9 +21,9 @@ const env = {
 };
 
 const pages = ["/", "/features", "/pricing", "/developers", "/security", "/contact", "/privacy", "/terms"];
-const locales = ["en", "nl"] as const;
+const locales = ["nl", "en"] as const;
 const localized = (locale: (typeof locales)[number], page: string) =>
-  locale === "en" ? page : page === "/" ? "/nl" : `/nl${page}`;
+  locale === "nl" ? page : page === "/" ? "/en" : `/en${page}`;
 
 let failures = 0;
 function check(ok: boolean, what: string, detail = "") {
@@ -129,7 +129,7 @@ async function run(base: string) {
       const nl = linkHref(html, "alternate", "nl");
       const xDefault = linkHref(html, "alternate", "x-default");
       check(
-        Boolean(en?.startsWith(siteUrl) && nl?.startsWith(`${siteUrl}/nl`) && xDefault === en),
+        Boolean(en?.startsWith(`${siteUrl}/en`) && nl?.startsWith(siteUrl) && xDefault === nl),
         `${url} has en/nl/x-default hreflang from SITE_URL`,
         `${en} ${nl} ${xDefault}`,
       );
@@ -148,19 +148,19 @@ async function run(base: string) {
   }
 
   console.log("\nLocale routing");
-  const en = await get(base, "/en/pricing");
+  const nl = await get(base, "/nl/pricing");
   check(
-    [301, 308].includes(en.status) && en.headers.get("location")?.endsWith("/pricing") === true,
-    "/en/pricing redirects permanently to /pricing",
-    `${en.status} ${en.headers.get("location")}`,
+    [301, 308].includes(nl.status) && nl.headers.get("location")?.endsWith("/pricing") === true,
+    "/nl/pricing redirects permanently to /pricing",
+    `${nl.status} ${nl.headers.get("location")}`,
   );
-  const dutchBrowser = await get(base, "/", { "Accept-Language": "nl-NL,nl;q=0.9" });
-  const dutchHtml = await dutchBrowser.text();
+  const englishBrowser = await get(base, "/", { "Accept-Language": "en-GB,en;q=0.9" });
+  const englishHtml = await englishBrowser.text();
   check(
-    dutchBrowser.status === 200 && dutchHtml.includes('<html lang="en"'),
+    englishBrowser.status === 200 && englishHtml.includes('<html lang="nl"'),
     "no locale redirect based on Accept-Language",
   );
-  check((await get(base, "/nl/does-not-exist")).status === 404, "unknown pages are 404");
+  check((await get(base, "/en/does-not-exist")).status === 404, "unknown pages are 404");
 
   console.log("\nOld product URLs");
   for (const [from, to] of [
@@ -188,7 +188,7 @@ async function run(base: string) {
   check(!/Disallow:\s*\/app/i.test(robots) && /Disallow:\s*\/api\//i.test(robots), "robots.txt disallows /api/ only", robots);
   const sitemap = await (await get(base, "/sitemap.xml")).text();
   check(
-    sitemap.includes(`${siteUrl}/pricing`) && sitemap.includes(`${siteUrl}/nl/pricing`) && !sitemap.includes("/app"),
+    sitemap.includes(`${siteUrl}/pricing`) && sitemap.includes(`${siteUrl}/en/pricing`) && !sitemap.includes("/app"),
     "sitemap lists both languages and no /app URL",
   );
 

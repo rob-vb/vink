@@ -2,10 +2,10 @@
 
 import { useMutation, useQuery } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
-import { ConvexError } from "convex/values";
 import { ArrowLeft, CircleAlert, CircleCheck, RotateCcw } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -18,31 +18,24 @@ import { Spinner } from "@/components/ui/spinner";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { cn } from "@/lib/utils";
-import { fieldTypes, toDraft } from "../../draft";
+import { useErrorText } from "../../../../../error-text";
+import { type FieldType, toDraft } from "../../draft";
 import { FormEditor } from "../../form-editor";
 
 type Proposal = FunctionReturnType<typeof api.formProposals.get>;
 type Proposed = Proposal["fields"][number];
 
-const typeLabel = (type: string) => fieldTypes.find((t) => t.value === type)?.label ?? type;
-
-function failed(error: unknown) {
-  toast.error(error instanceof ConvexError ? String(error.data) : "That didn't work. Try again.");
-}
-
 function Progress({ proposal }: { proposal: Proposal }) {
+  const t = useTranslations("appForms.proposal");
   const steps = [
-    { label: `Reading ${proposal.filename}`, done: proposal.state !== "reading" },
-    { label: "Proposing Fields", done: false },
+    { label: t("reading", { filename: proposal.filename }), done: proposal.state !== "reading" },
+    { label: t("proposing"), done: false },
   ];
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Vink is reading your sample</CardTitle>
-        <CardDescription>
-          This takes a minute or two. You can leave this page: the proposal waits for you under
-          Forms.
-        </CardDescription>
+        <CardTitle>{t("progressTitle")}</CardTitle>
+        <CardDescription>{t("progressDescription")}</CardDescription>
       </CardHeader>
       <CardContent>
         <ol className="flex flex-col gap-3 text-sm">
@@ -78,6 +71,7 @@ function ProposedRow({
   checked: boolean;
   onCheckedChange: (checked: boolean) => void;
 }) {
+  const t = useTranslations("appForms");
   const { field } = proposed;
   const id = `proposed-${field.key}`;
   return (
@@ -87,14 +81,14 @@ function ProposedRow({
         <span className="flex flex-wrap items-center gap-2">
           <span className="font-medium">{field.label}</span>
           <span className="font-mono text-xs text-muted-foreground">{field.key}</span>
-          <Badge variant="secondary">{typeLabel(field.type)}</Badge>
+          <Badge variant="secondary">{t(`types.${field.type as FieldType}`)}</Badge>
         </span>
         {field.description && (
           <span className="mt-0.5 block text-sm text-muted-foreground">{field.description}</span>
         )}
         {field.type === "choice" && (
           <span className="mt-1 block text-xs text-muted-foreground">
-            Options: {field.options.map((o) => o.value).join(", ")}
+            {t("proposal.options", { options: field.options.map((o) => o.value).join(", ") })}
           </span>
         )}
         {field.type === "list" && (
@@ -122,6 +116,9 @@ export function ProposalScreen({
   organisationSlug: string;
   proposalId: Id<"formProposals">;
 }) {
+  const t = useTranslations("appForms");
+  const errorText = useErrorText();
+  const failed = (error: unknown) => toast.error(errorText(error, t("tryAgain")));
   const router = useRouter();
   const proposal = useQuery(api.formProposals.get, { organisationSlug, proposalId });
   const form = useQuery(
@@ -184,12 +181,14 @@ export function ProposalScreen({
           render={<Link href={`/app/o/${organisationSlug}/forms`} />}
         >
           <ArrowLeft />
-          Forms
+          {t("proposal.back")}
         </Button>
         <h1 className="text-xl font-semibold">
-          {form ? `New Fields for ${form.name}` : "Proposed Fields"}
+          {form ? t("proposal.newFieldsFor", { form: form.name }) : t("proposal.title")}
         </h1>
-        <p className="text-sm text-muted-foreground">From {proposal.filename}</p>
+        <p className="text-sm text-muted-foreground">
+          {t("proposal.from", { filename: proposal.filename })}
+        </p>
       </div>
 
       {(proposal.state === "reading" || proposal.state === "proposing") && <Progress proposal={proposal} />}
@@ -197,7 +196,7 @@ export function ProposalScreen({
       {proposal.state === "failed" && (
         <Alert variant="destructive">
           <CircleAlert />
-          <AlertTitle>Vink couldn&apos;t propose Fields from this sample</AlertTitle>
+          <AlertTitle>{t("proposal.failedTitle")}</AlertTitle>
           <AlertDescription>
             {proposal.error && (
               <p className="line-clamp-2 font-mono text-xs break-all opacity-80">{proposal.error}</p>
@@ -205,10 +204,10 @@ export function ProposalScreen({
             <div className="mt-2 flex flex-wrap gap-2">
               <Button size="sm" onClick={() => retry({ organisationSlug, proposalId }).catch(failed)}>
                 <RotateCcw />
-                Retry
+                {t("proposal.retry")}
               </Button>
               <Button size="sm" variant="outline" onClick={() => void startBlank()}>
-                Start blank
+                {t("proposal.startBlank")}
               </Button>
             </div>
           </AlertDescription>
@@ -218,9 +217,9 @@ export function ProposalScreen({
       {proposal.state === "ready" && proposal.fields.length === 0 && (
         <Alert>
           <CircleCheck />
-          <AlertTitle>Nothing new</AlertTitle>
+          <AlertTitle>{t("proposal.nothingNew")}</AlertTitle>
           <AlertDescription>
-            <p>{form?.name ?? "The Form"} already places everything Vink found on this sample.</p>
+            <p>{t("proposal.nothingNewText", { form: form?.name ?? t("proposal.theForm") })}</p>
             <Button
               size="sm"
               variant="outline"
@@ -232,7 +231,7 @@ export function ProposalScreen({
                 )
               }
             >
-              Done
+              {t("proposal.done")}
             </Button>
           </AlertDescription>
         </Alert>
@@ -241,12 +240,8 @@ export function ProposalScreen({
       {proposal.state === "ready" && proposal.fields.length > 0 && (
         <>
           <p className="text-sm text-muted-foreground">
-            {form
-              ? `Only what ${form.name} can't place yet is listed.`
-              : "Everything on the sample is listed."}{" "}
-            What serves this kind of document is ticked; untick
-            what your system doesn&apos;t need. You can still edit every Field next. None is
-            required yet: decide that on purpose, because a required Field blocks Auto-Send.
+            {form ? t("proposal.onlyNew", { form: form.name }) : t("proposal.everything")}{" "}
+            {t("proposal.explanation")}
           </p>
           <ul className="overflow-hidden rounded-lg border bg-card">
             {proposal.fields.map((p) => (
@@ -260,7 +255,7 @@ export function ProposalScreen({
           </ul>
           <div className="sticky bottom-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-background p-3 shadow-md">
             <p className="text-sm text-muted-foreground tabular-nums">
-              {kept.length} of {proposal.fields.length} Fields kept
+              {t("proposal.kept", { kept: kept.length, total: proposal.fields.length })}
             </p>
             <div className="flex gap-2">
               <Button
@@ -272,10 +267,10 @@ export function ProposalScreen({
                   )
                 }
               >
-                Discard
+                {t("proposal.discard")}
               </Button>
               <Button disabled={kept.length === 0} onClick={() => setEditing(true)}>
-                Continue to the Form editor
+                {t("proposal.continue")}
               </Button>
             </div>
           </div>

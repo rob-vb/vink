@@ -1,0 +1,104 @@
+{
+  "tryAgain": "That didn't work. Try again.",
+  "retryFailed": "The retry didn't start. Try again.",
+  "cancel": "Cancel",
+  "chooseForm": "Choose a Form",
+  "form": "Form",
+  "list": {
+    "welcome": "Welcome to {organisation}",
+    "adminIntro": "Set up a Form for each kind of document you receive, and Vink will fill it from your PDFs.",
+    "memberIntro": "An Admin first sets up a Form for each kind of document you receive. Then you can upload PDFs here.",
+    "goToForms": "Go to Forms",
+    "extracting": "Extracting"
+  },
+  "emailIn": {
+    "button": "Email in",
+    "title": "Email documents in",
+    "description": "Each Form can have its own email address. PDFs sent there become Documents of that Form."
+  },
+  "upload": {
+    "button": "Upload PDFs",
+    "title": "Upload PDFs",
+    "description": "Each PDF becomes its own Document. Vink fills the Form you choose from all of its pages.",
+    "pdfs": "PDFs",
+    "drop": "Drop PDFs here, or <browse>browse</browse>",
+    "limit": "Up to 20 pages each",
+    "notPdf": "Not a PDF.",
+    "failed": "We couldn't upload this PDF. Try again.",
+    "outOfPages": "You have {remaining} {remaining, plural, one {page} other {pages}} left; this PDF has {needed}.",
+    "uploaded": "{count, plural, one {# PDF uploaded} other {# PDFs uploaded}}",
+    "readingNow": "Vink is reading them now.",
+    "view": "View",
+    "close": "Close",
+    "submit": "{count, plural, =0 {Upload} =1 {Upload} other {Upload # PDFs}}",
+    "remove": "Remove {filename}",
+    "progress": "Upload progress"
+  },
+  "extracting": {
+    "metaTitle": "Extracting · Vink",
+    "back": "Documents",
+    "title": "Extracting",
+    "description": "Vink is reading these now. Each moves to Needs Review or Approved when it is done, or to Failed.",
+    "empty": "Nothing is being read right now."
+  },
+  "review": {
+    "metaTitle": "Review · Vink",
+    "notVerified": "Not verified by Jev",
+    "notVerifiedTip": "Jev couldn't verify this Document, so it is never approved automatically.",
+    "approvedToast": "{filename} is approved.",
+    "nothingElse": "Nothing else needs review.",
+    "approvalFailed": "Approval didn't work. Try again.",
+    "doesNotFit": "Does not fit this Form",
+    "doesNotFitText": "Too few of {form}'s required Fields were found on it. It may have been uploaded against the wrong Form, or not be a usable Document.",
+    "rejected": "Rejected",
+    "rejectedAndDeleted": "Rejected and deleted",
+    "rejectedBy": "By {name}, {date}",
+    "gone": "Its PDF and data are gone; only this record and its history are kept.",
+    "failedTitle": "Vink couldn't read this Document",
+    "failedText": "It tried four times. This is usually a passing outage, so try again. When a Reading was stored, the retry picks up from there and doesn't read the PDF again.",
+    "retry": "Retry",
+    "dataDeleted": "Data deleted",
+    "dataDeletedBy": "Its PDF, what Vink read and its values were deleted on {date} by {name}. Only this record, its history and its Delivery log are kept.",
+    "dataDeletedRetention": "Its PDF, what Vink read and its values were deleted on {date} under the Organisation's retention. Only this record, its history and its Delivery log are kept.",
+    "pdfDeleted": "The PDF was deleted.",
+    "pdfFailed": "The PDF couldn't be loaded.",
+    "reading": "Vink is reading this Document",
+    "readingText": "This can take up to a minute. The Fields fill in here when it's done."
+  },
+  "changeForm": {
+    "button": "Change Form",
+    "title": "Change the Form",
+    "description": "Vink fills the new Form from what it already read on the PDF. Only when it hasn't read it yet does it read the PDF again.",
+    "newForm": "New Form",
+    "noOtherForms": "No other Forms",
+    "lost": "{count, plural, one {# correction will be lost.} other {# corrections will be lost.}}",
+    "dropped": "The values for the current Form are dropped."
+  },
+  "reject": {
+    "button": "Reject",
+    "title": "Reject this Document?",
+    "description": "{filename} will never be approved or sent. It stays in the Rejected list, and you can reopen it while its PDF is kept.",
+    "reason": "Reason (optional)",
+    "placeholder": "Blank scan, unreadable, not a work order…",
+    "reasonHelp": "Shown to your team next to the Document.",
+    "submit": "Reject Document",
+    "toast": "{filename} is rejected.",
+    "reopen": "Reopen"
+  },
+  "delete": {
+    "button": "Delete now",
+    "title": "Delete {filename} for good?",
+    "description": "The PDF, what Vink read, every value and your system's replies are deleted now and can't be brought back. Deliveries that haven't gone out yet are cancelled. Only the filename, who uploaded and approved it, the dates, the history and the Delivery status stay, with a \"Deleted by you\" line.",
+    "toast": "{filename} is deleted."
+  },
+  "pdf": {
+    "previous": "Previous page",
+    "next": "Next page",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "failed": "The PDF couldn't be shown here."
+  },
+  "delivery": {
+    "sendAgain": "Send again"
+  }
+}

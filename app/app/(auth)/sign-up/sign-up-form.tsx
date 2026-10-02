@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useLocale, useTranslations } from "next-intl";
 import { useState, type FormEvent } from "react";
 import { CheckInbox } from "@/components/check-inbox";
 import { Button } from "@/components/ui/button";
@@ -21,16 +22,22 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
+import { routing } from "@/i18n/routing";
 import { authClient } from "@/lib/auth-client";
 
 type Pending = "password" | "link" | null;
 
 /** Better Auth's own answer to a per-IP limit is too technical; others are shown as they are. */
-function messageOf(error: { status?: number; message?: string }, fallback: string) {
+function messageOf(error: { status?: number; message?: string }, fallback: string, tooMany: string) {
   if (error.status === 429 && error.message?.startsWith("Too many requests")) {
-    return "Too many attempts from here. Wait a few minutes and try again.";
+    return tooMany;
   }
   return error.message ?? fallback;
+}
+
+/** A marketing page in the app's language: the default language has no prefix. */
+function marketingPath(locale: string, path: string) {
+  return locale === routing.defaultLocale ? path : `/${locale}${path}`;
 }
 
 /**
@@ -38,6 +45,8 @@ function messageOf(error: { status?: number; message?: string }, fallback: strin
  * invite link, signs up only and returns there to join the inviting one.
  */
 export function SignUpForm({ next }: { next: string | null }) {
+  const t = useTranslations("app.auth");
+  const locale = useLocale();
   const [organisation, setOrganisation] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -64,7 +73,7 @@ export function SignUpForm({ next }: { next: string | null }) {
     });
     setPending(null);
     if (error) {
-      setError(messageOf(error, "We couldn't send the link. Try again."));
+      setError(messageOf(error, t("linkNotSent"), t("tooManyAttempts")));
       return;
     }
     setLinkSentTo({ email, purpose: "sign-in" });
@@ -75,12 +84,12 @@ export function SignUpForm({ next }: { next: string | null }) {
     setPending("password");
     const { error } = await authClient.sendVerificationEmail({ email, callbackURL: afterSignUp });
     setPending(null);
-    if (error) setError(messageOf(error, "We couldn't send the link. Try again."));
+    if (error) setError(messageOf(error, t("linkNotSent"), t("tooManyAttempts")));
   }
 
   async function signUpWithPassword() {
     if (password.length < 8) {
-      setError("Choose a password of at least 8 characters, or email yourself a link.");
+      setError(t("signUp.passwordTooShort"));
       return;
     }
     setPending("password");
@@ -95,7 +104,7 @@ export function SignUpForm({ next }: { next: string | null }) {
     });
     setPending(null);
     if (error) {
-      setError(messageOf(error, "We couldn't create your account. Try again."));
+      setError(messageOf(error, t("signUp.accountNotCreated"), t("tooManyAttempts")));
       return;
     }
     setLinkSentTo({ email, purpose: "verify" });
@@ -127,12 +136,10 @@ export function SignUpForm({ next }: { next: string | null }) {
     <Card>
       <CardHeader className="text-center">
         <CardTitle className="text-xl">
-          {next ? "Create your account" : "Create your Organisation"}
+          {next ? t("signUp.titleAccount") : t("signUp.titleOrganisation")}
         </CardTitle>
         <CardDescription>
-          {next
-            ? "Use the address your invitation was sent to."
-            : "You'll be its Admin and can invite your team later."}
+          {next ? t("signUp.descriptionAccount") : t("signUp.descriptionOrganisation")}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -140,10 +147,10 @@ export function SignUpForm({ next }: { next: string | null }) {
           <FieldGroup>
             {!next && (
               <Field>
-                <FieldLabel htmlFor="organisation">Organisation name</FieldLabel>
+                <FieldLabel htmlFor="organisation">{t("signUp.organisationName")}</FieldLabel>
                 <Input
                   id="organisation"
-                  placeholder="Acme Fleet"
+                  placeholder={t("signUp.organisationPlaceholder")}
                   autoComplete="organization"
                   required
                   value={organisation}
@@ -152,11 +159,11 @@ export function SignUpForm({ next }: { next: string | null }) {
               </Field>
             )}
             <Field>
-              <FieldLabel htmlFor="email">Work email</FieldLabel>
+              <FieldLabel htmlFor="email">{t("workEmail")}</FieldLabel>
               <Input
                 id="email"
                 type="email"
-                placeholder="you@company.com"
+                placeholder={t("emailPlaceholder")}
                 autoComplete="email"
                 required
                 value={email}
@@ -164,7 +171,7 @@ export function SignUpForm({ next }: { next: string | null }) {
               />
             </Field>
             <Field>
-              <FieldLabel htmlFor="password">Password</FieldLabel>
+              <FieldLabel htmlFor="password">{t("password")}</FieldLabel>
               <Input
                 id="password"
                 type="password"
@@ -172,7 +179,7 @@ export function SignUpForm({ next }: { next: string | null }) {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
-              <FieldDescription>At least 8 characters.</FieldDescription>
+              <FieldDescription>{t("signUp.passwordHint")}</FieldDescription>
             </Field>
             <div aria-hidden className="absolute -left-[9999px] size-px overflow-hidden">
               <label htmlFor="website">Website</label>
@@ -190,10 +197,10 @@ export function SignUpForm({ next }: { next: string | null }) {
             <Field>
               <Button type="submit" value="password" disabled={pending !== null}>
                 {pending === "password" && <Spinner />}
-                Create account
+                {t("signUp.submit")}
               </Button>
             </Field>
-            <FieldSeparator>or skip the password</FieldSeparator>
+            <FieldSeparator>{t("signUp.orSkip")}</FieldSeparator>
             <Field>
               <Button
                 type="submit"
@@ -202,21 +209,20 @@ export function SignUpForm({ next }: { next: string | null }) {
                 disabled={pending !== null}
               >
                 {pending === "link" && <Spinner />}
-                Email me a sign-up link
+                {t("signUp.emailLink")}
               </Button>
               <FieldDescription className="text-center">
-                Already have an account?{" "}
+                {t("signUp.haveAccount")}{" "}
                 <Link href={next ? `/app/sign-in?${new URLSearchParams({ next })}` : "/app/sign-in"}>
-                  Sign in
+                  {t("signUp.signIn")}
                 </Link>
               </FieldDescription>
               {/* Plain links: the legal pages are on the marketing site, under another root layout. */}
               <FieldDescription className="text-center">
-                By creating an account you agree to the{" "}
-                {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
-                <a href="/terms">Terms</a> and{" "}
-                {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
-                <a href="/privacy">Privacy policy</a>.
+                {t.rich("signUp.agree", {
+                  terms: (chunks) => <a href={marketingPath(locale, "/terms")}>{chunks}</a>,
+                  privacy: (chunks) => <a href={marketingPath(locale, "/privacy")}>{chunks}</a>,
+                })}
               </FieldDescription>
             </Field>
           </FieldGroup>

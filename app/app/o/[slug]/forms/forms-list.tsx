@@ -4,6 +4,7 @@ import { useQuery } from "convex/react";
 import { FileText, Plus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useFormatter, useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,13 +27,15 @@ import {
 import { api } from "@/convex/_generated/api";
 
 export function FormsList({ organisationSlug }: { organisationSlug: string }) {
+  const t = useTranslations("appForms.list");
+  const format = useFormatter();
   const router = useRouter();
   const forms = useQuery(api.forms.list, { organisationSlug });
   const proposals = useQuery(api.formProposals.list, { organisationSlug });
   const newForm = (
     <Button nativeButton={false} render={<Link href={`/app/o/${organisationSlug}/forms/new`} />}>
       <Plus />
-      New Form
+      {t("newForm")}
     </Button>
   );
 
@@ -40,10 +43,8 @@ export function FormsList({ organisationSlug }: { organisationSlug: string }) {
     <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8 md:px-6">
       <div className="mb-6 flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold">Forms</h1>
-          <p className="text-sm text-muted-foreground">
-            One Form per kind of document. Each save keeps the earlier versions.
-          </p>
+          <h1 className="text-xl font-semibold">{t("title")}</h1>
+          <p className="text-sm text-muted-foreground">{t("description")}</p>
         </div>
         {forms && forms.length > 0 && newForm}
       </div>
@@ -51,7 +52,7 @@ export function FormsList({ organisationSlug }: { organisationSlug: string }) {
       {proposals && proposals.length > 0 && (
         <section aria-labelledby="proposals" className="mb-6 rounded-lg border p-4">
           <h2 id="proposals" className="mb-2 text-sm font-medium">
-            Proposals from sample PDFs
+            {t("proposals")}
           </h2>
           <ul className="flex flex-col gap-1 text-sm">
             {proposals.map((p) => (
@@ -63,18 +64,20 @@ export function FormsList({ organisationSlug }: { organisationSlug: string }) {
                   {p.filename}
                 </Link>
                 <Badge variant={p.state === "failed" ? "destructive" : "secondary"}>
-                  {p.state === "ready"
-                    ? "Ready to review"
-                    : p.state === "failed"
-                      ? "Failed"
-                      : "Being read"}
+                  {t(
+                    p.state === "ready"
+                      ? "states.ready"
+                      : p.state === "failed"
+                        ? "states.failed"
+                        : "states.reading",
+                  )}
                 </Badge>
-                {p.formId && <span className="text-muted-foreground">new Fields for a Form</span>}
+                {p.formId && <span className="text-muted-foreground">{t("newFieldsForForm")}</span>}
               </li>
             ))}
           </ul>
           <p className="mt-2 text-xs text-muted-foreground">
-            An unsaved proposal is deleted after 7 days, with its PDF.
+            {t("proposalsDeleted")}
           </p>
         </section>
       )}
@@ -91,11 +94,8 @@ export function FormsList({ organisationSlug }: { organisationSlug: string }) {
             <EmptyMedia variant="icon">
               <FileText />
             </EmptyMedia>
-            <EmptyTitle>No Forms yet</EmptyTitle>
-            <EmptyDescription>
-              A Form lists the Fields Vink fills from a kind of document,
-              such as a tyre service report or an invoice.
-            </EmptyDescription>
+            <EmptyTitle>{t("emptyTitle")}</EmptyTitle>
+            <EmptyDescription>{t("emptyDescription")}</EmptyDescription>
           </EmptyHeader>
           <EmptyContent>{newForm}</EmptyContent>
         </Empty>
@@ -104,13 +104,13 @@ export function FormsList({ organisationSlug }: { organisationSlug: string }) {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead className="text-right">Fields</TableHead>
-                <TableHead className="hidden text-right sm:table-cell">Version</TableHead>
+                <TableHead>{t("name")}</TableHead>
+                <TableHead className="text-right">{t("fields")}</TableHead>
+                <TableHead className="hidden text-right sm:table-cell">{t("version")}</TableHead>
                 <TableHead className="hidden text-right sm:table-cell">
-                  Review Threshold
+                  {t("reviewThreshold")}
                 </TableHead>
-                <TableHead className="hidden sm:table-cell">Auto-Send</TableHead>
+                <TableHead className="hidden sm:table-cell">{t("autoSend")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -139,13 +139,16 @@ export function FormsList({ organisationSlug }: { organisationSlug: string }) {
                       v{form.version}
                     </TableCell>
                     <TableCell className="hidden text-right tabular-nums sm:table-cell">
-                      {form.reviewThreshold.toFixed(2)}
+                      {format.number(form.reviewThreshold, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
                     </TableCell>
                     <TableCell className="hidden sm:table-cell">
                       {form.autoSend ? (
-                        <Badge>On</Badge>
+                        <Badge>{t("on")}</Badge>
                       ) : (
-                        <Badge variant="outline">Off</Badge>
+                        <Badge variant="outline">{t("off")}</Badge>
                       )}
                     </TableCell>
                   </TableRow>

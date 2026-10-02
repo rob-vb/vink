@@ -1,8 +1,8 @@
 "use client";
 
 import { useMutation, useQuery } from "convex/react";
-import { ConvexError } from "convex/values";
 import { ArrowRightLeft, TriangleAlert } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/select";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
+import { useErrorText } from "../../../../error-text";
 
 /**
  * Change Form: pick another Form. Warns how many corrections will be lost,
@@ -42,6 +43,8 @@ export function ChangeFormButton({
   currentFormId: Id<"forms">;
   size?: "default" | "sm";
 }) {
+  const t = useTranslations("appDocuments");
+  const errorText = useErrorText();
   const [open, setOpen] = useState(false);
   const [formId, setFormId] = useState<Id<"forms"> | null>(null);
   const [pending, setPending] = useState(false);
@@ -60,7 +63,7 @@ export function ChangeFormButton({
       setOpen(false);
       setFormId(null);
     } catch (error) {
-      toast.error(error instanceof ConvexError ? String(error.data) : "That didn't work. Try again.");
+      toast.error(errorText(error, t("tryAgain")));
     } finally {
       setPending(false);
     }
@@ -70,25 +73,22 @@ export function ChangeFormButton({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger render={<Button variant="outline" size={size} />}>
         <ArrowRightLeft />
-        Change Form
+        {t("changeForm.button")}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Change the Form</DialogTitle>
-          <DialogDescription>
-            Vink fills the new Form from what it already read on the PDF. Only when it
-            hasn&apos;t read it yet does it read the PDF again.
-          </DialogDescription>
+          <DialogTitle>{t("changeForm.title")}</DialogTitle>
+          <DialogDescription>{t("changeForm.description")}</DialogDescription>
         </DialogHeader>
         <Field>
-          <FieldLabel htmlFor="change-form">New Form</FieldLabel>
+          <FieldLabel htmlFor="change-form">{t("changeForm.newForm")}</FieldLabel>
           <Select
             items={others}
             value={formId}
             onValueChange={(value) => setFormId(value as Id<"forms"> | null)}
           >
             <SelectTrigger id="change-form" className="w-full">
-              <SelectValue placeholder={others.length ? "Choose a Form" : "No other Forms"} />
+              <SelectValue placeholder={others.length ? t("chooseForm") : t("changeForm.noOtherForms")} />
             </SelectTrigger>
             <SelectContent>
               {others.map((form) => (
@@ -102,16 +102,13 @@ export function ChangeFormButton({
         {impact !== undefined && impact.corrections > 0 && (
           <p className="flex gap-2 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
             <TriangleAlert className="mt-0.5 size-4 shrink-0" />
-            {impact.corrections === 1
-              ? "1 correction will be lost."
-              : `${impact.corrections} corrections will be lost.`}{" "}
-            The values for the current Form are dropped.
+            {t("changeForm.lost", { count: impact.corrections })} {t("changeForm.dropped")}
           </p>
         )}
         <DialogFooter>
-          <DialogClose render={<Button variant="outline" />}>Cancel</DialogClose>
+          <DialogClose render={<Button variant="outline" />}>{t("cancel")}</DialogClose>
           <Button disabled={formId === null || pending} onClick={submit}>
-            Change Form
+            {t("changeForm.button")}
           </Button>
         </DialogFooter>
       </DialogContent>

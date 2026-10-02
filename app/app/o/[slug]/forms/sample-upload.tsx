@@ -3,12 +3,13 @@
 import { useAction, useMutation } from "convex/react";
 import { FileUp } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { type DragEvent, useState } from "react";
 import { Spinner } from "@/components/ui/spinner";
 import { api } from "@/convex/_generated/api";
-import { errorText } from "@/lib/convex-error";
 import type { Id } from "@/convex/_generated/dataModel";
 import { cn } from "@/lib/utils";
+import { useErrorText } from "../../../error-text";
 
 /**
  * Drop one sample PDF: it is uploaded and a Form Proposal starts, for a new
@@ -21,6 +22,8 @@ export function SampleUpload({
   organisationSlug: string;
   formId?: Id<"forms">;
 }) {
+  const t = useTranslations("appForms.sample");
+  const errorText = useErrorText();
   const router = useRouter();
   const generateUploadUrl = useMutation(api.documents.generateUploadUrl);
   const create = useAction(api.formProposals.create);
@@ -32,7 +35,7 @@ export function SampleUpload({
     setError(null);
     if (!file) return;
     if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
-      setError("Choose a PDF file.");
+      setError(t("notPdf"));
       return;
     }
     setUploading(file.name);
@@ -47,7 +50,7 @@ export function SampleUpload({
       const { proposalId } = await create({ organisationSlug, key, filename: file.name, formId });
       router.push(`/app/o/${organisationSlug}/forms/proposals/${proposalId}`);
     } catch (e) {
-      setError(errorText(e, "The upload didn't work. Try again."));
+      setError(errorText(e, t("failed")));
       setUploading(null);
     }
   }
@@ -77,15 +80,17 @@ export function SampleUpload({
         {uploading ? (
           <>
             <Spinner className="mb-1" />
-            <span>Uploading {uploading}…</span>
+            <span>{t("uploading", { filename: uploading })}</span>
           </>
         ) : (
           <>
             <FileUp className="mb-1 size-5 text-muted-foreground" />
             <span>
-              Drop a sample PDF here, or <span className="font-medium underline">browse</span>
+              {t.rich("drop", {
+                browse: (chunks) => <span className="font-medium underline">{chunks}</span>,
+              })}
             </span>
-            <span className="text-muted-foreground">One filled-in example, up to 20 pages</span>
+            <span className="text-muted-foreground">{t("limit")}</span>
           </>
         )}
         <input

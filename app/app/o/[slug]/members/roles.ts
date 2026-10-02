@@ -1,23 +1,33 @@
+"use client";
+
 import { ConvexError } from "convex/values";
+import { useTranslations } from "next-intl";
+import { useErrorText } from "../../../error-text";
 
 export type Role = "admin" | "member";
 
-export const roles: { value: Role; label: string }[] = [
-  { value: "member", label: "Member" },
-  { value: "admin", label: "Admin" },
-];
+const roleValues: Role[] = ["member", "admin"];
 
-const problems: Record<string, string> = {
-  LastAdmin: "An Organisation needs at least one Admin.",
-  AlreadyMember: "That address already has a Membership here.",
-  InvalidEmail: "Enter a valid email address.",
-  MembershipNotFound: "That Membership no longer exists.",
-  InvitationNotFound: "That Invitation no longer exists.",
-};
+/** The roles to pick from, in the app's language. */
+export function useRoles(): { value: Role; label: string }[] {
+  const t = useTranslations("app.roles");
+  return roleValues.map((value) => ({ value, label: t(value) }));
+}
 
-export function describeProblem(error: unknown, fallback: string) {
-  if (error instanceof ConvexError) {
-    return problems[String(error.data)] ?? String(error.data);
-  }
-  return fallback;
+const problems = [
+  "LastAdmin",
+  "AlreadyMember",
+  "InvalidEmail",
+  "MembershipNotFound",
+  "InvitationNotFound",
+] as const;
+
+/** Memberships' own error codes in words; other errors as useErrorText shows them. */
+export function useDescribeProblem() {
+  const t = useTranslations("appMembers.problems");
+  const errorText = useErrorText();
+  return (error: unknown, fallback: string) => {
+    const code = error instanceof ConvexError ? error.data : null;
+    return (problems as readonly unknown[]).includes(code) ? t(code as (typeof problems)[number]) : errorText(error, fallback);
+  };
 }

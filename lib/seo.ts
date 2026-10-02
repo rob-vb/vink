@@ -3,7 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { routing, type Locale } from "@/i18n/routing";
 import { absoluteUrl } from "@/lib/site";
 
-/** A marketing page's public path in a locale: English unprefixed, Dutch under /nl. */
+/** A marketing page's public path in a locale: Dutch unprefixed, English under /en. */
 export function localePath(locale: Locale, path: string) {
   if (locale === routing.defaultLocale) return path;
   return path === "/" ? `/${locale}` : `/${locale}${path}`;
@@ -13,12 +13,12 @@ export function localeUrl(locale: Locale, path: string) {
   return absoluteUrl(localePath(locale, path));
 }
 
-/** hreflang for one page: en, nl and x-default (English), all from SITE_URL. */
+/** hreflang for one page: en, nl and x-default (the unprefixed default), all from SITE_URL. */
 export function languageAlternates(path: string) {
   return {
     en: localeUrl("en", path),
     nl: localeUrl("nl", path),
-    "x-default": localeUrl("en", path),
+    "x-default": localeUrl(routing.defaultLocale, path),
   };
 }
 

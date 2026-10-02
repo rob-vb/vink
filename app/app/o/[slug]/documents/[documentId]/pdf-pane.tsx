@@ -1,6 +1,7 @@
 "use client";
 
 import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/Page/AnnotationLayer.css";
@@ -32,6 +33,7 @@ export default function PdfPane({
   page: number;
   onPageChange: (page: number) => void;
 }) {
+  const t = useTranslations("appDocuments.pdf");
   const [zoom, setZoom] = useState(1);
   const [failed, setFailed] = useState(false);
   const frame = useRef<HTMLDivElement>(null);
@@ -54,7 +56,7 @@ export default function PdfPane({
           <Button
             variant="ghost"
             size="icon-sm"
-            aria-label="Previous page"
+            aria-label={t("previous")}
             disabled={page <= 1}
             onClick={() => onPageChange(page - 1)}
           >
@@ -66,7 +68,7 @@ export default function PdfPane({
           <Button
             variant="ghost"
             size="icon-sm"
-            aria-label="Next page"
+            aria-label={t("next")}
             disabled={page >= pageCount}
             onClick={() => onPageChange(page + 1)}
           >
@@ -77,7 +79,7 @@ export default function PdfPane({
           <Button
             variant="ghost"
             size="icon-sm"
-            aria-label="Zoom out"
+            aria-label={t("zoomOut")}
             disabled={zoomIndex <= 0}
             onClick={() => setZoom(ZOOMS[zoomIndex - 1])}
           >
@@ -89,7 +91,7 @@ export default function PdfPane({
           <Button
             variant="ghost"
             size="icon-sm"
-            aria-label="Zoom in"
+            aria-label={t("zoomIn")}
             disabled={zoomIndex >= ZOOMS.length - 1}
             onClick={() => setZoom(ZOOMS[zoomIndex + 1])}
           >
@@ -99,9 +101,7 @@ export default function PdfPane({
       </div>
       <div ref={frame} className="min-h-0 flex-1 overflow-auto p-3">
         {failed ? (
-          <p className="p-6 text-center text-sm text-muted-foreground">
-            The PDF couldn&apos;t be shown here.
-          </p>
+          <p className="p-6 text-center text-sm text-muted-foreground">{t("failed")}</p>
         ) : (
           width !== undefined && (
             <Document

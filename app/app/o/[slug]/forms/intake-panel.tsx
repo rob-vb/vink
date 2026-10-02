@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery } from "convex/react";
 import { Check, Copy, Mail } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 import {
@@ -20,14 +21,13 @@ import { FieldDescription, FieldLegend, FieldSet } from "@/components/ui/field";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
-import { errorText } from "@/lib/convex-error";
-
-function failed(error: unknown) {
-  toast.error(errorText(error, "That didn't work. Try again."));
-}
+import type { Locale } from "@/i18n/routing";
+import { serverErrorText } from "@/lib/server-errors";
+import { useErrorText } from "../../../error-text";
 
 /** Copies the address; shows a tick for a moment. */
 export function CopyAddress({ address }: { address: string }) {
+  const t = useTranslations("appForms.intake");
   const [copied, setCopied] = useState(false);
   return (
     <div className="flex min-w-0 items-center gap-2 rounded-lg border bg-muted/40 py-1 pr-1 pl-3">
@@ -37,7 +37,7 @@ export function CopyAddress({ address }: { address: string }) {
         type="button"
         variant="ghost"
         size="icon-sm"
-        aria-label="Copy address"
+        aria-label={t("copy")}
         onClick={() =>
           navigator.clipboard.writeText(address).then(() => {
             setCopied(true);
@@ -64,6 +64,9 @@ export function IntakePanel({
   formId: Id<"forms">;
   isAdmin: boolean;
 }) {
+  const t = useTranslations("appForms");
+  const errorText = useErrorText();
+  const failed = (error: unknown) => toast.error(errorText(error, t("tryAgain")));
   const on = { organisationSlug, formId };
   const intake = useQuery(api.intake.get, on);
   const switchOn = useMutation(api.intake.switchOn);
@@ -74,12 +77,8 @@ export function IntakePanel({
   return (
     <section className="rounded-lg border p-4 md:p-6">
       <FieldSet>
-        <FieldLegend>Email in</FieldLegend>
-        <FieldDescription>
-          Each PDF attached to an email sent to this address becomes a Document of this Form. Up
-          to 20 pages per PDF. Vink never replies to the sender. Anyone who knows the address can
-          send to it, so share it only with the people and systems that send you these documents.
-        </FieldDescription>
+        <FieldLegend>{t("intake.legend")}</FieldLegend>
+        <FieldDescription>{t("intake.description")}</FieldDescription>
         {intake === undefined ? (
           <Skeleton className="h-10" />
         ) : !enabled ? (
@@ -87,45 +86,38 @@ export function IntakePanel({
             <div>
               <Button type="button" variant="outline" onClick={() => switchOn(on).catch(failed)}>
                 <Mail />
-                Switch on email in
+                {t("intake.switchOn")}
               </Button>
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">
-              An Admin can switch on an email address for this Form.
-            </p>
+            <p className="text-sm text-muted-foreground">{t("intake.adminCanSwitchOn")}</p>
           )
         ) : (
           <div className="flex flex-col gap-3">
             {intake.address ? (
               <CopyAddress address={intake.address} />
             ) : (
-              <p className="text-sm text-muted-foreground">
-                Switched on. The address appears once email in is set up for Vink.
-              </p>
+              <p className="text-sm text-muted-foreground">{t("intake.pending")}</p>
             )}
             {isAdmin && (
               <div className="flex flex-wrap gap-2">
                 <AlertDialog>
                   <AlertDialogTrigger render={<Button type="button" variant="outline" size="sm" />}>
-                    Replace address
+                    {t("intake.replace")}
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
-                      <AlertDialogTitle>Replace this address?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        The current address stops working at once. Give the new one to everyone
-                        who sends documents to this Form.
-                      </AlertDialogDescription>
+                      <AlertDialogTitle>{t("intake.replaceTitle")}</AlertDialogTitle>
+                      <AlertDialogDescription>{t("intake.replaceDescription")}</AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogCancel>{t("intake.cancel")}</AlertDialogCancel>
                       <AlertDialogAction
                         onClick={() =>
-                          replace(on).then(() => toast.success("New address ready"), failed)
+                          replace(on).then(() => toast.success(t("intake.replaced")), failed)
                         }
                       >
-                        Replace
+                        {t("intake.replaceConfirm")}
                       </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
@@ -134,9 +126,9 @@ export function IntakePanel({
                   type="button"
                   variant="ghost"
                   size="sm"
-                  onClick={() => switchOff(on).then(() => toast.success("Email in is off"), failed)}
+                  onClick={() => switchOff(on).then(() => toast.success(t("intake.switchedOff")), failed)}
                 >
-                  Switch off
+                  {t("intake.switchOff")}
                 </Button>
               </div>
             )}
@@ -156,11 +148,13 @@ type RecentEmail = {
 };
 
 function RecentEmails({ emails }: { emails: RecentEmail[] }) {
+  const t = useTranslations("appForms.intake");
+  const locale = useLocale() as Locale;
   return (
     <div className="flex flex-col gap-2">
-      <h3 className="text-sm font-medium">Recent emails</h3>
+      <h3 className="text-sm font-medium">{t("recent")}</h3>
       {emails.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No emails have arrived yet.</p>
+        <p className="text-sm text-muted-foreground">{t("noEmails")}</p>
       ) : (
         <ul className="flex flex-col divide-y rounded-lg border text-sm">
           {emails.map((email) => (
@@ -168,7 +162,7 @@ function RecentEmails({ emails }: { emails: RecentEmail[] }) {
               <div className="flex flex-wrap justify-between gap-x-4">
                 <span className="min-w-0 truncate font-medium">{email.from}</span>
                 <time className="text-muted-foreground tabular-nums">
-                  {new Date(email.receivedAt).toLocaleString("en-GB", {
+                  {new Date(email.receivedAt).toLocaleString(locale === "nl" ? "nl-NL" : "en-GB", {
                     day: "numeric",
                     month: "short",
                     hour: "2-digit",
@@ -177,7 +171,7 @@ function RecentEmails({ emails }: { emails: RecentEmail[] }) {
                 </time>
               </div>
               {email.attachments.length === 0 ? (
-                <p className="text-muted-foreground">No attachments.</p>
+                <p className="text-muted-foreground">{t("noAttachments")}</p>
               ) : (
                 <ul className="flex flex-col gap-0.5">
                   {email.attachments.map((a, i) => (
@@ -188,7 +182,9 @@ function RecentEmails({ emails }: { emails: RecentEmail[] }) {
                           a.outcome === "created" ? "text-green-700 dark:text-green-500" : "text-destructive"
                         }
                       >
-                        {a.outcome === "created" ? "Document created" : a.reason}
+                        {a.outcome === "created"
+                          ? t("created")
+                          : a.reason && serverErrorText(a.reason, locale)}
                       </span>
                     </li>
                   ))}

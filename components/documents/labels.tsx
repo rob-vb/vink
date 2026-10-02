@@ -6,9 +6,8 @@ import { createContext, useContext, type ReactNode } from "react";
  * The words and date formats of the Documents page and review screen.
  *
  * These components are shared by the app (fed by Convex) and the marketing
- * site's interactive demo (fed by static data, in English or Dutch). The app
- * never sets a provider, so it always gets `englishLabels` and the browser's
- * own date formats, exactly as before.
+ * site's interactive demo (fed by static data). Both set a provider with the
+ * words of their language; the app keeps the browser's own time zone.
  */
 
 export type DocumentState =
@@ -218,9 +217,9 @@ const Context = createContext<{ labels: DocumentsLabels; format: DocumentsFormat
 });
 
 /**
- * Used by the demo only: other words, a fixed locale and time zone so the
- * static render matches, and `h2` page headings inside a marketing page that
- * has its own `h1`.
+ * The words and date formats for one language. The demo also fixes the time
+ * zone so the static render matches, and uses `h2` page headings inside a
+ * marketing page that has its own `h1`.
  */
 export function DocumentsLabelsProvider({
   labels,

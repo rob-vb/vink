@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery } from "convex/react";
-import { ConvexError } from "convex/values";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -10,11 +10,8 @@ import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/convex/_generated/api";
+import { useErrorText } from "../../../error-text";
 import { PagesCard } from "./pages-card";
-
-function failed(error: unknown) {
-  toast.error(error instanceof ConvexError ? String(error.data) : "That didn't save. Try again.");
-}
 
 function Settings({
   organisationSlug,
@@ -23,6 +20,9 @@ function Settings({
   organisationSlug: string;
   initial: { name: string; retentionDays: number };
 }) {
+  const t = useTranslations("appSettings");
+  const errorText = useErrorText();
+  const failed = (error: unknown) => toast.error(errorText(error, t("notSaved")));
   const rename = useMutation(api.organisations.rename);
   const updateRetention = useMutation(api.organisations.updateRetention);
   const [name, setName] = useState(initial.name);
@@ -34,22 +34,22 @@ function Settings({
 
       <Card>
         <CardHeader>
-          <CardTitle>Organisation</CardTitle>
+          <CardTitle>{t("organisation")}</CardTitle>
         </CardHeader>
         <CardContent>
           <form
             className="flex flex-wrap items-end gap-3"
             onSubmit={(e) => {
               e.preventDefault();
-              rename({ organisationSlug, name: name.trim() }).then(() => toast.success("Saved."), failed);
+              rename({ organisationSlug, name: name.trim() }).then(() => toast.success(t("saved")), failed);
             }}
           >
             <Field className="min-w-60 flex-1">
-              <FieldLabel htmlFor="organisation-name">Name</FieldLabel>
+              <FieldLabel htmlFor="organisation-name">{t("name")}</FieldLabel>
               <Input id="organisation-name" value={name} onChange={(e) => setName(e.target.value)} />
             </Field>
             <Button type="submit" variant="outline" disabled={!name.trim() || name === initial.name}>
-              Save
+              {t("save")}
             </Button>
           </form>
         </CardContent>
@@ -57,11 +57,8 @@ function Settings({
 
       <Card>
         <CardHeader>
-          <CardTitle>Data retention</CardTitle>
-          <CardDescription>
-            Vink deletes a Document&apos;s PDF, what it read and its values once they&apos;re
-            no longer needed. The Document&apos;s name, dates, history and Delivery log stay.
-          </CardDescription>
+          <CardTitle>{t("retention.title")}</CardTitle>
+          <CardDescription>{t("retention.description")}</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           <form
@@ -69,13 +66,13 @@ function Settings({
             onSubmit={(e) => {
               e.preventDefault();
               updateRetention({ organisationSlug, retentionDays: Number(days) }).then(
-                () => toast.success("Saved. It applies from the next daily cleanup."),
+                () => toast.success(t("retention.saved")),
                 failed,
               );
             }}
           >
             <Field className="w-56">
-              <FieldLabel htmlFor="retention-days">Days after sending</FieldLabel>
+              <FieldLabel htmlFor="retention-days">{t("retention.days")}</FieldLabel>
               <Input
                 id="retention-days"
                 type="number"
@@ -85,21 +82,18 @@ function Settings({
                 value={days}
                 onChange={(e) => setDays(e.target.value)}
               />
-              <FieldDescription>
-                1 to 365. Counted from the last successful Delivery, from Approval when nothing
-                is sent, or from the last attempt when every Delivery failed.
-              </FieldDescription>
+              <FieldDescription>{t("retention.daysHint")}</FieldDescription>
             </Field>
             <Button type="submit" variant="outline" disabled={days === String(initial.retentionDays)}>
-              Save
+              {t("save")}
             </Button>
           </form>
           <div className="text-sm text-muted-foreground">
-            <p className="mb-1 font-medium text-foreground">Always</p>
+            <p className="mb-1 font-medium text-foreground">{t("retention.always")}</p>
             <ul className="list-disc space-y-0.5 pl-5">
-              <li>Documents never approved: 90 days after upload.</li>
-              <li>Rejected Documents: 30 days after Reject. They can&apos;t be reopened after that.</li>
-              <li>Unsaved Form Proposals: 7 days, with their sample PDF.</li>
+              <li>{t("retention.neverApproved")}</li>
+              <li>{t("retention.rejected")}</li>
+              <li>{t("retention.proposals")}</li>
             </ul>
           </div>
         </CardContent>
@@ -110,10 +104,11 @@ function Settings({
 
 /** Organisation settings: its name, and how long Document data is kept. */
 export function OrganisationSettings({ organisationSlug }: { organisationSlug: string }) {
+  const t = useTranslations("appSettings");
   const settings = useQuery(api.organisations.settings, { organisationSlug });
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-8 md:px-6">
-      <h1 className="mb-6 text-xl font-semibold">Settings</h1>
+      <h1 className="mb-6 text-xl font-semibold">{t("title")}</h1>
       {settings === undefined ? (
         <Skeleton className="h-64" />
       ) : (

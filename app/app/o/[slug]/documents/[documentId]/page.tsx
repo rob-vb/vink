@@ -1,9 +1,13 @@
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import type { Id } from "@/convex/_generated/dataModel";
 import { getOrganisation } from "../../organisation";
 import { ReviewScreen } from "./review-screen";
 
-export const metadata: Metadata = { title: "Review · Vink" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("appDocuments.review");
+  return { title: t("metaTitle") };
+}
 
 export default async function DocumentPage({
   params,

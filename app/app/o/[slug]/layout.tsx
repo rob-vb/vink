@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import { Logo } from "@/components/logo";
 import { getOrganisation } from "./organisation";
 import { OrganisationSwitcher } from "./organisation-switcher";
@@ -13,13 +14,13 @@ export default async function OrganisationLayout({
   params,
 }: LayoutProps<"/app/o/[slug]">) {
   const { slug } = await params;
-  const organisation = await getOrganisation(slug);
+  const [organisation, t] = await Promise.all([getOrganisation(slug), getTranslations("app.shell")]);
 
   return (
     <div className="flex flex-1 flex-col">
       <header className="flex flex-wrap items-center justify-between gap-x-3 border-b px-4 md:px-6">
         <div className="flex h-14 min-w-0 flex-1 items-center gap-2 sm:flex-none">
-          <Link href={`/app/o/${slug}`} aria-label="Home" className="shrink-0">
+          <Link href={`/app/o/${slug}`} aria-label={t("home")} className="shrink-0">
             <Logo />
           </Link>
           <span className="shrink-0 text-muted-foreground">/</span>

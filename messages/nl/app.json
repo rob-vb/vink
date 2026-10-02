@@ -1,0 +1,125 @@
+{
+  "meta": {
+    "description": "Leest je documenten, vult je Formulieren en stuurt de data waar die hoort."
+  },
+  "language": {
+    "label": "Taal",
+    "en": "English",
+    "nl": "Nederlands"
+  },
+  "titles": {
+    "signIn": "Inloggen · Vink",
+    "signUp": "Aanmelden · Vink",
+    "invitation": "Uitnodiging · Vink",
+    "documents": "Documenten · Vink",
+    "members": "Leden · Vink"
+  },
+  "roles": {
+    "admin": "Admin",
+    "member": "Lid"
+  },
+  "auth": {
+    "workEmail": "Zakelijk e-mailadres",
+    "emailPlaceholder": "jij@bedrijf.nl",
+    "password": "Wachtwoord",
+    "tooManyAttempts": "Te veel pogingen vanaf hier. Wacht een paar minuten en probeer het opnieuw.",
+    "linkNotSent": "We konden de link niet versturen. Probeer het opnieuw.",
+    "signIn": {
+      "title": "Inloggen bij Vink",
+      "description": "Gebruik je wachtwoord of ontvang een link per e-mail.",
+      "linkFailed": "Die inloglink is verlopen of al gebruikt. Vraag een nieuwe aan.",
+      "enterPassword": "Vul je wachtwoord in, of mail jezelf een link.",
+      "verifyFirst": "Bevestig eerst je e-mailadres. We hebben je een nieuwe link gestuurd.",
+      "noMatch": "Dat e-mailadres en wachtwoord horen niet bij elkaar.",
+      "submit": "Inloggen",
+      "or": "of",
+      "emailLink": "Mail me een inloglink",
+      "newToVink": "Nieuw bij Vink?",
+      "createAccount": "Maak een account",
+      "createOrganisation": "Maak een Organisatie"
+    },
+    "signUp": {
+      "titleAccount": "Maak je account",
+      "titleOrganisation": "Maak je Organisatie",
+      "descriptionAccount": "Gebruik het adres waar je uitnodiging naartoe is gestuurd.",
+      "descriptionOrganisation": "Je wordt er Admin van en kunt je team later uitnodigen.",
+      "organisationName": "Naam van de Organisatie",
+      "organisationPlaceholder": "Bakker Transport",
+      "passwordHint": "Minstens 8 tekens.",
+      "passwordTooShort": "Kies een wachtwoord van minstens 8 tekens, of mail jezelf een link.",
+      "accountNotCreated": "We konden je account niet maken. Probeer het opnieuw.",
+      "submit": "Account maken",
+      "orSkip": "of sla het wachtwoord over",
+      "emailLink": "Mail me een aanmeldlink",
+      "haveAccount": "Heb je al een account?",
+      "signIn": "Inloggen",
+      "agree": "Met een account ga je akkoord met de <terms>Voorwaarden</terms> en het <privacy>Privacybeleid</privacy>."
+    },
+    "checkInbox": {
+      "title": "Kijk in je mail",
+      "sent": "We hebben een link gestuurd naar <b>{email}</b>.",
+      "verify": "Open hem om je e-mailadres te bevestigen en je account af te maken. Hij verloopt over 1 uur.",
+      "signIn": "Open hem op dit apparaat om verder te gaan. Hij verloopt over 5 minuten.",
+      "resend": "Stuur hem opnieuw",
+      "changeEmail": "Gebruik een ander e-mailadres"
+    },
+    "invite": {
+      "title": "Je bent uitgenodigd voor Vink",
+      "description": "Log in of maak een account met het adres waar de uitnodiging naartoe is gestuurd.",
+      "signIn": "Inloggen",
+      "createAccount": "Maak een account",
+      "notAccepted": "We konden de uitnodiging niet accepteren.",
+      "openVink": "Open Vink",
+      "notFoundTitle": "Deze uitnodiging bestaat niet",
+      "notFound": "De link is misschien onvolledig, of de uitnodiging is ingetrokken of vervangen door een nieuwere. Vraag een Admin je opnieuw uit te nodigen.",
+      "usedTitle": "Deze uitnodiging is al gebruikt",
+      "used": "Hij is al eerder geaccepteerd en kan niet nog eens worden gebruikt.",
+      "expiredTitle": "Deze uitnodiging is verlopen",
+      "expired": "Uitnodigingen werken 7 dagen. Vraag een Admin van {organisation} om een nieuwe.",
+      "anotherEmailTitle": "Deze uitnodiging is voor een ander adres",
+      "signInAs": "Inloggen als {email}",
+      "anotherEmail": "Hij is gestuurd naar <strong>{email}</strong>, maar je bent ingelogd als <strong>{current}</strong>.",
+      "someoneElse": "iemand anders",
+      "join": "Word lid van {organisation}",
+      "invitedBy": "{inviter} heeft je uitgenodigd als {role}.",
+      "anAdmin": "Een Admin",
+      "accept": "Uitnodiging accepteren",
+      "signedInAs": "Ingelogd als {email}"
+    }
+  },
+  "welcome": {
+    "defaultOrganisation": "Mijn Organisatie",
+    "settingUp": "Je Organisatie wordt ingericht…"
+  },
+  "shell": {
+    "home": "Home",
+    "nav": {
+      "documents": "Documenten",
+      "forms": "Formulieren",
+      "integrations": "Koppelingen",
+      "members": "Leden"
+    },
+    "organisations": "Organisaties",
+    "account": "Account",
+    "organisationSettings": "Instellingen van de Organisatie",
+    "signOut": "Uitloggen"
+  },
+  "notifications": {
+    "title": "Meldingen",
+    "label": "{unread, plural, =0 {Meldingen} other {Meldingen, # ongelezen}}",
+    "markAllRead": "Alles als gelezen markeren",
+    "empty": "Niets nieuws.",
+    "deliveryFailed": "{document} kon niet worden afgeleverd bij {integration}",
+    "aDocument": "Een Document"
+  },
+  "pages": {
+    "upgrade": "Upgraden",
+    "left": "{remaining, plural, one {Nog # pagina} other {Nog # pagina's}}",
+    "resets": " · vernieuwt {date}",
+    "noneLeftTitle": "Je Organisatie heeft geen pagina's meer",
+    "leftTitle": "{remaining, plural, one {Je Organisatie heeft nog # pagina} other {Je Organisatie heeft nog # pagina's}}",
+    "noneLeft": "Nieuwe pdf's worden geweigerd tot je upgradet. Documenten die al zijn geüpload blijven werken.",
+    "almostOut": "Je hebt 80% van je pagina's gebruikt. Upgrade op tijd, zodat nieuwe pdf's niet worden geweigerd.",
+    "resetsOn": " Je pagina's vernieuwen op {date}."
+  }
+}

@@ -29,7 +29,7 @@ import { Button } from "@/components/ui/button";
 import { DEMO_FORM_VERSION, DEMO_THRESHOLD } from "./demo-data";
 import { DemoPdfPane } from "./demo-pdf-pane";
 import { needsReviewCount, type DemoDocument, type Locale } from "./demo-state";
-import { dutchLabels } from "./nl-labels";
+import { dutchLabels } from "@/components/documents/nl-labels";
 
 /*
  * The demo's two screens, built from the app's own parts in

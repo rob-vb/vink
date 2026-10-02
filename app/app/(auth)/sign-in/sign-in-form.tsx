@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useState, type FormEvent } from "react";
 import { CheckInbox } from "@/components/check-inbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -35,6 +36,7 @@ export function SignInForm({
   /** Where to go after signing in: an invite link, or home. */
   next: string | null;
 }) {
+  const t = useTranslations("app.auth");
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -55,8 +57,8 @@ export function SignInForm({
     if (error) {
       setError(
         error.status === 429 && error.message?.startsWith("Too many requests")
-          ? "Too many attempts from here. Wait a few minutes and try again."
-          : (error.message ?? "We couldn't send the link. Try again."),
+          ? t("tooManyAttempts")
+          : (error.message ?? t("linkNotSent")),
       );
       return;
     }
@@ -65,7 +67,7 @@ export function SignInForm({
 
   async function signInWithPassword() {
     if (!password) {
-      setError("Enter your password, or email yourself a link.");
+      setError(t("signIn.enterPassword"));
       return;
     }
     setPending("password");
@@ -75,11 +77,11 @@ export function SignInForm({
       setPending(null);
       if (error.code === "EMAIL_NOT_VERIFIED") {
         // Better Auth has just mailed a fresh verification link.
-        setError("Verify your email first. We've sent you a new link.");
+        setError(t("signIn.verifyFirst"));
       } else if (error.status === 429) {
-        setError("Too many attempts from here. Wait a few minutes and try again.");
+        setError(t("tooManyAttempts"));
       } else {
-        setError("That email and password don't match.");
+        setError(t("signIn.noMatch"));
       }
       return;
     }
@@ -111,25 +113,23 @@ export function SignInForm({
   return (
     <Card>
       <CardHeader className="text-center">
-        <CardTitle className="text-xl">Sign in to Vink</CardTitle>
-        <CardDescription>Use your password or get a link by email.</CardDescription>
+        <CardTitle className="text-xl">{t("signIn.title")}</CardTitle>
+        <CardDescription>{t("signIn.description")}</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={onSubmit}>
           <FieldGroup>
             {linkFailed && (
               <Alert variant="destructive">
-                <AlertDescription>
-                  That sign-in link has expired or was already used. Request a new one.
-                </AlertDescription>
+                <AlertDescription>{t("signIn.linkFailed")}</AlertDescription>
               </Alert>
             )}
             <Field>
-              <FieldLabel htmlFor="email">Work email</FieldLabel>
+              <FieldLabel htmlFor="email">{t("workEmail")}</FieldLabel>
               <Input
                 id="email"
                 type="email"
-                placeholder="you@company.com"
+                placeholder={t("emailPlaceholder")}
                 autoComplete="email"
                 required
                 value={email}
@@ -137,7 +137,7 @@ export function SignInForm({
               />
             </Field>
             <Field>
-              <FieldLabel htmlFor="password">Password</FieldLabel>
+              <FieldLabel htmlFor="password">{t("password")}</FieldLabel>
               <Input
                 id="password"
                 type="password"
@@ -150,10 +150,10 @@ export function SignInForm({
             <Field>
               <Button type="submit" value="password" disabled={pending !== null}>
                 {pending === "password" && <Spinner />}
-                Sign in
+                {t("signIn.submit")}
               </Button>
             </Field>
-            <FieldSeparator>or</FieldSeparator>
+            <FieldSeparator>{t("signIn.or")}</FieldSeparator>
             <Field>
               <Button
                 type="submit"
@@ -162,13 +162,16 @@ export function SignInForm({
                 disabled={pending !== null}
               >
                 {pending === "link" && <Spinner />}
-                Email me a sign-in link
+                {t("signIn.emailLink")}
               </Button>
               <FieldDescription className="text-center">
-                New to Vink? {next ? (
-                  <Link href={`/app/sign-up?${new URLSearchParams({ next })}`}>Create an account</Link>
+                {t("signIn.newToVink")}{" "}
+                {next ? (
+                  <Link href={`/app/sign-up?${new URLSearchParams({ next })}`}>
+                    {t("signIn.createAccount")}
+                  </Link>
                 ) : (
-                  <Link href="/app/sign-up">Create an Organisation</Link>
+                  <Link href="/app/sign-up">{t("signIn.createOrganisation")}</Link>
                 )}
               </FieldDescription>
             </Field>

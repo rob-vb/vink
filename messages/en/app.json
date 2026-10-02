@@ -1,0 +1,125 @@
+{
+  "meta": {
+    "description": "Reads your documents, fills your Forms and sends the data where it belongs."
+  },
+  "language": {
+    "label": "Language",
+    "en": "English",
+    "nl": "Nederlands"
+  },
+  "titles": {
+    "signIn": "Sign in · Vink",
+    "signUp": "Sign up · Vink",
+    "invitation": "Invitation · Vink",
+    "documents": "Documents · Vink",
+    "members": "Members · Vink"
+  },
+  "roles": {
+    "admin": "Admin",
+    "member": "Member"
+  },
+  "auth": {
+    "workEmail": "Work email",
+    "emailPlaceholder": "you@company.com",
+    "password": "Password",
+    "tooManyAttempts": "Too many attempts from here. Wait a few minutes and try again.",
+    "linkNotSent": "We couldn't send the link. Try again.",
+    "signIn": {
+      "title": "Sign in to Vink",
+      "description": "Use your password or get a link by email.",
+      "linkFailed": "That sign-in link has expired or was already used. Request a new one.",
+      "enterPassword": "Enter your password, or email yourself a link.",
+      "verifyFirst": "Verify your email first. We've sent you a new link.",
+      "noMatch": "That email and password don't match.",
+      "submit": "Sign in",
+      "or": "or",
+      "emailLink": "Email me a sign-in link",
+      "newToVink": "New to Vink?",
+      "createAccount": "Create an account",
+      "createOrganisation": "Create an Organisation"
+    },
+    "signUp": {
+      "titleAccount": "Create your account",
+      "titleOrganisation": "Create your Organisation",
+      "descriptionAccount": "Use the address your invitation was sent to.",
+      "descriptionOrganisation": "You'll be its Admin and can invite your team later.",
+      "organisationName": "Organisation name",
+      "organisationPlaceholder": "Acme Fleet",
+      "passwordHint": "At least 8 characters.",
+      "passwordTooShort": "Choose a password of at least 8 characters, or email yourself a link.",
+      "accountNotCreated": "We couldn't create your account. Try again.",
+      "submit": "Create account",
+      "orSkip": "or skip the password",
+      "emailLink": "Email me a sign-up link",
+      "haveAccount": "Already have an account?",
+      "signIn": "Sign in",
+      "agree": "By creating an account you agree to the <terms>Terms</terms> and <privacy>Privacy policy</privacy>."
+    },
+    "checkInbox": {
+      "title": "Check your email",
+      "sent": "We sent a link to <b>{email}</b>.",
+      "verify": "Open it to verify your email and finish creating your account. It expires in 1 hour.",
+      "signIn": "Open it on this device to continue. It expires in 5 minutes.",
+      "resend": "Send it again",
+      "changeEmail": "Use a different email"
+    },
+    "invite": {
+      "title": "You're invited to Vink",
+      "description": "Sign in or create an account with the address the invitation was sent to.",
+      "signIn": "Sign in",
+      "createAccount": "Create an account",
+      "notAccepted": "We couldn't accept the invitation.",
+      "openVink": "Open Vink",
+      "notFoundTitle": "This invitation doesn't exist",
+      "notFound": "The link may be incomplete, or the invitation was withdrawn or replaced by a newer one. Ask an Admin to invite you again.",
+      "usedTitle": "This invitation was already used",
+      "used": "It was accepted before, so it can't be used again.",
+      "expiredTitle": "This invitation has expired",
+      "expired": "Invitations work for 7 days. Ask an Admin of {organisation} for a new one.",
+      "anotherEmailTitle": "This invitation is for another address",
+      "signInAs": "Sign in as {email}",
+      "anotherEmail": "It was sent to <strong>{email}</strong>, but you're signed in as <strong>{current}</strong>.",
+      "someoneElse": "someone else",
+      "join": "Join {organisation}",
+      "invitedBy": "{inviter} invited you as {role}.",
+      "anAdmin": "An Admin",
+      "accept": "Accept invitation",
+      "signedInAs": "Signed in as {email}"
+    }
+  },
+  "welcome": {
+    "defaultOrganisation": "My Organisation",
+    "settingUp": "Setting up your Organisation…"
+  },
+  "shell": {
+    "home": "Home",
+    "nav": {
+      "documents": "Documents",
+      "forms": "Forms",
+      "integrations": "Integrations",
+      "members": "Members"
+    },
+    "organisations": "Organisations",
+    "account": "Account",
+    "organisationSettings": "Organisation settings",
+    "signOut": "Sign out"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "label": "{unread, plural, =0 {Notifications} other {Notifications, # unread}}",
+    "markAllRead": "Mark all as read",
+    "empty": "Nothing new.",
+    "deliveryFailed": "{document} couldn't be delivered to {integration}",
+    "aDocument": "A Document"
+  },
+  "pages": {
+    "upgrade": "Upgrade",
+    "left": "{remaining, plural, one {# page left} other {# pages left}}",
+    "resets": " · resets {date}",
+    "noneLeftTitle": "Your Organisation has no pages left",
+    "leftTitle": "{remaining, plural, one {Your Organisation has # page left} other {Your Organisation has # pages left}}",
+    "noneLeft": "New PDFs are refused until you upgrade. Documents already uploaded keep working.",
+    "almostOut": "You've used 80% of your pages. Upgrade in time so new PDFs aren't refused.",
+    "resetsOn": " Your pages reset on {date}."
+  }
+}
