@@ -36,11 +36,10 @@
   "free": "Begin met 20 gratis pagina's. Geen creditcard nodig.",
   "custom": {
     "name": "Custom",
-    "title": "Meer dan 3.000 pagina's per maand, of een verwerkersovereenkomst en betalen op factuur nodig?",
+    "title": "Meer dan 3.000 pagina's per maand nodig?",
     "body": "Vanaf {price} per maand, jaarlijks gefactureerd. Een volumeprijs, eigen voorwaarden en een serviceniveau dat we met je afspreken.",
     "chips": {
       "volume": "3.000+ pagina's per maand",
-      "dpa": "Verwerkersovereenkomst",
       "invoice": "Betalen op factuur",
       "terms": "Eigen voorwaarden",
       "sla": "SLA"
@@ -64,14 +63,6 @@
     "integrations": {
       "title": "Koppelingen (webhook)",
       "body": "Ondertekende JSON naar je systeem, met nieuwe pogingen en een test-send."
-    },
-    "eu": {
-      "title": "Opgeslagen in de EU",
-      "body": "Database en pdf's worden in de EU opgeslagen. Zie wie wat verwerkt."
-    },
-    "retention": {
-      "title": "30 dagen bewaartermijn",
-      "body": "Standaard 30 dagen na versturen verwijderd. Je kunt het korter maken."
     }
   },
   "pages": {
@@ -110,10 +101,6 @@
     "cancel": {
       "q": "Kunnen we opzeggen?",
       "a": "Ja. Een maandabonnement stopt aan het einde van de maand, een jaarabonnement aan het einde van het jaar. De 20 gratis pagina's vragen geen creditcard en verlopen niet."
-    },
-    "data": {
-      "q": "Waar staat onze data?",
-      "a": "Opgeslagen in de EU en standaard 30 dagen na versturen verwijderd. De <link>beveiligingspagina</link> noemt elke subverwerker en zijn regio."
     },
     "intake": {
       "q": "Hoe komen documenten binnen?",

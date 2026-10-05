@@ -20,7 +20,7 @@ export default async function PrivacyPage({ params }: PageProps<"/[locale]/priva
       locale={locale}
       doc="privacy"
       points={["security", "contact", "analytics", "cookies", "questions"]}
-      links={{ security: "/security", subprocessors: "/security#subprocessors", contact: "/contact" }}
+      links={{ terms: "/terms", subprocessors: "/terms#subprocessors", contact: "/contact" }}
     />
   );
 }

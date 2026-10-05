@@ -4,7 +4,6 @@
     "features": "Features",
     "pricing": "Pricing",
     "developers": "Developers",
-    "security": "Security",
     "logIn": "Log in",
     "openApp": "Open app",
     "startFree": "Start free",
@@ -23,8 +22,8 @@
     "freeNote": "20 free pages. No credit card."
   },
   "trust": {
-    "eu": "Stored in the EU",
-    "deleted": "Deleted 30 days after sending",
+    "anyPdf": "Typed, scanned or handwritten",
+    "fields": "Your own fields, no templates",
     "approval": "Nothing sent without your approval"
   },
   "closing": {
@@ -47,13 +46,11 @@
     "features": "Features",
     "pricing": "Pricing",
     "developers": "Developers",
-    "security": "Security & privacy",
     "contact": "Contact",
     "integration": "Integration service",
     "logIn": "Log in",
     "privacy": "Privacy policy",
     "terms": "Terms",
-    "subprocessors": "Subprocessors",
     "cookieSettings": "Cookie settings",
     "rights": "© {year} Vink. Prices excl. VAT.",
     "language": "Language"

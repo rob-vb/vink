@@ -22,8 +22,7 @@
     "upload": "/app/o/kantoor-noord/forms/invoices",
     "form": "/app/o/kantoor-noord/forms/invoices",
     "integration": "/app/o/kantoor-noord/integrations",
-    "members": "/app/o/kantoor-noord/members",
-    "settings": "/app/o/kantoor-noord/settings"
+    "members": "/app/o/kantoor-noord/members"
   },
   "stops": {
     "arrives": {
@@ -48,8 +47,8 @@
     },
     "around": {
       "label": "Around it",
-      "title": "For the whole team, with data kept short.",
-      "lede": "Everyone who handles the documents, on every plan. And nothing kept longer than it has to be."
+      "title": "For the whole team.",
+      "lede": "Everyone who handles the documents, on every plan."
     }
   },
   "intake": {
@@ -146,18 +145,6 @@
     "alt": "The Members page with three people and a pending invitation.",
     "placeholder": "Members"
   },
-  "data": {
-    "title": "Your data, kept short.",
-    "text": "Stored in the EU and deleted 30 days after sending, unless you choose otherwise. An Admin can delete any Document right away.",
-    "bullets": [
-      "Retention set per Organisation",
-      "“Delete now” on any Document",
-      "A public list of who processes your data"
-    ],
-    "link": "Security & privacy",
-    "alt": "The Organisation's retention setting, and Delete now on a Document.",
-    "placeholder": "Retention settings"
-  },
   "plans": {
     "title": "Every plan includes everything.",
     "text": "You only choose how many pages. Start with 20 free pages, no credit card.",
@@ -165,9 +152,7 @@
       "Unlimited users",
       "All Forms and Fields",
       "Review and Approval",
-      "Integrations",
-      "Stored in the EU",
-      "30-day retention"
+      "Integrations"
     ],
     "link": "See pricing"
   },

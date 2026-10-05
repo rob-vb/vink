@@ -79,7 +79,6 @@ export default async function Home({ params }: PageProps<"/[locale]">) {
       <Video />
       <Journey />
       <Connect />
-      <DataKeptShort />
       <PricingRow locale={locale} />
       <FounderAndFaq />
       <ClosingCard location="home" />
@@ -381,51 +380,6 @@ function Connect() {
   );
 }
 
-/** Mirrors the "Data retention" card in the app's Organisation settings. */
-function DataKeptShort() {
-  const t = useTranslations("home.data");
-  return (
-    <section className="py-16 sm:py-24">
-      <Container className="grid grid-cols-[minmax(0,1fr)] items-center gap-10 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:gap-14">
-        <div>
-          <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">{t("title")}</h2>
-          <p className="mt-3 max-w-[44ch] text-lg text-muted-foreground">{t("body")}</p>
-          <Link href="/security" className={cn(moreLink, "mt-5")}>
-            {t("link")}
-            <ArrowRight />
-          </Link>
-        </div>
-        <ScreenshotFrame title="Settings · Data retention">
-          <div className="p-4 sm:p-6">
-            <div className="rounded-xl border bg-card p-5 text-sm">
-              <p className="font-medium">Data retention</p>
-              <p className="mt-1 text-muted-foreground">
-                Vink deletes a Document&apos;s PDF, what it read and its values once they&apos;re no longer
-                needed. The Document&apos;s name, dates, history and Delivery log stay.
-              </p>
-              <div className="mt-4 flex flex-wrap items-end gap-3">
-                <div className="w-56">
-                  <p className="text-sm font-medium">Days after sending</p>
-                  <div className="mt-1.5 flex h-8 items-center rounded-lg border border-input px-2.5 tabular-nums">30</div>
-                  <p className="mt-1.5 text-xs text-muted-foreground">
-                    Counted from the last successful Delivery, or from Approval when nothing is sent.
-                  </p>
-                </div>
-              </div>
-              <p className="mt-4 mb-1 font-medium">Always</p>
-              <ul className="list-disc space-y-0.5 pl-5 text-muted-foreground">
-                <li>Documents never approved: 90 days after upload.</li>
-                <li>Rejected Documents: 30 days after Reject.</li>
-                <li>Unsaved Form Proposals: 7 days, with their sample PDF.</li>
-              </ul>
-            </div>
-          </div>
-        </ScreenshotFrame>
-      </Container>
-    </section>
-  );
-}
-
 function PricingRow({ locale }: { locale: Locale }) {
   const t = useTranslations("home.pricing");
   return (
@@ -480,7 +434,7 @@ function PricingRow({ locale }: { locale: Locale }) {
 
 function FounderAndFaq() {
   const t = useTranslations("home.faq");
-  const keys = ["wrong", "messy", "developer", "data", "templates"] as const;
+  const keys = ["wrong", "messy", "developer", "templates"] as const;
   return (
     <section className="pb-8">
       <Container className="grid grid-cols-[minmax(0,1fr)] gap-12 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:gap-16">
@@ -491,13 +445,7 @@ function FounderAndFaq() {
             items={keys.map((key) => ({
               id: key,
               question: t(`${key}.q`),
-              answer: t.rich(`${key}.a`, {
-                link: (chunks) => (
-                  <Link href="/security#subprocessors" className="font-medium text-foreground underline underline-offset-3">
-                    {chunks}
-                  </Link>
-                ),
-              }),
+              answer: t(`${key}.a`),
             }))}
           />
         </div>

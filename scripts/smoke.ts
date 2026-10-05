@@ -20,7 +20,7 @@ const env = {
   NEXT_PUBLIC_GA_ID: process.env.NEXT_PUBLIC_GA_ID ?? "G-SMOKETEST",
 };
 
-const pages = ["/", "/features", "/pricing", "/developers", "/security", "/contact", "/privacy", "/terms"];
+const pages = ["/", "/features", "/pricing", "/developers", "/contact", "/privacy", "/terms"];
 const locales = ["nl", "en"] as const;
 const localized = (locale: (typeof locales)[number], page: string) =>
   locale === "nl" ? page : page === "/" ? "/en" : `/en${page}`;
@@ -133,7 +133,7 @@ async function run(base: string) {
         `${url} has en/nl/x-default hreflang from SITE_URL`,
         `${en} ${nl} ${xDefault}`,
       );
-      if (["/", "/features", "/pricing", "/developers", "/security"].includes(page)) {
+      if (["/", "/features", "/pricing", "/developers"].includes(page)) {
         const image = metaContent(html, "og:image");
         const imageResponse = image ? await get(base, image.replace(siteUrl, "")) : null;
         check(

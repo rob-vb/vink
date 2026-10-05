@@ -4,7 +4,6 @@
     "features": "Functies",
     "pricing": "Prijzen",
     "developers": "Developers",
-    "security": "Beveiliging",
     "logIn": "Inloggen",
     "openApp": "Open app",
     "startFree": "Gratis starten",
@@ -23,8 +22,8 @@
     "freeNote": "20 gratis pagina's. Geen creditcard nodig."
   },
   "trust": {
-    "eu": "Opgeslagen in de EU",
-    "deleted": "Verwijderd 30 dagen na versturen",
+    "anyPdf": "Getypt, gescand of handgeschreven",
+    "fields": "Je eigen velden, geen sjablonen",
     "approval": "Niets verstuurd zonder jouw akkoord"
   },
   "closing": {
@@ -47,13 +46,11 @@
     "features": "Functies",
     "pricing": "Prijzen",
     "developers": "Developers",
-    "security": "Beveiliging en privacy",
     "contact": "Contact",
     "integration": "Koppelservice",
     "logIn": "Inloggen",
     "privacy": "Privacybeleid",
     "terms": "Voorwaarden",
-    "subprocessors": "Subverwerkers",
     "cookieSettings": "Cookie-instellingen",
     "rights": "© {year} Vink. Prijzen excl. btw.",
     "language": "Taal"

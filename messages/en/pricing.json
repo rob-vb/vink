@@ -36,11 +36,10 @@
   "free": "Start with 20 free pages. No credit card.",
   "custom": {
     "name": "Custom",
-    "title": "More than 3,000 pages a month, or need a DPA and payment by invoice?",
+    "title": "Need more than 3,000 pages a month?",
     "body": "From {price} a month, billed annually. A volume price, custom terms and a service level agreed with you.",
     "chips": {
       "volume": "3,000+ pages a month",
-      "dpa": "DPA",
       "invoice": "Payment by invoice",
       "terms": "Custom terms",
       "sla": "SLA"
@@ -64,14 +63,6 @@
     "integrations": {
       "title": "Integrations (webhook)",
       "body": "Signed JSON to your system, with retries and a test-send."
-    },
-    "eu": {
-      "title": "Stored in the EU",
-      "body": "Database and PDFs are stored in the EU. See who processes what."
-    },
-    "retention": {
-      "title": "30-day retention",
-      "body": "Deleted 30 days after sending by default. You can shorten it."
     }
   },
   "pages": {
@@ -110,10 +101,6 @@
     "cancel": {
       "q": "Can we cancel?",
       "a": "Yes. Monthly plans stop at the end of the month, annual plans at the end of the year. The 20 free pages need no card and have no end date."
-    },
-    "data": {
-      "q": "Where does our data live?",
-      "a": "Stored in the EU and deleted 30 days after sending by default. The <link>Security page</link> lists every subprocessor and its region."
     },
     "intake": {
       "q": "How do documents get in?",

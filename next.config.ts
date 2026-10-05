@@ -65,6 +65,9 @@ const nextConfig: NextConfig = {
       { source: "/sign-up", destination: "/app/sign-up", permanent: true },
       { source: "/welcome", destination: "/app/welcome", permanent: true },
       { source: "/o/:path*", destination: "/app/o/:path*", permanent: true },
+      // Security and privacy moved into the Terms page.
+      { source: "/security", destination: "/terms", permanent: true },
+      { source: "/en/security", destination: "/en/terms", permanent: true },
       // Dutch has no prefix: /nl/x is only an internal path.
       { source: "/nl", destination: "/", permanent: true },
       { source: `/nl/:path((?!${OG_IMAGE}).*)`, destination: "/:path", permanent: true },

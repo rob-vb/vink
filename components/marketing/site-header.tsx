@@ -11,7 +11,6 @@ export const navItems = [
   { href: "/features", key: "features" },
   { href: "/pricing", key: "pricing" },
   { href: "/developers", key: "developers" },
-  { href: "/security", key: "security" },
 ] as const;
 
 export function SiteHeader() {
