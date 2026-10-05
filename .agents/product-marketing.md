@@ -3,7 +3,7 @@
 **Document version:** v1
 **Last updated:** 2026-09-29
 
-Source of the decisions: [Positioning and messaging](../.scratch/vink-marketing/issues/06-positioning-and-messaging.md). Product vocabulary: `CONTEXT.md` (copy may be plainer, never contradictory).
+Source of the decisions: [Positioning and messaging](../.scratch/vink-marketing/issues/06-positioning-and-messaging.md). Product vocabulary: `GLOSSARY.md` (copy may be plainer, never contradictory).
 
 ## Product Overview
 **One-liner:** Vink turns any PDF, even handwritten, into clean data for your systems, so your team stops retyping documents.
@@ -71,7 +71,7 @@ Source of the decisions: [Positioning and messaging](../.scratch/vink-marketing/
 **How they describe the problem:** "overtikken", "handmatig verwerken" (EN: retyping, processing by hand).
 **Words to use:** retyping, by hand, clean data, your systems, check, approve, unsure.
 **Words to avoid:** AI, AI-powered, OCR, intelligent document processing, template, accuracy percentages, Enterprise.
-**Glossary:** see `CONTEXT.md` (Form, Field, Document, Page, Needs Review, Approval, Auto-Send, Payload, Integration).
+**Glossary:** see `GLOSSARY.md` (Form, Field, Document, Page, Needs Review, Approval, Auto-Send, Payload, Integration).
 
 ## Brand Voice
 **Tone:** clear, calm, precise. Short sentences. Honest about uncertainty, because that is the product.
