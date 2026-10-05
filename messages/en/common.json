@@ -31,12 +31,11 @@
     "customer": "Already a customer?",
     "logIn": "Log in"
   },
-  "founder": {
+  "team": {
     "eyebrow": "Who's behind Vink",
-    "quote": "I built Vink after watching teams retype the same kinds of PDFs every day. If you're unsure whether it fits your documents, write to me. I read every email.",
-    "name": "Rob",
-    "role": "Founder of Vink",
-    "photoAlt": "Rob, founder of Vink"
+    "quote": "We built Vink after watching teams retype the same kinds of PDFs every day. If you're unsure whether it fits your documents, write to us. We read every email.",
+    "name": "Vink",
+    "role": "The team behind Vink"
   },
   "footer": {
     "tagline": "Automated data entry for operations teams. Any PDF in, clean data out.",

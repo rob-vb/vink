@@ -12,7 +12,7 @@ const has = (file: string) => existsSync(path.join(process.cwd(), "public", file
 /**
  * The 15-second video, the same as on Home: one PDF in, clean data out.
  *
- * TODO(Rob): record it and add public/video/vink-15s.mp4 plus a poster at
+ * TODO(video): record it and add public/video/vink-15s.mp4 plus a poster at
  * public/video/vink-15s-poster.jpg. Until the video exists (checked when the
  * page is built), a still of a paper document next to its read values stands in.
  */

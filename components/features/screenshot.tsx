@@ -7,7 +7,7 @@ import { BrowserFrame } from "./browser-frame";
  * data), in a browser frame. Checked when the page is built: until the file
  * exists, a quiet placeholder of the same shape stands in.
  *
- * TODO(Rob): add the missing files listed in the Features page report.
+ * TODO(screenshots): add the missing files listed in the Features page report.
  */
 export function Screenshot({
   name,

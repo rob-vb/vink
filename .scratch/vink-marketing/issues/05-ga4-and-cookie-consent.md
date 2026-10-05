@@ -14,7 +14,7 @@ GA4 needs consent before it loads for EU and Dutch visitors. Dutch law (Telecomm
 
 - **Consent Mode v2, basic:** no Google tag loads until Accept. Advanced mode's cookieless pings count as device access (EDPB) and need consent too. Ad consent types permanently denied; Google signals and ad personalisation off.
 - **Banner: our own, built with shadcn.** One purpose (statistics); "Accept" and "Reject" equal on the first layer, which also names the processor, the purpose, the one third party (Google) and how to withdraw. No pre-ticked boxes, no cookie wall, a permanent "Cookie settings" link in the footer, English on `/` and Dutch on `/nl`, consent logged. c15t is a fallback, but its GA integration defaults to advanced mode.
-- **Remembering the choice:** one first-party cookie, `Path=/`, kept 6 months, read client-side so pages stay static. Set GA's `cookie_domain` to the site host (default would be `.robvb.com`).
+- **Remembering the choice:** one first-party cookie, `Path=/`, kept 6 months, read client-side so pages stay static. Set GA's `cookie_domain` to the site host (default would be `.vink.page`).
 - **`/app` stays GA-free:** gtag only in the `(marketing)` root layout; crossing root layouts forces a full load, so gtag never follows into the app. Measure sign-up clicks on the marketing CTAs.
 
 Secondary sources: the DPF appeal status (IAPP, WilmerHale), the Digital Omnibus status, and the removal of the AP's old GA guide (a blog; the AP's Jan 2025 Woo decision confirms it covers an old GA version).

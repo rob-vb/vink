@@ -8,8 +8,8 @@ export function absoluteUrl(path: string): string {
 /** The site's host name, e.g. for GA's `cookie_domain` and default mailboxes. */
 export const SITE_HOST = new URL(SITE_URL).hostname;
 
-/** Rob's direct address, shown in the founder block on Home and Contact. */
-export const FOUNDER_EMAIL = process.env.FOUNDER_EMAIL ?? `rob@${SITE_HOST}`;
+/** Vink's direct address, shown in the team block on Home and Contact. */
+export const CONTACT_EMAIL = process.env.CONTACT_EMAIL ?? `support@${SITE_HOST}`;
 
 /** Where security problems are reported (Terms page, security.txt). */
 export const SECURITY_EMAIL = process.env.SECURITY_EMAIL ?? `security@${SITE_HOST}`;

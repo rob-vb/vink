@@ -400,15 +400,15 @@ test("existing Organisations move to the internal unlimited Plan", async () => {
       name: "Test BV",
       slug: "test-bv",
     });
-    await ctx.db.insert("memberships", { organisationId, userId: "rob", role: "admin" });
+    await ctx.db.insert("memberships", { organisationId, userId: "owner", role: "admin" });
     return organisationId;
   });
 
   const { migrated } = await t.mutation(internal.pages.migrateExistingToUnlimited, {});
 
   expect(migrated).toBe(1);
-  const rob = t.withIdentity({ subject: "rob", email: "rob@example.com" });
-  expect(await usage(rob, "test-bv")).toMatchObject({
+  const owner = t.withIdentity({ subject: "owner", email: "owner@example.com" });
+  expect(await usage(owner, "test-bv")).toMatchObject({
     plan: "internal_unlimited",
     unlimited: true,
   });
@@ -425,8 +425,8 @@ test("Members see the remaining Pages; Plans are only set internally", async () 
   expect(await usage(cas, slug)).toMatchObject({ remaining: 20 });
 });
 
-test("Rob is emailed about every new Organisation, with the email domain", async () => {
-  vi.stubEnv("SIGNUP_NOTIFY_TO", "rob@vink.test");
+test("Vink is emailed about every new Organisation, with the email domain", async () => {
+  vi.stubEnv("SIGNUP_NOTIFY_TO", "team@vink.test");
   const t = newBackend();
   await t.withIdentity({ subject: "ann", email: "ann@kantoornoord.nl" }).mutation(
     api.onboarding.createOrganisation,
@@ -434,7 +434,7 @@ test("Rob is emailed about every new Organisation, with the email domain", async
   );
   await t.finishAllScheduledFunctions(vi.runAllTimers);
 
-  const mail = sent.find((m) => m.to.includes("rob@vink.test"));
+  const mail = sent.find((m) => m.to.includes("team@vink.test"));
   expect(mail?.subject).toContain("Kantoor Noord");
   expect(mail?.html).toContain("kantoornoord.nl");
 });

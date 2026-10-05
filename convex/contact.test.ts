@@ -18,7 +18,7 @@ beforeEach(() => {
   vi.useFakeTimers({ toFake: ["Date"] });
   vi.setSystemTime(new Date("2026-09-30T09:00:00Z"));
   vi.stubEnv("RESEND_API_KEY", "re_test");
-  vi.stubEnv("CONTACT_TO", "rob@vink.test");
+  vi.stubEnv("CONTACT_TO", "team@vink.test");
   vi.stubEnv("VINK_PROXY_SECRET", PROXY_SECRET);
   sent = [];
   vi.stubGlobal(
@@ -69,7 +69,7 @@ test("a request is emailed once to CONTACT_TO, with Reply-To set to the visitor"
 
   expect(sent).toHaveLength(1);
   const [mail] = sent;
-  expect(mail.to).toEqual(["rob@vink.test"]);
+  expect(mail.to).toEqual(["team@vink.test"]);
   expect(mail.reply_to).toBe("marieke@hoekstra-transport.nl");
   expect(mail.subject).toBe("Integration request: Marieke Hoekstra, Hoekstra Transport");
   for (const value of ["Marieke Hoekstra", "Exact Online", "Delivery notes and invoices", "about 1,500"]) {

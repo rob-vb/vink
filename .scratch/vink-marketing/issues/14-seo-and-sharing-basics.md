@@ -24,7 +24,7 @@ How do we do per-page, per-language metadata and sharing on this repo's Next.js 
   - Home: Organization + WebSite.
   - Pricing: SoftwareApplication with one Offer per plan (EUR, excl. VAT), built from the plan data. It gives no rich result: Google requires ratings, and we won't fake them.
   - FAQPage is optional. Google stopped showing FAQ rich results for everyone on 7 May 2026.
-- **AI-SEO.** Google says llms.txt and special schema aren't needed. A small English `app/llms.txt/route.ts` (facts, prices, links) is worth ~20 minutes — **included** (Rob, 2026-09-30). The real lever is static HTML with prices and FAQ as text. Submit the sitemap to Search Console (DNS domain property) and Bing.
+- **AI-SEO.** Google says llms.txt and special schema aren't needed. A small English `app/llms.txt/route.ts` (facts, prices, links) is worth ~20 minutes — **included** (2026-09-30). The real lever is static HTML with prices and FAQ as text. Submit the sitemap to Search Console (DNS domain property) and Bing.
 - **Per-page checklist** (EN and NL): localized title (~50–60 chars) and unique description (~140–160 chars); own canonical; the three hreflang entries; og url and locale; OG card or inherited card; sitemap entry with alternates; one `<h1>`. Pricing adds Offers JSON-LD and Home adds Organization/WebSite. `/app/*` gets noindex and stays out of the sitemap.
 
 Nothing was built. The findings end with open checks: build output, view-source and curl checks, and share debuggers.

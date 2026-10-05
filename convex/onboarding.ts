@@ -43,7 +43,7 @@ export const createOrganisation = userMutation({
 });
 
 /**
- * Tells Rob about every new Organisation, to spot abuse and follow up. Sent to
+ * Tells Vink about every new Organisation, to spot abuse and follow up. Sent to
  * SIGNUP_NOTIFY_TO; nothing is sent when it isn't set.
  */
 export const notifyNewOrganisation = internalAction({

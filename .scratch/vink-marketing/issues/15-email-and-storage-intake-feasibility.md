@@ -8,7 +8,7 @@ Blocked by:
 
 What does it take for Vink to receive Documents by email and from cloud storage, as input for Volume intake at launch? Cover:
 
-- **Email-in**: inbound providers that fit (Resend inbound if it exists, Cloudflare Email Routing/Workers — we already use R2 —, Postmark, Mailgun, SES): EU processing/storage, price at ~5–20k mails/month, webhook payload (attachments inline or fetched, size limits), catch-all/subdomain addressing (`<token>@in.<domain>`), SPF/DKIM/DMARC checks available to reject spoofed senders, and what happens to addresses when the domain moves (docuhelper.robvb.com → a future vink domain).
+- **Email-in**: inbound providers that fit (Resend inbound if it exists, Cloudflare Email Routing/Workers — we already use R2 —, Postmark, Mailgun, SES): EU processing/storage, price at ~5–20k mails/month, webhook payload (attachments inline or fetched, size limits), catch-all/subdomain addressing (`<token>@in.<domain>`), SPF/DKIM/DMARC checks available to reject spoofed senders, and what happens to addresses when the domain moves (docuhelper domain → vink.page).
 - **Cloud storage "watch a folder"**: Google Drive (which scope can watch a user-chosen folder for new files — `drive.file` + Picker vs `drive.readonly`; restricted-scope verification / CASA assessment cost and timeline; push notifications vs polling), Microsoft OneDrive/SharePoint (Graph scopes, user vs admin consent, change notifications/delta, publisher verification), Dropbox (scopes, webhooks, app review), iCloud Drive (is there any third-party API at all?).
 - Per option: rough build size, recurring cost, and review/verification hurdles before launch.
 

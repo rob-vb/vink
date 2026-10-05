@@ -22,7 +22,7 @@ Which plans does Vink offer and how are they metered — credits or not, per pag
 | Business | 3,000 | €199 | €159 (€1,908/yr) | €0.066 | −26% (€269) | 55% / 43% |
 | Custom | 3,000+ | from €500/month, annual only | — | ≥ €0.05 | — | ≥ 40% |
 
-- **Why these levels:** the `pricing` skill's checks — value/price ~5× (Starter), ~9× (Team), ~12× (Business) against ~€0.80/page of manual keying saved; Team is the obvious middle choice (3.3× the pages for 1.8× the price); Business is 2.2× Team; "when in doubt, price higher". Every paid plan stays cheaper than Parseur and than DocuPipe with confidence scores. Rob first wanted 50% under Parseur everywhere; that loses money from ~5k pages/month, so it was dropped.
+- **Why these levels:** the `pricing` skill's checks — value/price ~5× (Starter), ~9× (Team), ~12× (Business) against ~€0.80/page of manual keying saved; Team is the obvious middle choice (3.3× the pages for 1.8× the price); Business is 2.2× Team; "when in doubt, price higher". Every paid plan stays cheaper than Parseur and than DocuPipe with confidence scores. We first wanted 50% under Parseur everywhere; that loses money from ~5k pages/month, so it was dropped.
 - **Custom** (not "Enterprise": we have no SSO, audit logs or certifications yet): more than 3,000 pages a month, a DPA, custom terms, SLA, payment by invoice, volume price. Minimum €500/month, billed annually.
 - **Launch-price rule:** after 20 paying customers or 3 months, review prices for new customers only (raise if trial-to-paid > 40% or price never comes up as an objection). Existing customers keep their price for 12 months.
 
@@ -34,7 +34,7 @@ Which plans does Vink offer and how are they metered — credits or not, per pag
 
 **What the app must enforce in this effort** (billing itself is a later effort):
 - a plan per Organisation with a Page allowance and a reset date, Free Pages for first-created Organisations, the refuse-at-upload check, the 80% warning and a remaining-pages indicator;
-- "Upgrade" goes to Contact; Rob sets plans by hand and invoices manually until Stripe exists;
+- "Upgrade" goes to Contact; we set plans by hand and invoices manually until Stripe exists;
 - existing Organisations (test accounts, test@test.nl, the Claude bridge) get an internal unlimited plan that never appears on the site.
 
 **Pricing page** (Mobbin: Chatbase, Framer, ToDesktop, ClassPass, Zaro):

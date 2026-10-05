@@ -1,12 +1,12 @@
 {
   "meta": {
     "title": "Contact",
-    "description": "Questions about Vink, a Custom plan or payment by invoice? Send a message and Rob replies personally, usually within one working day."
+    "description": "Questions about Vink, a Custom plan or payment by invoice? Send a message and we reply personally, usually within one working day."
   },
   "header": {
     "eyebrow": "Contact",
     "title": "Talk to a person.",
-    "subtitle": "Questions about your documents, a Custom plan or payment by invoice. Rob reads every message and replies to your own email."
+    "subtitle": "Questions about your documents, a Custom plan or payment by invoice. We read every message and reply to your own email."
   },
   "formTitle": "Send a message",
   "direct": "Prefer email? Write to <email></email>.",

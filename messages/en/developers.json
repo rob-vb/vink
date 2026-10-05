@@ -97,13 +97,13 @@
   },
   "service": {
     "title": "Integration service",
-    "lead": "No developer, or no time? Rob builds the connection for you.",
-    "body": "A one-off build, never part of a plan. Rob writes the receiver that takes the Payload into your system, whether that is an ERP, an accounting package, a spreadsheet or a database, and sets up your Forms with you.",
+    "lead": "No developer, or no time? We build the connection for you.",
+    "body": "A one-off build, never part of a plan. We write the receiver that takes the Payload into your system, whether that is an ERP, an accounting package, a spreadsheet or a database, and sets up your Forms with you.",
     "includes": {
       "title": "What you get",
       "receiver": "A receiver that verifies the signature and writes the data into your system",
       "forms": "Your Forms and Fields set up with you, tested on your own documents",
-      "hosting": "You host it, or Rob hosts it for a monthly fee on request",
+      "hosting": "You host it, or we host it for a monthly fee on request",
       "changes": "Maintenance and changes later, billed per job"
     },
     "need": {
@@ -115,7 +115,7 @@
     "price": "From €950 per connection, excl. VAT",
     "priceNote": "A fixed price, agreed before we start.",
     "formTitle": "Ask about a connection",
-    "formBody": "Tell us a little about your system and documents. Rob replies personally."
+    "formBody": "Tell us a little about your system and documents. We reply personally."
   },
   "code": {
     "copy": "Copy",

@@ -10,7 +10,7 @@ Source of the decisions: [Positioning and messaging](../.scratch/vink-marketing/
 **What it does:** Vink reads PDFs (typed, scanned or handwritten, one page or a bundle of papers) and fills the fields a team defines. Values it isn't sure about are flagged for a person to check. After approval, the data goes to the team's own system as JSON.
 **Product category:** "automated data entry" in copy (how ops teams name the problem); "document data extraction" as the SEO/subtitle term. Not "intelligent document processing".
 **Product type:** B2B SaaS, self-serve.
-**Business model:** metered per Page; Free Pages (20, once), Starter, Team, Business, Custom. See [Plans and pricing model](../.scratch/vink-marketing/issues/03-plans-and-pricing-model.md). Separate paid integration service by Rob.
+**Business model:** metered per Page; Free Pages (20, once), Starter, Team, Business, Custom. See [Plans and pricing model](../.scratch/vink-marketing/issues/03-plans-and-pricing-model.md). Separate paid integration service by Vink.
 
 ## Target Audience
 **Target companies:** operations and admin teams, Netherlands first, small to large companies (larger parties welcome, served through Custom).
@@ -27,7 +27,7 @@ Source of the decisions: [Positioning and messaging](../.scratch/vink-marketing/
 |---------|-------------|-----------|------------------|
 | Ops/admin lead | Time, fewer mistakes | Team retypes documents all day | Clean data out; you only check what's unsure |
 | Finance/owner | Cost, risk | Manual processing is slow and error-prone | Per-page pricing, 20 free pages, nothing sent without approval |
-| IT/developer | Clean integration, security | Another system to connect | Signed JSON webhook, retries, test-send; or Rob builds it |
+| IT/developer | Clean integration, security | Another system to connect | Signed JSON webhook, retries, test-send; or we build it |
 
 ## Problems & Pain Points
 **Core problem:** teams retype (NL: *overtikken*) or process by hand (*handmatig verwerken*) the data in incoming documents.
@@ -48,7 +48,7 @@ Source of the decisions: [Positioning and messaging](../.scratch/vink-marketing/
 - Flags only what it isn't sure about; every value shows what was read and on which page.
 - Nothing is sent without approval; Auto-Send for documents Vink is sure about.
 - Stored in the EU, deleted 30 days after sending.
-- A real person (Rob) who can build the connection for you.
+- Real people who can build the connection for you.
 
 ## Objections
 | Objection | Response |
@@ -96,7 +96,7 @@ Source of the decisions: [Positioning and messaging](../.scratch/vink-marketing/
 ## Proof Points
 **Metrics:** "Most documents in under a minute" (measured 16–55 s for 1–3 page PDFs). No accuracy percentages: the benchmark is 5 documents.
 **Customers:** none yet; no logos, no fake testimonials.
-**Other proof:** real app screenshots, the clickable demo, a real Payload, a founder block by Rob (photo, direct email) on Home and Contact, the subprocessor list.
+**Other proof:** real app screenshots, the clickable demo, a real Payload, a team block ("Who's behind Vink", direct email) on Home and Contact, the subprocessor list.
 **Value themes:**
 | Theme | Proof |
 |-------|-------|

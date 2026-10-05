@@ -82,7 +82,7 @@ export const planName = v.union(
   v.literal("team"),
   v.literal("business"),
   v.literal("custom"),
-  // For Rob's own and test Organisations: never refuses, never on the site.
+  // For Vink's own and test Organisations: never refuses, never on the site.
   v.literal("internal_unlimited"),
 );
 

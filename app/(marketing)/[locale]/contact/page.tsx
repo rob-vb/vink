@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
-import { FounderBlock } from "@/components/marketing/blocks";
+import { TeamBlock } from "@/components/marketing/blocks";
 import { LogInLink } from "@/components/marketing/cta-links";
 import { RequestForm } from "@/components/marketing/request-form";
 import { Container, SectionHeading } from "@/components/marketing/section";
 import { Link } from "@/i18n/navigation";
 import { isLocale, routing, type Locale } from "@/i18n/routing";
 import { pageMetadata } from "@/lib/seo";
-import { FOUNDER_EMAIL } from "@/lib/site";
+import { CONTACT_EMAIL } from "@/lib/site";
 
 function localeOf(value: string): Locale {
   return isLocale(value) ? value : routing.defaultLocale;
@@ -30,19 +30,19 @@ export default async function ContactPage({ params }: PageProps<"/[locale]/conta
         <div className="mt-12 grid grid-cols-[minmax(0,1fr)] gap-12 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)] lg:gap-16">
           <div>
             <h2 className="mb-4 text-xl font-semibold">{t("formTitle")}</h2>
-            <RequestForm kind="contact" fallbackEmail={FOUNDER_EMAIL} />
+            <RequestForm kind="contact" fallbackEmail={CONTACT_EMAIL} />
             <p className="mt-4 text-sm text-muted-foreground">
               {t.rich("direct", {
                 email: () => (
-                  <a href={`mailto:${FOUNDER_EMAIL}`} className={`${inlineLink} font-mono`}>
-                    {FOUNDER_EMAIL}
+                  <a href={`mailto:${CONTACT_EMAIL}`} className={`${inlineLink} font-mono`}>
+                    {CONTACT_EMAIL}
                   </a>
                 ),
               })}
             </p>
           </div>
           <div className="flex flex-col gap-10">
-            <FounderBlock className="rounded-2xl border bg-panel p-6 sm:p-8" />
+            <TeamBlock className="rounded-2xl border bg-panel p-6 sm:p-8" />
             <div>
               <h2 className="text-base font-semibold">{t("other.title")}</h2>
               <ul className="mt-3 flex flex-col gap-2 text-sm text-muted-foreground">

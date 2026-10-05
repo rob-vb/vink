@@ -23,7 +23,7 @@ Full context for the other marketing skills: `.agents/product-marketing.md` (v1)
 - **"AI":** never in visible copy. It is allowed in meta and SEO ("Vink: AI document data extraction for operations teams"), plus one factual line on Developers ("reads with Gemini on Vertex AI, EU region").
 - **Proof without customers:**
   - Show the product itself: real screens, the demo and a real Payload.
-  - A founder block by Rob, with photo and direct email, on Home and Contact.
+  - A team block ("Who's behind Vink") with direct email, on Home and Contact.
   - "Most documents in under a minute" (measured 16–55 s for 1–3 pages).
   - No accuracy percentages: the benchmark is 5 documents.
   - No competitors named, no logos, no founding-customer offer. The integration service is always paid.

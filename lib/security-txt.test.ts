@@ -16,8 +16,8 @@ test("points to security@ on the site's own host, expires a year ahead, and name
 });
 
 test("a configured contact wins: an address becomes mailto:, a URL stays as it is", () => {
-  expect(securityTxt({ siteUrl: "https://vink.example", contact: "rob@vink.example", now })).toContain(
-    "Contact: mailto:rob@vink.example\n",
+  expect(securityTxt({ siteUrl: "https://vink.example", contact: "security@vink.example", now })).toContain(
+    "Contact: mailto:security@vink.example\n",
   );
   expect(
     securityTxt({ siteUrl: "https://vink.example", contact: "https://vink.example/security", now }),
