@@ -42,6 +42,7 @@ import type * as lib_payload from "../lib/payload.js";
 import type * as lib_pdfStore from "../lib/pdfStore.js";
 import type * as lib_pipeline from "../lib/pipeline.js";
 import type * as lib_proposer from "../lib/proposer.js";
+import type * as lib_readThinking from "../lib/readThinking.js";
 import type * as lib_reader from "../lib/reader.js";
 import type * as lib_reading from "../lib/reading.js";
 import type * as lib_reviewState from "../lib/reviewState.js";
@@ -101,6 +102,7 @@ declare const fullApi: ApiFromModules<{
   "lib/pdfStore": typeof lib_pdfStore;
   "lib/pipeline": typeof lib_pipeline;
   "lib/proposer": typeof lib_proposer;
+  "lib/readThinking": typeof lib_readThinking;
   "lib/reader": typeof lib_reader;
   "lib/reading": typeof lib_reading;
   "lib/reviewState": typeof lib_reviewState;
