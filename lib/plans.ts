@@ -1,4 +1,4 @@
-// The public Plans (CONTEXT.md, Plan): one place for names, Pages and prices.
+// The public Plans (GLOSSARY.md, Plan): one place for names, Pages and prices.
 // The pricing cards, the Home pricing row, the Pricing JSON-LD Offers and
 // llms.txt all read this, so a price change is one edit. Prices are EUR,
 // excl. VAT; annual billing is 20% off and shown as its monthly equivalent.
