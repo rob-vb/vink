@@ -58,7 +58,7 @@ export default async function ContactPage({ params }: PageProps<"/[locale]/conta
                 <li>
                   {t.rich("other.security", {
                     link: (chunks) => (
-                      <Link href="/security#report" className={inlineLink}>
+                      <Link href="/terms#report" className={inlineLink}>
                         {chunks}
                       </Link>
                     ),

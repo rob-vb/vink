@@ -1,34 +1,13 @@
 {
-  "meta": {
-    "title": "Beveiliging en privacy",
-    "description": "Waar Vink je documenten opslaat, hoe lang het ze bewaart, wie ze verwerkt en hoe toegang geregeld is. Opgeslagen in de EU, verwijderd 30 dagen na versturen."
-  },
-  "og": {
-    "title": "Je data, kort bewaard. Opgeslagen in de EU, verwijderd 30 dagen na versturen.",
-    "alt": "Beveiliging en privacy bij Vink. Opgeslagen in de EU, verwijderd 30 dagen na versturen."
-  },
   "toc": {
     "label": "Op deze pagina",
-    "summary": "Samenvatting",
     "where": "Waar je data staat",
     "retention": "Hoe lang we het bewaren",
-    "subprocessors": "Wie het verwerkt",
+    "subprocessors": "Subverwerkers",
     "access": "Toegang en accounts",
     "transit": "Onderweg en opgeslagen",
     "notYet": "Wat we nog niet hebben",
     "report": "Een probleem melden"
-  },
-  "header": {
-    "eyebrow": "Beveiliging en privacy",
-    "title": "Je data, kort bewaard.",
-    "subtitle": "Eerst de korte versie, daarna de details die een IT- of inkoopbeoordelaar kan nagaan."
-  },
-  "summary": {
-    "title": "Samenvatting",
-    "eu": "Je documenten worden in de EU opgeslagen: de database in Ierland, de pdf's in Cloudflare R2 met EU-jurisdictie.",
-    "deleted": "De pdf en waarden van een document worden standaard 30 dagen na versturen verwijderd. Je Admin kan alles van 1 tot 365 dagen instellen.",
-    "approval": "Er gaat niets naar je systeem tot iemand het goedkeurt. Auto-Send staat standaard uit.",
-    "subprocessors": "Twee subverwerkers zitten in de Verenigde Staten. Hieronder staat precies wat ze ontvangen."
   },
   "where": {
     "title": "Waar je data staat",
@@ -50,9 +29,8 @@
     "account": "Wil je je account of organisatie opheffen? Mail ons. We verwijderen alles binnen 30 dagen."
   },
   "subprocessors": {
-    "title": "Wie het verwerkt",
+    "title": "Subverwerkers",
     "intro": "Elke partij die met je data werkt, waarvoor, waar en wat ze ontvangt.",
-    "caption": "Subverwerkers",
     "name": "Naam",
     "purpose": "Doel",
     "region": "Regio",

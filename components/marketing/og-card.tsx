@@ -10,7 +10,7 @@ import { isLocale, routing, type Locale } from "@/i18n/routing";
 export const ogSize = { width: 1200, height: 630 };
 export const ogContentType = "image/png";
 
-type OgNamespace = "home" | "pricing" | "developers" | "security" | "common";
+type OgNamespace = "home" | "pricing" | "developers" | "common";
 
 /** Reads a page's `og` strings straight from the message files (no request context in image routes). */
 export async function ogText(locale: string, ns: OgNamespace, key = "og") {

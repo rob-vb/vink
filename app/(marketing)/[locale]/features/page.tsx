@@ -231,11 +231,11 @@ export default async function FeaturesPage() {
         />,
       )}
 
-      {/* Around it: a bento of three cards */}
+      {/* Around it: a bento of two cards */}
       {chapter(
         "around",
         "+",
-        <div className="mt-10 grid gap-4 lg:grid-cols-3">
+        <div className="mt-10 grid gap-4 lg:grid-cols-2">
           <BentoCard
             title={t("team.title")}
             text={t("team.text")}
@@ -250,25 +250,11 @@ export default async function FeaturesPage() {
             }
           />
           <BentoCard
-            title={t("data.title")}
-            text={t("data.text")}
-            bullets={list("data.bullets")}
-            link={{ label: t("data.link"), href: "/security" }}
-            visual={
-              <Screenshot
-                name="retention"
-                alt={t("data.alt")}
-                framePath={t("frames.settings")}
-                placeholder={t("data.placeholder")}
-              />
-            }
-          />
-          <BentoCard
             title={t("plans.title")}
             text={t("plans.text")}
             link={{ label: t("plans.link"), href: "/pricing" }}
             visual={
-              <ul className="grid grid-cols-1 gap-2.5 rounded-xl border bg-background p-5 text-sm sm:grid-cols-2 lg:grid-cols-1">
+              <ul className="grid grid-cols-1 gap-2.5 rounded-xl border bg-background p-5 text-sm sm:grid-cols-2">
                 {list("plans.includes").map((item) => (
                   <li key={item} className="flex items-center gap-2.5">
                     <Check className="size-4 shrink-0 text-emerald-600 dark:text-emerald-500" />

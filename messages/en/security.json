@@ -1,34 +1,13 @@
 {
-  "meta": {
-    "title": "Security and privacy",
-    "description": "Where Vink stores your documents, how long it keeps them, who processes them and how access is controlled. Stored in the EU, deleted 30 days after sending."
-  },
-  "og": {
-    "title": "Your data, kept short. Stored in the EU, deleted 30 days after sending.",
-    "alt": "Vink security and privacy. Stored in the EU, deleted 30 days after sending."
-  },
   "toc": {
     "label": "On this page",
-    "summary": "Summary",
     "where": "Where your data lives",
     "retention": "How long we keep it",
-    "subprocessors": "Who processes it",
+    "subprocessors": "Subprocessors",
     "access": "Access and accounts",
     "transit": "In transit and at rest",
     "notYet": "What we don't have yet",
     "report": "Reporting a problem"
-  },
-  "header": {
-    "eyebrow": "Security & privacy",
-    "title": "Your data, kept short.",
-    "subtitle": "The short version first, then the details an IT or procurement reviewer can check."
-  },
-  "summary": {
-    "title": "Summary",
-    "eu": "Your documents are stored in the EU: the database in Ireland, the PDFs in Cloudflare R2 with EU jurisdiction.",
-    "deleted": "A Document's PDF and values are deleted 30 days after sending by default. Your Admin can set anywhere from 1 to 365 days.",
-    "approval": "Nothing is sent to your system until someone approves it. Auto-Send is off by default.",
-    "subprocessors": "Two subprocessors are in the United States. We list them below with exactly what they receive."
   },
   "where": {
     "title": "Where your data lives",
@@ -50,9 +29,8 @@
     "account": "To close your account or Organisation, email us. We delete everything within 30 days."
   },
   "subprocessors": {
-    "title": "Who processes it",
+    "title": "Subprocessors",
     "intro": "Every party that handles your data, what for, where, and what it receives.",
-    "caption": "Subprocessors",
     "name": "Name",
     "purpose": "Purpose",
     "region": "Region",

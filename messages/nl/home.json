@@ -73,11 +73,6 @@
       "cta": "Vraag naar een koppeling"
     }
   },
-  "data": {
-    "title": "Je data, kort bewaard.",
-    "body": "Opgeslagen in de EU en 30 dagen na versturen verwijderd. Je ziet precies wie het verwerkt.",
-    "link": "Beveiliging en privacy"
-  },
   "pricing": {
     "title": "Elk abonnement bevat alles.",
     "subtitle": "Je kiest alleen hoeveel pagina's. Prijzen excl. btw.",
@@ -86,7 +81,7 @@
     "pages": "{count} pagina's",
     "customPages": "{count}+ pagina's",
     "perPage": "{price} per pagina",
-    "customNote": "Verwerkersovereenkomst, factuur, volumeprijs",
+    "customNote": "Volumeprijs, betalen op factuur",
     "popular": "Meest gekozen",
     "free": "Begin met 20 gratis pagina's. Geen creditcard nodig.",
     "link": "Bekijk prijzen"
@@ -104,10 +99,6 @@
     "developer": {
       "q": "We hebben geen developer.",
       "a": "Wij bouwen de koppeling met je systeem voor je. Dat is een betaalde dienst met een prijs die we vooraf afspreken."
-    },
-    "data": {
-      "q": "Waar gaat onze data naartoe?",
-      "a": "Het wordt opgeslagen in de EU en 30 dagen na versturen verwijderd. We publiceren de <link>volledige lijst van wie het verwerkt</link>."
     },
     "templates": {
       "q": "Moet ik templates instellen?",

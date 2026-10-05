@@ -49,7 +49,7 @@ export function TrustRow({ className }: { className?: string }) {
         className,
       )}
     >
-      {(["eu", "deleted", "approval"] as const).map((key) => (
+      {(["anyPdf", "fields", "approval"] as const).map((key) => (
         <li key={key} className="inline-flex items-center gap-2">
           <Check className="size-4 text-emerald-600 dark:text-emerald-400" strokeWidth={2.5} aria-hidden />
           {t(key)}

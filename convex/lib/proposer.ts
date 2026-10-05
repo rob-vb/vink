@@ -13,7 +13,7 @@ Propose one Field per piece of data in the Reading. List everything, and set "ti
 - "label": the term as printed on the Document, in its language (e.g. "Kilometerstand").
 - "key": English camelCase from the meaning (e.g. "mileageKm").
 - "description": English, with the printed terms as synonyms (e.g. "Odometer reading in km (Kilometerstand, Km. stand)").
-- "type": text, number (amounts and measures), date, boolean (ticks), choice or list. Use "choice" only when the options are printed on the paper (pre-printed boxes or a list), never from one filled-in value; give them as "options". Use "list" for repeated objects (one entry per tyre change, per invoice line), with their "fields" (never lists themselves).
+- "type": text, number (amounts and measures), date, boolean (ticks), choice or list. Use "choice" only when the options are printed on the paper (pre-printed boxes or a list), never from one filled-in value; give them as "options". Use "list" for repeated objects (one entry per delivery note line, per invoice line), with their "fields" (never lists themselves).
 
 Answer with {"fields": [...]} only.`;
 

@@ -27,7 +27,7 @@ export function GET() {
       (plan) =>
         `- ${plan.name}: ${formatNumber(plan.pages, "en")} pages/month, ${price(plan.monthly)}/month, or ${price(plan.annualMonthly)}/month billed annually.`,
     ),
-    `- ${custom.name}: more than ${formatNumber(custom.fromPages, "en")} pages/month, DPA, payment by invoice, from ${price(custom.fromMonthly)}/month billed annually.`,
+    `- ${custom.name}: more than ${formatNumber(custom.fromPages, "en")} pages/month, payment by invoice, from ${price(custom.fromMonthly)}/month billed annually.`,
     "- Every plan includes everything: unlimited users, all Forms and Fields, review and Approval, webhook Integrations.",
     "- Integration service: Vink builds the connection to your system, from €950 per connection, excl. VAT.",
     "",
@@ -37,7 +37,7 @@ export function GET() {
     `- [Features](${localeUrl("en", "/features")})`,
     `- [Pricing](${localeUrl("en", "/pricing")})`,
     `- [Developers: Payload, signature, retries](${localeUrl("en", "/developers")})`,
-    `- [Security and privacy, subprocessors](${localeUrl("en", "/security")})`,
+    `- [Terms, data and subprocessors](${localeUrl("en", "/terms")})`,
     `- [Contact](${localeUrl("en", "/contact")})`,
     `- [Dutch site](${localeUrl("nl", "/")})`,
     "",

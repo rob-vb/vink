@@ -73,11 +73,6 @@
       "cta": "Ask about a connection"
     }
   },
-  "data": {
-    "title": "Your data, kept short.",
-    "body": "Stored in the EU and deleted 30 days after sending. You see exactly who processes it.",
-    "link": "Security and privacy"
-  },
   "pricing": {
     "title": "Every plan includes everything.",
     "subtitle": "You only choose how many pages. Prices excl. VAT.",
@@ -86,7 +81,7 @@
     "pages": "{count} pages",
     "customPages": "{count}+ pages",
     "perPage": "{price} per page",
-    "customNote": "DPA, invoice, volume price",
+    "customNote": "Volume price, payment by invoice",
     "popular": "Most popular",
     "free": "Start with 20 free pages. No credit card.",
     "link": "See pricing"
@@ -104,10 +99,6 @@
     "developer": {
       "q": "We don't have a developer.",
       "a": "We'll build the connection to your system for you. It's a paid service with a price agreed up front."
-    },
-    "data": {
-      "q": "Where does our data go?",
-      "a": "It's stored in the EU and deleted 30 days after sending. We publish the <link>full list of who processes it</link>."
     },
     "templates": {
       "q": "Do I need to set up templates?",

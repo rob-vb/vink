@@ -11,7 +11,7 @@ export const SITE_HOST = new URL(SITE_URL).hostname;
 /** Rob's direct address, shown in the founder block on Home and Contact. */
 export const FOUNDER_EMAIL = process.env.FOUNDER_EMAIL ?? `rob@${SITE_HOST}`;
 
-/** Where security problems are reported (Security page, security.txt). */
+/** Where security problems are reported (Terms page, security.txt). */
 export const SECURITY_EMAIL = process.env.SECURITY_EMAIL ?? `security@${SITE_HOST}`;
 
 /** The product lives under its own root layout: links to it are plain `<a>`, never next/link. */

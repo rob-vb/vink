@@ -18,7 +18,6 @@ export function SiteFooter() {
         { href: "/features", label: t("footer.features") },
         { href: "/pricing", label: t("footer.pricing") },
         { href: "/developers", label: t("footer.developers") },
-        { href: "/security", label: t("footer.security") },
       ],
     },
     {
@@ -33,7 +32,6 @@ export function SiteFooter() {
       links: [
         { href: "/privacy", label: t("footer.privacy") },
         { href: "/terms", label: t("footer.terms") },
-        { href: "/security#subprocessors", label: t("footer.subprocessors") },
       ],
     },
   ];

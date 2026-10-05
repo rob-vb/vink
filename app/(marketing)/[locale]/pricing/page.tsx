@@ -1,4 +1,4 @@
-import { ArrowRight, FileText, MapPin, RotateCcw, ShieldCheck, Timer, Users, Webhook } from "lucide-react";
+import { ArrowRight, FileText, RotateCcw, ShieldCheck, Users, Webhook } from "lucide-react";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { Badge } from "@/components/ui/badge";
@@ -32,17 +32,15 @@ export default async function PricingPage({ params }: PageProps<"/[locale]/prici
     { key: "forms", icon: FileText },
     { key: "review", icon: ShieldCheck },
     { key: "integrations", icon: Webhook },
-    { key: "eu", icon: MapPin },
-    { key: "retention", icon: Timer },
   ] as const;
 
-  const faqKeys = ["users", "page", "runOut", "rollover", "vat", "cancel", "data", "intake"] as const;
+  const faqKeys = ["users", "page", "runOut", "rollover", "vat", "cancel", "intake"] as const;
   const faqItems = faqKeys.map((key) => ({
     id: key,
     question: t(`faq.${key}.q`),
     answer: t.rich(`faq.${key}.a`, {
       link: (chunks) => (
-        <Link href={key === "data" ? "/security#subprocessors" : "/contact"} className={inlineLink}>
+        <Link href="/contact" className={inlineLink}>
           {chunks}
         </Link>
       ),
@@ -105,7 +103,7 @@ export default async function PricingPage({ params }: PageProps<"/[locale]/prici
                 {t("custom.body", { price: formatEuro(custom.fromMonthly, locale) })}
               </p>
               <ul className="mt-4 flex flex-wrap gap-2">
-                {(["volume", "dpa", "invoice", "terms", "sla"] as const).map((key) => (
+                {(["volume", "invoice", "terms", "sla"] as const).map((key) => (
                   <li key={key}>
                     <Badge variant="outline" className="h-7 bg-card px-3 text-sm font-normal">
                       {t(`custom.chips.${key}`)}
@@ -125,7 +123,7 @@ export default async function PricingPage({ params }: PageProps<"/[locale]/prici
       <section className="border-y bg-panel/60 py-16 sm:py-24">
         <Container>
           <SectionHeading title={t("includes.title")} className="mb-10" />
-          <ul className="grid gap-x-8 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
+          <ul className="grid gap-x-8 gap-y-8 sm:grid-cols-2 lg:grid-cols-4">
             {includes.map(({ key, icon: Icon }) => (
               <li key={key} className="flex gap-4">
                 <span className="grid size-10 shrink-0 place-items-center rounded-lg border bg-card">

@@ -18,7 +18,7 @@ export async function LegalPage({
   links,
 }: {
   locale: Locale;
-  doc: "privacy" | "terms";
+  doc: "privacy";
   points: string[];
   links: Record<string, string>;
 }) {
@@ -37,13 +37,8 @@ export async function LegalPage({
   return (
     <main className="pt-14 pb-20 sm:pt-20 sm:pb-28">
       <Container className="max-w-3xl">
-        <p className="inline-block rounded-full border border-dashed px-3 py-1 font-mono text-xs tracking-wide text-muted-foreground uppercase">
-          {t("updated")}
-        </p>
-        <h1 className="mt-5 text-4xl font-semibold tracking-tight sm:text-5xl">{t(`${doc}.title`)}</h1>
-        <p className="mt-5 rounded-xl border-l-2 border-amber-500 bg-amber-50 px-4 py-3 text-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
-          {t(`${doc}.pending`)}
-        </p>
+        <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">{t(`${doc}.title`)}</h1>
+        <p className="mt-4 max-w-[60ch] text-muted-foreground">{t(`${doc}.pending`)}</p>
         <ul className="mt-8 flex list-disc flex-col gap-3 pl-5 text-[15.5px] leading-relaxed text-muted-foreground">
           {points.map((key) => (
             <li key={key}>{rich(`${doc}.points.${key}`, tags)}</li>

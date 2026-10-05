@@ -22,8 +22,7 @@
     "upload": "/app/o/kantoor-noord/forms/invoices",
     "form": "/app/o/kantoor-noord/forms/invoices",
     "integration": "/app/o/kantoor-noord/integrations",
-    "members": "/app/o/kantoor-noord/members",
-    "settings": "/app/o/kantoor-noord/settings"
+    "members": "/app/o/kantoor-noord/members"
   },
   "stops": {
     "arrives": {
@@ -48,8 +47,8 @@
     },
     "around": {
       "label": "Eromheen",
-      "title": "Voor het hele team, en data niet langer dan nodig.",
-      "lede": "Iedereen die met de documenten werkt, op elk abonnement. En niets wordt langer bewaard dan nodig."
+      "title": "Voor het hele team.",
+      "lede": "Iedereen die met de documenten werkt, op elk abonnement."
     }
   },
   "intake": {
@@ -146,18 +145,6 @@
     "alt": "De Ledenpagina met drie mensen en een openstaande uitnodiging.",
     "placeholder": "Leden"
   },
-  "data": {
-    "title": "Je data, kort bewaard.",
-    "text": "Opgeslagen in de EU en 30 dagen na verzending verwijderd, tenzij je anders kiest. Een Admin kan elk Document direct verwijderen.",
-    "bullets": [
-      "Bewaartermijn per Organisatie in te stellen",
-      "„Nu verwijderen” bij elk Document",
-      "Een openbare lijst van wie je data verwerkt"
-    ],
-    "link": "Beveiliging en privacy",
-    "alt": "De bewaartermijn van de Organisatie, en Nu verwijderen bij een Document.",
-    "placeholder": "Bewaartermijn"
-  },
   "plans": {
     "title": "Elk abonnement bevat alles.",
     "text": "Je kiest alleen hoeveel pagina's. Begin met 20 gratis pagina's, zonder creditcard.",
@@ -165,9 +152,7 @@
       "Onbeperkt gebruikers",
       "Alle Formulieren en velden",
       "Controle en Goedkeuring",
-      "Koppelingen",
-      "Opgeslagen in de EU",
-      "30 dagen bewaartermijn"
+      "Koppelingen"
     ],
     "link": "Bekijk de prijzen"
   },
