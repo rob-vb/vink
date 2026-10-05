@@ -71,7 +71,7 @@ export type VerifyRequest = {
   /** As in FillRequest. */
   id: string;
   field: FlatField;
-  /** The Field as a user knows it, e.g. `Tyre changes → Position`. */
+  /** The Field as a user knows it, e.g. `Invoice lines → Amount`. */
   label: string;
   value: string | number | boolean;
   readText: string;

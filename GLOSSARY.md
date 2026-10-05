@@ -20,7 +20,7 @@ A typed slot on a Form. It has a label (shown to users), a key (its name in the 
 _Avoid_: attribute, column
 
 **List Field**:
-A Field that holds any number of entries, each made up of the same sub-Fields (for example, one entry per changed tyre, or per invoice line). Sub-Fields are never lists themselves.
+A Field that holds any number of entries, each made up of the same sub-Fields (for example, one entry per delivery note line, or per invoice line). Sub-Fields are never lists themselves.
 _Avoid_: table, repeating group
 
 **Form Version**:
@@ -59,7 +59,7 @@ One run that turns a Document into Field Values for its Form Version, in four st
 _Avoid_: OCR, parse, scan
 
 **Reading**:
-A clean JSON description of everything a Document says, written by the vision model without knowing any Form: one object per real-world thing (a tyre change, an invoice line), with duplicates across bundled papers merged, conflicting readings kept side by side, and the pages each fact came from. It is stored with the Document and never sent.
+A clean JSON description of everything a Document says, written by the vision model without knowing any Form: one object per real-world thing (a delivered item, an invoice line), with duplicates across bundled papers merged, conflicting readings kept side by side, and the pages each fact came from. It is stored with the Document and never sent.
 _Avoid_: OCR output, transcript, raw extraction
 
 **Match**:
