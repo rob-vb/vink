@@ -19,7 +19,7 @@ Today: one PDF per upload (`upload-dialog.tsx` takes `files[0]`), up to 20 pages
   - Admins switch it on and replace it; replacing kills the old address immediately. Every Member can see and copy it.
   - Never reply to the sender. Each PDF attachment becomes a Document; refused attachments (no PDF, >20 pages, >25 MiB, out of Pages) create nothing. The Form's Intake Address panel shows **Recent emails**: the last 50, with sender, time, and per attachment "Document created" or the reason it was refused.
   - Out of Pages: refuse, like at upload, and email the Admins at most once a day ("Emails to [Form] are being refused: out of Pages", with a link to Upgrade/Contact).
-  - **Domain.** Rob buys the permanent intake apex (the Vink domain or a dedicated one) later, as a **pre-launch to-do**. Build and test on a throwaway domain via `INBOUND_DOMAIN`. No customer gets an address until the permanent domain is live on Cloudflare.
+  - **Domain.** We buy the permanent intake apex (the Vink domain or a dedicated one) later, as a **pre-launch to-do**. Build and test on a throwaway domain via `INBOUND_DOMAIN`. No customer gets an address until the permanent domain is live on Cloudflare.
 - **Out of this effort:** an upload API (Developers keeps "no upload API yet, tell us"; any system can already email in) and cloud-storage connectors (not mentioned on the site at all).
 
 **Site copy**

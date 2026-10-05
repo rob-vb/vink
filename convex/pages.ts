@@ -1,5 +1,5 @@
 // Plans and Pages: how many Pages an Organisation may still have read, and
-// charging them when Vink accepts a PDF. Rob sets Plans by hand until billing
+// charging them when Vink accepts a PDF. We set Plans by hand until billing
 // exists: the internal functions below run from the Convex dashboard or CLI.
 import { ConvexError, v, type Infer } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
@@ -129,7 +129,7 @@ async function ownPages(ctx: MutationCtx, organisationId: Id<"organisations">) {
 }
 
 /**
- * Rob: puts an Organisation on a Plan with its Pages per period and the date
+ * Admin: puts an Organisation on a Plan with its Pages per period and the date
  * the current period ends. The allowance starts afresh.
  *   npx convex run --prod pages:setPlan '{"organisationId":"…","plan":"team","allowance":1000,"periodEndsAt":1767225600000}'
  */
@@ -149,7 +149,7 @@ export const setPlan = internalMutation({
   },
 });
 
-/** Rob: adds Top-up Pages, valid until the end of the current period. */
+/** Admin: adds Top-up Pages, valid until the end of the current period. */
 export const addTopUp = internalMutation({
   args: { organisationId: v.id("organisations"), pages: v.number() },
   handler: async (ctx, { organisationId, pages: added }) => {
@@ -158,7 +158,7 @@ export const addTopUp = internalMutation({
   },
 });
 
-/** Rob: sets the Free Pages balance, e.g. to 0 against abuse. */
+/** Admin: sets the Free Pages balance, e.g. to 0 against abuse. */
 export const setFreePages = internalMutation({
   args: { organisationId: v.id("organisations"), freePages: v.number() },
   handler: async (ctx, { organisationId, freePages }) => {
@@ -214,7 +214,7 @@ export const advancePeriods = internalMutation({
 });
 
 /**
- * Once, when Plans ship: every existing Organisation (Rob's, the prod test
+ * Once, when Plans ship: every existing Organisation (Vink's own, the prod test
  * account's, the Claude bridge's) goes on the internal unlimited Plan.
  *   npx convex run --prod pages:migrateExistingToUnlimited
  */

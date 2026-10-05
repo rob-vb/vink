@@ -14,7 +14,7 @@ What is on `/features`? Settle which features get a section (e.g. any PDF incl. 
 
 ## Answer
 
-Rob picked **variant C, "Chapters"** in [Vink Features Page](https://claude.ai/artifact/GRrZDiN1L1jPeiSLuXbTik). Prototype source: branch `prototype/features-page`, `.scratch/vink-marketing/prototypes/` (A "Demo first" and B "Sticky index" kept there for reference).
+We picked **variant C, "Chapters"** in [Vink Features Page](https://claude.ai/artifact/GRrZDiN1L1jPeiSLuXbTik). Prototype source: branch `prototype/features-page`, `.scratch/vink-marketing/prototypes/` (A "Demo first" and B "Sticky index" kept there for reference).
 
 **Page order:** nav (Features active) → hero "Everything between the PDF and your system." with "Start free" + "Try the demo" and "20 free pages. No credit card." → **the 15-second video, big, under the hero** (the same video as Home) → four chapters, one per stop → the "Around it" bento → closing card "Stop retyping. Start with 20 pages." → footer.
 

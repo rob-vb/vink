@@ -42,8 +42,8 @@ export function ScreenshotFrame({
 }
 
 /**
- * A real app screenshot from `public/screenshots/<name>.png`. Until Rob adds
- * the file, a labelled placeholder of the same size shows instead.
+ * A real app screenshot from `public/screenshots/<name>.png`. Until the file
+ * is added, a labelled placeholder of the same size shows instead.
  * TODO(screenshots): see the list in the marketing build report.
  */
 export function Screenshot({

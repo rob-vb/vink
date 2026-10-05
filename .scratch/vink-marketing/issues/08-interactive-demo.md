@@ -12,7 +12,7 @@ Context from [Visual direction and homepage layout](07-visual-direction-and-home
 
 ## Answer
 
-Rob picked the direction of variant C ("clear this morning's documents"), but shaped exactly like the app instead of an inbox: variant **D** in [Vink Demo Behaviours](https://claude.ai/artifact/HNgL3bnsfBJfNYfUtSfRqK). Prototype source: branch `prototype/interactive-demo`, `.scratch/vink-marketing/prototypes/` (variants A inline tabs, B guided walkthrough, C inbox kept there for reference).
+We picked the direction of variant C ("clear this morning's documents"), but shaped exactly like the app instead of an inbox: variant **D** in [Vink Demo Behaviours](https://claude.ai/artifact/HNgL3bnsfBJfNYfUtSfRqK). Prototype source: branch `prototype/interactive-demo`, `.scratch/vink-marketing/prototypes/` (variants A inline tabs, B guided walkthrough, C inbox kept there for reference).
 
 **What it is:** a replica of the real app with demo data, in a "Demo data" app frame (Vink nav with Documents active). Two screens:
 1. **Documents page**, exactly as the app: "Documents" heading, tabs Needs Review / Approved / Failed / Rejected with counts, and the table Document · Form vN · Pages · Uploaded by · Uploaded (Form, Pages and Uploaded by hidden on mobile, as in the app). **No demo-only additions** (no "N to check" badge).

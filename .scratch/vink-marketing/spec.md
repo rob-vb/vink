@@ -6,10 +6,10 @@ Synthesised from the [Vink marketing map](map.md), its 15 resolved tickets, `CON
 
 ## Problem Statement
 
-Vink works, but only people Rob sends a link to can reach it. The domain opens straight onto the product's sign-in. An operations or admin team that retypes invoices, delivery notes, order forms and handwritten forms has nowhere to learn what Vink does or whether it reads their messy documents. They can't see what it costs, whether their data leaves the EU, or how the data gets into their own system. They can't try it without talking to someone either.
+Vink works, but only people we send a link to can reach it. The domain opens straight onto the product's sign-in. An operations or admin team that retypes invoices, delivery notes, order forms and handwritten forms has nowhere to learn what Vink does or whether it reads their messy documents. They can't see what it costs, whether their data leaves the EU, or how the data gets into their own system. They can't try it without talking to someone either.
 
 Several things in the app also stand in the way of letting strangers in:
-- Nothing limits how much an Organisation may read, so self-serve sign-up would be an open tab on Rob's Vertex bill.
+- Nothing limits how much an Organisation may read, so self-serve sign-up would be an open tab on Vink's Vertex bill.
 - Sign-up has no email verification and no rate limits.
 - Documents arrive one PDF at a time, too slow for a team on 1,000–3,000 Pages a month.
 - A developer can't find out how the Payload is shaped or signed, and the current signature can be replayed.
@@ -28,7 +28,7 @@ The site says Vink handles **any PDF**, typed, scanned or handwritten, and never
 The site shows the real product rather than claims: real screenshots, a 15-second video, a clickable demo that is an exact copy of the app's Documents table and review screen, and a real Payload. Pages v1: Home, Features, Pricing, Developers, Security & privacy, Contact, Privacy policy and Terms.
 
 To make self-serve safe and credible, the app gains:
-- **Plans** metered in **Pages**, with a quota that refuses uploads once the Pages run out. Rob sets Plans by hand until billing exists.
+- **Plans** metered in **Pages**, with a quota that refuses uploads once the Pages run out. We set Plans by hand until billing exists.
 - Email verification, rate limits and a disposable-domain block at sign-up.
 - Multi-file upload and a per-Form **Intake Address** for email-in.
 - A timestamped webhook signature.
@@ -44,7 +44,7 @@ To make self-serve safe and credible, the app gains:
 4. As a visitor, I want a 15-second video right after the hero, so that I see one PDF go in and clean data come out without reading anything.
 5. As a visitor, I want to follow "what happens to one document" in four stops (it arrives, Vink reads it, you check, it lands), so that I understand the whole flow.
 6. As a visitor with varied paperwork, I want document tabs (invoice, delivery note, handwritten form, order form) showing Fields and "Read on page N", so that I see Vink isn't limited to one kind of document.
-7. As a visitor without a developer, I want to see that Rob can connect Vink to our system for a fixed price, so that a missing developer doesn't stop me.
+7. As a visitor without a developer, I want to see that Vink can connect to our system for a fixed price, so that a missing developer doesn't stop me.
 8. As a visitor with a developer, I want to see a real JSON Payload under a `POST` bar, so that I know the integration is ordinary.
 9. As a visitor, I want a pricing row on Home with Starter, Team, Business and Custom, so that I learn the cost before I dig deeper.
 10. As a visitor, I want to see who is behind Vink, with a photo and a direct email, so that I trust a small company without customer logos.
@@ -94,7 +94,7 @@ To make self-serve safe and credible, the app gains:
 45. As a developer, I want an honest line that there is no upload API yet, with "tell us" and the email-in alternative, so that I know what's possible today.
 46. As a developer or IT reviewer, I want one factual line on how reading happens ("reads with Gemini on Vertex AI, EU region"), so that I can assess it.
 47. As a business owner without a developer, I want to read what the integration service includes, what it costs ("From €950 per connection, excl. VAT") and what I'd need to provide, so that I can decide to ask.
-48. As a prospect, I want a short request form (name, work email, company, target system, documents, rough Pages per month, optional note), so that Rob has what he needs to reply.
+48. As a prospect, I want a short request form (name, work email, company, target system, documents, rough Pages per month, optional note), so that we have what we need to reply.
 49. As a Dutch developer, I want `/nl/developers` with Dutch prose but code, keys and header names in English, so that it reads naturally and matches the real API.
 
 ### Security & privacy
@@ -110,7 +110,7 @@ To make self-serve safe and credible, the app gains:
 
 ### Contact, legal and language
 
-58. As a visitor, I want a Contact page with the same form (fewer fields) and the founder block, so that I can ask anything.
+58. As a visitor, I want a Contact page with the same form (fewer fields) and the team block, so that I can ask anything.
 59. As a visitor who submits a form, I want a clear confirmation and a reply from a real person to my own email, so that I know it arrived.
 60. As a visitor, I want Privacy policy and Terms pages linked from the footer and from sign-up, so that I can read what I agree to.
 61. As a Dutch visitor, I want the whole site in Dutch at `/nl/…`, with a language switcher in the nav and footer, so that I can read it in my own language.
@@ -123,7 +123,7 @@ To make self-serve safe and credible, the app gains:
 65. As a visitor, I want a cookie banner with equal "Accept" and "Reject" buttons that names the purpose (statistics) and the one third party (Google), so that I can make a real choice.
 66. As a visitor who rejects cookies, I want no Google tag to load at all, so that my choice is respected.
 67. As a visitor, I want a permanent "Cookie settings" link in the footer, so that I can change my mind.
-68. As Rob, I want GA4 measuring marketing pages and clicks on "Start free", so that I know which pages lead to sign-ups.
+68. As Vink, we want GA4 measuring marketing pages and clicks on "Start free", so that we know which pages lead to sign-ups.
 69. As a Vink user, I want the app under `/app` to be completely free of Google Analytics, so that my work isn't tracked.
 
 ### Sign-up and access
@@ -132,9 +132,9 @@ To make self-serve safe and credible, the app gains:
 71. As a visitor, I want the sign-up form unchanged (Organisation name, email, then a password or a magic link), with a line that I agree to the Terms and Privacy policy, so that it stays quick.
 72. As a password sign-up, I want to verify my email before I can sign in, so that nobody can claim my address.
 73. As someone using a disposable email address, I want a plain message that it isn't accepted, so that I know to use a real one.
-74. As Rob, I want sign-up, password sign-in and magic-link sending rate-limited per IP and per email, so that bots can't farm Free Pages or spam addresses.
-75. As Rob, I want a honeypot field on sign-up, so that simple bots are stopped without a captcha.
-76. As Rob, I want an email for every new Organisation (with the email domain), so that I can spot abuse and follow up with sales.
+74. As Vink, we want sign-up, password sign-in and magic-link sending rate-limited per IP and per email, so that bots can't farm Free Pages or spam addresses.
+75. As Vink, we want a honeypot field on sign-up, so that simple bots are stopped without a captcha.
+76. As Vink, we want an email for every new Organisation (with the email domain), so that we can spot abuse and follow up with sales.
 77. As an existing user, I want "Log in" on the site to take me to the app, and "Open app" instead when I'm already signed in, so that I get to my work in one click.
 78. As an existing user, I want my old bookmarks (`/o/…`, `/sign-in`, `/sign-up`, `/welcome`) and old invitation links (`/invite/…`) to still work, so that the move to `/app` doesn't break anything.
 79. As an invited user, I want new invitation emails to point to `/app/invite/…`, so that I land in the app and not on the marketing site.
@@ -150,8 +150,8 @@ To make self-serve safe and credible, the app gains:
 86. As a user whose Pages ran out, I want everything already uploaded to keep working (review, Approval, Delivery), so that no work in progress is lost.
 87. As an Admin, I want a Page to count once, when Vink accepts the PDF, and never again for a retry, a move to another Form or a sample becoming the first Document, so that I only pay for real reading.
 88. As an Admin, I want "Upgrade" to take me to Contact until online billing exists, so that I can still get a Plan.
-89. As Rob, I want to set an Organisation's Plan, Page allowance and reset date by hand, add Top-ups, and set Free Pages to zero, so that I can run billing manually and stop abuse.
-90. As Rob, I want the existing test Organisations (including the prod test account and the Claude bridge) on an internal unlimited Plan that never shows on the site, so that nothing I rely on breaks.
+89. As Vink, we want to set an Organisation's Plan, Page allowance and reset date by hand, add Top-ups, and set Free Pages to zero, so that we can run billing manually and stop abuse.
+90. As Vink, we want the existing test Organisations (including the prod test account and the Claude bridge) on an internal unlimited Plan that never shows on the site, so that nothing we rely on breaks.
 
 ### Getting documents in
 
@@ -172,20 +172,20 @@ To make self-serve safe and credible, the app gains:
 102. As an Admin, I want the retention setting to go from 1 to 365 days, so that data is never kept longer than the site promises.
 103. As an Admin whose Deliveries all failed, I want retention to start at the last attempt, so that data isn't kept forever by accident.
 104. As an Admin, I want the receiver's response bodies wiped when a Document is deleted, so that no document data survives in delivery logs.
-105. As Rob, I want PDFs that were uploaded but never became a Document deleted after 24 hours, so that storage holds no orphaned customer files.
+105. As Vink, we want PDFs that were uploaded but never became a Document deleted after 24 hours, so that storage holds no orphaned customer files.
 106. As an Admin, I want test-send to only send example values or Approved Documents, so that unchecked data never leaves by accident.
 107. As a receiver, I want each webhook signed as `X-Vink-Signature: t=<unix>,v1=<hex>` over `"{t}.{rawBody}"`, so that a captured request can't be replayed after 5 minutes.
 108. As a user, I want the site and app served with HSTS and standard security headers, so that the transport claims on the Security page are true.
-109. As Rob, I want `/app/*` kept out of search engines, so that sign-in and product URLs never show up in Google.
+109. As Vink, we want `/app/*` kept out of search engines, so that sign-in and product URLs never show up in Google.
 
 ### SEO and sharing
 
-110. As Rob, I want every marketing page to have a localized title, a unique description, its own canonical URL and en/nl/x-default hreflang, so that both languages rank without competing.
-111. As Rob, I want a sitemap listing both languages with alternates, so that search engines find every page.
-112. As Rob, I want generated OG cards per page and language, so that shared links look good in both languages.
-113. As Rob, I want Organization/WebSite structured data on Home and SoftwareApplication + Offers on Pricing, built from the same plan data the page shows, so that search engines read the prices correctly.
-114. As Rob, I want a small `llms.txt` with facts, prices and links, so that AI assistants describe Vink correctly.
-115. As Rob, I want every absolute URL built from one `SITE_URL`, so that the later domain move is a config change.
+110. As Vink, we want every marketing page to have a localized title, a unique description, its own canonical URL and en/nl/x-default hreflang, so that both languages rank without competing.
+111. As Vink, we want a sitemap listing both languages with alternates, so that search engines find every page.
+112. As Vink, we want generated OG cards per page and language, so that shared links look good in both languages.
+113. As Vink, we want Organization/WebSite structured data on Home and SoftwareApplication + Offers on Pricing, built from the same plan data the page shows, so that search engines read the prices correctly.
+114. As Vink, we want a small `llms.txt` with facts, prices and links, so that AI assistants describe Vink correctly.
+115. As Vink, we want every absolute URL built from one `SITE_URL`, so that the later domain move is a config change.
 
 ## Implementation Decisions
 
@@ -225,10 +225,10 @@ To make self-serve safe and credible, the app gains:
   2. Trust row.
   3. The 15 s video: "One PDF in, clean data out."
   4. "What happens to one document": four stops on a vertical line. Stop 1 is "Upload it or email it in". Stop 2 has the lighter document tabs and a "Try the demo" link to Features. Stop 3 is Needs Review. Stop 4 shows Deliveries.
-  5. "Two ways to connect it": your developer (a Payload under a `POST` bar, a link to Developers) next to "We connect it for you" (Rob, a fixed price agreed up front, "Ask about a connection").
+  5. "Two ways to connect it": your developer (a Payload under a `POST` bar, a link to Developers) next to "We connect it for you" (Vink, a fixed price agreed up front, "Ask about a connection").
   6. "Your data, kept short".
   7. Pricing row.
-  8. Founder block + the five-question FAQ.
+  8. Team block + the five-question FAQ.
   9. Closing card.
 - **Features** ([Features page content](issues/12-features-page-content.md), variant C "Chapters"):
   1. Hero "Everything between the PDF and your system."
@@ -249,9 +249,9 @@ To make self-serve safe and credible, the app gains:
   8. Closing CTA.
 
   There is no slider or calculator. Plan data (name, Pages, monthly and annual price) lives in one module that the cards, the Home pricing row, the JSON-LD Offers and `llms.txt` all read.
-- **Developers** ([Developers page](issues/09-developers-page-and-integration-service.md)): the anchor sections from the user stories. The envelope example is built from a demo Form, and the snippets are in Node, Python and PHP. It has two app screenshots (the Integration with a test-send result, and a Document's Delivery status showing a retry) and the integration service ("From €950 per connection, excl. VAT"; hosting by Rob on request for a monthly fee; changes billed per job) with the request form.
+- **Developers** ([Developers page](issues/09-developers-page-and-integration-service.md)): the anchor sections from the user stories. The envelope example is built from a demo Form, and the snippets are in Node, Python and PHP. It has two app screenshots (the Integration with a test-send result, and a Document's Delivery status showing a retry) and the integration service ("From €950 per connection, excl. VAT"; hosting by Vink on request for a monthly fee; changes billed per job) with the request form.
 - **Security & privacy** ([Security & privacy page](issues/13-security-and-privacy-page.md)): the summary plus eight sections in the ticket's order. The subprocessor table has the anchor `#subprocessors`. Only the statements that ticket lists as true (or true once the build items below ship) may appear. Add a Cloudflare Email Routing/Workers row now that email-in ships (region still to confirm). If TypeSafe grants zero retention before launch, drop its "may keep logs" clause.
-- **Contact:** the shared request form with fewer fields, plus the founder block.
+- **Contact:** the shared request form with fewer fields, plus the team block.
 - **Privacy policy, Terms:** pages and routes are reserved with placeholder content. The legal texts come from the GDPR track.
 
 ### Interactive demo ([Interactive demo](issues/08-interactive-demo.md), variant D)
@@ -303,21 +303,21 @@ To make self-serve safe and credible, the app gains:
 - **Addresses:** disposable domains are blocked at sign-up against a maintained list, with a plain message. Free-mail is allowed with the same 20 Pages. No `+tag` or dot normalisation.
 - **Rate limits:** Better Auth's rate limiter **with database storage** on sign-up, password sign-in and magic-link sending: ~5 per 10 minutes per IP and 3 magic links per hour per email. Confirm that the real client IP reaches Better Auth through the `/api/auth` proxy.
 - **Form:** unchanged, plus a honeypot field and the line "By creating an account you agree to the Terms and Privacy policy." (links, no checkbox).
-- **Notification:** a Resend email to Rob for each new Organisation, including the email domain.
+- **Notification:** a Resend email to Vink for each new Organisation, including the email domain.
 
 ### Plans, Pages and quota ([Plans and pricing model](issues/03-plans-and-pricing-model.md))
 
 - **Per-Organisation state:** a Plan (starter / team / business / custom / internal-unlimited, or none), a Page allowance per period, the period's reset date, Pages used this period, Top-up Pages valid until the period end, and a Free Pages balance. Without a Plan, the Organisation runs on Free Pages only.
 - **Free Pages:** 20, granted only when a user creates their **first** Organisation. Invitations grant nothing. They never renew or expire.
 - **What counts:** a Page is charged once, when Vink accepts a PDF for reading, at `documents.create` (including multi-file and email-in) and at Form Proposal sample upload. These never charge: the sample becoming the first Document, a retry after Extraction Failed, and a Change Form. A Rejected Document is not refunded.
-- **Order of use:** Free Pages first, then the Plan allowance, then Top-ups. Rob can override this when setting things by hand.
+- **Order of use:** Free Pages first, then the Plan allowance, then Top-ups. We can override this when setting things by hand.
 - **Refusal:** a PDF that doesn't fit the remaining Pages is refused **whole** at acceptance, with an error carrying the remaining count and the PDF's page count. Nothing already accepted is affected.
 - **Reset:** unused Pages expire at the reset date (no roll-over), and a scheduled job advances periods.
 - **In the app:**
   - a remaining-Pages indicator and reset date;
   - an 80% warning;
   - Upgrade buttons that link to the marketing Contact page (outside the app root layout, so a full page load).
-- **Admin operations** (internal functions Rob runs from the Convex dashboard or CLI): set Plan and allowance and reset date, add Top-up Pages, set Free Pages to 0.
+- **Admin operations** (internal functions we run from the Convex dashboard or CLI): set Plan and allowance and reset date, add Top-up Pages, set Free Pages to 0.
 - **Migration:** every existing Organisation gets the internal unlimited Plan, which never appears on the site.
 
 ### Getting documents in ([Volume intake](issues/11-volume-intake-gaps.md), [Email-in feasibility](issues/15-email-and-storage-intake-feasibility.md))
@@ -363,7 +363,7 @@ To make self-serve safe and credible, the app gains:
     - the 80% warning state;
     - period reset with a fake clock;
     - internal unlimited never refusing;
-    - Rob's admin operations;
+    - the admin operations;
     - Members can't change Plans.
   - **Multi-file:** several `create` calls where one fails (too many pages, out of Pages) and the others still succeed.
   - **Intake Address:**
@@ -377,7 +377,7 @@ To make self-serve safe and credible, the app gains:
     - a disposable domain refused;
     - free-mail allowed;
     - a password sign-in refused before verification;
-    - a new-Organisation email to Rob.
+    - a new-Organisation email to Vink.
 
     Also the rate limiter's behaviour where `convex-test` can drive Better Auth. If it can't, test these checks as pure functions at the auth hooks.
   - **Contact action:** honeypot, rate limit per IP, email validation, one email sent to `CONTACT_TO` with `Reply-To`, and nothing stored.
@@ -397,7 +397,7 @@ To make self-serve safe and credible, the app gains:
 
   For network and local-address quirks on the VPS, follow the local e2e notes (port, IPv4-first).
 - **Prior art:** every `convex/*.test.ts` file, using `newBackend`, `signUp`, `addMembership`, `fakePdfStore`, `putToUploadUrl`, `pdfWithPages` and `fakeHttp` from the shared test setup. `documents.test.ts` is the model for acceptance and quota tests, `deliveries.test.ts` and `lib/signing.test.ts` for the signature, `retention.test.ts` for clock-driven jobs, and `invitations.test.ts` for the invite URL. Seam 2 has no prior art; keep it one small script next to the existing scripts.
-- **Not automated:** UI components, the demo's interactions, the consent banner's behaviour after Accept, the language switcher and theme switch. They are checked by hand in a browser before launch and shown to Rob as screenshots in an Artifact (Rob can't open VPS URLs). The Cloudflare Worker gets at most a unit test of its MIME-to-request mapping. Real email routing is checked once on the throwaway domain.
+- **Not automated:** UI components, the demo's interactions, the consent banner's behaviour after Accept, the language switcher and theme switch. They are checked by hand in a browser before launch and shown as screenshots in an Artifact (VPS URLs can't be opened from outside). The Cloudflare Worker gets at most a unit test of its MIME-to-request mapping. Real email routing is checked once on the throwaway domain.
 
 ## Out of Scope
 
@@ -405,7 +405,7 @@ To make self-serve safe and credible, the app gains:
 - Translating the app itself into Dutch. Only the `NEXT_LOCALE` cookie is shared.
 - Writing the legal texts (privacy policy, terms, DPA). The pages are reserved, and the texts come from the GDPR pre-launch track.
 - Blog and changelog.
-- Stripe billing: checkout, subscriptions, Stripe Tax, annual billing, buying Top-ups and invoices. Rob sets Plans and Top-ups by hand.
+- Stripe billing: checkout, subscriptions, Stripe Tax, annual billing, buying Top-ups and invoices. We set Plans and Top-ups by hand.
 - An upload API (`POST /documents`).
 - Cloud-storage connectors (Dropbox, OneDrive, SharePoint, Google Drive). They are not mentioned on the site.
 - Halving cost per page with Vertex Flex/Batch.
@@ -425,7 +425,7 @@ To make self-serve safe and credible, the app gains:
   - Buy the permanent intake apex, put it on Cloudflare, and confirm the region of Cloudflare Email Routing/Workers for the subprocessor table.
   - Create the `security@` and `CONTACT_TO` mailboxes.
   - Register the site in Search Console (DNS property) and Bing and submit the sitemap.
-  - Rob records the 15-second video, and gets a founder photo.
+  - Record the 15-second video.
 - **Launch-price rule:** after 20 paying customers or 3 months, review prices for new customers only. Existing customers keep their price for 12 months.
 - **Standing rule:** the demo and the Features screenshots mirror the app. Any change to the Documents table, review screen or a screenshotted screen updates them in the same change (see the Demo mirrors app memory).
 - **Tickets should follow dependencies:**

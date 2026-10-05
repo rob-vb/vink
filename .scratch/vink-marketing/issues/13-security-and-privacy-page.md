@@ -10,7 +10,7 @@ Which true statements can `/security` make today, and how is the page structured
 
 ## Answer
 
-Rob agreed with every recommendation (2026-09-30). Facts come from a code, prod-env and live-server scan on 2026-09-30; file references are in that scan's findings below.
+We agreed with every recommendation (2026-09-30). Facts come from a code, prod-env and live-server scan on 2026-09-30; file references are in that scan's findings below.
 
 ### Page
 
@@ -25,7 +25,7 @@ Rob agreed with every recommendation (2026-09-30). Facts come from a code, prod-
   7. What we don't have yet
   8. Reporting a problem and contact
 - **What we don't have yet:** short and factual. "No SOC 2 or ISO 27001 certification yet. No two-factor sign-in or SSO yet. A data processing agreement is available on request." The DPA must exist by launch (GDPR track).
-- **Security contact:** `security@<domain>` forwarded to Rob, behind config so it survives the domain move, plus `/.well-known/security.txt`.
+- **Security contact:** `security@<domain>` forwarded to the team, behind config so it survives the domain move, plus `/.well-known/security.txt`.
 
 ### Statements the page may make (true today, or once the build items below ship)
 

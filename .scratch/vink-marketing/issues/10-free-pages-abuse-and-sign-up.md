@@ -19,6 +19,6 @@ Farming costs ~€0.60 per account (20 Pages × ~€0.03), so the defences stay 
 - **Rate limits:** Better Auth's built-in limiter with database storage on sign-up, password sign-in and magic-link sending: ~5 per 10 minutes per IP, 3 magic links per hour per email. No separate upload limit; the Page quota caps uploads.
 - **Form:** unchanged — Organisation name, email, password or link. Under the button: "By creating an account you agree to the Terms and Privacy policy." (links, no checkbox). No marketing opt-in in v1; name stays derived from the email.
 - **Bots:** honeypot field + the rate limits (as on Contact). No captcha at launch; add Cloudflare Turnstile only if abuse appears.
-- **Watching:** Rob gets an email per new Organisation (Resend, includes the email domain) — doubles as sales follow-up. Rob can set an Organisation's Free Pages to 0 by hand. No automatic global cap.
+- **Watching:** Vink gets an email per new Organisation (Resend, includes the email domain) — doubles as sales follow-up. We can set an Organisation's Free Pages to 0 by hand. No automatic global cap.
 
 **Open checks.** `/api/auth` is proxied through Next to Convex: confirm Better Auth sees the real client IP (not the proxy's) before trusting per-IP limits. Verify the verification email and disposable-domain block on prod once Resend is live there.

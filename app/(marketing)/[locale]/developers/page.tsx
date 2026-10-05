@@ -11,7 +11,7 @@ import { DocSection, TocLayout } from "@/components/marketing/toc";
 import { isLocale, routing, type Locale } from "@/i18n/routing";
 import { sampleEnvelopeJson } from "@/lib/sample-payload";
 import { pageMetadata } from "@/lib/seo";
-import { FOUNDER_EMAIL } from "@/lib/site";
+import { CONTACT_EMAIL } from "@/lib/site";
 import { signatureHeaderExample, verifySnippets } from "@/lib/verify-snippets";
 
 function localeOf(value: string): Locale {
@@ -246,7 +246,7 @@ export default async function DevelopersPage({ params }: PageProps<"/[locale]/de
           </div>
           <h3 className="mt-4 text-xl font-semibold text-foreground">{t("service.formTitle")}</h3>
           <p>{t("service.formBody")}</p>
-          <RequestForm kind="integration" fallbackEmail={FOUNDER_EMAIL} />
+          <RequestForm kind="integration" fallbackEmail={CONTACT_EMAIL} />
         </DocSection>
       </TocLayout>
       <div className="h-16 sm:h-24" />

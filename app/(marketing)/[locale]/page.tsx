@@ -8,7 +8,7 @@ import type { ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ClosingCard, Faq, FounderBlock, StartFree, TrustRow } from "@/components/marketing/blocks";
+import { ClosingCard, Faq, TeamBlock, StartFree, TrustRow } from "@/components/marketing/blocks";
 import { VinkMark } from "@/components/marketing/brand";
 import { CodeBlock, PostBar } from "@/components/marketing/code-block";
 import { JsonLd } from "@/components/marketing/json-ld";
@@ -30,7 +30,7 @@ import { isLocale, routing, type Locale } from "@/i18n/routing";
 import { custom, formatEuro, formatNumber, perPage, plans } from "@/lib/plans";
 import { sampleEnvelopeJson } from "@/lib/sample-payload";
 import { localeUrl, pageMetadata } from "@/lib/seo";
-import { absoluteUrl, FOUNDER_EMAIL } from "@/lib/site";
+import { absoluteUrl, CONTACT_EMAIL } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
 function localeOf(value: string): Locale {
@@ -58,7 +58,7 @@ export default async function Home({ params }: PageProps<"/[locale]">) {
             name: "Vink",
             url: absoluteUrl("/"),
             logo: absoluteUrl("/vink_icon.svg"),
-            email: FOUNDER_EMAIL,
+            email: CONTACT_EMAIL,
           },
           {
             "@context": "https://schema.org",
@@ -122,7 +122,7 @@ function Hero() {
 }
 
 /**
- * The 15-second video. TODO(video): Rob records it and adds
+ * The 15-second video. TODO(video): record it and add
  * public/video/vink-15s.mp4 (plus public/video/vink-15s.jpg as the poster);
  * until then a labelled placeholder shows.
  */
@@ -438,7 +438,7 @@ function FounderAndFaq() {
   return (
     <section className="pb-8">
       <Container className="grid grid-cols-[minmax(0,1fr)] gap-12 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:gap-16">
-        <FounderBlock className="lg:pt-2" />
+        <TeamBlock className="lg:pt-2" />
         <div>
           <h2 className="mb-6 text-3xl font-semibold tracking-tight">{t("title")}</h2>
           <Faq

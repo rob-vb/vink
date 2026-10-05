@@ -97,13 +97,13 @@
   },
   "service": {
     "title": "Koppelservice",
-    "lead": "Geen developer, of geen tijd? Rob bouwt de koppeling voor je.",
-    "body": "Een eenmalige klus, nooit onderdeel van een abonnement. Rob schrijft de ontvanger die de Payload in je systeem zet, of dat nu een ERP, boekhoudpakket, spreadsheet of database is, en richt samen met jou je formulieren in.",
+    "lead": "Geen developer, of geen tijd? Wij bouwen de koppeling voor je.",
+    "body": "Een eenmalige klus, nooit onderdeel van een abonnement. Wij schrijven de ontvanger die de Payload in je systeem zet, of dat nu een ERP, boekhoudpakket, spreadsheet of database is, en richten samen met jou je formulieren in.",
     "includes": {
       "title": "Wat je krijgt",
       "receiver": "Een ontvanger die de handtekening controleert en de data in je systeem zet",
       "forms": "Je formulieren en velden samen ingericht, getest op je eigen documenten",
-      "hosting": "Jij host het, of Rob host het op verzoek voor een vast bedrag per maand",
+      "hosting": "Jij host het, of wij hosten het op verzoek voor een vast bedrag per maand",
       "changes": "Onderhoud en aanpassingen later, per klus gefactureerd"
     },
     "need": {
@@ -115,7 +115,7 @@
     "price": "Vanaf €950 per koppeling, excl. btw",
     "priceNote": "Een vaste prijs, afgesproken voordat we beginnen.",
     "formTitle": "Vraag naar een koppeling",
-    "formBody": "Vertel ons iets over je systeem en documenten. Rob antwoordt persoonlijk."
+    "formBody": "Vertel ons iets over je systeem en documenten. We antwoorden persoonlijk."
   },
   "code": {
     "copy": "Kopiëren",

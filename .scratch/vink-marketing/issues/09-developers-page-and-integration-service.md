@@ -6,11 +6,11 @@ Blocked by: 06
 
 ## Question
 
-What does the Developers page contain and how is Rob's paid integration service offered? Settle: what developers see (Payload envelope example, HMAC signature verification, retries and at-least-once delivery, test-send, any public API docs), whether the integration service shows a price or starting price, what a visitor submits to request it, and where that request goes.
+What does the Developers page contain and how is Vink's paid integration service offered? Settle: what developers see (Payload envelope example, HMAC signature verification, retries and at-least-once delivery, test-send, any public API docs), whether the integration service shows a price or starting price, what a visitor submits to request it, and where that request goes.
 
 ## Answer
 
-Settled with Rob on 2026-09-30.
+Settled on 2026-09-30.
 
 **Page shape.** One page at `/developers` (and `/nl/developers`: prose in Dutch, code, keys and header names in English) with anchor sections: Overview → Envelope → Verify the signature → Delivery and retries → Test-send → Integration service. No separate docs area.
 
@@ -26,7 +26,7 @@ Settled with Rob on 2026-09-30.
 
 **App change before launch: timestamped signature.** Today `X-Vink-Signature: sha256=<hex>` covers only the body, so a captured request can be replayed. Before the format is published it changes to `X-Vink-Signature: t=<unix>,v1=<hex>`, an HMAC-SHA256 over `"{t}.{rawBody}"` with the same `whsec_` secret. The documented tolerance is 5 minutes. The header name stays; `v1` leaves room for a later scheme or rotation (multiple `v1=` values during rotation is a later extension, not v1).
 
-**Integration service.** A paid, one-off build that is never part of a Plan. Rob writes the receiver that takes the Payload into the customer's system (ERP, accounting package, spreadsheet, database) and sets up the Form(s) with them. The customer hosts it, or Rob hosts it for a monthly fee on request. Maintenance and changes are billed per job. Price shown: **"From €950 per connection, excl. VAT"**.
+**Integration service.** A paid, one-off build that is never part of a Plan. We write the receiver that takes the Payload into the customer's system (ERP, accounting package, spreadsheet, database) and sets up the Form(s) with them. The customer hosts it, or we host it for a monthly fee on request. Maintenance and changes are billed per job. Price shown: **"From €950 per connection, excl. VAT"**.
 
 **Request form.** A short form on Developers: name, work email, company, "Which system should it land in?", "What documents?", rough pages per month, and an optional note. The general Contact page uses the same form component with fewer fields, which settles the map's "Contact handling" fog. Submissions:
 - are emailed through the app's existing Resend (EU) sender to one address in config (`CONTACT_TO`), with `Reply-To` set to the visitor, and are **not stored**. The privacy policy only needs "contact requests are emailed to us".
