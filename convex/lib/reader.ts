@@ -4,6 +4,7 @@
 import { extractPagesMarkdown } from "@firecrawl/pdf-inspector";
 import { complete, models, parseJsonObject } from "./models";
 import type { PageText, Reader, Reading } from "./pipeline";
+import { readThinking } from "./readThinking";
 
 const PROMPT = `Describe everything this Document says as one clean JSON object, so that a program can pick any fact out of it. The Document is a PDF that may bundle several papers about the same job (an invoice, a work order, handwritten forms). You get the page images and the text layer per page (when a page has one).
 
@@ -41,11 +42,14 @@ function describe(textLayer: PageText[], pageCount: number) {
 export const reader: Reader = {
   async read(pdf) {
     const { textLayer, pageCount } = textLayerOf(pdf);
+    const { level, scannedPages } = await readThinking(pdf);
+    // In the deployment's logs, so a Read's cost can be traced to its level.
+    console.log(`Read at ${level}; scanned pages: ${scannedPages.join(", ") || "none"}`);
     const answer = await complete({
       model: models.reader,
       pdf,
       maxTokens: 64000,
-      thinking: models.readerThinking,
+      thinking: level,
       texts: [`# Text layer\n\n${describe(textLayer, pageCount)}`, PROMPT],
     });
     return { reading: parseJsonObject(answer) as Reading, textLayer };

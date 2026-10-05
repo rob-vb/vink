@@ -7,8 +7,7 @@ import { usage } from "./usage";
 export const models = {
   /** Reads the PDF into a Reading (ADR 0003, Read). */
   reader: process.env.READER_MODEL ?? "gemini-3.8-flash",
-  /** How hard the reader thinks (ticket 39). */
-  readerThinking: (process.env.READER_THINKING ?? "HIGH") as ThinkingLevel,
+  // How hard the reader thinks is per PDF: see readThinking.ts (ticket 40).
   /** Writes each Field Value from its source (ADR 0003, Fill). */
   filler: process.env.FILL_MODEL ?? "gemini-3.8-flash",
   /** Proposes a Form's Fields from a sample (ticket 36). */
