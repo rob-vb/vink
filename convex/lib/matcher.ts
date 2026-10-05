@@ -3,7 +3,7 @@
 // that holds it, and per List Field the array of objects that holds its
 // entries, `none` included. A second request then picks, per sub-Field, the
 // key inside the chosen array's elements. The whole Reading is Jev's state.
-import { type ChoiceResponse, TypeSafeClient, choice } from "@typesafe-ai/sdk";
+import { choice } from "@typesafe-ai/sdk";
 import { MAX_CRITERIA, MAX_OBJECTS } from "./matchPlan";
 import { models } from "./models";
 import type { FlatField, ListField, ListMatch, Match, Matcher, Reading } from "./pipeline";
@@ -15,7 +15,7 @@ import {
   readingLeaves,
   readingObjects,
 } from "./reading";
-import { usage } from "./usage";
+import { type ChoiceAnswer, type PageImage, decide } from "./systemOne";
 
 const NONE = { none: "Nothing in the Reading holds this" };
 
@@ -102,21 +102,23 @@ function keyQuestion(list: ListField, array: ReadingArray, field: FlatField) {
   );
 }
 
-type Answers = Record<string, ChoiceResponse>;
+type Answers = Record<string, ChoiceAnswer>;
 
-async function ask(reading: Reading, questions: Record<string, ReturnType<typeof choice>>) {
-  if (Object.keys(questions).length === 0) return {};
-  const result = await new TypeSafeClient().systemOne({
-    model: models.jev,
-    state: { document: reading },
-    questions,
-  });
-  usage.record({
-    model: result.model,
-    inputTokens: result.usage.input_tokens,
-    outputTokens: result.usage.output_tokens,
-  });
-  return result.answers as Answers;
+/** The pages a model that can see them gets with Match: all of them, or none when there are too many. */
+export type PageImages = () => PageImage[];
+
+function asker(images: PageImages | undefined) {
+  return (reading: Reading, questions: Record<string, ReturnType<typeof choice>>) => {
+    const pages = images?.() ?? [];
+    return decide({
+      model: models.jev,
+      state: pages.length > 0
+        ? { document: reading, pageImages: `The images are pages ${pages.map((p) => p.page).join(", ")} of the Document, in that order.` }
+        : { document: reading },
+      questions,
+      images: pages,
+    }) as Promise<Answers>;
+  };
 }
 
 const picked = (answers: Answers, id: string) => {
@@ -143,8 +145,10 @@ function pathOf(choice: string, leaves: Leaf[], objects: ReadingObject[]) {
   return choice.startsWith("o") ? objects[index].path : leaves[index].path;
 }
 
-export const matcher: Matcher = {
+/** The Matcher; with `images`, the model also sees the pages (Clef only). */
+export const matcherWith = (images?: PageImages): Matcher => ({
   async match(reading, { fields, lists }) {
+    const ask = asker(images);
     const leaves = readingLeaves(reading);
     const objects = readingObjects(reading);
     const arrays = readingArrays(reading);
@@ -199,4 +203,6 @@ export const matcher: Matcher = {
       ),
     };
   },
-};
+});
+
+export const matcher = matcherWith();

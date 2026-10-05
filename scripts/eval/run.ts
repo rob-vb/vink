@@ -11,13 +11,21 @@
 // CLAUDE_BRIDGE_URL (e.g. http://127.0.0.1:3004) and CLAUDE_BRIDGE_SECRET
 // instead of Vertex, Claude Code answers the Claude steps (scripts/claude-bridge).
 // READER_MODEL, FILL_MODEL and JEV_MODEL try other versions (convex/lib/models.ts).
+//
+// Clef spike: JEV_MODEL=clef (or clef-flash) runs Match and Verify on Clef, which
+// needs CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN (and CLOUDFLARE_AI_GATEWAY_ID
+// to pay with AI Gateway credits). With --match-images Clef also sees the pages
+// in Match (when there are at most 4); with --verify-images it sees them in
+// Verify, where support then comes from the images instead of the text layer.
 import { join } from "node:path";
 import { filler } from "../../convex/lib/filler";
-import { matcher } from "../../convex/lib/matcher";
+import { matcherWith } from "../../convex/lib/matcher";
 import { models } from "../../convex/lib/models";
 import { reader } from "../../convex/lib/reader";
-import { verifier } from "../../convex/lib/verifier";
+import { CLEF_MAX_IMAGES, type PageImage, isClef } from "../../convex/lib/systemOne";
+import { verifierWith } from "../../convex/lib/verifier";
 import { evaluate, type Prices } from "./harness";
+import { renderPages } from "./pageImages";
 import { formatReport } from "./report";
 
 // Gemini API list prices (through 2026-12-31; they double on 2027-01-01).
@@ -28,24 +36,42 @@ const prices: Prices = {
   "claude-opus-5": { inputPerMillion: 5, outputPerMillion: 25 },
   "claude-haiku-4-5@20251001": { inputPerMillion: 1, outputPerMillion: 5 },
   // Jev bills input tokens only (ticket 11).
-  [models.jev]: { inputPerMillion: 0.042, outputPerMillion: 0 },
+  ...(isClef(models.jev) ? {} : { [models.jev]: { inputPerMillion: 0.042, outputPerMillion: 0 } }),
+  // Workers AI list prices (2026-10-03); no output price is listed.
+  clef: { inputPerMillion: 0.24, outputPerMillion: 0 },
+  "clef-flash": { inputPerMillion: 0.09, outputPerMillion: 0 },
 };
 
 const args = process.argv.slice(2);
 const thresholdAt = args.indexOf("--threshold");
 const readingsAt = args.indexOf("--readings");
 const fixturesAt = args.indexOf("--fixtures");
+const matchImages = args.includes("--match-images");
+const verifyImages = args.includes("--verify-images");
+
+let pages: PageImage[] = [];
+const allPages = () => pages;
+const matchPages = () => (pages.length <= CLEF_MAX_IMAGES ? pages : []);
 
 async function main() {
   const report = await evaluate({
     fixturesDir: join(process.cwd(), fixturesAt === -1 ? "fixtures" : args[fixturesAt + 1]),
-    adapters: { reader, matcher, filler, verifier },
+    adapters: {
+      reader,
+      matcher: matcherWith(matchImages ? matchPages : undefined),
+      filler,
+      verifier: verifierWith(verifyImages ? allPages : undefined),
+    },
     prices,
     threshold: thresholdAt === -1 ? 0.8 : Number(args[thresholdAt + 1]),
     record: !args.includes("--no-record"),
     readingsDir: readingsAt === -1 ? undefined : args[readingsAt + 1],
+    beforeDocument: matchImages || verifyImages ? (pdf) => (pages = renderPages(pdf)) : undefined,
   });
-  console.log(`Reader ${models.reader}, Fill ${models.filler}, Jev ${models.jev}\n`);
+  console.log(
+    `Reader ${models.reader}, Fill ${models.filler}, Jev ${models.jev}` +
+      `${matchImages ? ", Match sees pages" : ""}${verifyImages ? ", Verify sees pages" : ""}\n`,
+  );
   console.log(formatReport(report));
 }
 

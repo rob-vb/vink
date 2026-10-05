@@ -83,6 +83,7 @@ export async function evaluate({
   threshold,
   record = false,
   readingsDir,
+  beforeDocument,
 }: {
   fixturesDir: string;
   adapters: Adapters;
@@ -95,6 +96,8 @@ export async function evaluate({
   record?: boolean;
   /** Keeps each Document's Reading here and reuses it on later runs; see storedReadings. */
   readingsDir?: string;
+  /** Called with each Document's PDF before it runs, e.g. to render its pages. */
+  beforeDocument?: (pdf: Uint8Array) => void;
 }) {
   const reader = readingsDir ? storedReadings(adapters.reader, readingsDir) : adapters.reader;
   const documents: DocumentResult[] = [];
@@ -123,6 +126,7 @@ export async function evaluate({
     const start = performance.now();
     try {
       const pdf = new Uint8Array(readFileSync(join(dir, "document.pdf")));
+      beforeDocument?.(pdf);
       const { reading, textLayer } = await timed("read", reader.read)(pdf);
       const recording: Required<Omit<Recording, "proposal">> = {
         reading,
