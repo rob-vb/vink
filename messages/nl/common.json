@@ -33,13 +33,13 @@
   },
   "founder": {
     "eyebrow": "Wie zit er achter Vink",
-    "quote": "Ik heb Vink gebouwd nadat ik teams elke dag dezelfde soort pdf's zag overtikken. Twijfel je of het werkt voor jouw documenten? Mail me. Ik lees elke mail.",
+    "quote": "Ik heb Vink gebouwd nadat ik teams elke dag dezelfde soort PDF's zag overtikken. Twijfel je of het werkt voor jouw documenten? Mail me. Ik lees elke mail.",
     "name": "Rob",
     "role": "Oprichter van Vink",
     "photoAlt": "Rob, oprichter van Vink"
   },
   "footer": {
-    "tagline": "Automatische data-invoer voor operationele teams. Elke pdf erin, schone data eruit.",
+    "tagline": "Automatische data-invoer voor operationele teams. Elke PDF erin, schone data eruit.",
     "product": "Product",
     "company": "Bedrijf",
     "legal": "Juridisch",
@@ -92,8 +92,8 @@
   },
   "og": {
     "features": {
-      "title": "Alles tussen de pdf en jouw systeem.",
-      "alt": "Functies van Vink. Alles tussen de pdf en jouw systeem."
+      "title": "Alles tussen de PDF en jouw systeem.",
+      "alt": "Functies van Vink. Alles tussen de PDF en jouw systeem."
     }
   },
   "frame": {

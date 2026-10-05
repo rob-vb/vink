@@ -67,7 +67,7 @@
   },
   "pages": {
     "title": "Wat telt als een pagina",
-    "body": "Eén pagina van een pdf is één pagina. Die telt één keer, wanneer Vink de pdf accepteert om te lezen.",
+    "body": "Eén pagina van een PDF is één pagina. Die telt één keer, wanneer Vink de PDF accepteert om te lezen.",
     "invoice": "Een factuur",
     "invoiceCount": "1 tot 2 pagina's",
     "delivery": "Een pakbon",
@@ -84,11 +84,11 @@
     },
     "page": {
       "q": "Wat is een pagina?",
-      "a": "Eén pagina van een pdf. Een document telt zijn pagina's één keer, wanneer Vink het accepteert om te lezen. Opnieuw proberen na een mislukte lezing is gratis."
+      "a": "Eén pagina van een PDF. Een document telt zijn pagina's één keer, wanneer Vink het accepteert om te lezen. Opnieuw proberen na een mislukte lezing is gratis."
     },
     "runOut": {
       "q": "Wat gebeurt er als onze pagina's op zijn?",
-      "a": "Een nieuwe pdf die niet in je resterende pagina's past, wordt bij het uploaden geweigerd, met een duidelijke melding. Alles wat al geüpload is blijft werken. Je kunt upgraden, of een aanvulling nemen van €10 per 100 pagina's die geldt tot het einde van de factuurperiode."
+      "a": "Een nieuwe PDF die niet in je resterende pagina's past, wordt bij het uploaden geweigerd, met een duidelijke melding. Alles wat al geüpload is blijft werken. Je kunt upgraden, of een aanvulling nemen van €10 per 100 pagina's die geldt tot het einde van de factuurperiode."
     },
     "rollover": {
       "q": "Schuiven ongebruikte pagina's door?",
@@ -104,11 +104,11 @@
     },
     "intake": {
       "q": "Hoe komen documenten binnen?",
-      "a": "Upload meerdere pdf's tegelijk in de app, of mail ze naar het eigen adres van een formulier. Elke pdf-bijlage wordt een document. Pdf's tot 20 pagina's. Andere bronnen? <link>Laat het ons weten</link>."
+      "a": "Upload meerdere PDF's tegelijk in de app, of mail ze naar het eigen adres van een formulier. Elke PDF-bijlage wordt een document. Pdf's tot 20 pagina's. Andere bronnen? <link>Laat het ons weten</link>."
     }
   },
   "jsonld": {
-    "description": "Vink leest pdf's, getypt, gescand of handgeschreven, en maakt er schone JSON van voor jouw systemen. Mensen controleren alleen de waarden waar Vink twijfelt.",
+    "description": "Vink leest PDF's, getypt, gescand of handgeschreven, en maakt er schone JSON van voor jouw systemen. Mensen controleren alleen de waarden waar Vink twijfelt.",
     "offer": "{count} pagina's per maand, maandelijks gefactureerd, excl. btw"
   }
 }
