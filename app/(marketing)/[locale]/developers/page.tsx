@@ -199,6 +199,8 @@ export default async function DevelopersPage({ params }: PageProps<"/[locale]/de
           <Screenshot
             name="delivery-retry"
             title="Vink · Document · Deliveries"
+            width={831}
+            height={341}
             alt={t("delivery.screenshot")}
             pendingLabel={tc("frame.screenshotPending")}
             className="mt-2"
