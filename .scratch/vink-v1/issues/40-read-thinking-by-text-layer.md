@@ -26,11 +26,22 @@ Some scanners add an OCR text layer to a scan. If pdf-inspector reads such a pag
 
 ## Acceptance criteria
 
-- [ ] Read uses `MEDIUM` when no page needs OCR and `HIGH` otherwise; `READER_THINKING`, when set, overrides it
-- [ ] The level used is stored with the Extraction's usage (or logged), so a bill can be traced to it
-- [ ] Tests cover: all pages text-based, one scanned page in a digital PDF, all pages scanned, and the override
-- [ ] An OCR'd scan is checked as described under Risk, and the rule handles it
-- [ ] `npm run eval` on fresh Readings (not cached), twice: values x/84 (bar 80/84), Lists x/4, Needs Review recall, and cost and Read time per Document, against the `HIGH` runs in ticket 39
-- [ ] `fixtures/timing` (20 pages, `Mixed`) still runs at `HIGH`, so its timing doesn't change
+- [x] Read uses `MEDIUM` when no page needs OCR and `HIGH` otherwise; `READER_THINKING`, when set, overrides it
+- [x] The level used is stored with the Extraction's usage (or logged), so a bill can be traced to it
+- [x] Tests cover: all pages text-based, one scanned page in a digital PDF, all pages scanned, and the override
+- [x] An OCR'd scan is checked as described under Risk, and the rule handles it
+- [x] `npm run eval` on fresh Readings (not cached), twice: values x/84 (bar 80/84), Lists x/4, Needs Review recall, and cost and Read time per Document, against the `HIGH` runs in ticket 39
+- [x] `fixtures/timing` (20 pages, `Mixed`) still runs at `HIGH`, so its timing doesn't change
 
 ## Comments
+
+- 2026-10-05 — Built on branch `read-thinking-by-text-layer`. `convex/lib/readThinking.ts` gives the level and the scanned pages; Read logs both (`Read at MEDIUM; scanned pages: none`). `READER_THINKING` moved out of `models.ts` and is read per call, so it still overrides.
+  - **OCR'd scans:** pdf-inspector already catches a real OCR layer, invisible text over the image (`needsOcr`, reason `invisible_text_layer`). It reads text placed *under* a page-sized image as a text layer, though (some tools write it that way). So a page also counts as scanned when images cover at least half of it; the logos and banners on the digital fixtures cover at most 16%. Both kinds have a test, built with pdf-lib so the tests don't need the git-ignored fixtures.
+  - **The rule on the fixtures:** `invoice-001`, `tire-service-003` and `-004` → `MEDIUM`; `tire-service-001`, `-002` and `pages-20` → `HIGH` (so the 20-page timing doesn't change; not re-timed).
+  - **Eval, fresh Readings, Vertex EU, Jev live:**
+    - Run 1: **81/84**, verified 14/15, Lists 4/4, Needs Review precision 17%, recall 33%, $0.12.
+    - Run 2: **82/84**, verified 15/15, Lists 4/4, precision 17%, recall 50%, $0.13.
+    - All at `HIGH` (ticket 26): 82/84, verified 15/15, $0.16. Read on the three digital Documents took 7–19 s.
+  - **Regression on a digital Document:** `currency` in `invoice-001` is `null` in both runs (want `EUR`). It is flagged, not missed. The `MEDIUM` runs in ticket 39 had the same miss.
+  - **Handwriting at `HIGH`:** `mileageKm` in 002 is 229596 (want 229546) and missed in **both** runs, although 002 is read at `HIGH`. Ticket 39 put this misread down to `MEDIUM`; it is read-to-read variation at `HIGH` too. This ticket doesn't change how 002 is read.
+
