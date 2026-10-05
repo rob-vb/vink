@@ -12,7 +12,7 @@
   "where": {
     "title": "Waar je data staat",
     "app": "<b>De app</b> draait in Finland (Hetzner, Helsinki).",
-    "database": "<b>De database</b> staat in Ierland (Convex, AWS eu-west-1). Daarin staat alles behalve de pdf's.",
+    "database": "<b>De database</b> staat in Ierland (Convex, AWS eu-west-1). Daarin staat alles behalve de PDF's.",
     "pdfs": "<b>Pdf's</b> worden opgeslagen in Cloudflare R2 met EU-jurisdictie.",
     "reading": "<b>Het lezen</b> gebeurt met Gemini op Vertex AI, in de EU-multiregio van Google Cloud.",
     "us": "Het koppelen van de gelezen tekst aan je velden gebeurt bij TypeSafe in de Verenigde Staten, en inlogmails gaan via Resend in de Verenigde Staten. Zie <link>Wie het verwerkt</link>."
@@ -22,8 +22,8 @@
     "default": "<b>30 dagen na versturen</b>, standaard. Je Admin kan alles van 1 tot 365 dagen instellen.",
     "neverApproved": "Documenten die nooit zijn goedgekeurd, worden 90 dagen na uploaden verwijderd.",
     "rejected": "Afgewezen documenten worden 30 dagen na afwijzing verwijderd.",
-    "proposals": "Niet-opgeslagen formuliervoorstellen worden na 7 dagen verwijderd, met hun voorbeeld-pdf.",
-    "what": "Verwijderen haalt de pdf weg, wat Vink gelezen heeft, alle waarden en de Payload.",
+    "proposals": "Niet-opgeslagen formuliervoorstellen worden na 7 dagen verwijderd, met hun voorbeeld-PDF.",
+    "what": "Verwijderen haalt de PDF weg, wat Vink gelezen heeft, alle waarden en de Payload.",
     "kept": "We houden een kort overzicht (bestandsnaam, wie het uploadde en goedkeurde, datums, bezorgstatus), nooit het document of de waarden.",
     "now": "Een Admin kan elk document direct verwijderen, ook goedgekeurde. Openstaande nieuwe pogingen worden dan geannuleerd.",
     "account": "Wil je je account of organisatie opheffen? Mail ons. We verwijderen alles binnen 30 dagen."
@@ -44,17 +44,17 @@
       "convex": {
         "purpose": "Database en backend",
         "region": "Ierland (EU)",
-        "data": "Alles behalve pdf's"
+        "data": "Alles behalve PDF's"
       },
       "r2": {
-        "purpose": "Opslag van pdf's",
+        "purpose": "Opslag van PDF's",
         "region": "EU",
-        "data": "De pdf's"
+        "data": "De PDF's"
       },
       "vertex": {
-        "purpose": "Het lezen van de pdf",
+        "purpose": "Het lezen van de PDF",
         "region": "EU",
-        "data": "De pdf"
+        "data": "De PDF"
       },
       "typesafe": {
         "purpose": "Gelezen tekst aan je velden koppelen",
@@ -69,7 +69,7 @@
       "email": {
         "purpose": "Documenten ontvangen die naar een Intake Address zijn gemaild",
         "region": "Nog te bevestigen",
-        "data": "Mails naar een Intake Address, met hun pdf-bijlagen"
+        "data": "Mails naar een Intake Address, met hun PDF-bijlagen"
       }
     },
     "transfers": "Doorgifte naar de Verenigde Staten gebeurt op basis van het EU-VS Data Privacy Framework of standaardcontractbepalingen."
@@ -91,7 +91,7 @@
   "transit": {
     "title": "Onderweg en opgeslagen",
     "https": "Alleen HTTPS, met HSTS.",
-    "links": "Links naar een pdf verlopen na 5 minuten.",
+    "links": "Links naar een PDF verlopen na 5 minuten.",
     "endpoints": "Endpoints van Integrations moeten HTTPS gebruiken.",
     "secrets": "Secrets van Integrations zijn versleuteld (AES-256-GCM) met een sleutel die buiten de database bewaard wordt.",
     "rest": "Opgeslagen data wordt door de providers versleuteld.",

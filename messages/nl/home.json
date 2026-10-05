@@ -1,34 +1,34 @@
 {
   "meta": {
     "title": "Vink: AI-data-extractie uit documenten voor operationele teams",
-    "description": "Vink leest elke pdf, getypt, gescand of handgeschreven, en maakt er schone data van voor jouw systemen. Jij controleert alleen waar Vink twijfelt. 20 pagina's gratis."
+    "description": "Vink leest elke PDF, getypt, gescand of handgeschreven, en maakt er schone data van voor jouw systemen. Jij controleert alleen waar Vink twijfelt. 20 pagina's gratis."
   },
   "og": {
     "title": "Document. Vink. Klaar.",
-    "alt": "Vink. Document. Vink. Klaar. Elke pdf erin, schone data eruit."
+    "alt": "Vink. Document. Vink. Klaar. Elke PDF erin, schone data eruit."
   },
   "hero": {
     "document": "Document.",
     "vink": "Vink.",
     "done": "Klaar.",
-    "subtitle": "Vink leest elke pdf, getypt, gescand of handgeschreven, en maakt er schone data van voor jouw systemen. Jij controleert alleen waar Vink twijfelt.",
+    "subtitle": "Vink leest elke PDF, getypt, gescand of handgeschreven, en maakt er schone data van voor jouw systemen. Jij controleert alleen waar Vink twijfelt.",
     "watch": "Bekijk 15 seconden",
     "screenLabel": "Het controlescherm van Vink met één waarde die gecontroleerd moet worden"
   },
   "video": {
-    "title": "Eén pdf erin, schone data eruit.",
+    "title": "Eén PDF erin, schone data eruit.",
     "subtitle": "Vijftien seconden, zonder knippen.",
     "placeholder": "Opname volgt",
-    "label": "Een opname van 15 seconden waarin één pdf door Vink gaat"
+    "label": "Een opname van 15 seconden waarin één PDF door Vink gaat"
   },
   "journey": {
     "title": "Wat er met één document gebeurt.",
-    "subtitle": "Vier stops, van de pdf op je bureau tot de data in je systeem. Jij stapt pas in bij de derde.",
+    "subtitle": "Vier stops, van de PDF op je bureau tot de data in je systeem. Jij stapt pas in bij de derde.",
     "arrives": {
       "kicker": "Het komt binnen",
-      "title": "Elke pdf. Zelfs handschrift.",
+      "title": "Elke PDF. Zelfs handschrift.",
       "body": "Getypt, gescand of handgeschreven, één pagina of een stapel papieren. Geen templates om te bouwen.",
-      "intake": "Upload het of mail het in. Sleep meerdere pdf's tegelijk, of geef een formulier een eigen e-mailadres. Pdf-bijlagen, tot 20 pagina's per stuk."
+      "intake": "Upload het of mail het in. Sleep meerdere PDF's tegelijk, of geef een formulier een eigen e-mailadres. Pdf-bijlagen, tot 20 pagina's per stuk."
     },
     "reads": {
       "kicker": "Vink leest het",
@@ -102,7 +102,7 @@
     },
     "templates": {
       "q": "Moet ik templates instellen?",
-      "a": "Nee. Beschrijf je velden, of laat Vink ze voorstellen op basis van één voorbeeld. Daarna koppelt Vink elk nieuw document zelf aan je velden, welke opmaak het ook heeft. Vink leest pdf's tot 20 pagina's."
+      "a": "Nee. Beschrijf je velden, of laat Vink ze voorstellen op basis van één voorbeeld. Daarna koppelt Vink elk nieuw document zelf aan je velden, welke opmaak het ook heeft. Vink leest PDF's tot 20 pagina's."
     }
   }
 }

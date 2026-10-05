@@ -31,9 +31,9 @@
       "retries": "Ongeveer 8 uur lang opnieuw geprobeerd bij timeouts, 408, 429 en 5xx",
       "atLeastOnce": "At-least-once: ontdubbel op <code>deliveryId</code>"
     },
-    "reading": "Vink leest pdf's met Gemini op Vertex AI, EU-regio.",
+    "reading": "Vink leest PDF's met Gemini op Vertex AI, EU-regio.",
     "inboundTitle": "Documenten naar binnen krijgen",
-    "inbound": "Documenten komen vandaag via de app binnen: upload meerdere pdf's tegelijk, of mail ze in. Geen code? Laat een systeem mailen naar het Intake Address van het formulier, en elke pdf-bijlage wordt een document. Er is nog geen upload-API. Heb je die nodig? <link>Laat het ons weten</link>."
+    "inbound": "Documenten komen vandaag via de app binnen: upload meerdere PDF's tegelijk, of mail ze in. Geen code? Laat een systeem mailen naar het Intake Address van het formulier, en elke PDF-bijlage wordt een document. Er is nog geen upload-API. Heb je die nodig? <link>Laat het ons weten</link>."
   },
   "envelope": {
     "title": "Envelope",
