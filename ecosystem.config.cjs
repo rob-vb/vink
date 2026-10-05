@@ -11,14 +11,5 @@ module.exports = {
         NODE_OPTIONS: "--dns-result-order=ipv4first",
       },
     },
-    {
-      // Answers the Claude steps with Claude Code until Vertex is set up
-      // (scripts/claude-bridge). nginx serves it at /claude-bridge/.
-      name: "docuhelper-claude-bridge",
-      cwd: __dirname,
-      script: "scripts/claude-bridge/server.ts",
-      interpreter: "node",
-      node_args: "--env-file=.env --import tsx",
-    },
   ],
 };
