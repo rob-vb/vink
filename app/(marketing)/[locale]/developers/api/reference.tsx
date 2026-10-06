@@ -68,6 +68,16 @@ function TypeLabel({ schema }: { schema: Schema }): ReactNode {
     );
   }
   if (schema.enum) return schema.enum.map((v) => `"${v}"`).join(" | ");
+  if (Array.isArray(schema.oneOf)) {
+    // One of several, like `Envelope | null`.
+    const options = schema.oneOf as Schema[];
+    return options.map((option, i) => (
+      <span key={i}>
+        {i > 0 && " | "}
+        <TypeLabel schema={option} />
+      </span>
+    ));
+  }
   if (schema.properties) {
     // An inline wrapper, like `{ data: Form[] }`.
     const entries = Object.entries(schema.properties);

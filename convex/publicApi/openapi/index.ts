@@ -2,11 +2,12 @@
 // API reference page (/developers/api) and, later, the Power Automate
 // connector. A new resource adds its own file here and one entry to `parts`.
 import { API_BASE_URL, commonErrors, errorSchema, securitySchemes, sharedResponses } from "./common";
+import { documentRead } from "./documentRead";
 import { forms } from "./forms";
 import { subscriptions } from "./subscriptions";
 import type { OpenApiPart } from "./types";
 
-export const parts: OpenApiPart[] = [forms, subscriptions];
+export const parts: OpenApiPart[] = [forms, subscriptions, documentRead];
 
 export const openApiDocument = {
   openapi: "3.1.0",
@@ -18,7 +19,8 @@ export const openApiDocument = {
   },
   servers: [{ url: API_BASE_URL }],
   security: [{ apiKey: [] }],
-  tags: parts.map((part) => part.tag),
+  // Parts may share a tag (Documents); it is listed once.
+  tags: parts.map((part) => part.tag).filter((tag, i, all) => all.findIndex((t) => t.name === tag.name) === i),
   paths: Object.assign({}, ...parts.map((part) => part.paths)) as OpenApiPart["paths"],
   components: {
     securitySchemes,
