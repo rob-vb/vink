@@ -158,7 +158,7 @@ export const subscriptions: OpenApiPart = {
         event: { type: "string", enum: ["document.approved"] },
         delivery_id: {
           type: "string",
-          description: "The same on every retry and re-send of one Delivery: de-duplicate on it. `test_…` in a test.",
+          description: "The same on every retry and re-send of one Delivery: de-duplicate on it. `test_…` in a test; `doc_<document id>` when read with Get a Document.",
         },
         test: { type: "boolean", description: "`true` for a test-send or a sample." },
         document: {
