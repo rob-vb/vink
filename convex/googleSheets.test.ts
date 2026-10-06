@@ -237,7 +237,7 @@ test("an Approval adds a row per tyre change, the second List as an empty cell",
     "tyre_changes.tread_depth_mm",
     "rims",
   ]);
-  const document = { approved_at: expect.stringMatching(/^2026-10-06T09:/), approved_by: "ann@example.com" };
+  const document = { approved_at: expect.stringMatching(/^2026-10-06T\d\d:\d\d:\d\d\.\d{3}Z$/), approved_by: "ann@example.com" };
   expect(sheet.rows).toEqual([
     [expect.stringMatching(/\.pdf$/), document.approved_at, document.approved_by, delivery.deliveryId, "OR18DH", "2L1", 3, null],
     [expect.stringMatching(/\.pdf$/), document.approved_at, document.approved_by, delivery.deliveryId, "OR18DH", "2R1", 4, null],
