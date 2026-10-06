@@ -12,6 +12,7 @@ import {
   type MutationCtx,
   type QueryCtx,
 } from "./_generated/server";
+import { removeIntegration } from "./integrations";
 import { MAX_ATTEMPTS, nextAttemptAt } from "./lib/backoff";
 import { refreshTokenKeeper, sendAlone } from "./lib/accounts";
 import { documentPayload } from "./lib/documentPayload";
@@ -87,7 +88,7 @@ const outcome = v.union(
   v.object({
     kind: v.literal("failed"),
     reason: v.string(),
-    cause: v.optional(v.literal("access_expired")),
+    cause: v.optional(v.union(v.literal("access_expired"), v.literal("gone"))),
   }),
 );
 
@@ -166,6 +167,9 @@ export const recordAttempt = internalMutation({
       await ctx.scheduler.runAt(next, internal.deliveries.attempt, { id });
       return;
     }
+    if (outcome.kind === "failed" && outcome.cause === "gone" && (await endSubscription(ctx, delivery, attempts))) {
+      return;
+    }
     const reason =
       outcome.kind === "retry"
         ? `Gave up after ${MAX_ATTEMPTS} attempts: ${outcome.reason.replace(/^The/, "the")}`
@@ -178,6 +182,30 @@ export const recordAttempt = internalMutation({
     await startClockIfAllFailed(ctx, delivery.documentId);
   },
 });
+
+/**
+ * A Subscription's receiver answered 410 Gone: the platform has ended it, so
+ * Vink ends the Subscription and removes its Webhook, as an unsubscribe does.
+ * The Delivery fails without a notice: nothing is wrong for an Admin to fix.
+ * False for an Admin's own Webhook, which fails as any refusal.
+ */
+async function endSubscription(ctx: MutationCtx, delivery: Doc<"deliveries">, attempts: Doc<"deliveries">["attempts"]) {
+  const subscription = await ctx.db
+    .query("subscriptions")
+    .withIndex("by_integrationId", (q) => q.eq("integrationId", delivery.integrationId))
+    .unique();
+  if (subscription === null) return false;
+  await ctx.db.patch(delivery._id, {
+    attempts,
+    state: "failed",
+    failureReason: "The receiver answered 410 Gone: the Subscription ended",
+    integrationRemoved: true,
+    nextAttemptAt: undefined,
+  });
+  await removeIntegration(ctx, delivery.integrationId);
+  await startClockIfAllFailed(ctx, delivery.documentId);
+  return true;
+}
 
 /** The Integration's connected account no longer lets Vink in: it shows as needing reconnecting. */
 async function markNeedsReconnect(ctx: MutationCtx, integrationId: Id<"integrations">) {

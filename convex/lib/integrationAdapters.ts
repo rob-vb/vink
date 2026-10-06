@@ -26,8 +26,9 @@ export type Outcome =
   | { kind: "retry"; reason: string; retryAfter: string | null }
   // Not tried again until an Admin re-sends it. `access_expired`: the
   // connected account no longer lets Vink in (a spreadsheet kind), so it
-  // needs connecting again before a re-send can work.
-  | { kind: "failed"; reason: string; cause?: "access_expired" };
+  // needs connecting again before a re-send can work. `gone`: a Webhook's
+  // receiver answered 410 Gone, which ends a Subscription's Webhook.
+  | { kind: "failed"; reason: string; cause?: "access_expired" | "gone" };
 
 /** What a send needs besides the envelope, which leaves it out. */
 export type SendDetails = {
