@@ -104,11 +104,9 @@ test("the trigger subscribes with Power Automate's callback URL, unsubscribes by
 });
 
 test("dynamic values and schemas call operations that exist, and their paths are in those answers", () => {
-  const schemaAt = (operationId: string) => {
-    const response = byId(operationId).operation.responses["200"].schema;
-    return response.$ref ? apiDefinition.definitions[response.$ref.split("/").pop()] : response;
-  };
-  const resolve = (schema: Json) => (schema.$ref ? apiDefinition.definitions[schema.$ref.split("/").pop()] : schema);
+  const definitions = apiDefinition.definitions as Json;
+  const resolve = (schema: Json): Json => (schema.$ref ? definitions[schema.$ref.split("/").pop()] : schema);
+  const schemaAt = (operationId: string) => resolve(byId(operationId).operation.responses["200"].schema);
   for (const [path, value] of walk(apiDefinition)) {
     const key = path.split("/").pop();
     if (key === "x-ms-dynamic-values") {
