@@ -349,6 +349,13 @@ export const releaseWriting = internalMutation({
   },
 });
 
+/** A Subscription's Webhook sends its own Form only: an Admin can delete it, not move it. */
+async function checkNotSubscription(ctx: QueryCtx, integrationId: Id<"integrations">) {
+  if ((await subscriptionOf(ctx, integrationId)) !== null) {
+    throw new ConvexError("An automation platform made this Webhook, so it stays attached to its own Form only. Delete the Webhook to stop it.");
+  }
+}
+
 async function linkOf(ctx: QueryCtx, integrationId: Id<"integrations">, formId: Id<"forms">) {
   const links = await ctx.db
     .query("formIntegrations")
@@ -364,6 +371,7 @@ export const attach = orgMutation({
   handler: async (ctx, { integrationId, formId }) => {
     await ownIntegration(ctx, ctx.organisationId, integrationId);
     await ownForm(ctx, ctx.organisationId, formId);
+    await checkNotSubscription(ctx, integrationId);
     if ((await linkOf(ctx, integrationId, formId)) !== null) return;
     await ctx.db.insert("formIntegrations", {
       organisationId: ctx.organisationId,
@@ -378,6 +386,7 @@ export const detach = orgMutation({
   args: { integrationId: v.id("integrations"), formId: v.id("forms") },
   handler: async (ctx, { integrationId, formId }) => {
     await ownIntegration(ctx, ctx.organisationId, integrationId);
+    await checkNotSubscription(ctx, integrationId);
     const link = await linkOf(ctx, integrationId, formId);
     if (link === null) return;
     await ctx.db.delete(link._id);

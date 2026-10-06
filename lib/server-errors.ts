@@ -65,6 +65,8 @@ const dutch: Record<string, string> = {
   "Integration removed: this Delivery can't be sent again":
     "Koppeling verwijderd: deze Levering kan niet opnieuw worden verstuurd",
   "This Integration isn't a Webhook": "Deze Koppeling is geen Webhook",
+  "An automation platform made this Webhook, so it stays attached to its own Form only. Delete the Webhook to stop it.":
+    "Een automatiseringsplatform heeft deze Webhook gemaakt, dus hij blijft alleen aan zijn eigen Formulier gekoppeld. Verwijder de Webhook om dat te stoppen.",
   "Google Sheets isn't set up on this deployment": "Google Sheets is hier nog niet ingesteld",
   "This Google sign-in has expired. Try again.": "Deze aanmelding bij Google is verlopen. Probeer het opnieuw.",
   "This Integration has no account to reconnect": "Deze Koppeling heeft geen account om opnieuw te koppelen",

@@ -220,6 +220,30 @@ test("an Admin can delete a Subscription's Webhook in the app; that ends the Sub
   expect((await call(`/subscriptions/${body.id}`, { method: "DELETE" })).status).toBe(200);
 });
 
+test("an Admin can't detach a Subscription's Webhook from its Form, or attach it to another Form", async () => {
+  const t = newBackend();
+  const { user, organisationSlug, formId, subscribe } = await organisation(t, "ann", "Acme Fleet");
+  await subscribe();
+  const { formId: otherForm } = await user.mutation(api.forms.create, {
+    organisationSlug,
+    name: "Delivery note",
+    fields: workOrderFields,
+  });
+  const [integration] = await user.query(api.integrations.list, { organisationSlug });
+  const refusal =
+    "An automation platform made this Webhook, so it stays attached to its own Form only. Delete the Webhook to stop it.";
+
+  await expect(
+    user.mutation(api.integrations.detach, { organisationSlug, integrationId: integration.id, formId }),
+  ).rejects.toThrow(refusal);
+  await expect(
+    user.mutation(api.integrations.attach, { organisationSlug, integrationId: integration.id, formId: otherForm }),
+  ).rejects.toThrow(refusal);
+  expect((await user.query(api.integrations.list, { organisationSlug }))[0].forms).toEqual([
+    { id: formId, name: "Work order" },
+  ]);
+});
+
 test("tenancy: another Organisation's Form and Subscription can't be reached, and its list doesn't show them", async () => {
   const t = newBackend();
   const acme = await organisation(t, "ann", "Acme Fleet");

@@ -349,23 +349,26 @@ export function IntegrationsList({ organisationSlug }: { organisationSlug: strin
                         <span className="text-muted-foreground">{t("notAttached")}</span>
                       )}
                       {integration.forms.map((form) => (
-                        <Badge key={form.id} variant="secondary" className="gap-1 pr-1">
+                        <Badge key={form.id} variant="secondary" className={integration.subscription ? undefined : "gap-1 pr-1"}>
                           {form.name}
-                          <button
-                            type="button"
-                            className="rounded-full p-0.5 hover:bg-foreground/10"
-                            aria-label={t("detach", { form: form.name })}
-                            onClick={() =>
-                              detach({ organisationSlug, integrationId: integration.id, formId: form.id }).catch(
-                                failed,
-                              )
-                            }
-                          >
-                            <X className="size-3" />
-                          </button>
+                          {/* A Subscription's Webhook stays on its own Form: deleting it is the way out. */}
+                          {!integration.subscription && (
+                            <button
+                              type="button"
+                              className="rounded-full p-0.5 hover:bg-foreground/10"
+                              aria-label={t("detach", { form: form.name })}
+                              onClick={() =>
+                                detach({ organisationSlug, integrationId: integration.id, formId: form.id }).catch(
+                                  failed,
+                                )
+                              }
+                            >
+                              <X className="size-3" />
+                            </button>
+                          )}
                         </Badge>
                       ))}
-                      {unattached.length > 0 && (
+                      {unattached.length > 0 && !integration.subscription && (
                         <Select
                           items={unattached}
                           value={null}
