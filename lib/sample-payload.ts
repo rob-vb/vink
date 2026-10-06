@@ -4,12 +4,12 @@
 
 export const sampleEnvelope = {
   event: "document.approved",
-  deliveryId: "dlv_3f6c2a1e-8b4d-4e2f-9a71-5c0d8e7b2f14",
+  delivery_id: "dlv_3f6c2a1e-8b4d-4e2f-9a71-5c0d8e7b2f14",
   test: false,
   document: {
     id: "k97d4m2x8q1v6c3n5b0e7h9r2t4w8a1f",
     filename: "invoice-F-2026-0418.pdf",
-    uploadedAt: "2026-09-30T08:12:04.000Z",
+    uploaded_at: "2026-09-30T08:12:04.000Z",
   },
   form: { id: "jd72k9m3x5q8v1c4n6b0e3h7r2t9w5as", version: 3 },
   approval: {

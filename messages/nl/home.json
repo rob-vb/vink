@@ -18,6 +18,77 @@
     "subtitle": "Van papier tot in de back-office.",
     "label": "Een film van 30 seconden waarin een handgeschreven werkbon door Vink gaat"
   },
+  "forms": {
+    "eyebrow": "Jouw formulieren",
+    "title": "Jij maakt het formulier. Vink vult het in.",
+    "subtitle": "Een formulier is jouw lijst met velden. Vink koppelt elk document aan die velden, en stuurt de gegevens naar je eigen applicatie.",
+    "pick": "Kies een factuur:",
+    "invoices": {
+      "hoekstra": {
+        "name": "Drukkerij Hoekstra",
+        "kind": "Getypt",
+        "alt": "Een getypte factuur van Drukkerij Hoekstra B.V."
+      },
+      "bakker": {
+        "name": "Groothandel Bakker",
+        "kind": "Andere opmaak",
+        "alt": "Een factuur van Groothandel Bakker met een groene kop en een eigen indeling."
+      },
+      "smit": {
+        "name": "Klusbedrijf Smit",
+        "kind": "Handgeschreven",
+        "alt": "Een gescande, met de hand ingevulde nota van Klusbedrijf Smit."
+      }
+    },
+    "steps": {
+      "form": {
+        "title": "Je maakt een formulier.",
+        "body": "Kies de velden die je nodig hebt: tekst, getal, datum of een lijst met regels. Of upload één voorbeeld-PDF. Vink stelt de velden dan voor."
+      },
+      "match": {
+        "title": "Vink koppelt elk document.",
+        "body": "Elke leverancier heeft een andere opmaak. Vink vindt je velden toch, ook op een scan of in handschrift. Je bouwt geen sjabloon per leverancier."
+      },
+      "send": {
+        "title": "Je applicatie krijgt de gegevens.",
+        "body": "Na goedkeuring gaan de gegevens als JSON naar je eigen systeem. Jouw veldnamen zijn de sleutels."
+      }
+    },
+    "sameKeys": "Kies een andere factuur. De waarden veranderen, de sleutels blijven gelijk.",
+    "form": {
+      "name": "Facturen",
+      "count": "{count} velden",
+      "required": "Verplicht",
+      "fields": {
+        "supplier": "Leverancier",
+        "invoice_number": "Factuurnummer",
+        "invoice_date": "Factuurdatum",
+        "total_excl_vat": "Totaal excl. btw",
+        "lines": "Regels",
+        "item": "Omschrijving",
+        "amount": "Bedrag"
+      },
+      "types": {
+        "supplier": "Tekst",
+        "invoice_number": "Tekst",
+        "invoice_date": "Datum",
+        "total_excl_vat": "Getal",
+        "lines": "Lijst"
+      }
+    },
+    "kinds": {
+      "title": "Eén formulier per soort document.",
+      "body": "Maak zoveel formulieren als je nodig hebt. Elk formulier heeft eigen velden, een eigen e-mailadres en eigen koppelingen.",
+      "list": [
+        "Facturen",
+        "Pakbonnen",
+        "Werkbonnen",
+        "Bestelformulieren",
+        "Keuringsrapporten",
+        "Onkostenbonnen"
+      ]
+    }
+  },
   "calculator": {
     "title": "Wat overtikken je nu kost.",
     "subtitle": "Vul je eigen cijfers in. Je ziet wat overtikken per maand kost, en wat Vink kost.",

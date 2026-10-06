@@ -10,6 +10,7 @@ import { ClosingCard, Faq, StartFree, TrustRow } from "@/components/marketing/bl
 import { VinkMark } from "@/components/marketing/brand";
 import { CodeBlock, PostBar } from "@/components/marketing/code-block";
 import { demoVideo } from "@/components/marketing/demo-video";
+import { FormMatch } from "@/components/marketing/form-match";
 import { JsonLd } from "@/components/marketing/json-ld";
 import { RetypingCalculator } from "@/components/marketing/retyping-calculator";
 import { seedDocuments } from "@/components/demo/demo-data";
@@ -76,6 +77,7 @@ export default async function Home({ params }: PageProps<"/[locale]">) {
         </Container>
       </section>
       <Video />
+      <Forms />
       <Calculator />
       <Journey />
       <Connect />
@@ -136,6 +138,34 @@ function Video() {
             aria-label={t("label")}
           />
         </ScreenshotFrame>
+      </Container>
+    </section>
+  );
+}
+
+/** The core idea: your Form, any document, your application. */
+function Forms() {
+  const t = useTranslations("home.forms");
+  return (
+    <section id="forms" className="scroll-mt-20 pb-16 sm:pb-24">
+      <Container>
+        <SectionHeading eyebrow={t("eyebrow")} title={t("title")} subtitle={t("subtitle")} className="mb-10" />
+        <FormMatch />
+        <div className="mt-5 flex flex-col gap-4 rounded-2xl bg-panel p-6 sm:p-7 lg:flex-row lg:items-center lg:justify-between lg:gap-10">
+          <div className="max-w-md">
+            <h3 className="text-lg font-semibold tracking-tight">{t("kinds.title")}</h3>
+            <p className="mt-1 text-[15px] text-muted-foreground">{t("kinds.body")}</p>
+          </div>
+          <ul className="flex flex-wrap gap-2">
+            {(t.raw("kinds.list") as string[]).map((kind) => (
+              <li key={kind}>
+                <Badge variant="outline" className="h-7 bg-background px-3 text-sm font-normal">
+                  {kind}
+                </Badge>
+              </li>
+            ))}
+          </ul>
+        </div>
       </Container>
     </section>
   );

@@ -18,6 +18,77 @@
     "subtitle": "From paper to back office.",
     "label": "A 30-second film of a handwritten work order going through Vink"
   },
+  "forms": {
+    "eyebrow": "Your Forms",
+    "title": "You make the Form. Vink fills it in.",
+    "subtitle": "A Form is your list of fields. Vink matches every document to those fields, and sends the data to your own application.",
+    "pick": "Pick an invoice:",
+    "invoices": {
+      "hoekstra": {
+        "name": "Drukkerij Hoekstra",
+        "kind": "Typed",
+        "alt": "A typed invoice from Drukkerij Hoekstra B.V."
+      },
+      "bakker": {
+        "name": "Groothandel Bakker",
+        "kind": "Other layout",
+        "alt": "An invoice from Groothandel Bakker with a green header and its own layout."
+      },
+      "smit": {
+        "name": "Klusbedrijf Smit",
+        "kind": "Handwritten",
+        "alt": "A scanned, hand-filled invoice from Klusbedrijf Smit."
+      }
+    },
+    "steps": {
+      "form": {
+        "title": "You make a Form.",
+        "body": "Pick the fields you need: text, number, date, or a list of lines. Or upload one sample PDF, and Vink proposes the fields."
+      },
+      "match": {
+        "title": "Vink matches every document.",
+        "body": "Every supplier uses a different layout. Vink still finds your fields, also on a scan or in handwriting. You build no template per supplier."
+      },
+      "send": {
+        "title": "Your application gets the data.",
+        "body": "After approval, the data goes to your own system as JSON. Your field names are the keys."
+      }
+    },
+    "sameKeys": "Pick another invoice. The values change, the keys stay the same.",
+    "form": {
+      "name": "Invoices",
+      "count": "{count} fields",
+      "required": "Required",
+      "fields": {
+        "supplier": "Supplier",
+        "invoice_number": "Invoice number",
+        "invoice_date": "Invoice date",
+        "total_excl_vat": "Total excl. VAT",
+        "lines": "Lines",
+        "item": "Item",
+        "amount": "Amount"
+      },
+      "types": {
+        "supplier": "Text",
+        "invoice_number": "Text",
+        "invoice_date": "Date",
+        "total_excl_vat": "Number",
+        "lines": "List"
+      }
+    },
+    "kinds": {
+      "title": "One Form per kind of document.",
+      "body": "Make as many Forms as you need. Each Form has its own fields, its own email address and its own integrations.",
+      "list": [
+        "Invoices",
+        "Delivery notes",
+        "Work orders",
+        "Order forms",
+        "Inspection reports",
+        "Receipts"
+      ]
+    }
+  },
   "calculator": {
     "title": "What retyping costs you now.",
     "subtitle": "Fill in your own numbers. You see what retyping costs per month, and what Vink costs.",

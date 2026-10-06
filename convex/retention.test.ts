@@ -56,10 +56,10 @@ afterEach(() => {
 });
 
 const clean: Recording = {
-  reading: { vehicle: { licensePlate: "OR18DH", _pages: [1] } },
-  matches: { licensePlate: { path: "vehicle.licensePlate", probability: 0.97 } },
-  fills: { licensePlate: "OR18DH" },
-  proposal: [{ field: { type: "text", label: "Kenteken", key: "licensePlate", required: false }, ticked: true }],
+  reading: { vehicle: { license_plate: "OR18DH", _pages: [1] } },
+  matches: { license_plate: { path: "vehicle.license_plate", probability: 0.97 } },
+  fills: { license_plate: "OR18DH" },
+  proposal: [{ field: { type: "text", label: "Kenteken", key: "license_plate", required: false }, ticked: true }],
 };
 
 async function acme(t: Backend) {
@@ -68,7 +68,7 @@ async function acme(t: Backend) {
   const { formId } = await ann.user.mutation(api.forms.create, {
     organisationSlug,
     name: "Work order",
-    fields: [{ type: "text", label: "Kenteken", key: "licensePlate", required: true }],
+    fields: [{ type: "text", label: "Kenteken", key: "license_plate", required: true }],
   });
   fakePipeline.replay(clean);
   const upload = async () => {
@@ -161,7 +161,7 @@ test("with an Integration, the days count from the last successful Delivery, usi
 test("a Document that never gets Approval goes after 90 days, leaving a deleted record", async () => {
   const t = newBackend();
   const { user, organisationSlug, upload } = await acme(t);
-  fakePipeline.replay({ ...clean, matches: { licensePlate: { path: "vehicle.licensePlate", probability: 0.4 } } });
+  fakePipeline.replay({ ...clean, matches: { license_plate: { path: "vehicle.license_plate", probability: 0.4 } } });
   const { key, read } = await upload();
 
   await daysLater(t, 89);

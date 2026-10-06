@@ -48,7 +48,7 @@ async function kantoorNoord(t: Backend, { plan }: { plan?: "internal_unlimited" 
   const { formId } = await ann.user.mutation(api.forms.create, {
     organisationSlug: ann.slug,
     name: "Invoice",
-    fields: [{ type: "text", label: "Invoice number", key: "invoiceNumber", required: true }],
+    fields: [{ type: "text", label: "Invoice number", key: "invoice_number", required: true }],
   });
   const cas = await addMembership(t, "cas", ann.slug, "member");
   const on = { organisationSlug: ann.slug, formId };

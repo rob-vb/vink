@@ -16,7 +16,7 @@ A user-defined set of Fields describing one kind of document.
 _Avoid_: template, schema
 
 **Field**:
-A typed slot on a Form. It has a label (shown to users), a key (its name in the Payload), a type (text, number, date, boolean, choice, or list), an optional description that guides extraction, and a required flag.
+A typed slot on a Form. It has a label (shown to users), a key (its name in the Payload, in snake_case), a type (text, number, date, boolean, choice, or list), an optional description that guides extraction, and a required flag.
 _Avoid_: attribute, column
 
 **List Field**:

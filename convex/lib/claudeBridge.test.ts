@@ -63,10 +63,10 @@ test("Fill sends a JSON schema to the bridge and answers per request id", async 
 
   const values = await filler.fill([
     { id: "total", field: total, source: { path: "invoice.total", text: "658,08 EUR" } },
-    { id: "tyreChanges[0].position", field: position, source: { path: "changes[0].pos", text: "?" } },
+    { id: "tyre_changes[0].position", field: position, source: { path: "changes[0].pos", text: "?" } },
   ]);
 
-  expect(values).toEqual({ total: 658.08, "tyreChanges[0].position": null });
+  expect(values).toEqual({ total: 658.08, "tyre_changes[0].position": null });
   expect(sent[0].body.model).toBe("claude-haiku-4-5@20251001");
   expect(sent[0].body.pdf).toBeUndefined();
   expect(sent[0].body.jsonSchema).toMatchObject({ required: ["v0", "v1"] });
@@ -75,7 +75,7 @@ test("Fill sends a JSON schema to the bridge and answers per request id", async 
 
 test("the Proposer sends the sample's PDF and Reading to the bridge", async () => {
   bridgeAnswers(
-    '{"fields":[{"label":"Factuurnummer","key":"invoiceNumber","type":"text","ticked":true}]}',
+    '{"fields":[{"label":"Factuurnummer","key":"invoice_number","type":"text","ticked":true}]}',
   );
 
   const proposed = await proposer.propose({
@@ -86,7 +86,7 @@ test("the Proposer sends the sample's PDF and Reading to the bridge", async () =
 
   expect(proposed).toEqual([
     {
-      field: { label: "Factuurnummer", key: "invoiceNumber", description: undefined, required: false, type: "text" },
+      field: { label: "Factuurnummer", key: "invoice_number", description: undefined, required: false, type: "text" },
       ticked: true,
     },
   ]);

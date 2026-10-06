@@ -43,14 +43,14 @@ afterEach(() => {
 const workOrder: Recording = {
   reading: {
     _pages: [1],
-    vehicle: { licensePlate: "NWA-30-E", mileage: "9899", _pages: [1] },
+    vehicle: { license_plate: "NWA-30-E", mileage: "9899", _pages: [1] },
   },
   matches: {
-    licensePlate: { path: "vehicle.licensePlate", probability: 0.97 },
-    mileageKm: { path: "vehicle.mileage", probability: 0.55 },
-    orderNumber: { path: null, probability: 0.9 },
+    license_plate: { path: "vehicle.license_plate", probability: 0.97 },
+    mileage_km: { path: "vehicle.mileage", probability: 0.55 },
+    order_number: { path: null, probability: 0.9 },
   },
-  fills: { licensePlate: "NWA30E", mileageKm: 9899 },
+  fills: { license_plate: "NWA30E", mileage_km: 9899 },
 };
 
 async function acmeWithWorkOrderForm(t: Backend) {
@@ -59,9 +59,9 @@ async function acmeWithWorkOrderForm(t: Backend) {
     organisationSlug: ann.slug,
     name: "Work order",
     fields: [
-      { type: "text", label: "Kenteken", key: "licensePlate", required: true },
-      { type: "number", label: "Kilometerstand", key: "mileageKm", required: false },
-      { type: "text", label: "Werkorder", key: "orderNumber", required: true },
+      { type: "text", label: "Kenteken", key: "license_plate", required: true },
+      { type: "number", label: "Kilometerstand", key: "mileage_km", required: false },
+      { type: "text", label: "Werkorder", key: "order_number", required: true },
     ],
   });
   return { ...ann, formId };
@@ -84,9 +84,9 @@ test("a Document with values to check lists how many are Needs Review", async ()
   const document = await read();
   expect(document.needsReviewCount).toBe(2);
   expect(document.fieldValues.map((f) => [f.key, f.needsReview])).toEqual([
-    ["licensePlate", false],
-    ["mileageKm", true],
-    ["orderNumber", true],
+    ["license_plate", false],
+    ["mileage_km", true],
+    ["order_number", true],
   ]);
 });
 
@@ -96,13 +96,13 @@ test("correcting a value marks it Corrected by whom and when, and clears Needs R
 
   await user.mutation(api.review.correct, {
     organisationSlug: slug,
-    fieldValueId: await idOf("orderNumber"),
+    fieldValueId: await idOf("order_number"),
     value: "WO-0142",
   });
 
   const document = await read();
-  const orderNumber = document.fieldValues.find((f) => f.key === "orderNumber")!;
-  expect(orderNumber).toMatchObject({
+  const order_number = document.fieldValues.find((f) => f.key === "order_number")!;
+  expect(order_number).toMatchObject({
     value: "WO-0142",
     needsReview: false,
     reviewReasons: ["required_empty"],
@@ -119,14 +119,14 @@ test("a correction must fit the Field's type, and a required Field can't be corr
   await expect(
     user.mutation(api.review.correct, {
       organisationSlug: slug,
-      fieldValueId: await idOf("mileageKm"),
+      fieldValueId: await idOf("mileage_km"),
       value: "a lot",
     }),
   ).rejects.toThrow("Kilometerstand needs a number");
   await expect(
     user.mutation(api.review.correct, {
       organisationSlug: slug,
-      fieldValueId: await idOf("orderNumber"),
+      fieldValueId: await idOf("order_number"),
       value: null,
     }),
   ).rejects.toThrow("Werkorder is required");
@@ -137,11 +137,11 @@ test("confirming a value marks it Checked and clears Needs Review, without touch
 
   await user.mutation(api.review.check, {
     organisationSlug: slug,
-    fieldValueId: await idOf("mileageKm"),
+    fieldValueId: await idOf("mileage_km"),
   });
 
   const document = await read();
-  expect(document.fieldValues.find((f) => f.key === "mileageKm")).toMatchObject({
+  expect(document.fieldValues.find((f) => f.key === "mileage_km")).toMatchObject({
     value: 9899,
     needsReview: false,
     review: { state: "checked", by: "ann@example.com" },
@@ -151,14 +151,14 @@ test("confirming a value marks it Checked and clears Needs Review, without touch
 
 test("undoing a correction brings back the extracted value and Needs Review", async () => {
   const { user, slug, read, idOf } = await reviewing();
-  const mileageKm = await idOf("mileageKm");
-  await user.mutation(api.review.correct, { organisationSlug: slug, fieldValueId: mileageKm, value: 9800 });
-  await user.mutation(api.review.correct, { organisationSlug: slug, fieldValueId: mileageKm, value: 9900 });
+  const mileage_km = await idOf("mileage_km");
+  await user.mutation(api.review.correct, { organisationSlug: slug, fieldValueId: mileage_km, value: 9800 });
+  await user.mutation(api.review.correct, { organisationSlug: slug, fieldValueId: mileage_km, value: 9900 });
 
-  await user.mutation(api.review.undo, { organisationSlug: slug, fieldValueId: mileageKm });
+  await user.mutation(api.review.undo, { organisationSlug: slug, fieldValueId: mileage_km });
 
   const document = await read();
-  expect(document.fieldValues.find((f) => f.key === "mileageKm")).toMatchObject({
+  expect(document.fieldValues.find((f) => f.key === "mileage_km")).toMatchObject({
     value: 9899,
     needsReview: true,
     review: null,
@@ -167,10 +167,10 @@ test("undoing a correction brings back the extracted value and Needs Review", as
 
 test("undoing a check brings back Needs Review", async () => {
   const { user, slug, read, idOf } = await reviewing();
-  const mileageKm = await idOf("mileageKm");
-  await user.mutation(api.review.check, { organisationSlug: slug, fieldValueId: mileageKm });
+  const mileage_km = await idOf("mileage_km");
+  await user.mutation(api.review.check, { organisationSlug: slug, fieldValueId: mileage_km });
 
-  await user.mutation(api.review.undo, { organisationSlug: slug, fieldValueId: mileageKm });
+  await user.mutation(api.review.undo, { organisationSlug: slug, fieldValueId: mileage_km });
 
   expect((await read()).needsReviewCount).toBe(2);
 });
@@ -179,7 +179,7 @@ test("Approval is refused while anything is Needs Review", async () => {
   const { user, slug, documentId, read, idOf } = await reviewing();
   await user.mutation(api.review.check, {
     organisationSlug: slug,
-    fieldValueId: await idOf("mileageKm"),
+    fieldValueId: await idOf("mileage_km"),
   });
 
   await expect(
@@ -190,10 +190,10 @@ test("Approval is refused while anything is Needs Review", async () => {
 
 test("Approval with no Integration attached marks the Document approved, manually, by whom and when", async () => {
   const { user, slug, documentId, read, idOf } = await reviewing();
-  await user.mutation(api.review.check, { organisationSlug: slug, fieldValueId: await idOf("mileageKm") });
+  await user.mutation(api.review.check, { organisationSlug: slug, fieldValueId: await idOf("mileage_km") });
   await user.mutation(api.review.correct, {
     organisationSlug: slug,
-    fieldValueId: await idOf("orderNumber"),
+    fieldValueId: await idOf("order_number"),
     value: "WO-0142",
   });
   vi.setSystemTime(new Date("2026-09-24T11:00:00Z"));
@@ -215,18 +215,18 @@ test("Approval with no Integration attached marks the Document approved, manuall
 test("an approved Document can't be corrected, checked or approved again", async () => {
   const clean: Recording = {
     ...workOrder,
-    matches: { ...workOrder.matches, mileageKm: { path: "vehicle.mileage", probability: 0.95 } },
+    matches: { ...workOrder.matches, mileage_km: { path: "vehicle.mileage", probability: 0.95 } },
     reading: { ...workOrder.reading, order: { number: "WO-1", _pages: [1] } },
   };
-  clean.matches.orderNumber = { path: "order.number", probability: 0.95 };
-  clean.fills = { ...workOrder.fills, orderNumber: "WO-1" };
+  clean.matches.order_number = { path: "order.number", probability: 0.95 };
+  clean.fills = { ...workOrder.fills, order_number: "WO-1" };
   const { user, slug, documentId, idOf } = await reviewing(clean);
   await user.mutation(api.review.approve, { organisationSlug: slug, documentId });
 
   await expect(
     user.mutation(api.review.correct, {
       organisationSlug: slug,
-      fieldValueId: await idOf("mileageKm"),
+      fieldValueId: await idOf("mileage_km"),
       value: 1,
     }),
   ).rejects.toThrow("This Document is approved");
@@ -238,10 +238,10 @@ test("an approved Document can't be corrected, checked or approved again", async
 test("\"Approve and next\" gets the next Document that needs review", async () => {
   const { t, user, slug, formId, documentId: first, idOf } = await reviewing();
   const second = (await uploadAndExtract(t, user, slug, formId))!;
-  await user.mutation(api.review.check, { organisationSlug: slug, fieldValueId: await idOf("mileageKm") });
+  await user.mutation(api.review.check, { organisationSlug: slug, fieldValueId: await idOf("mileage_km") });
   await user.mutation(api.review.correct, {
     organisationSlug: slug,
-    fieldValueId: await idOf("orderNumber"),
+    fieldValueId: await idOf("order_number"),
     value: "WO-0142",
   });
 
@@ -255,10 +255,10 @@ test("\"Approve and next\" gets the next Document that needs review", async () =
 
 test("the last Document in the queue has no next one", async () => {
   const { user, slug, documentId, idOf } = await reviewing();
-  await user.mutation(api.review.check, { organisationSlug: slug, fieldValueId: await idOf("mileageKm") });
+  await user.mutation(api.review.check, { organisationSlug: slug, fieldValueId: await idOf("mileage_km") });
   await user.mutation(api.review.correct, {
     organisationSlug: slug,
-    fieldValueId: await idOf("orderNumber"),
+    fieldValueId: await idOf("order_number"),
     value: "WO-0142",
   });
 
@@ -271,11 +271,11 @@ test("a Member can review and approve", async () => {
   const { t, slug, documentId, idOf } = await reviewing();
   const bob = await addMembership(t, "bob", slug, "member");
 
-  await bob.mutation(api.review.check, { organisationSlug: slug, fieldValueId: await idOf("mileageKm") });
+  await bob.mutation(api.review.check, { organisationSlug: slug, fieldValueId: await idOf("mileage_km") });
 
   expect(
     (await bob.query(api.documents.get, { organisationSlug: slug, documentId })).fieldValues.find(
-      (f) => f.key === "mileageKm",
+      (f) => f.key === "mileage_km",
     )!.review,
   ).toMatchObject({ state: "checked", by: "bob@example.com" });
 });
@@ -283,7 +283,7 @@ test("a Member can review and approve", async () => {
 test("nobody can review another Organisation's Field Values", async () => {
   const { t, idOf, documentId } = await reviewing();
   const eve = await signUp(t, "eve", "Evil Corp");
-  const fieldValueId: Id<"fieldValues"> = await idOf("mileageKm");
+  const fieldValueId: Id<"fieldValues"> = await idOf("mileage_km");
 
   await expect(
     eve.user.mutation(api.review.check, { organisationSlug: eve.slug, fieldValueId }),

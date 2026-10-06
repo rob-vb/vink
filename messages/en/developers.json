@@ -29,7 +29,7 @@
       "method": "One <code>POST</code> per Delivery, <code>Content-Type: application/json</code>",
       "signed": "Signed with HMAC-SHA256 in the <code>X-Vink-Signature</code> header",
       "retries": "Retried for about 8 hours on timeouts, 408, 429 and 5xx",
-      "atLeastOnce": "At-least-once: deduplicate on <code>deliveryId</code>"
+      "atLeastOnce": "At-least-once: deduplicate on <code>delivery_id</code>"
     },
     "reading": "Vink reads PDFs with Gemini on Vertex AI, EU region.",
     "inboundTitle": "Getting documents in",
@@ -48,7 +48,7 @@
       "key": "Key",
       "meaning": "Meaning",
       "event": "Always <code>document.approved</code>.",
-      "deliveryId": "Unique per Delivery. It stays the same when a Delivery is retried or sent again, so use it to deduplicate.",
+      "delivery_id": "Unique per Delivery. It stays the same when a Delivery is retried or sent again, so use it to deduplicate.",
       "test": "<code>true</code> for a test-send, <code>false</code> for a real Delivery.",
       "document": "The Document's id, its file name and when it was uploaded (ISO 8601, UTC).",
       "form": "The Form's id and the Form Version the Document was read with.",
@@ -84,7 +84,7 @@
     },
     "retryAfter": "A <code>Retry-After</code> header (seconds or an HTTP date) is honoured, up to 24 hours.",
     "redirects": "Redirects are not followed. Your endpoint must use HTTPS.",
-    "atLeastOnce": "Delivery is at-least-once. The same Delivery can arrive twice, for example when your receiver saved it but timed out before answering. Store <code>deliveryId</code> and skip one you have already handled.",
+    "atLeastOnce": "Delivery is at-least-once. The same Delivery can arrive twice, for example when your receiver saved it but timed out before answering. Store <code>delivery_id</code> and skip one you have already handled.",
     "headersTitle": "Headers",
     "headers": "You can add your own headers to an Integration, such as an API key or Basic auth. Mark a header as secret and its value is stored encrypted and only shown masked afterwards. Vink sets <code>Content-Type</code> and <code>X-Vink-Signature</code> itself.",
     "screenshot": "A Document's Delivery status in Vink, showing a retry"

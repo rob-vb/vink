@@ -41,28 +41,28 @@ afterEach(() => {
 const workOrder: Recording = {
   reading: {
     _pages: [1, 2],
-    vehicle: { licensePlate: "NWA-30-E", mileage: "9899", _pages: [1] },
+    vehicle: { license_plate: "NWA-30-E", mileage: "9899", _pages: [1] },
     workOrder: { number: "WO-0142", date: "1 maart 2026", _pages: [2] },
   },
   textLayer: [{ page: 2, text: "Werkorder WO-0142\nDatum 1 maart 2026" }],
   matches: {
-    licensePlate: { path: "vehicle.licensePlate", probability: 0.97 },
-    mileageKm: { path: "vehicle.mileage", probability: 0.91 },
-    orderNumber: { path: "workOrder.number", probability: 0.95 },
-    orderDate: { path: "workOrder.date", probability: 0.96 },
-    purchaseOrderNumber: { path: null, probability: 0.93 },
+    license_plate: { path: "vehicle.license_plate", probability: 0.97 },
+    mileage_km: { path: "vehicle.mileage", probability: 0.91 },
+    order_number: { path: "workOrder.number", probability: 0.95 },
+    order_date: { path: "workOrder.date", probability: 0.96 },
+    purchase_order_number: { path: null, probability: 0.93 },
   },
   fills: {
-    licensePlate: "NWA30E",
-    mileageKm: 9899,
-    orderNumber: "WO-0142",
-    orderDate: "2026-03-01",
+    license_plate: "NWA30E",
+    mileage_km: 9899,
+    order_number: "WO-0142",
+    order_date: "2026-03-01",
   },
   verifications: {
-    licensePlate: { fit: 0.98, support: 0.2 },
-    mileageKm: { fit: 0.9, support: 0.99 },
-    orderNumber: { fit: 0.99, support: 0.85 },
-    orderDate: { fit: 0.97, support: 0.99 },
+    license_plate: { fit: 0.98, support: 0.2 },
+    mileage_km: { fit: 0.9, support: 0.99 },
+    order_number: { fit: 0.99, support: 0.85 },
+    order_date: { fit: 0.97, support: 0.99 },
   },
 };
 
@@ -78,11 +78,11 @@ async function acmeWithWorkOrderForm(t: Backend, required: string[] = []) {
     organisationSlug: ann.slug,
     name: "Work order",
     fields: [
-      field("text", "Kenteken", "licensePlate"),
-      field("number", "Kilometerstand", "mileageKm"),
-      field("text", "Werkorder", "orderNumber"),
-      field("date", "Datum", "orderDate"),
-      field("text", "Bestelbon", "purchaseOrderNumber"),
+      field("text", "Kenteken", "license_plate"),
+      field("number", "Kilometerstand", "mileage_km"),
+      field("text", "Werkorder", "order_number"),
+      field("date", "Datum", "order_date"),
+      field("text", "Bestelbon", "purchase_order_number"),
     ],
   });
   return { ...ann, formId };
@@ -107,26 +107,26 @@ test("Verify runs after Fill as one request for every filled value, and asks sup
   expect(fakePipeline.calls.map((c) => c.step)).toEqual(["read", "match", "fill", "verify"]);
   expect(fakePipeline.calls[3]).toEqual({
     step: "verify",
-    fields: ["licensePlate", "mileageKm", "orderNumber", "orderDate"],
-    supportAskedFor: ["orderNumber", "orderDate"],
+    fields: ["license_plate", "mileage_km", "order_number", "order_date"],
+    supportAskedFor: ["order_number", "order_date"],
   });
 });
 
 test("a Field Value's confidence is the lowest of its Match, fit and support, and records which signal was lowest", async () => {
   const { fieldValue } = await extracted(workOrder);
 
-  expect(fieldValue("orderNumber")).toMatchObject({
+  expect(fieldValue("order_number")).toMatchObject({
     confidence: 0.85,
     lowestSignal: "support",
     signals: { match: 0.95, fit: 0.99, support: 0.85 },
   });
-  expect(fieldValue("mileageKm")).toMatchObject({
+  expect(fieldValue("mileage_km")).toMatchObject({
     confidence: 0.9,
     lowestSignal: "fit",
     signals: { match: 0.91, fit: 0.9, support: null },
   });
   // Page 1 is a scan, so Jev's support isn't a signal there.
-  expect(fieldValue("licensePlate")).toMatchObject({
+  expect(fieldValue("license_plate")).toMatchObject({
     confidence: 0.97,
     lowestSignal: "match",
     signals: { match: 0.97, fit: 0.98, support: null },
@@ -136,7 +136,7 @@ test("a Field Value's confidence is the lowest of its Match, fit and support, an
 test("an empty optional Field whose Match chose none counts with its none probability", async () => {
   const { fieldValue } = await extracted(workOrder);
 
-  expect(fieldValue("purchaseOrderNumber")).toMatchObject({
+  expect(fieldValue("purchase_order_number")).toMatchObject({
     value: null,
     confidence: 0.93,
     lowestSignal: "match",
@@ -148,33 +148,33 @@ test("an empty optional Field whose Match chose none counts with its none probab
 test("a Field Value below the Form's Review Threshold is Needs Review", async () => {
   const { fieldValue } = await extracted({
     ...workOrder,
-    verifications: { ...workOrder.verifications, mileageKm: { fit: 0.42, support: 1 } },
+    verifications: { ...workOrder.verifications, mileage_km: { fit: 0.42, support: 1 } },
   });
 
-  expect(fieldValue("mileageKm").reviewReasons).toEqual(["below_threshold"]);
-  expect(fieldValue("orderNumber").reviewReasons).toEqual([]);
+  expect(fieldValue("mileage_km").reviewReasons).toEqual(["below_threshold"]);
+  expect(fieldValue("order_number").reviewReasons).toEqual([]);
 });
 
 test("a required Field with no value is Needs Review", async () => {
-  const { fieldValue } = await extracted(workOrder, ["purchaseOrderNumber"]);
+  const { fieldValue } = await extracted(workOrder, ["purchase_order_number"]);
 
-  expect(fieldValue("purchaseOrderNumber").reviewReasons).toEqual(["required_empty"]);
+  expect(fieldValue("purchase_order_number").reviewReasons).toEqual(["required_empty"]);
 });
 
 test("a value that doesn't fit its Field's type becomes empty, keeps its read text and is Needs Review", async () => {
   const { fieldValue } = await extracted({
     ...workOrder,
-    fills: { ...workOrder.fills, orderDate: "1 maart 2026" },
+    fills: { ...workOrder.fills, order_date: "1 maart 2026" },
   });
 
-  expect(fieldValue("orderDate")).toMatchObject({
+  expect(fieldValue("order_date")).toMatchObject({
     value: null,
     readText: "1 maart 2026",
     reviewReasons: ["type_mismatch"],
   });
   // An empty value isn't sent to Verify.
   expect(fakePipeline.calls[3]).toMatchObject({
-    fields: ["licensePlate", "mileageKm", "orderNumber"],
+    fields: ["license_plate", "mileage_km", "order_number"],
   });
 });
 
@@ -183,17 +183,19 @@ test("a value the Reading marks as unsure is Needs Review", async () => {
     ...workOrder,
     reading: {
       ...workOrder.reading,
-      vehicle: { licensePlate: "NWA-30-E", mileage: "9899", _pages: [1], _unsure: ["mileage"] },
+      vehicle: { license_plate: "NWA-30-E", mileage: "9899", _pages: [1], _unsure: ["mileage"] },
     },
   });
 
-  expect(fieldValue("mileageKm").reviewReasons).toEqual(["unsure"]);
-  expect(fieldValue("licensePlate").reviewReasons).toEqual([]);
+  expect(fieldValue("mileage_km").reviewReasons).toEqual(["unsure"]);
+  expect(fieldValue("license_plate").reviewReasons).toEqual([]);
 });
 
 test("a value the Reading holds conflicting readings for is Needs Review", async () => {
   const { fieldValue } = await extracted({
     ...workOrder,
+    // The Reader's own keys are camelCase, its other reading under `<key>Alt`.
+    matches: { ...workOrder.matches, license_plate: { path: "vehicle.licensePlate", probability: 0.98 } },
     reading: {
       ...workOrder.reading,
       vehicle: {
@@ -211,10 +213,10 @@ test("a value the Reading holds conflicting readings for is Needs Review", async
     },
   });
 
-  expect(fieldValue("licensePlate").reviewReasons).toEqual(["conflicting"]);
-  expect(fieldValue("orderDate").reviewReasons).toEqual(["conflicting"]);
-  expect(fieldValue("orderNumber").reviewReasons).toEqual([]);
-  expect(fieldValue("mileageKm").reviewReasons).toEqual([]);
+  expect(fieldValue("license_plate").reviewReasons).toEqual(["conflicting"]);
+  expect(fieldValue("order_date").reviewReasons).toEqual(["conflicting"]);
+  expect(fieldValue("order_number").reviewReasons).toEqual([]);
+  expect(fieldValue("mileage_km").reviewReasons).toEqual([]);
 });
 
 test("a value can be Needs Review for several reasons at once", async () => {
@@ -223,15 +225,15 @@ test("a value can be Needs Review for several reasons at once", async () => {
       ...workOrder,
       reading: {
         ...workOrder.reading,
-        vehicle: { licensePlate: "NWA-30-E", mileage: "9899", _pages: [1], _unsure: ["mileage"] },
+        vehicle: { license_plate: "NWA-30-E", mileage: "9899", _pages: [1], _unsure: ["mileage"] },
       },
-      fills: { ...workOrder.fills, mileageKm: "negenduizend" },
-      matches: { ...workOrder.matches, mileageKm: { path: "vehicle.mileage", probability: 0.5 } },
+      fills: { ...workOrder.fills, mileage_km: "negenduizend" },
+      matches: { ...workOrder.matches, mileage_km: { path: "vehicle.mileage", probability: 0.5 } },
     },
-    ["mileageKm"],
+    ["mileage_km"],
   );
 
-  expect(fieldValue("mileageKm").reviewReasons).toEqual([
+  expect(fieldValue("mileage_km").reviewReasons).toEqual([
     "below_threshold",
     "required_empty",
     "type_mismatch",
@@ -251,7 +253,7 @@ test("when Verify fails the Extraction still succeeds, unverified, with Match as
 
   expect(document.state).toBe("needs_review");
   expect(document.jevVerified).toBe(false);
-  expect(fieldValue("orderNumber")).toMatchObject({
+  expect(fieldValue("order_number")).toMatchObject({
     confidence: 0.95,
     lowestSignal: "match",
     signals: { match: 0.95, fit: null, support: null },
@@ -262,7 +264,7 @@ test("when Verify fails the Extraction still succeeds, unverified, with Match as
 test("changing the Review Threshold leaves finished Documents alone, and the next Extraction uses it", async () => {
   const { t, user, slug, formId, document: first } = await extracted({
     ...workOrder,
-    verifications: { ...workOrder.verifications, mileageKm: { fit: 0.85, support: 1 } },
+    verifications: { ...workOrder.verifications, mileage_km: { fit: 0.85, support: 1 } },
   });
   expect(first.reviewThreshold).toBe(0.8);
 
@@ -279,13 +281,13 @@ test("changing the Review Threshold leaves finished Documents alone, and the nex
     documentId: first.id,
   });
   expect(firstNow.reviewThreshold).toBe(0.8);
-  expect(firstNow.fieldValues.find((f) => f.key === "mileageKm")!.reviewReasons).toEqual([]);
+  expect(firstNow.fieldValues.find((f) => f.key === "mileage_km")!.reviewReasons).toEqual([]);
   const secondNow = await user.query(api.documents.get, {
     organisationSlug: slug,
     documentId: second!,
   });
   expect(secondNow.reviewThreshold).toBe(0.9);
-  expect(secondNow.fieldValues.find((f) => f.key === "mileageKm")!.reviewReasons).toEqual([
+  expect(secondNow.fieldValues.find((f) => f.key === "mileage_km")!.reviewReasons).toEqual([
     "below_threshold",
   ]);
 });
@@ -299,7 +301,7 @@ const mileageTwice: Recording = {
   },
   matches: {
     ...workOrder.matches,
-    mileageKm: {
+    mileage_km: {
       path: "vehicle.mileage",
       probability: 0.55,
       alternatives: [
@@ -308,13 +310,13 @@ const mileageTwice: Recording = {
       ],
     },
   },
-  fills: { ...workOrder.fills, "mileageKm@workOrder.km": 9899 },
+  fills: { ...workOrder.fills, "mileage_km@workOrder.km": 9899 },
 };
 
 test("a Field Value's Match probability adds up every source Jev weighed that gives the same value", async () => {
   const { fieldValue } = await extracted(mileageTwice);
 
-  expect(fieldValue("mileageKm")).toMatchObject({
+  expect(fieldValue("mileage_km")).toMatchObject({
     value: 9899,
     sourcePath: "vehicle.mileage",
     signals: { match: expect.closeTo(0.95, 10) },
@@ -324,10 +326,10 @@ test("a Field Value's Match probability adds up every source Jev weighed that gi
 test("a source Jev weighed that gives another value doesn't add to the pick's Match probability", async () => {
   const { fieldValue } = await extracted({
     ...mileageTwice,
-    fills: { ...mileageTwice.fills, "mileageKm@workOrder.km": 9989 },
+    fills: { ...mileageTwice.fills, "mileage_km@workOrder.km": 9989 },
   });
 
-  expect(fieldValue("mileageKm")).toMatchObject({ value: 9899, signals: { match: 0.55 } });
+  expect(fieldValue("mileage_km")).toMatchObject({ value: 9899, signals: { match: 0.55 } });
 });
 
 test("the value most of Jev's probability supports wins over its single likeliest source", async () => {
@@ -335,7 +337,7 @@ test("the value most of Jev's probability supports wins over its single likelies
     ...mileageTwice,
     matches: {
       ...mileageTwice.matches,
-      mileageKm: {
+      mileage_km: {
         path: "vehicle.mileage",
         probability: 0.4,
         alternatives: [
@@ -344,10 +346,10 @@ test("the value most of Jev's probability supports wins over its single likelies
         ],
       },
     },
-    fills: { ...mileageTwice.fills, mileageKm: 9899, "mileageKm@workOrder.km": 9989, "mileageKm@workOrder": 9989 },
+    fills: { ...mileageTwice.fills, mileage_km: 9899, "mileage_km@workOrder.km": 9989, "mileage_km@workOrder": 9989 },
   });
 
-  expect(fieldValue("mileageKm")).toMatchObject({
+  expect(fieldValue("mileage_km")).toMatchObject({
     value: 9989,
     sourcePath: "workOrder.km",
     readText: "9.899",

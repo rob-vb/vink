@@ -40,12 +40,12 @@ afterEach(() => {
 });
 
 const workOrder: Recording = {
-  reading: { vehicle: { licensePlate: "NWA-30-E", mileage: "9899", _pages: [1] } },
+  reading: { vehicle: { license_plate: "NWA-30-E", mileage: "9899", _pages: [1] } },
   matches: {
-    licensePlate: { path: "vehicle.licensePlate", probability: 0.97 },
-    mileageKm: { path: "vehicle.mileage", probability: 0.55 },
+    license_plate: { path: "vehicle.license_plate", probability: 0.97 },
+    mileage_km: { path: "vehicle.mileage", probability: 0.55 },
   },
-  fills: { licensePlate: "NWA30E", mileageKm: 9899 },
+  fills: { license_plate: "NWA30E", mileage_km: 9899 },
 };
 
 async function uploaded(t: Backend) {
@@ -55,8 +55,8 @@ async function uploaded(t: Backend) {
     organisationSlug,
     name: "Work order",
     fields: [
-      { type: "text", label: "Kenteken", key: "licensePlate", required: true },
-      { type: "number", label: "Kilometerstand", key: "mileageKm", required: false },
+      { type: "text", label: "Kenteken", key: "license_plate", required: true },
+      { type: "number", label: "Kilometerstand", key: "mileage_km", required: false },
     ],
   });
   fakePipeline.replay(workOrder);
@@ -129,8 +129,8 @@ test("a Document whose Extraction failed can be rejected, and reopens as failed"
 test("Reopen brings back the prior state with the corrections, and sets user touched", async () => {
   const t = newBackend();
   const { user, on, read } = await uploaded(t);
-  const mileageKm = (await read()).fieldValues.find((f) => f.key === "mileageKm")!;
-  await user.mutation(api.review.check, { organisationSlug: on.organisationSlug, fieldValueId: mileageKm.id });
+  const mileage_km = (await read()).fieldValues.find((f) => f.key === "mileage_km")!;
+  await user.mutation(api.review.check, { organisationSlug: on.organisationSlug, fieldValueId: mileage_km.id });
   await user.mutation(api.rejection.reject, on);
 
   await user.mutation(api.rejection.reopen, on);
@@ -139,15 +139,15 @@ test("Reopen brings back the prior state with the corrections, and sets user tou
   expect(document.state).toBe("needs_review");
   expect(document.rejection).toBeNull();
   expect(document.userTouched).toBe(true);
-  expect(document.fieldValues.find((f) => f.key === "mileageKm")!.review).toMatchObject({ state: "checked" });
+  expect(document.fieldValues.find((f) => f.key === "mileage_km")!.review).toMatchObject({ state: "checked" });
   expect(document.history.map((h) => h.event).slice(-2)).toEqual(["rejected", "reopened"]);
 });
 
 test("an approved Document can't be rejected", async () => {
   const t = newBackend();
   const { user, on, read } = await uploaded(t);
-  const mileageKm = (await read()).fieldValues.find((f) => f.key === "mileageKm")!;
-  await user.mutation(api.review.check, { organisationSlug: on.organisationSlug, fieldValueId: mileageKm.id });
+  const mileage_km = (await read()).fieldValues.find((f) => f.key === "mileage_km")!;
+  await user.mutation(api.review.check, { organisationSlug: on.organisationSlug, fieldValueId: mileage_km.id });
   await user.mutation(api.review.approve, on);
 
   await expect(user.mutation(api.rejection.reject, on)).rejects.toThrow("This Document is approved");

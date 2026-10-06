@@ -50,33 +50,33 @@ afterEach(() => {
 // Everything clears review, so the Document can be approved straight away.
 const tyreService: Recording = {
   reading: {
-    vehicle: { licensePlate: "OR18DH", fuel: "Diesel", _pages: [1] },
+    vehicle: { license_plate: "OR18DH", fuel: "Diesel", _pages: [1] },
     order: { date: "13/12/2024", _pages: [1] },
-    tyreChanges: [{ position: "2L1", depth: "3", _pages: [2] }],
+    tyre_changes: [{ position: "2L1", depth: "3", _pages: [2] }],
   },
   matches: {
-    licensePlate: { path: "vehicle.licensePlate", probability: 0.97 },
-    serviceDate: { path: "order.date", probability: 0.95 },
+    license_plate: { path: "vehicle.license_plate", probability: 0.97 },
+    service_date: { path: "order.date", probability: 0.95 },
     fuel: { path: "vehicle.fuel", probability: 0.93 },
-    mileageKm: { path: null, probability: 0.9 },
+    mileage_km: { path: null, probability: 0.9 },
   },
   lists: {
-    tyreChanges: {
-      path: "tyreChanges",
+    tyre_changes: {
+      path: "tyre_changes",
       probability: 0.96,
       keys: {
         position: { path: "position", probability: 0.99 },
-        treadDepthMm: { path: "depth", probability: 0.95 },
+        tread_depth_mm: { path: "depth", probability: 0.95 },
       },
     },
     rims: { path: null, probability: 0.92, keys: {} },
   },
   fills: {
-    licensePlate: "OR18DH",
-    serviceDate: "2024-12-13",
+    license_plate: "OR18DH",
+    service_date: "2024-12-13",
     fuel: "diesel",
-    "tyreChanges[0].position": "2L1",
-    "tyreChanges[0].treadDepthMm": 3,
+    "tyre_changes[0].position": "2L1",
+    "tyre_changes[0].tread_depth_mm": 3,
   },
 };
 
@@ -87,8 +87,8 @@ async function approvedWith(t: Backend, integrations: number, answers: typeof fa
     organisationSlug,
     name: "Tyre service",
     fields: [
-      { type: "text", label: "Kenteken", key: "licensePlate", required: true },
-      { type: "date", label: "Datum", key: "serviceDate", required: false },
+      { type: "text", label: "Kenteken", key: "license_plate", required: true },
+      { type: "date", label: "Datum", key: "service_date", required: false },
       {
         type: "choice",
         label: "Brandstof",
@@ -96,15 +96,15 @@ async function approvedWith(t: Backend, integrations: number, answers: typeof fa
         required: false,
         options: [{ value: "diesel", description: "Diesel, gasolie" }, { value: "petrol" }],
       },
-      { type: "number", label: "Km", key: "mileageKm", required: false },
+      { type: "number", label: "Km", key: "mileage_km", required: false },
       {
         type: "list",
         label: "Banden",
-        key: "tyreChanges",
+        key: "tyre_changes",
         required: false,
         fields: [
           { type: "text", label: "Positie", key: "position", required: false },
-          { type: "number", label: "Profiel", key: "treadDepthMm", required: false },
+          { type: "number", label: "Profiel", key: "tread_depth_mm", required: false },
         ],
       },
       {
@@ -145,7 +145,7 @@ test("Approval with no Integration attached creates no Delivery and sends nothin
   expect(fakeHttp.requests).toEqual([]);
 });
 
-test("Approval creates one Delivery per attached Integration, each with its own stable deliveryId", async () => {
+test("Approval creates one Delivery per attached Integration, each with its own stable delivery_id", async () => {
   const t = newBackend();
   const { read } = await approvedWith(t, 2);
 
@@ -158,7 +158,7 @@ test("Approval creates one Delivery per attached Integration, each with its own 
     "https://system1.example.com/in",
     "https://system2.example.com/in",
   ]);
-  const ids = fakeHttp.requests.map((r) => JSON.parse(r.body).deliveryId);
+  const ids = fakeHttp.requests.map((r) => JSON.parse(r.body).delivery_id);
   expect(ids).toEqual(deliveries.map((d) => d.deliveryId));
   expect(new Set(ids).size).toBe(2);
 });
@@ -170,17 +170,17 @@ test("the envelope carries the Payload with every key: null, [], ISO dates, choi
   const envelope = JSON.parse(fakeHttp.requests[0].body);
   expect(envelope).toEqual({
     event: "document.approved",
-    deliveryId: expect.stringMatching(/^dlv_/),
+    delivery_id: expect.stringMatching(/^dlv_/),
     test: false,
-    document: { id: documentId, filename: "werkorder.pdf", uploadedAt: expect.any(String) },
+    document: { id: documentId, filename: "werkorder.pdf", uploaded_at: expect.any(String) },
     form: { id: formId, version: 1 },
     approval: { mode: "manual", by: "ann", at: "2026-09-24T12:00:00.000Z" },
     data: {
-      licensePlate: "OR18DH",
-      serviceDate: "2024-12-13",
+      license_plate: "OR18DH",
+      service_date: "2024-12-13",
       fuel: "diesel",
-      mileageKm: null,
-      tyreChanges: [{ position: "2L1", treadDepthMm: 3 }],
+      mileage_km: null,
+      tyre_changes: [{ position: "2L1", tread_depth_mm: 3 }],
       rims: [],
     },
   });
@@ -236,12 +236,12 @@ test("a 2xx answer delivers the Delivery and logs the attempt", async () => {
 
 test("a 4xx other than 408 and 429 fails the Delivery at once", async () => {
   const t = newBackend();
-  const { read } = await approvedWith(t, 1, [{ status: 422, body: "licensePlate missing" }]);
+  const { read } = await approvedWith(t, 1, [{ status: 422, body: "license_plate missing" }]);
 
   expect((await read()).deliveries[0]).toMatchObject({
     state: "failed",
     failureReason: "The receiver refused it (422)",
-    attempts: [{ status: 422, body: "licensePlate missing" }],
+    attempts: [{ status: 422, body: "license_plate missing" }],
   });
   expect(fakeHttp.requests).toHaveLength(1);
 });

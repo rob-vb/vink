@@ -53,9 +53,9 @@ afterEach(() => {
 });
 
 const workOrder: Recording = {
-  reading: { vehicle: { licensePlate: "OR18DH", _pages: [1] } },
-  matches: { licensePlate: { path: "vehicle.licensePlate", probability: 0.97 } },
-  fills: { licensePlate: "OR18DH" },
+  reading: { vehicle: { license_plate: "OR18DH", _pages: [1] } },
+  matches: { license_plate: { path: "vehicle.license_plate", probability: 0.97 } },
+  fills: { license_plate: "OR18DH" },
 };
 
 /** Lets time pass, and runs whatever the scheduler has due by then. */
@@ -70,7 +70,7 @@ async function acme(t: Backend) {
   const { formId } = await ann.user.mutation(api.forms.create, {
     organisationSlug,
     name: "Work order",
-    fields: [{ type: "text", label: "Kenteken", key: "licensePlate", required: true }],
+    fields: [{ type: "text", label: "Kenteken", key: "license_plate", required: true }],
   });
   const { integrationId } = await ann.user.mutation(api.integrations.create, {
     organisationSlug,
@@ -104,7 +104,7 @@ async function attachedAndApproved(t: Backend) {
   return { ...acmeOrg, ...(await approve(t, acmeOrg)) };
 }
 
-test("a 5xx is retried after about a minute, with the same deliveryId and a fresh signature", async () => {
+test("a 5xx is retried after about a minute, with the same delivery_id and a fresh signature", async () => {
   const t = newBackend();
   fakeHttp.answer({ status: 503, body: "down" }, { status: 200 });
   const { user, organisationSlug, integrationId, delivery } = await attachedAndApproved(t);
@@ -120,7 +120,7 @@ test("a 5xx is retried after about a minute, with the same deliveryId and a fres
   const { secret } = await user.query(api.integrations.signingSecret, { organisationSlug, integrationId });
   expect(fakeHttp.requests).toHaveLength(2);
   for (const request of fakeHttp.requests) {
-    expect(JSON.parse(request.body).deliveryId).toBe(waiting.deliveryId);
+    expect(JSON.parse(request.body).delivery_id).toBe(waiting.deliveryId);
     expectSignedBy(secret, request);
   }
 });
@@ -220,7 +220,7 @@ test("a fix to the URL or headers is used by the next retry", async () => {
   });
 });
 
-test("an Admin re-sends a failed Delivery by hand, with the same deliveryId and the current configuration", async () => {
+test("an Admin re-sends a failed Delivery by hand, with the same delivery_id and the current configuration", async () => {
   const t = newBackend();
   fakeHttp.answer({ status: 400, body: "bad" });
   const { user, organisationSlug, integrationId, delivery } = await attachedAndApproved(t);
@@ -239,7 +239,7 @@ test("an Admin re-sends a failed Delivery by hand, with the same deliveryId and 
 
   expect((await delivery()).state).toBe("delivered");
   expect(fakeHttp.requests[1].url).toBe("https://fleet.example.com/fixed");
-  expect(JSON.parse(fakeHttp.requests[1].body).deliveryId).toBe(failed.deliveryId);
+  expect(JSON.parse(fakeHttp.requests[1].body).delivery_id).toBe(failed.deliveryId);
   await expect(user.mutation(api.deliveries.resend, { organisationSlug, id: failed.id })).rejects.toThrow(
     "Only a failed Delivery can be sent again",
   );

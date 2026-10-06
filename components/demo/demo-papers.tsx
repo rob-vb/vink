@@ -304,6 +304,109 @@ function ReceiptPage() {
   );
 }
 
+/* Two more invoices for Home's "your Form" section: other suppliers, other
+ * layouts, the same Fields. */
+
+function WholesaleInvoicePage() {
+  return (
+    <Paper className="p-0">
+      <div className="flex items-end justify-between bg-[#1E4D3A] px-7 pt-6 pb-4 text-white">
+        <div>
+          <b className="block text-[16px] tracking-wide">GROOTHANDEL BAKKER</b>
+          <span className="text-[10px] opacity-80">Horeca &amp; kantoor · Zwolle</span>
+        </div>
+        <span className="text-[22px] font-light tracking-[0.2em]">FACTUUR</span>
+      </div>
+      <div className="grid grid-cols-2 gap-4 px-7 pt-5 pb-4 text-[11px]">
+        <div>
+          <span className={cn("block text-[10px]", faint)}>Factuur aan</span>
+          Kantoor Noord B.V.
+          <br />
+          Stationsplein 2, Groningen
+        </div>
+        <dl className="grid grid-cols-[auto_1fr] gap-x-3 text-right">
+          <dt className={faint}>Factuurnr.</dt>
+          <dd>2026/1187</dd>
+          <dt className={faint}>Datum</dt>
+          <dd>1 oktober 2026</dd>
+          <dt className={faint}>Klantnr.</dt>
+          <dd>40213</dd>
+        </dl>
+      </div>
+      <table className="mx-7 mb-3 w-[calc(100%-3.5rem)] border-collapse text-[11px] tabular-nums">
+        <thead>
+          <tr className="bg-[#EEF3F0] text-left">
+            <th className="px-2 py-1 font-semibold">Aantal</th>
+            <th className="px-2 py-1 font-semibold">Omschrijving</th>
+            <th className="px-2 py-1 text-right font-semibold">Totaal</th>
+          </tr>
+        </thead>
+        <tbody>
+          {[
+            ["2.000", "Koffiebekers 250 ml", "180,00"],
+            ["40", "Servetten wit, pak", "92,00"],
+          ].map(([qty, item, total]) => (
+            <tr key={item} className="border-b border-[#D9DDE3]">
+              <td className="px-2 py-1">{qty}</td>
+              <td className="px-2 py-1">{item}</td>
+              <td className="px-2 py-1 text-right">{total}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <dl className="mr-7 ml-auto grid w-44 grid-cols-[1fr_auto] gap-x-3 text-[11px] tabular-nums">
+        <dt className={faint}>Netto</dt>
+        <dd className="text-right">272,00</dd>
+        <dt className={faint}>BTW 21%</dt>
+        <dd className="text-right">57,12</dd>
+        <dt className="font-bold">Te betalen</dt>
+        <dd className="text-right font-bold">€ 329,12</dd>
+      </dl>
+      <Foot>NL02 RABO 0123 4567 89 · Betaling binnen 14 dagen</Foot>
+    </Paper>
+  );
+}
+
+function HandwrittenInvoicePage() {
+  return (
+    <Paper className={cn(scan, "bg-[#FBF7EC]")} style={{ transform: "rotate(-0.8deg)" }}>
+      <Head name="Klusbedrijf Smit" lines={["Dorpsstraat 41, Haren", "06 4433 2211"]} />
+      <div className="mb-3 flex items-center justify-between">
+        <Title>NOTA</Title>
+        <span className="flex items-end gap-1.5">
+          <small className={faint}>Nr.</small>
+          <span className="font-bold text-[#B91C1C]">0087</span>
+        </span>
+      </div>
+      <Line label="Datum">
+        <span className={cn(pen, "text-[20px]")}>29/9/26</span>
+      </Line>
+      <Line label="Voor">
+        <span className={cn(pen, "text-[20px]")}>Kantoor Noord</span>
+      </Line>
+      <Line label="Werk">
+        <span className={cn(pen, "flex-1 text-[19px]")}>Kraan vervangen</span>
+        <span className={cn(pen, "text-[20px]")}>85,-</span>
+      </Line>
+      <Line label="Materiaal">
+        <span className={cn(pen, "flex-1 text-[19px]")}>mengkraan + slangen</span>
+        <span className={cn(pen, "text-[20px]")}>42,50</span>
+      </Line>
+      <Line label="Totaal excl. btw">
+        <span className={cn(pen, "ml-auto text-[21px] font-semibold")}>127,50</span>
+      </Line>
+      <Foot>Graag binnen 8 dagen overmaken · NL17 INGB 0006 5432 10</Foot>
+    </Paper>
+  );
+}
+
+/** Home's three invoices, one Form: each a different supplier and layout. */
+export const invoicePages = {
+  hoekstra: InvoicePage,
+  bakker: WholesaleInvoicePage,
+  smit: HandwrittenInvoicePage,
+} as const;
+
 /** Each demo Document's pages, in order. */
 export const demoPages = {
   invoice: [InvoicePage],
