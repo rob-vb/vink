@@ -168,7 +168,12 @@ export function IntegrationsList({ organisationSlug }: { organisationSlug: strin
             return (
               <Card key={integration.id}>
                 <CardHeader>
-                  <CardTitle>{integration.name}</CardTitle>
+                  <CardTitle className="flex flex-wrap items-center gap-2">
+                    {integration.name}
+                    {integration.subscription && (
+                      <Badge variant="outline">{t("viaApi", { key: integration.subscription.apiKeyName })}</Badge>
+                    )}
+                  </CardTitle>
                   <CardDescription className="truncate font-mono text-xs">
                     {integration.url}
                   </CardDescription>
@@ -193,7 +198,11 @@ export function IntegrationsList({ organisationSlug }: { organisationSlug: strin
                       <AlertDialogContent>
                         <AlertDialogHeader>
                           <AlertDialogTitle>{t("deleteTitle", { name: integration.name })}</AlertDialogTitle>
-                          <AlertDialogDescription>{t("deleteDescription")}</AlertDialogDescription>
+                          <AlertDialogDescription>
+                            {integration.subscription
+                              ? t("deleteSubscriptionDescription", { key: integration.subscription.apiKeyName })
+                              : t("deleteDescription")}
+                          </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                           <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>

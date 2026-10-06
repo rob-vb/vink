@@ -10,6 +10,8 @@
   "delete": "{name} verwijderen",
   "deleteTitle": "{name} verwijderen?",
   "deleteDescription": "Ze wordt losgekoppeld van haar Formulieren, en er wordt niets meer naartoe gestuurd.",
+  "viaApi": "via API · {key}",
+  "deleteSubscriptionDescription": "Een automatiseringsplatform heeft haar gemaakt met de API-sleutel {key}. Verwijder je haar, dan krijgt dat platform niets meer.",
   "cancel": "Annuleren",
   "deleteConfirm": "Verwijderen",
   "signingSecret": "Ondertekeningssecret",

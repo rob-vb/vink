@@ -10,6 +10,8 @@
   "delete": "Delete {name}",
   "deleteTitle": "Delete {name}?",
   "deleteDescription": "It is detached from its Forms, and nothing is sent to it anymore.",
+  "viaApi": "via API · {key}",
+  "deleteSubscriptionDescription": "An automation platform made it with the API Key {key}. Deleting it ends that Subscription: the platform gets nothing anymore.",
   "cancel": "Cancel",
   "deleteConfirm": "Delete",
   "signingSecret": "Signing secret",

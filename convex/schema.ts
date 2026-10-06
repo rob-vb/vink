@@ -511,6 +511,19 @@ export default defineSchema({
     .index("by_keyHash", ["keyHash"])
     .index("by_organisationId", ["organisationId"]),
 
+  // An automation platform's request, made with an API Key, to hear about one
+  // Form's Approvals (ADR 0008): it is the Webhook `integrationId`, attached to
+  // `formId`. Removing that Webhook, or revoking the key, ends it.
+  subscriptions: defineTable({
+    organisationId: v.id("organisations"),
+    apiKeyId: v.id("apiKeys"),
+    integrationId: v.id("integrations"),
+    formId: v.id("forms"),
+  })
+    .index("by_organisationId", ["organisationId"])
+    .index("by_apiKeyId", ["apiKeyId"])
+    .index("by_integrationId", ["integrationId"]),
+
   // How many Documents an Organisation has in each state, for the list's tabs.
   // Kept in step by every state change, so the tabs never scan Documents.
   documentCounts: defineTable({
