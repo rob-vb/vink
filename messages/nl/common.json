@@ -31,12 +31,6 @@
     "customer": "Al klant?",
     "logIn": "Inloggen"
   },
-  "team": {
-    "eyebrow": "Wie zit er achter Vink",
-    "quote": "We hebben Vink gebouwd nadat we teams elke dag dezelfde soort PDF's zagen overtikken. Twijfel je of het werkt voor jouw documenten? Mail ons. We lezen elke mail.",
-    "name": "Vink",
-    "role": "Het team achter Vink"
-  },
   "footer": {
     "tagline": "Automatische data-invoer voor operationele teams. Elke PDF erin, schone data eruit.",
     "product": "Product",
