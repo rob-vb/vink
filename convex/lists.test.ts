@@ -40,11 +40,11 @@ afterEach(() => {
 const tyreReport: Recording = {
   reading: {
     _pages: [1, 2],
-    vehicle: { licensePlate: "OR18DH", _pages: [1] },
-    tyreChanges: [
+    vehicle: { license_plate: "OR18DH", _pages: [1] },
+    tyre_changes: [
       {
         position: "2L1",
-        removed: { serial: "6135366435", treadDepthMm: "3" },
+        removed: { serial: "6135366435", tread_depth_mm: "3" },
         _pages: [1],
       },
       {
@@ -54,25 +54,25 @@ const tyreReport: Recording = {
       },
     ],
   },
-  matches: { licensePlate: { path: "vehicle.licensePlate", probability: 0.97 } },
+  matches: { license_plate: { path: "vehicle.license_plate", probability: 0.97 } },
   lists: {
-    tyreChanges: {
-      path: "tyreChanges",
+    tyre_changes: {
+      path: "tyre_changes",
       probability: 0.94,
       keys: {
         position: { path: "position", probability: 0.99 },
-        removedSerial: { path: "removed.serial", probability: 0.9 },
-        treadDepthMm: { path: "removed.treadDepthMm", probability: 0.96 },
+        removed_serial: { path: "removed.serial", probability: 0.9 },
+        tread_depth_mm: { path: "removed.tread_depth_mm", probability: 0.96 },
       },
     },
   },
   fills: {
-    licensePlate: "OR18DH",
-    "tyreChanges[0].position": "2L1",
-    "tyreChanges[0].removedSerial": "6135366435",
-    "tyreChanges[0].treadDepthMm": 3,
-    "tyreChanges[1].position": "2R1",
-    "tyreChanges[1].removedSerial": "BPP10930524",
+    license_plate: "OR18DH",
+    "tyre_changes[0].position": "2L1",
+    "tyre_changes[0].removed_serial": "6135366435",
+    "tyre_changes[0].tread_depth_mm": 3,
+    "tyre_changes[1].position": "2R1",
+    "tyre_changes[1].removed_serial": "BPP10930524",
   },
 };
 
@@ -85,19 +85,19 @@ async function extracted(recording: Recording, options: ListOptions = {}) {
     organisationSlug: ann.slug,
     name: "Tyre service",
     fields: [
-      { type: "text", label: "Kenteken", key: "licensePlate", required: false },
+      { type: "text", label: "Kenteken", key: "license_plate", required: false },
       {
         type: "list",
         label: "Bandenwissels",
-        key: "tyreChanges",
+        key: "tyre_changes",
         required: options.listRequired ?? false,
         fields: [
           { type: "text", label: "Positie", key: "position", required: false },
-          { type: "text", label: "Serienummer", key: "removedSerial", required: false },
+          { type: "text", label: "Serienummer", key: "removed_serial", required: false },
           {
             type: "number",
             label: "Profieldiepte",
-            key: "treadDepthMm",
+            key: "tread_depth_mm",
             required: options.treadDepthRequired ?? false,
           },
         ],
@@ -116,26 +116,26 @@ async function extracted(recording: Recording, options: ListOptions = {}) {
 test("a List Field gets one entry per element of the array Match chose, with a Field Value per sub-Field", async () => {
   const { list } = await extracted(tyreReport);
 
-  expect(list).toMatchObject({ key: "tyreChanges", label: "Bandenwissels", sourcePath: "tyreChanges" });
+  expect(list).toMatchObject({ key: "tyre_changes", label: "Bandenwissels", sourcePath: "tyre_changes" });
   expect(list.entries).toHaveLength(2);
   expect(list.entries[0].fieldValues).toMatchObject([
-    { key: "position", label: "Positie", value: "2L1", readText: "2L1", sourcePath: "tyreChanges[0].position", pages: [1] },
-    { key: "removedSerial", value: "6135366435", sourcePath: "tyreChanges[0].removed.serial", pages: [1] },
-    { key: "treadDepthMm", value: 3, readText: "3", sourcePath: "tyreChanges[0].removed.treadDepthMm" },
+    { key: "position", label: "Positie", value: "2L1", readText: "2L1", sourcePath: "tyre_changes[0].position", pages: [1] },
+    { key: "removed_serial", value: "6135366435", sourcePath: "tyre_changes[0].removed.serial", pages: [1] },
+    { key: "tread_depth_mm", value: 3, readText: "3", sourcePath: "tyre_changes[0].removed.tread_depth_mm" },
   ]);
   expect(list.entries[1].fieldValues).toMatchObject([
     { key: "position", value: "2R1", pages: [2] },
-    { key: "removedSerial", value: "BPP10930524" },
-    { key: "treadDepthMm", value: null, readText: null, sourcePath: null, pages: [] },
+    { key: "removed_serial", value: "BPP10930524" },
+    { key: "tread_depth_mm", value: null, readText: null, sourcePath: null, pages: [] },
   ]);
 });
 
 test("a sub-Field's Match probability is the lower of the array choice and the key choice", async () => {
   const { list } = await extracted(tyreReport);
 
-  const [position, removedSerial] = list.entries[0].fieldValues;
+  const [position, removed_serial] = list.entries[0].fieldValues;
   expect(position.signals.match).toBe(0.94);
-  expect(removedSerial.signals.match).toBe(0.9);
+  expect(removed_serial.signals.match).toBe(0.9);
 });
 
 test("Match, Fill and Verify each take the List entries along with the top-level Fields", async () => {
@@ -143,27 +143,27 @@ test("Match, Fill and Verify each take the List entries along with the top-level
 
   expect(fakePipeline.calls).toEqual([
     { step: "read" },
-    { step: "match", reading: tyreReport.reading, fields: ["licensePlate"], lists: ["tyreChanges"] },
+    { step: "match", reading: tyreReport.reading, fields: ["license_plate"], lists: ["tyre_changes"] },
     {
       step: "fill",
       fields: [
-        "licensePlate",
-        "tyreChanges[0].position",
-        "tyreChanges[0].removedSerial",
-        "tyreChanges[0].treadDepthMm",
-        "tyreChanges[1].position",
-        "tyreChanges[1].removedSerial",
+        "license_plate",
+        "tyre_changes[0].position",
+        "tyre_changes[0].removed_serial",
+        "tyre_changes[0].tread_depth_mm",
+        "tyre_changes[1].position",
+        "tyre_changes[1].removed_serial",
       ],
     },
     {
       step: "verify",
       fields: [
-        "licensePlate",
-        "tyreChanges[0].position",
-        "tyreChanges[0].removedSerial",
-        "tyreChanges[0].treadDepthMm",
-        "tyreChanges[1].position",
-        "tyreChanges[1].removedSerial",
+        "license_plate",
+        "tyre_changes[0].position",
+        "tyre_changes[0].removed_serial",
+        "tyre_changes[0].tread_depth_mm",
+        "tyre_changes[1].position",
+        "tyre_changes[1].removed_serial",
       ],
       supportAskedFor: [],
     },
@@ -175,17 +175,17 @@ test("a sub-Field Value is Needs Review by the same rules as a top-level one", a
     ...tyreReport,
     reading: {
       ...tyreReport.reading,
-      tyreChanges: [
+      tyre_changes: [
         {
           position: "2L1",
-          removed: { serial: "6135366435", treadDepthMm: "3" },
+          removed: { serial: "6135366435", tread_depth_mm: "3" },
           _pages: [1],
           _unsure: ["removed.serial"],
         },
         { position: "2R1", removed: { serial: "BPP10930524" }, _pages: [2] },
       ],
     },
-    verifications: { "tyreChanges[1].position": { fit: 0.3, support: 1 } },
+    verifications: { "tyre_changes[1].position": { fit: 0.3, support: 1 } },
   });
 
   expect(list.entries[0].fieldValues[1].reviewReasons).toEqual(["unsure"]);
@@ -202,7 +202,7 @@ test("a List Field's completeness confidence is Jev's probability for the array 
 test("a List Field whose completeness is below the Review Threshold is Needs Review", async () => {
   const { list } = await extracted({
     ...tyreReport,
-    lists: { tyreChanges: { ...tyreReport.lists!.tyreChanges, probability: 0.6 } },
+    lists: { tyre_changes: { ...tyreReport.lists!.tyre_changes, probability: 0.6 } },
   });
 
   expect(list.completeness).toBe(0.6);
@@ -211,7 +211,7 @@ test("a List Field whose completeness is below the Review Threshold is Needs Rev
 
 test("a required List Field with no entries is Needs Review", async () => {
   const { list } = await extracted(
-    { ...tyreReport, lists: { tyreChanges: { path: null, probability: 0.9, keys: {} } } },
+    { ...tyreReport, lists: { tyre_changes: { path: null, probability: 0.9, keys: {} } } },
     { listRequired: true },
   );
 
@@ -221,7 +221,7 @@ test("a required List Field with no entries is Needs Review", async () => {
 test("an optional List Field with no entries is not Needs Review", async () => {
   const { list } = await extracted({
     ...tyreReport,
-    lists: { tyreChanges: { path: null, probability: 0.9, keys: {} } },
+    lists: { tyre_changes: { path: null, probability: 0.9, keys: {} } },
   });
 
   expect(list).toMatchObject({ entries: [], completeness: 0.9, reviewReasons: [] });
@@ -249,8 +249,8 @@ test("a Reading over the request cap is matched in two requests, top-level Field
 
   const matches = fakePipeline.calls.filter((c) => c.step === "match");
   expect(matches.map((c) => ({ fields: c.fields, lists: c.lists }))).toEqual([
-    { fields: ["licensePlate"], lists: [] },
-    { fields: [], lists: ["tyreChanges"] },
+    { fields: ["license_plate"], lists: [] },
+    { fields: [], lists: ["tyre_changes"] },
   ]);
   expect(document.lists[0].entries).toHaveLength(2);
 });
@@ -293,7 +293,7 @@ test("a Form with many Fields is matched in as many requests as Jev's cap needs,
     const { formId } = await ann.user.mutation(api.forms.create, {
       organisationSlug: ann.slug,
       name: "Work order",
-      fields: [{ type: "text", label: "Kenteken", key: "licensePlate", required: false }, ...fields],
+      fields: [{ type: "text", label: "Kenteken", key: "license_plate", required: false }, ...fields],
     });
     fakePipeline.replay({ ...tyreReport, reading: longInvoiceReading() });
     const documentId = await uploadAndExtract(t, ann.user, ann.slug, formId, 2);
@@ -308,14 +308,14 @@ test("a Form with many Fields is matched in as many requests as Jev's cap needs,
 
   expect(requests.length).toBeGreaterThan(1);
   expect(requests.flatMap((r) => r.fields).sort()).toEqual(
-    ["licensePlate", ...fields.map((f) => f.key)].sort(),
+    ["license_plate", ...fields.map((f) => f.key)].sort(),
   );
   expect(split.fieldValues).toEqual(single.fieldValues);
 });
 
 test("a sub-Field matched to an object in the entries is filled from all the values in it", async () => {
   const reading = structuredClone(tyreReport.reading);
-  const changes = reading.tyreChanges as Array<Record<string, Record<string, unknown>>>;
+  const changes = reading.tyre_changes as Array<Record<string, Record<string, unknown>>>;
   // The brand and the model sit apart; the sub-Field wants them together.
   changes[0].removed = { ...changes[0].removed, brand: "WESTLAKE", pattern: "WTR1" };
   changes[1].removed = { ...changes[1].removed, brand: "GITI", pattern: "GTR955", _pages: [3] };
@@ -323,18 +323,18 @@ test("a sub-Field matched to an object in the entries is filled from all the val
     ...tyreReport,
     reading,
     lists: {
-      tyreChanges: {
-        ...tyreReport.lists!.tyreChanges,
+      tyre_changes: {
+        ...tyreReport.lists!.tyre_changes,
         keys: {
-          ...tyreReport.lists!.tyreChanges.keys,
-          removedSerial: { path: "removed", probability: 0.9 },
+          ...tyreReport.lists!.tyre_changes.keys,
+          removed_serial: { path: "removed", probability: 0.9 },
         },
       },
     },
     fills: {
       ...tyreReport.fills,
-      "tyreChanges[0].removedSerial": "Westlake WTR1",
-      "tyreChanges[1].removedSerial": "Giti GTR955",
+      "tyre_changes[0].removed_serial": "Westlake WTR1",
+      "tyre_changes[1].removed_serial": "Giti GTR955",
     },
   };
 
@@ -342,13 +342,13 @@ test("a sub-Field matched to an object in the entries is filled from all the val
 
   expect(list.entries[0].fieldValues[1]).toMatchObject({
     value: "Westlake WTR1",
-    sourcePath: "tyreChanges[0].removed",
-    readText: "serial: 6135366435\ntreadDepthMm: 3\nbrand: WESTLAKE\npattern: WTR1",
+    sourcePath: "tyre_changes[0].removed",
+    readText: "serial: 6135366435\ntread_depth_mm: 3\nbrand: WESTLAKE\npattern: WTR1",
     pages: [1],
   });
   expect(list.entries[1].fieldValues[1]).toMatchObject({
     value: "Giti GTR955",
-    sourcePath: "tyreChanges[1].removed",
+    sourcePath: "tyre_changes[1].removed",
     pages: [3],
   });
 });
@@ -357,23 +357,23 @@ test("a sub-Field's Match probability adds up the keys that give the same value,
   const { list } = await extracted({
     ...tyreReport,
     lists: {
-      tyreChanges: {
-        ...tyreReport.lists!.tyreChanges,
+      tyre_changes: {
+        ...tyreReport.lists!.tyre_changes,
         keys: {
-          ...tyreReport.lists!.tyreChanges.keys,
-          treadDepthMm: {
-            path: "removed.treadDepthMm",
+          ...tyreReport.lists!.tyre_changes.keys,
+          tread_depth_mm: {
+            path: "removed.tread_depth_mm",
             probability: 0.7,
             alternatives: [{ path: "removed", probability: 0.28 }],
           },
         },
       },
     },
-    fills: { ...tyreReport.fills, "tyreChanges[0].treadDepthMm@tyreChanges[0].removed": 3 },
+    fills: { ...tyreReport.fills, "tyre_changes[0].tread_depth_mm@tyre_changes[0].removed": 3 },
   });
 
   const treadDepth = list.entries[0].fieldValues[2];
-  expect(treadDepth).toMatchObject({ value: 3, sourcePath: "tyreChanges[0].removed.treadDepthMm" });
+  expect(treadDepth).toMatchObject({ value: 3, sourcePath: "tyre_changes[0].removed.tread_depth_mm" });
   // 0.7 + 0.28 for the key, but the array choice was 0.94.
   expect(treadDepth.signals.match).toBe(0.94);
 });

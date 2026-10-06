@@ -276,7 +276,7 @@ export const saveFields = internalMutation({
     }
     const unique = (key: string) => {
       let candidate = key;
-      for (let n = 2; taken.has(candidate); n++) candidate = `${key}${n}`;
+      for (let n = 2; taken.has(candidate); n++) candidate = `${key}_${n}`;
       taken.add(candidate);
       return candidate;
     };

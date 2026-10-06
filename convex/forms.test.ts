@@ -4,18 +4,18 @@ import { api } from "./_generated/api";
 import type { field } from "./schema";
 import { addMembership, newBackend, signUp } from "./test.setup";
 
-const licensePlate = {
+const license_plate = {
   type: "text",
   label: "Kenteken",
-  key: "licensePlate",
+  key: "license_plate",
   description: "Registration number, plate, nummerbord",
   required: true,
 } as const;
 
-const serviceDate = {
+const service_date = {
   type: "date",
   label: "Datum",
-  key: "serviceDate",
+  key: "service_date",
   required: false,
 } as const;
 
@@ -27,7 +27,7 @@ test("an Admin creates a Form and finds it in the list with default settings", a
     organisationSlug: ann.slug,
     name: "Tyre service",
     description: "Work orders from tyre shops",
-    fields: [licensePlate, serviceDate],
+    fields: [license_plate, service_date],
   });
 
   expect(
@@ -51,37 +51,37 @@ test("each save creates the next Form Version and leaves earlier ones unchanged"
   const { formId } = await ann.user.mutation(api.forms.create, {
     organisationSlug,
     name: "Tyre service",
-    fields: [licensePlate],
+    fields: [license_plate],
   });
 
   await ann.user.mutation(api.forms.save, {
     organisationSlug,
     formId,
     name: "Tyre service",
-    fields: [licensePlate, serviceDate],
+    fields: [license_plate, service_date],
   });
   await ann.user.mutation(api.forms.save, {
     organisationSlug,
     formId,
     name: "Tyre and brake service",
-    fields: [serviceDate],
+    fields: [service_date],
   });
 
   const current = await ann.user.query(api.forms.get, { organisationSlug, formId });
   expect(current).toMatchObject({ name: "Tyre and brake service", version: 3 });
-  expect(current.fields).toEqual([serviceDate]);
+  expect(current.fields).toEqual([service_date]);
   const first = await ann.user.query(api.forms.get, {
     organisationSlug,
     formId,
     version: 1,
   });
-  expect(first).toMatchObject({ version: 1, fields: [licensePlate] });
+  expect(first).toMatchObject({ version: 1, fields: [license_plate] });
   const second = await ann.user.query(api.forms.get, {
     organisationSlug,
     formId,
     version: 2,
   });
-  expect(second).toMatchObject({ version: 2, fields: [licensePlate, serviceDate] });
+  expect(second).toMatchObject({ version: 2, fields: [license_plate, service_date] });
 });
 
 test("two Fields can't share a key, and the refused save leaves the Form as it was", async () => {
@@ -91,7 +91,7 @@ test("two Fields can't share a key, and the refused save leaves the Form as it w
   const { formId } = await ann.user.mutation(api.forms.create, {
     organisationSlug,
     name: "Tyre service",
-    fields: [licensePlate],
+    fields: [license_plate],
   });
 
   await expect(
@@ -99,24 +99,24 @@ test("two Fields can't share a key, and the refused save leaves the Form as it w
       organisationSlug,
       formId,
       name: "Tyre service",
-      fields: [licensePlate, { ...serviceDate, key: "licensePlate" }],
+      fields: [license_plate, { ...service_date, key: "license_plate" }],
     }),
-  ).rejects.toThrow('The key "licensePlate" is used by more than one Field');
+  ).rejects.toThrow('The key "license_plate" is used by more than one Field');
   await expect(
     ann.user.mutation(api.forms.create, {
       organisationSlug,
       name: "Brake service",
-      fields: [licensePlate, licensePlate],
+      fields: [license_plate, license_plate],
     }),
-  ).rejects.toThrow('The key "licensePlate" is used by more than one Field');
+  ).rejects.toThrow('The key "license_plate" is used by more than one Field');
 
   expect(
     await ann.user.query(api.forms.get, { organisationSlug, formId }),
-  ).toMatchObject({ version: 1, fields: [licensePlate] });
+  ).toMatchObject({ version: 1, fields: [license_plate] });
 });
 
-test.each(["license plate", "2ndDriver", "kenteken-nr", "LicensePlate", "", "prijs€"])(
-  'a key like "%s" is refused: it must be camelCase letters and digits',
+test.each(["license plate", "2nd_driver", "kenteken-nr", "licensePlate", "License_plate", "license__plate", "_plate", "plate_", "", "prijs€"])(
+  'a key like "%s" is refused: it must be snake_case',
   async (key) => {
     const t = newBackend();
     const ann = await signUp(t, "ann", "Acme Fleet");
@@ -125,7 +125,7 @@ test.each(["license plate", "2ndDriver", "kenteken-nr", "LicensePlate", "", "pri
       ann.user.mutation(api.forms.create, {
         organisationSlug: ann.slug,
         name: "Tyre service",
-        fields: [{ ...licensePlate, key }],
+        fields: [{ ...license_plate, key }],
       }),
     ).rejects.toThrow(`"${key}" isn't a valid key`);
   },
@@ -139,9 +139,9 @@ test("a Field needs a label", async () => {
     ann.user.mutation(api.forms.create, {
       organisationSlug: ann.slug,
       name: "Tyre service",
-      fields: [{ ...licensePlate, label: "  " }],
+      fields: [{ ...license_plate, label: "  " }],
     }),
-  ).rejects.toThrow('The Field "licensePlate" needs a label');
+  ).rejects.toThrow('The Field "license_plate" needs a label');
 });
 
 const season = {
@@ -202,7 +202,7 @@ test("the Review Threshold and Auto-Send change without a new Form Version", asy
   const { formId } = await ann.user.mutation(api.forms.create, {
     organisationSlug,
     name: "Tyre service",
-    fields: [licensePlate],
+    fields: [license_plate],
   });
 
   await ann.user.mutation(api.forms.updateSettings, {
@@ -226,7 +226,7 @@ test.each([-0.1, 1.2, Number.NaN])(
     const { formId } = await ann.user.mutation(api.forms.create, {
       organisationSlug,
       name: "Tyre service",
-      fields: [licensePlate],
+      fields: [license_plate],
     });
 
     await expect(
@@ -247,7 +247,7 @@ test("a Member can list Forms but can't open the editor or change a Form", async
   const { formId } = await ann.user.mutation(api.forms.create, {
     organisationSlug,
     name: "Tyre service",
-    fields: [licensePlate],
+    fields: [license_plate],
   });
   const cas = await addMembership(t, "cas", organisationSlug, "member");
 
@@ -299,7 +299,7 @@ test("an Admin of another Organisation can't see or change its Forms", async () 
   const { formId } = await ann.user.mutation(api.forms.create, {
     organisationSlug: ann.slug,
     name: "Tyre service",
-    fields: [licensePlate],
+    fields: [license_plate],
   });
 
   expect(
@@ -334,23 +334,23 @@ test("a Form needs a name", async () => {
     ann.user.mutation(api.forms.create, {
       organisationSlug: ann.slug,
       name: " ",
-      fields: [licensePlate],
+      fields: [license_plate],
     }),
   ).rejects.toThrow("A Form needs a name");
 });
 
 const position = { type: "text", label: "Positie", key: "position", required: true } as const;
 
-const tyreChanges: Infer<typeof field> = {
+const tyre_changes: Infer<typeof field> = {
   type: "list",
   label: "Gewisselde banden",
-  key: "tyreChanges",
+  key: "tyre_changes",
   description: "One entry per changed tyre",
   required: true,
   fields: [
     position,
-    { type: "number", label: "Profieldiepte", key: "treadDepthMm", required: false },
-    { type: "date", label: "Montagedatum", key: "mountedOn", required: false },
+    { type: "number", label: "Profieldiepte", key: "tread_depth_mm", required: false },
+    { type: "date", label: "Montagedatum", key: "mounted_on", required: false },
     { type: "boolean", label: "Reserveband", key: "spare", required: false },
     {
       type: "choice",
@@ -369,22 +369,22 @@ test("saving creates a new Form Version that holds the List Field and its sub-Fi
   const { formId } = await ann.user.mutation(api.forms.create, {
     organisationSlug,
     name: "Tyre service",
-    fields: [licensePlate],
+    fields: [license_plate],
   });
 
   await ann.user.mutation(api.forms.save, {
     organisationSlug,
     formId,
     name: "Tyre service",
-    fields: [licensePlate, tyreChanges],
+    fields: [license_plate, tyre_changes],
   });
 
   expect(
     await ann.user.query(api.forms.get, { organisationSlug, formId }),
-  ).toMatchObject({ version: 2, fields: [licensePlate, tyreChanges] });
+  ).toMatchObject({ version: 2, fields: [license_plate, tyre_changes] });
   expect(
     await ann.user.query(api.forms.get, { organisationSlug, formId, version: 1 }),
-  ).toMatchObject({ fields: [licensePlate] });
+  ).toMatchObject({ fields: [license_plate] });
 });
 
 test("two sub-Fields of a List Field can't share a key, but a sub-Field may reuse a top-level key", async () => {
@@ -396,19 +396,19 @@ test("two sub-Fields of a List Field can't share a key, but a sub-Field may reus
       organisationSlug: ann.slug,
       name: "Tyre service",
       fields: [
-        { ...tyreChanges, fields: [position, { ...position, label: "Plaats" }] },
+        { ...tyre_changes, fields: [position, { ...position, label: "Plaats" }] },
       ],
     }),
   ).rejects.toThrow(
-    'The key "position" is used by more than one sub-Field of the List Field "tyreChanges"',
+    'The key "position" is used by more than one sub-Field of the List Field "tyre_changes"',
   );
 
   const { formId } = await ann.user.mutation(api.forms.create, {
     organisationSlug: ann.slug,
     name: "Tyre service",
     fields: [
-      licensePlate,
-      { ...tyreChanges, fields: [position, { ...licensePlate, required: false }] },
+      license_plate,
+      { ...tyre_changes, fields: [position, { ...license_plate, required: false }] },
     ],
   });
   expect(formId).toBeDefined();
@@ -423,11 +423,11 @@ test("a List Field needs at least one sub-Field, and no sub-Field is a list itse
     ann.user.mutation(api.forms.create, {
       organisationSlug,
       name: "Tyre service",
-      fields: [{ ...tyreChanges, fields: [] }],
+      fields: [{ ...tyre_changes, fields: [] }],
     }),
-  ).rejects.toThrow('The List Field "tyreChanges" needs at least one sub-Field');
+  ).rejects.toThrow('The List Field "tyre_changes" needs at least one sub-Field');
 
-  const nested = { ...tyreChanges, key: "axles", fields: [tyreChanges] };
+  const nested = { ...tyre_changes, key: "axles", fields: [tyre_changes] };
   await expect(
     ann.user.mutation(api.forms.create, {
       organisationSlug,

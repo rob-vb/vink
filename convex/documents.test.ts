@@ -53,13 +53,13 @@ async function acmeWithForm(t: Backend) {
   const { formId } = await ann.user.mutation(api.forms.create, {
     organisationSlug: ann.slug,
     name: "Tyre service",
-    fields: [{ type: "text", label: "Kenteken", key: "licensePlate", required: true }],
+    fields: [{ type: "text", label: "Kenteken", key: "license_plate", required: true }],
   });
   await ann.user.mutation(api.forms.save, {
     organisationSlug: ann.slug,
     formId,
     name: "Tyre service",
-    fields: [{ type: "text", label: "Kenteken", key: "licensePlate", required: false }],
+    fields: [{ type: "text", label: "Kenteken", key: "license_plate", required: false }],
   });
   const cas = await addMembership(t, "cas", ann.slug, "member");
   return { ann, cas, slug: ann.slug, formId };

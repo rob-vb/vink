@@ -185,7 +185,7 @@ function checkFields(fields: Infer<typeof field>[], kind: string) {
     const { key, label } = f;
     if (!isValidKey(key)) {
       throw new ConvexError(
-        `"${key}" isn't a valid key: use camelCase letters and digits, starting with a lowercase letter`,
+        `"${key}" isn't a valid key: use snake_case: lowercase letters, digits and single underscores, starting with a letter`,
       );
     }
     if (label.trim() === "") {

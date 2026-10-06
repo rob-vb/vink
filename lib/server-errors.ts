@@ -103,9 +103,9 @@ const dutchPatterns: [RegExp, (...groups: string[]) => string][] = [
     (key) => `De Lijst "${key}" heeft minstens één subveld nodig`,
   ],
   [
-    /^"(.+)" isn't a valid key: use camelCase letters and digits, starting with a lowercase letter$/,
+    /^"(.+)" isn't a valid key: use snake_case: lowercase letters, digits and single underscores, starting with a letter$/,
     (key) =>
-      `"${key}" is geen geldige sleutel: gebruik letters en cijfers in camelCase, beginnend met een kleine letter`,
+      `"${key}" is geen geldige sleutel: gebruik snake_case: kleine letters, cijfers en losse liggende streepjes, beginnend met een letter`,
   ],
   [/^The Field "(.+)" needs a label$/, (key) => `Het Veld "${key}" heeft een label nodig`],
   [

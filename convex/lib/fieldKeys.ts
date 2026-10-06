@@ -2,39 +2,33 @@
 // derive a key as the Admin types a label) and the backend (to check one).
 
 /**
- * Derives a camelCase key from a label, e.g. "VAT number" → "vatNumber",
- * numbered on when the Form already uses it ("date" → "date2").
+ * Derives a snake_case key from a label, e.g. "VAT number" → "vat_number",
+ * numbered on when the Form already uses it ("date" → "date_2").
  */
 export function keyFromLabel(label: string, taken: readonly string[] = []) {
-  const base = camelCase(label);
+  const base = snakeCase(label);
   let key = base;
   for (let n = 2; taken.includes(key); n++) {
-    key = `${base}${n}`;
+    key = `${base}_${n}`;
   }
   return key;
 }
 
-/** A key is camelCase: a lowercase letter, then letters and digits. */
+/** A key is snake_case: lowercase words of letters and digits, joined by single underscores, starting with a letter. */
 export function isValidKey(key: string) {
-  return /^[a-z][A-Za-z0-9]*$/.test(key);
+  return /^[a-z][a-z0-9]*(_[a-z0-9]+)*$/.test(key);
 }
 
-function camelCase(label: string) {
+function snakeCase(label: string) {
   const words = label
     .replace(/ß/g, "ss")
     .normalize("NFKD")
     .replace(/\p{M}/gu, "")
     .split(/[^A-Za-z0-9]+/)
     .filter(Boolean);
-  const key = words
-    .map((word, i) =>
-      i === 0
-        ? word.toLowerCase()
-        : word[0].toUpperCase() + word.slice(1).toLowerCase(),
-    )
-    .join("");
+  const key = words.map((word) => word.toLowerCase()).join("_");
   if (key === "") {
     return "field";
   }
-  return /^[a-z]/.test(key) ? key : `field${key[0].toUpperCase()}${key.slice(1)}`;
+  return /^[a-z]/.test(key) ? key : `field_${key}`;
 }

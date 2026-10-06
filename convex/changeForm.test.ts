@@ -46,16 +46,16 @@ const invoice: Recording = {
   reading: {
     supplier: { name: "Vianor", vatNumber: "BE0884257344", _pages: [1] },
     totals: { inclVat: "293,82", _pages: [1] },
-    vehicle: { licensePlate: "OR18DH", _pages: [1] },
+    vehicle: { license_plate: "OR18DH", _pages: [1] },
   },
   matches: {
-    licensePlate: { path: "vehicle.licensePlate", probability: 0.9 },
-    orderNumber: { path: null, probability: 0.9 },
-    mileageKm: { path: null, probability: 0.9 },
-    supplierName: { path: "supplier.name", probability: 0.97 },
-    totalInclVat: { path: "totals.inclVat", probability: 0.95 },
+    license_plate: { path: "vehicle.license_plate", probability: 0.9 },
+    order_number: { path: null, probability: 0.9 },
+    mileage_km: { path: null, probability: 0.9 },
+    supplier_name: { path: "supplier.name", probability: 0.97 },
+    total_incl_vat: { path: "totals.inclVat", probability: 0.95 },
   },
-  fills: { licensePlate: "OR18DH", supplierName: "Vianor", totalInclVat: 293.82 },
+  fills: { license_plate: "OR18DH", supplier_name: "Vianor", total_incl_vat: 293.82 },
 };
 
 async function acme(t: Backend) {
@@ -65,17 +65,17 @@ async function acme(t: Backend) {
     organisationSlug,
     name: "Work order",
     fields: [
-      { type: "text", label: "Kenteken", key: "licensePlate", required: true },
-      { type: "text", label: "Werkorder", key: "orderNumber", required: true },
-      { type: "number", label: "Kilometerstand", key: "mileageKm", required: true },
+      { type: "text", label: "Kenteken", key: "license_plate", required: true },
+      { type: "text", label: "Werkorder", key: "order_number", required: true },
+      { type: "number", label: "Kilometerstand", key: "mileage_km", required: true },
     ],
   });
   const { formId: invoiceForm } = await ann.user.mutation(api.forms.create, {
     organisationSlug,
     name: "Invoice",
     fields: [
-      { type: "text", label: "Leverancier", key: "supplierName", required: true },
-      { type: "number", label: "Totaal", key: "totalInclVat", required: true },
+      { type: "text", label: "Leverancier", key: "supplier_name", required: true },
+      { type: "number", label: "Totaal", key: "total_incl_vat", required: true },
     ],
   });
   return { ...ann, workOrderForm, invoiceForm };
@@ -110,7 +110,7 @@ test("a Document is flagged \"Does not fit this Form\" when fewer than half of t
 test("a Document isn't flagged when at least half of the required Fields matched", async () => {
   const { read } = await uploadedAgainstWorkOrder({
     ...invoice,
-    matches: { ...invoice.matches, mileageKm: { path: "vehicle.licensePlate", probability: 0.3 } },
+    matches: { ...invoice.matches, mileage_km: { path: "vehicle.license_plate", probability: 0.3 } },
   });
 
   expect((await read()).doesNotFit).toBe(false);
@@ -132,17 +132,17 @@ test("the cut-off comes from configuration", async () => {
 
 test("before Change Form, the user learns how many corrections will be lost", async () => {
   const { user, on, read } = await uploadedAgainstWorkOrder();
-  const [licensePlate, orderNumber] = (await read()).fieldValues;
-  await user.mutation(api.review.correct, { organisationSlug: on.organisationSlug, fieldValueId: orderNumber.id, value: "WO-1" });
-  await user.mutation(api.review.check, { organisationSlug: on.organisationSlug, fieldValueId: licensePlate.id });
+  const [license_plate, order_number] = (await read()).fieldValues;
+  await user.mutation(api.review.correct, { organisationSlug: on.organisationSlug, fieldValueId: order_number.id, value: "WO-1" });
+  await user.mutation(api.review.check, { organisationSlug: on.organisationSlug, fieldValueId: license_plate.id });
 
   expect(await user.query(api.changeForm.impact, on)).toEqual({ corrections: 1 });
 });
 
 test("Change Form drops the old values and corrections and runs Match, Fill and Verify again on the stored Reading", async () => {
   const { t, user, on, read, invoiceForm } = await uploadedAgainstWorkOrder();
-  const [, orderNumber] = (await read()).fieldValues;
-  await user.mutation(api.review.correct, { organisationSlug: on.organisationSlug, fieldValueId: orderNumber.id, value: "WO-1" });
+  const [, order_number] = (await read()).fieldValues;
+  await user.mutation(api.review.correct, { organisationSlug: on.organisationSlug, fieldValueId: order_number.id, value: "WO-1" });
   fakePipeline.calls = [];
 
   await user.mutation(api.changeForm.changeForm, { ...on, formId: invoiceForm });
@@ -159,8 +159,8 @@ test("Change Form drops the old values and corrections and runs Match, Fill and 
     userTouched: true,
   });
   expect(document.fieldValues.map((f) => [f.key, f.value, f.review])).toEqual([
-    ["supplierName", "Vianor", null],
-    ["totalInclVat", 293.82, null],
+    ["supplier_name", "Vianor", null],
+    ["total_incl_vat", 293.82, null],
   ]);
   expect(document.history.map((h) => h.event)).toContain("form_changed");
   expect(document.history.find((h) => h.event === "form_changed")!.detail).toBe("Work order → Invoice");
@@ -187,10 +187,10 @@ test("Change Form is refused after Approval", async () => {
     ...invoice,
     matches: {
       ...invoice.matches,
-      orderNumber: { path: "supplier.vatNumber", probability: 0.9 },
-      mileageKm: { path: "totals.inclVat", probability: 0.9 },
+      order_number: { path: "supplier.vatNumber", probability: 0.9 },
+      mileage_km: { path: "totals.inclVat", probability: 0.9 },
     },
-    fills: { ...invoice.fills, orderNumber: "X", mileageKm: 1 },
+    fills: { ...invoice.fills, order_number: "X", mileage_km: 1 },
   });
   expect((await read()).needsReviewCount).toBe(0);
   await user.mutation(api.review.approve, on);

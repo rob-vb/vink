@@ -1,4 +1,4 @@
-import { ArrowRight, FileText, RotateCcw, ShieldCheck, Users, Webhook } from "lucide-react";
+import { ArrowRight, FileText, ShieldCheck, Users, Webhook } from "lucide-react";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { Badge } from "@/components/ui/badge";
@@ -136,30 +136,6 @@ export default async function PricingPage({ params }: PageProps<"/[locale]/prici
               </li>
             ))}
           </ul>
-        </Container>
-      </section>
-
-      <section className="py-16 sm:py-24">
-        <Container className="grid grid-cols-[minmax(0,1fr)] gap-10 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-16">
-          <div>
-            <h2 className="text-3xl font-semibold tracking-tight">{t("pages.title")}</h2>
-            <p className="mt-3 text-lg text-muted-foreground">{t("pages.body")}</p>
-            <p className="mt-4 flex gap-2.5 text-[15px]">
-              <RotateCcw className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden />
-              {t("pages.free")}
-            </p>
-          </div>
-          <dl className="divide-y overflow-hidden rounded-2xl border bg-card">
-            {(["invoice", "delivery", "contract"] as const).map((key) => (
-              <div key={key} className="flex items-center justify-between gap-4 px-6 py-5">
-                <dt className="flex items-center gap-3">
-                  <FileText className="size-5 text-muted-foreground" aria-hidden />
-                  {t(`pages.${key}`)}
-                </dt>
-                <dd className="font-mono text-sm font-medium tabular-nums">{t(`pages.${key}Count`)}</dd>
-              </div>
-            ))}
-          </dl>
         </Container>
       </section>
 

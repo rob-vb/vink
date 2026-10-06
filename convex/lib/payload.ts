@@ -1,6 +1,6 @@
 // The Payload (spec, Payload and Delivery): the JSON built from a Document's
 // Field Values, keyed by the Form's Fields, and the envelope around it. Every
-// key is always there: `null` for no value, `[]` for a List without entries.
+// key on the wire is snake_case (ADR 0005) and always there: `null` for no value, `[]` for a List without entries.
 import type { Infer } from "convex/values";
 import type { field } from "../schema";
 import type { FilledValue, FlatField } from "./pipeline";
@@ -74,9 +74,13 @@ export function envelopeOf(delivery: {
 }) {
   return {
     event: "document.approved",
-    deliveryId: delivery.deliveryId,
+    delivery_id: delivery.deliveryId,
     test: delivery.test,
-    document: { ...delivery.document, uploadedAt: iso(delivery.document.uploadedAt) },
+    document: {
+      id: delivery.document.id,
+      filename: delivery.document.filename,
+      uploaded_at: iso(delivery.document.uploadedAt),
+    },
     form: delivery.form,
     approval: { ...delivery.approval, at: iso(delivery.approval.at) },
     data: delivery.data,

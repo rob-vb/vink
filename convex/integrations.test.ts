@@ -55,12 +55,12 @@ async function acme(t: Backend) {
     organisationSlug,
     name: "Work order",
     fields: [
-      { type: "text", label: "Kenteken", key: "licensePlate", required: true },
-      { type: "number", label: "Kilometerstand", key: "mileageKm", required: false },
+      { type: "text", label: "Kenteken", key: "license_plate", required: true },
+      { type: "number", label: "Kilometerstand", key: "mileage_km", required: false },
       {
         type: "list",
         label: "Banden",
-        key: "tyreChanges",
+        key: "tyre_changes",
         required: false,
         fields: [{ type: "text", label: "Positie", key: "position", required: false }],
       },
@@ -155,7 +155,7 @@ test("an Integration attaches to several Forms and is listed with them; it can b
   const { formId: invoiceForm } = await user.mutation(api.forms.create, {
     organisationSlug,
     name: "Invoice",
-    fields: [{ type: "text", label: "Nummer", key: "invoiceNumber", required: true }],
+    fields: [{ type: "text", label: "Nummer", key: "invoice_number", required: true }],
   });
   const { integrationId } = await create();
 
@@ -214,10 +214,10 @@ test("once an Integration is attached, the Form's keys are locked: renaming or r
       name: "Work order",
       fields: [{ ...fields[0], key: "plate" }, ...fields.slice(1)],
     }),
-  ).rejects.toThrow("licensePlate");
+  ).rejects.toThrow("license_plate");
   await expect(
     user.mutation(api.forms.save, { organisationSlug, formId, name: "Work order", fields: fields.slice(1) }),
-  ).rejects.toThrow("licensePlate");
+  ).rejects.toThrow("license_plate");
   // Labels can change and new Fields can be added.
   await user.mutation(api.forms.save, {
     organisationSlug,
@@ -262,9 +262,9 @@ test("a test-send posts the test envelope with example data, signed like a real 
     test: true,
     form: { id: formId, version: 1 },
     data: {
-      licensePlate: "Example Kenteken",
-      mileageKm: 123.45,
-      tyreChanges: [{ position: "Example Positie" }],
+      license_plate: "Example Kenteken",
+      mileage_km: 123.45,
+      tyre_changes: [{ position: "Example Positie" }],
     },
   });
 });
@@ -277,9 +277,9 @@ test("a test-send can leave optional values empty, to show null and []", async (
   await user.action(api.integrations.testSend, { organisationSlug, integrationId, formId, mode: "empty" });
 
   expect(JSON.parse(fakeHttp.requests[0].body).data).toEqual({
-    licensePlate: "Example Kenteken",
-    mileageKm: null,
-    tyreChanges: [],
+    license_plate: "Example Kenteken",
+    mileage_km: null,
+    tyre_changes: [],
   });
 });
 
@@ -288,12 +288,12 @@ test("a test-send with an Approved Document sends that Document's Payload, corre
   const { user, organisationSlug, formId, create } = await acme(t);
   const { integrationId } = await create();
   const recording: Recording = {
-    reading: { vehicle: { licensePlate: "NWA-30-E", mileage: "9899", _pages: [1] } },
+    reading: { vehicle: { license_plate: "NWA-30-E", mileage: "9899", _pages: [1] } },
     matches: {
-      licensePlate: { path: "vehicle.licensePlate", probability: 0.97 },
-      mileageKm: { path: "vehicle.mileage", probability: 0.95 },
+      license_plate: { path: "vehicle.license_plate", probability: 0.97 },
+      mileage_km: { path: "vehicle.mileage", probability: 0.95 },
     },
-    fills: { licensePlate: "NWA30E", mileageKm: 9899 },
+    fills: { license_plate: "NWA30E", mileage_km: 9899 },
   };
   fakePipeline.replay(recording);
   const documentId = (await uploadAndExtract(t, user, organisationSlug, formId)) as Id<"documents">;
@@ -319,7 +319,7 @@ test("a test-send with an Approved Document sends that Document's Payload, corre
   expect(JSON.parse(fakeHttp.requests[0].body)).toMatchObject({
     test: true,
     document: { id: documentId, filename: "werkorder.pdf" },
-    data: { licensePlate: "NWA30E", mileageKm: 9800, tyreChanges: [] },
+    data: { license_plate: "NWA30E", mileage_km: 9800, tyre_changes: [] },
   });
 });
 
@@ -328,9 +328,9 @@ test("a Document still in Needs Review is never test-sent: unchecked data doesn'
   const { user, organisationSlug, formId, create } = await acme(t);
   const { integrationId } = await create();
   fakePipeline.replay({
-    reading: { vehicle: { licensePlate: "NWA-30-E", _pages: [1] } },
-    matches: { licensePlate: { path: "vehicle.licensePlate", probability: 0.4 } },
-    fills: { licensePlate: "NWA30E" },
+    reading: { vehicle: { license_plate: "NWA-30-E", _pages: [1] } },
+    matches: { license_plate: { path: "vehicle.license_plate", probability: 0.4 } },
+    fills: { license_plate: "NWA30E" },
   });
   const documentId = (await uploadAndExtract(t, user, organisationSlug, formId)) as Id<"documents">;
 

@@ -46,20 +46,20 @@ afterEach(() => {
 // A Dutch work order: plate, mileage, and the supplier's IBAN nobody needs.
 const sample: Recording = {
   reading: {
-    vehicle: { licensePlate: "NWA-30-E", mileage: "9.899 km", _pages: [1] },
+    vehicle: { license_plate: "NWA-30-E", mileage: "9.899 km", _pages: [1] },
     supplier: { iban: "NL91ABNA0417164300", _pages: [1] },
   },
   matches: {
-    licensePlate: { path: "vehicle.licensePlate", probability: 0.97 },
-    mileageKm: { path: "vehicle.mileage", probability: 0.95 },
+    license_plate: { path: "vehicle.license_plate", probability: 0.97 },
+    mileage_km: { path: "vehicle.mileage", probability: 0.95 },
   },
-  fills: { licensePlate: "NWA30E", mileageKm: 9899 },
+  fills: { license_plate: "NWA30E", mileage_km: 9899 },
   proposal: [
     {
       field: {
         type: "text",
         label: "Kenteken",
-        key: "licensePlate",
+        key: "license_plate",
         description: "Vehicle registration (Kenteken)",
         required: false,
       },
@@ -69,7 +69,7 @@ const sample: Recording = {
       field: {
         type: "number",
         label: "Kilometerstand",
-        key: "mileageKm",
+        key: "mileage_km",
         description: "Odometer reading in km (Kilometerstand, Km. stand)",
         // The model said required; proposals never are.
         required: true,
@@ -77,7 +77,7 @@ const sample: Recording = {
       ticked: true,
     },
     {
-      field: { type: "text", label: "IBAN", key: "supplierIban", required: false },
+      field: { type: "text", label: "IBAN", key: "supplier_iban", required: false },
       ticked: false,
     },
   ],
@@ -117,9 +117,9 @@ test("a sample PDF is read in the background, then every piece of data is propos
   const proposal = await read();
   expect(proposal).toMatchObject({ state: "ready", filename: "voorbeeld.pdf", error: null });
   expect(proposal.fields.map((f) => [f.field.key, f.ticked, f.field.required])).toEqual([
-    ["licensePlate", true, false],
-    ["mileageKm", true, false],
-    ["supplierIban", false, false],
+    ["license_plate", true, false],
+    ["mileage_km", true, false],
+    ["supplier_iban", false, false],
   ]);
   expect(fakePipeline.calls.map((c) => c.step)).toEqual(["read", "propose"]);
   expect(fakePipeline.calls[1]).toMatchObject({ reading: sample.reading });
@@ -142,7 +142,7 @@ test("saving the ticked Fields creates the Form's first Version, and the sample 
 
   const form = await user.query(api.forms.get, { organisationSlug, formId });
   expect(form).toMatchObject({ name: "Work order", version: 1 });
-  expect(form.fields.map((f) => f.key)).toEqual(["licensePlate", "mileageKm"]);
+  expect(form.fields.map((f) => f.key)).toEqual(["license_plate", "mileage_km"]);
   expect(fakePipeline.calls.map((c) => c.step)).toEqual(["match", "fill", "verify"]);
   const document = await user.query(api.documents.get, {
     organisationSlug,
