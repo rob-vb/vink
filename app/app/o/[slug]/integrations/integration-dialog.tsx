@@ -25,6 +25,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { useErrorText } from "../../../error-text";
+import { ReconnectButton } from "./reconnect-button";
 
 type Header = { name: string; value: string; secret: boolean; stored: boolean };
 
@@ -37,6 +38,8 @@ export type IntegrationValues = {
   // A Webhook's endpoint, or the link to a Google Sheets Integration's sheet.
   url: string;
   headers: Array<{ name: string; value: string; secret: boolean }>;
+  // A Google Sheets Integration whose account no longer lets Vink in.
+  needsReconnect: boolean;
 };
 
 /**
@@ -55,6 +58,7 @@ export function IntegrationDialog({
   trigger: ReactElement;
 }) {
   const t = useTranslations("appIntegrations.dialog");
+  const tList = useTranslations("appIntegrations");
   const errorText = useErrorText();
   const create = useMutation(api.integrations.create);
   const update = useMutation(api.integrations.update);
@@ -177,15 +181,30 @@ export function IntegrationDialog({
               </ul>
             )}
             {sheets && integration && (
-              <a
-                href={integration.url}
-                target="_blank"
-                rel="noreferrer"
-                className="flex w-fit items-center gap-1 text-sm underline-offset-4 hover:underline"
-              >
-                {t("openSheet")}
-                <ExternalLink className="size-3.5" />
-              </a>
+              <>
+                <a
+                  href={integration.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex w-fit items-center gap-1 text-sm underline-offset-4 hover:underline"
+                >
+                  {t("openSheet")}
+                  <ExternalLink className="size-3.5" />
+                </a>
+                <Field>
+                  <div>
+                    <ReconnectButton
+                      organisationSlug={organisationSlug}
+                      integrationId={integration.id}
+                      label={t("reconnect")}
+                      variant={integration.needsReconnect ? "default" : "outline"}
+                    />
+                  </div>
+                  <FieldDescription className={integration.needsReconnect ? "text-destructive" : undefined}>
+                    {integration.needsReconnect ? tList("needsReconnectText") : t("reconnectHint")}
+                  </FieldDescription>
+                </Field>
+              </>
             )}
             {!sheets && (
               <>

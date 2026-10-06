@@ -12,6 +12,8 @@ export type OAuthClaims = {
   userId: string;
   // The new Integration's name.
   name: string;
+  // Set on a Reconnect: the Integration whose account is connected again.
+  integrationId?: string;
   expiresAt: number;
 };
 

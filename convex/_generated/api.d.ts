@@ -27,6 +27,7 @@ import type * as http from "../http.js";
 import type * as intake from "../intake.js";
 import type * as integrations from "../integrations.js";
 import type * as invitations from "../invitations.js";
+import type * as lib_accounts from "../lib/accounts.js";
 import type * as lib_backoff from "../lib/backoff.js";
 import type * as lib_billing from "../lib/billing.js";
 import type * as lib_clientIp from "../lib/clientIp.js";
@@ -115,6 +116,7 @@ declare const fullApi: ApiFromModules<{
   intake: typeof intake;
   integrations: typeof integrations;
   invitations: typeof invitations;
+  "lib/accounts": typeof lib_accounts;
   "lib/backoff": typeof lib_backoff;
   "lib/billing": typeof lib_billing;
   "lib/clientIp": typeof lib_clientIp;

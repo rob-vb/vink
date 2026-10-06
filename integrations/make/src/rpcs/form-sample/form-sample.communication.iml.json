@@ -1,0 +1,7 @@
+{
+    "url": "/forms/{{webhook.formId}}/sample",
+    "method": "GET",
+    "response": {
+        "output": "{{body}}"
+    }
+}

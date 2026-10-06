@@ -348,15 +348,20 @@ export function expectSignedBy(secret: string, request: { headers: Record<string
 
 /**
  * Stands in for Google (lib/google.ts): OAuth and spreadsheets in memory.
- * A code `code-<x>` trades for refresh token `refresh-<x>`; `revoke` makes a
- * refresh token refused. `answer` scripts failures for the next Sheets calls.
+ * A code `code-<x>` trades for refresh token `refresh-<x>` (account `<x>`,
+ * a new grant); `revoked` holds refresh tokens Google refuses. A sheet opens
+ * only for the account that made it (drive.file). `answer` scripts failures
+ * for the next Sheets calls.
  * Install with `vi.mock("./lib/google", …)`.
  */
 type GoogleAnswer = { status: number | null; retryAfter?: string } | "ok";
 
 export const fakeGoogle = {
-  sheets: new Map<string, { title: string; rows: FilledValue[][] }>(),
+  sheets: new Map<string, { title: string; rows: FilledValue[][]; owner: string }>(),
   revoked: new Set<string>(),
+  // Tokens Vink asked Google to revoke, in order; `revokeFails` makes Google not answer.
+  revokeCalls: [] as string[],
+  revokeFails: false,
   // The scopes the next consent grants.
   scopes: ["https://www.googleapis.com/auth/drive.file"],
   script: [] as GoogleAnswer[],
@@ -364,6 +369,8 @@ export const fakeGoogle = {
   reset() {
     fakeGoogle.sheets.clear();
     fakeGoogle.revoked.clear();
+    fakeGoogle.revokeCalls = [];
+    fakeGoogle.revokeFails = false;
     fakeGoogle.scopes = ["https://www.googleapis.com/auth/drive.file"];
     fakeGoogle.script = [];
     fakeGoogle.redirectUris = [];
@@ -392,7 +399,21 @@ export const fakeGoogle = {
       const { GoogleFailure } = await import("./lib/google");
       throw new GoogleFailure(400, "Google answered 400: invalid_grant", null, true);
     }
-    return { refreshToken: `refresh-${code.slice(5)}`, scopes: fakeGoogle.scopes };
+    const refreshToken = `refresh-${code.slice(5)}`;
+    fakeGoogle.revoked.delete(refreshToken);
+    return { refreshToken, scopes: fakeGoogle.scopes };
+  },
+  async revoke(token: string) {
+    fakeGoogle.revokeCalls.push(token);
+    if (fakeGoogle.revokeFails) {
+      const { GoogleFailure } = await import("./lib/google");
+      throw new GoogleFailure(null, "Google couldn't be reached");
+    }
+    fakeGoogle.revoked.add(token);
+  },
+  async canOpen(token: string, spreadsheetId: string) {
+    await fakeGoogle.next(token);
+    return fakeGoogle.sheets.get(spreadsheetId)?.owner === token;
   },
   async accessToken(refreshToken: string) {
     if (fakeGoogle.revoked.has(refreshToken)) {
@@ -404,7 +425,7 @@ export const fakeGoogle = {
   async createSheet(token: string, title: string, header: string[]) {
     await fakeGoogle.next(token);
     const spreadsheetId = `sheet${fakeGoogle.sheets.size + 1}`;
-    fakeGoogle.sheets.set(spreadsheetId, { title, rows: [header] });
+    fakeGoogle.sheets.set(spreadsheetId, { title, rows: [header], owner: token });
     return { spreadsheetId, sheetId: 0, url: `https://docs.google.com/spreadsheets/d/${spreadsheetId}/edit` };
   },
   async read(token: string, sheet: { spreadsheetId: string }, column: string) {

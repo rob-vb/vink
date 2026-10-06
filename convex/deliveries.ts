@@ -15,7 +15,7 @@ import {
 import { MAX_ATTEMPTS, nextAttemptAt } from "./lib/backoff";
 import { documentPayload } from "./lib/documentPayload";
 import { orgMutation, orgQuery } from "./lib/functions";
-import { sendTo } from "./lib/integrationAdapters";
+import { kindOf, sendTo } from "./lib/integrationAdapters";
 import { envelopeOf } from "./lib/payload";
 
 // What the attempt log keeps of a response body.
@@ -159,10 +159,20 @@ export const recordAttempt = internalMutation({
         ? `Gave up after ${MAX_ATTEMPTS} attempts: ${outcome.reason.replace(/^The/, "the")}`
         : outcome.reason;
     await ctx.db.patch(id, { attempts, state: "failed", failureReason: reason, nextAttemptAt: undefined });
+    if (outcome.kind === "failed" && outcome.cause === "access_expired") {
+      await markNeedsReconnect(ctx, delivery.integrationId);
+    }
     await notifyFailed(ctx, delivery);
     await startClockIfAllFailed(ctx, delivery.documentId);
   },
 });
+
+/** The Integration's connected account no longer lets Vink in: it shows as needing reconnecting. */
+async function markNeedsReconnect(ctx: MutationCtx, integrationId: Id<"integrations">) {
+  const integration = await ctx.db.get(integrationId);
+  if (integration === null || kindOf(integration) === "webhook") return;
+  await ctx.db.patch(integrationId, { needsReconnect: true });
+}
 
 /**
  * When every Delivery of a Document has ended failed, its retention clock
