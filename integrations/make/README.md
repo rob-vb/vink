@@ -72,13 +72,14 @@ Use a Vink Organisation with a Form and an API Key (Settings → API Keys).
    module with a Form. The Document shows in Vink with the API Key's name as its source.
    Send a PNG, a 21-page PDF, and use an organisation without Pages: each fails with Vink's
    message.
-7. Check the gap below: delete the Subscription's Webhook in Vink first, then delete the
-   webhook in Make.
+7. Delete the Subscription's Webhook in Vink first, then delete the webhook in Make: Make
+   removes it without an error.
 
-Known gap: detach answers 404 when the Subscription is already gone (an Admin deleted the
-Webhook, or the API Key was revoked). Make treats every 4xx as an error and can't mark it
-as success, so Make shows "There's no Subscription with that id in your Organisation." Check
-in step 7 whether Make still removes its webhook.
+Detach of a Subscription that is gone already (an Admin deleted its Webhook, or its URL
+answered 410) still answers 200: `DELETE /v1/subscriptions/{id}` is idempotent, because Make
+treats every 4xx as an error. Known gap: after the API Key is revoked, detach gets 401 (the
+key no longer works) and Make shows "This API Key doesn't exist or was revoked." The
+Subscription ended with the key, so delete the webhook in Make anyway.
 
 ## Submit for review
 

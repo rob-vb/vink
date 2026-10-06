@@ -30,3 +30,5 @@ Open checks (real accounts), steps in `integrations/make/README.md`: Make develo
 enables custom IML functions for the app; deploy; a real scenario moves a Document end to end (trigger fields before the
 first run, `webhook.formId` available in the interface/sample RPCs, multipart upload, refusal messages, detach after an
 Admin deleted the Webhook); submission for review.
+
+**2026-10-06 (review fixes, `int/13-review-fixes`):** The detach gap is fixed in the API, not the app: `DELETE /v1/subscriptions/{id}` answers 200 `{id, deleted: true}` also when the Subscription is gone already, so Make removes its webhook without an error. README step 7 and "Known gap" are updated. What stays: after the API Key is revoked, detach gets 401 and Make shows Vink's message (the Subscription ended with the key). Real-account check: README step 7.

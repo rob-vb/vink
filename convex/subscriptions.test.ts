@@ -127,7 +127,7 @@ test("the subscribe answer's Location header is the URL that unsubscribes, as Po
   expect(unsubscribe.status).toBe(200);
 });
 
-test("unsubscribing removes the Webhook; a second time, or an Admin's own Webhook, is not found", async () => {
+test("unsubscribing removes the Webhook; a second time, an unknown id or an Admin's own Webhook's id answers the same and removes nothing", async () => {
   const t = newBackend();
   const { user, organisationSlug, formId, call, subscribe } = await organisation(t, "ann", "Acme Fleet");
   const { integrationId: adminMade } = await user.mutation(api.integrations.create, {
@@ -145,11 +145,13 @@ test("unsubscribing removes the Webhook; a second time, or an Admin's own Webhoo
   expect((await user.query(api.integrations.list, { organisationSlug })).map((i) => i.name)).toEqual(["ERP"]);
   expect((await user.query(api.forms.get, { organisationSlug, formId })).keysLocked).toBe(false);
 
-  const again = await call(`/subscriptions/${body.id}`, { method: "DELETE" });
-  expect(again.status).toBe(404);
-  expect((await again.json()).error.code).toBe("not_found");
-  expect((await call(`/subscriptions/${adminMade}`, { method: "DELETE" })).status).toBe(404);
-  expect((await call("/subscriptions/nonsense", { method: "DELETE" })).status).toBe(404);
+  // Already gone or never there: platforms treat any 4xx on detach as an error, so this is a 200 too.
+  for (const id of [body.id, adminMade, "nonsense"]) {
+    const again = await call(`/subscriptions/${id}`, { method: "DELETE" });
+    expect(again.status).toBe(200);
+    expect(await again.json()).toEqual({ id, deleted: true });
+  }
+  expect((await user.query(api.integrations.list, { organisationSlug })).map((i) => i.name)).toEqual(["ERP"]);
 });
 
 test("revoking an API Key ends its Subscriptions and removes their Webhooks, and nothing else", async () => {
@@ -215,7 +217,7 @@ test("an Admin can delete a Subscription's Webhook in the app; that ends the Sub
   await user.mutation(api.integrations.remove, { organisationSlug, integrationId: integration.id });
 
   expect(await user.query(api.integrations.list, { organisationSlug })).toEqual([]);
-  expect((await call(`/subscriptions/${body.id}`, { method: "DELETE" })).status).toBe(404);
+  expect((await call(`/subscriptions/${body.id}`, { method: "DELETE" })).status).toBe(200);
 });
 
 test("tenancy: another Organisation's Form and Subscription can't be reached, and its list doesn't show them", async () => {
@@ -227,7 +229,8 @@ test("tenancy: another Organisation's Form and Subscription can't be reached, an
   const intoAcme = await other.subscribe("https://hooks.zapier.com/eve", acme.formId);
   expect(intoAcme.status).toBe(404);
   expect(intoAcme.body.error.code).toBe("not_found");
-  expect((await other.call(`/subscriptions/${body.id}`, { method: "DELETE" })).status).toBe(404);
+  // Answers as if gone, and ends nothing of Acme's.
+  expect((await other.call(`/subscriptions/${body.id}`, { method: "DELETE" })).status).toBe(200);
   expect((await other.call(`/forms/${acme.formId}/sample`)).status).toBe(404);
 
   expect(await other.user.query(api.integrations.list, { organisationSlug: other.organisationSlug })).toEqual([]);
