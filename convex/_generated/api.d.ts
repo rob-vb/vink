@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as apiKeys from "../apiKeys.js";
 import type * as auth from "../auth.js";
 import type * as billing from "../billing.js";
 import type * as billingState from "../billingState.js";
@@ -61,6 +62,14 @@ import type * as onboarding from "../onboarding.js";
 import type * as organisations from "../organisations.js";
 import type * as pages from "../pages.js";
 import type * as proposalRun from "../proposalRun.js";
+import type * as publicApi_auth from "../publicApi/auth.js";
+import type * as publicApi_forms from "../publicApi/forms.js";
+import type * as publicApi_openapi_common from "../publicApi/openapi/common.js";
+import type * as publicApi_openapi_forms from "../publicApi/openapi/forms.js";
+import type * as publicApi_openapi_index from "../publicApi/openapi/index.js";
+import type * as publicApi_openapi_types from "../publicApi/openapi/types.js";
+import type * as publicApi_respond from "../publicApi/respond.js";
+import type * as publicApi_routes from "../publicApi/routes.js";
 import type * as rejection from "../rejection.js";
 import type * as retention from "../retention.js";
 import type * as review from "../review.js";
@@ -72,6 +81,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  apiKeys: typeof apiKeys;
   auth: typeof auth;
   billing: typeof billing;
   billingState: typeof billingState;
@@ -125,6 +135,14 @@ declare const fullApi: ApiFromModules<{
   organisations: typeof organisations;
   pages: typeof pages;
   proposalRun: typeof proposalRun;
+  "publicApi/auth": typeof publicApi_auth;
+  "publicApi/forms": typeof publicApi_forms;
+  "publicApi/openapi/common": typeof publicApi_openapi_common;
+  "publicApi/openapi/forms": typeof publicApi_openapi_forms;
+  "publicApi/openapi/index": typeof publicApi_openapi_index;
+  "publicApi/openapi/types": typeof publicApi_openapi_types;
+  "publicApi/respond": typeof publicApi_respond;
+  "publicApi/routes": typeof publicApi_routes;
   rejection: typeof rejection;
   retention: typeof retention;
   review: typeof review;
