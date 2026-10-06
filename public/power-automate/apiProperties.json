@@ -1,0 +1,26 @@
+{
+  "properties": {
+    "connectionParameters": {
+      "api_key": {
+        "type": "securestring",
+        "uiDefinition": {
+          "displayName": "API Key",
+          "description": "Type Bearer, a space, then your Vink API Key: Bearer vink_live_…",
+          "tooltip": "An Admin makes API Keys in Vink, under Organisation settings → API Keys.",
+          "constraints": {
+            "tabIndex": 2,
+            "clearText": false,
+            "required": "true"
+          }
+        }
+      }
+    },
+    "iconBrandColor": "#0f1e36",
+    "capabilities": [
+      "actions",
+      "triggers"
+    ],
+    "publisher": "Vink",
+    "stackOwner": "Vink"
+  }
+}
