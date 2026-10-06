@@ -35,12 +35,12 @@ export const googleSheetsAdapter: IntegrationAdapter<"google_sheets"> = {
     const sheet = { spreadsheetId: integration.spreadsheetId, sheetId: integration.sheetId };
     try {
       const token = await google.accessToken(await decryptSecret(integration.refreshToken));
-      const { header, column } = await google.read(token, sheet, "delivery_id");
+      const { header, column, columnCount } = await google.read(token, sheet, "delivery_id");
       if (column.includes(envelope.delivery_id)) {
         return { outcome: { kind: "delivered" }, status: 200, body: "Already in the sheet: no rows added", error: null };
       }
       const { added, values } = sheetLayout(header, rowsOf(envelope, approverEmail));
-      await google.append(token, sheet, { from: header.length, cells: added }, values);
+      await google.append(token, sheet, { from: header.length, cells: added, columnCount }, values);
       const body = values.length === 1 ? "1 row added to the sheet" : `${values.length} rows added to the sheet`;
       return { outcome: { kind: "delivered" }, status: 200, body, error: null };
     } catch (error) {

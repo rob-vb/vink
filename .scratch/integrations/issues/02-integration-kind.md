@@ -30,3 +30,5 @@ npx convex run --prod integrations:backfillKind
 After both runs, a later change can make `kind` required (the contract step).
 
 Open checks (real account): none for this ticket. Real webhook sends are covered by ticket 01's guides.
+
+**2026-10-06 (review fixes, `int/13-review-fixes`):** `sendTo` now settles a send that throws inside Vink (a missing setting, a secret it can't decrypt, a 2xx that isn't JSON, a failing `keepRefreshToken`) as a retry with the reason `Vink couldn't send it: <message>`; before, the Delivery stayed `pending` for good and a test-send crashed. It then fails after the usual 6 attempts with the usual notice. New `isWebhook` guard (`kindOf(i) === "webhook"`) replaces naming the other kinds in `integrations.ownWebhook` and `list`. Proof: `convex/deliveryRetries.test.ts` (two new tests: a Delivery and a test-send with an unreadable secret).

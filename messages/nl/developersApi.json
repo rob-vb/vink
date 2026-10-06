@@ -11,7 +11,7 @@
   "toc": {
     "label": "Op deze pagina",
     "overview": "Overzicht",
-    "auth": "Inloggen",
+    "auth": "Authenticatie",
     "errors": "Fouten",
     "objects": "Objecten"
   },
@@ -24,7 +24,7 @@
     "english": "De beschrijvingen van endpoints en velden hieronder zijn in het Engels, net als de API zelf."
   },
   "auth": {
-    "title": "Inloggen",
+    "title": "Authenticatie",
     "keys": "Stuur bij elk verzoek een API-sleutel mee. Een Admin maakt die in de app onder <b>Instellingen van de Organisatie → API-sleutels</b>, geeft hem een naam en ziet hem één keer. Een sleutel hoort bij één organisatie en komt alleen bij de gegevens van die organisatie.",
     "secret": "Behandel een sleutel als een wachtwoord: bewaar hem op je server, nooit in een browser of app. Een ontbrekende, onbekende of ingetrokken sleutel krijgt <code>401</code>. Trek je één sleutel in, dan blijven je andere sleutels werken."
   },

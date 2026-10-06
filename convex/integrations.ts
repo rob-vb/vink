@@ -5,17 +5,16 @@ import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import {
   type ActionCtx,
-  internalAction,
   internalMutation,
   internalQuery,
   type MutationCtx,
   type QueryCtx,
 } from "./_generated/server";
 import { failOpenDeliveries } from "./deliveries";
-import { accountProviderFor, accountProviderOf, refreshTokenKeeper } from "./lib/accounts";
+import { accountProviderOf, refreshTokenKeeper, sendAlone } from "./lib/accounts";
 import { documentPayload } from "./lib/documentPayload";
 import { orgAction, orgMutation, orgQuery } from "./lib/functions";
-import { kindOf, sendTo } from "./lib/integrationAdapters";
+import { isWebhook, sendTo } from "./lib/integrationAdapters";
 import { signState } from "./lib/oauthState";
 import { dummyPayload, envelopeOf } from "./lib/payload";
 import { decryptSecret, encryptSecret, masked } from "./lib/secrets";
@@ -39,9 +38,7 @@ async function ownWebhook(
   integrationId: Id<"integrations">,
 ) {
   const integration = await ownIntegration(ctx, organisationId, integrationId);
-  if (integration.kind === "google_sheets" || integration.kind === "excel") {
-    throw new ConvexError("This Integration isn't a Webhook");
-  }
+  if (!isWebhook(integration)) throw new ConvexError("This Integration isn't a Webhook");
   return integration;
 }
 
@@ -114,24 +111,24 @@ export const list = orgQuery({
           needsReconnect: "needsReconnect" in integration && integration.needsReconnect === true,
         };
         // Where it sends to: a Webhook's endpoint, or the link to a sheet or workbook.
+        if (isWebhook(integration)) {
+          return {
+            ...common,
+            kind: "webhook" as const,
+            url: integration.url,
+            headers: await Promise.all(
+              integration.headers.map(async (h) => ({
+                name: h.name,
+                secret: h.secret,
+                value: h.secret ? masked(await decryptSecret(h.value)) : h.value,
+              })),
+            ),
+          };
+        }
         if (integration.kind === "google_sheets") {
           return { ...common, kind: integration.kind, url: integration.spreadsheetUrl, headers: [] };
         }
-        if (integration.kind === "excel") {
-          return { ...common, kind: integration.kind, url: integration.workbookUrl, headers: [] };
-        }
-        return {
-          ...common,
-          kind: kindOf(integration) as "webhook",
-          url: integration.url,
-          headers: await Promise.all(
-            integration.headers.map(async (h) => ({
-              name: h.name,
-              secret: h.secret,
-              value: h.secret ? masked(await decryptSecret(h.value)) : h.value,
-            })),
-          ),
-        };
+        return { ...common, kind: integration.kind, url: integration.workbookUrl, headers: [] };
       }),
     );
   },
@@ -202,9 +199,13 @@ export const update = orgMutation({
   },
 });
 
-/** Also ends the Subscription that made it, if any, and revokes a connected account's access. */
+/**
+ * Also ends the Subscription that made it, if any. A connected account's
+ * token is deleted with it, but its grant at the provider is left alone:
+ * Google's revoke ends the account's whole grant to Vink, which the same
+ * account's Integrations in other Organisations still use.
+ */
 export async function removeIntegration(ctx: MutationCtx, integrationId: Id<"integrations">) {
-  const integration = (await ctx.db.get(integrationId))!;
   const links = await ctx.db
     .query("formIntegrations")
     .withIndex("by_integrationId", (q) => q.eq("integrationId", integrationId))
@@ -217,38 +218,7 @@ export async function removeIntegration(ctx: MutationCtx, integrationId: Id<"int
   if (subscription !== null) await ctx.db.delete(subscription._id);
   await failOpenDeliveries(ctx, integrationId);
   await ctx.db.delete(integrationId);
-  if ("refreshToken" in integration && !(await hasOtherOfKind(ctx, integration))) {
-    await ctx.scheduler.runAfter(0, internal.integrations.revokeAccess, {
-      kind: kindOf(integration),
-      refreshToken: integration.refreshToken,
-    });
-  }
 }
-
-/**
- * Whether the Organisation has another Integration of the same kind. A revoke
- * ends the account's whole grant to Vink, and that Integration may use the
- * same account (Vink can't tell accounts apart), so its access is kept then.
- */
-async function hasOtherOfKind(ctx: QueryCtx, integration: Doc<"integrations">) {
-  const others = await ctx.db
-    .query("integrations")
-    .withIndex("by_organisationId", (q) => q.eq("organisationId", integration.organisationId))
-    .take(100);
-  return others.some((o) => o._id !== integration._id && kindOf(o) === kindOf(integration));
-}
-
-/** Best-effort: the Integration is already gone, whether or not the provider answers. */
-export const revokeAccess = internalAction({
-  args: { kind: v.string(), refreshToken: v.string() },
-  handler: async (_ctx, { kind, refreshToken }) => {
-    try {
-      await accountProviderFor(kind)?.revoke(await decryptSecret(refreshToken));
-    } catch (error) {
-      console.warn(`Revoking a removed ${kind} Integration's access didn't work`, error);
-    }
-  },
-});
 
 /** Renames an Integration of any kind; the rest of a Webhook is changed with `update`. */
 export const rename = orgMutation({
@@ -348,6 +318,42 @@ export const keepRefreshToken = internalMutation({
   },
 });
 
+// How long a send may hold a spreadsheet Integration: several calls of up to 15 s each.
+const WRITING_MS = 2 * 60_000;
+
+/**
+ * Lets one send at a time write to a spreadsheet Integration (lib/accounts.ts
+ * `sendAlone`): true when `by` may write now. Gone Integrations and Webhooks
+ * need no turn.
+ */
+export const claimWriting = internalMutation({
+  args: { integrationId: v.id("integrations"), by: v.string() },
+  handler: async (ctx, { integrationId, by }) => {
+    const integration = await ctx.db.get(integrationId);
+    if (integration === null || !("refreshToken" in integration)) return true;
+    const now = Date.now();
+    if (integration.writing && integration.writing.by !== by && integration.writing.until > now) return false;
+    await ctx.db.patch(integrationId, { writing: { by, until: now + WRITING_MS } });
+    return true;
+  },
+});
+
+export const releaseWriting = internalMutation({
+  args: { integrationId: v.id("integrations"), by: v.string() },
+  handler: async (ctx, { integrationId, by }) => {
+    const integration = await ctx.db.get(integrationId);
+    if (integration === null || !("writing" in integration) || integration.writing?.by !== by) return;
+    await ctx.db.patch(integrationId, { writing: undefined });
+  },
+});
+
+/** A Subscription's Webhook sends its own Form only: an Admin can delete it, not move it. */
+async function checkNotSubscription(ctx: QueryCtx, integrationId: Id<"integrations">) {
+  if ((await subscriptionOf(ctx, integrationId)) !== null) {
+    throw new ConvexError("An automation platform made this Webhook, so it stays attached to its own Form only. Delete the Webhook to stop it.");
+  }
+}
+
 async function linkOf(ctx: QueryCtx, integrationId: Id<"integrations">, formId: Id<"forms">) {
   const links = await ctx.db
     .query("formIntegrations")
@@ -363,6 +369,7 @@ export const attach = orgMutation({
   handler: async (ctx, { integrationId, formId }) => {
     await ownIntegration(ctx, ctx.organisationId, integrationId);
     await ownForm(ctx, ctx.organisationId, formId);
+    await checkNotSubscription(ctx, integrationId);
     if ((await linkOf(ctx, integrationId, formId)) !== null) return;
     await ctx.db.insert("formIntegrations", {
       organisationId: ctx.organisationId,
@@ -377,6 +384,7 @@ export const detach = orgMutation({
   args: { integrationId: v.id("integrations"), formId: v.id("forms") },
   handler: async (ctx, { integrationId, formId }) => {
     await ownIntegration(ctx, ctx.organisationId, integrationId);
+    await checkNotSubscription(ctx, integrationId);
     const link = await linkOf(ctx, integrationId, formId);
     if (link === null) return;
     await ctx.db.delete(link._id);
@@ -465,15 +473,22 @@ export const testSend = orgAction({
     mode: v.union(v.literal("examples"), v.literal("empty")),
     documentId: v.optional(v.id("documents")),
   },
-  handler: async (ctx, args) => {
+  handler: async (
+    ctx,
+    args,
+  ): Promise<{ ok: boolean; status: number | null; body: string | null; error: string | null }> => {
     const { integration, envelope, approverEmail } = await ctx.runQuery(internal.integrations.testSendInput, {
       organisationId: ctx.organisationId,
       ...args,
     });
-    const { outcome, status, body, error } = await sendTo(integration, JSON.parse(envelope), {
-      approverEmail,
-      keepRefreshToken: refreshTokenKeeper(ctx, integration),
-    });
+    const sent = await sendAlone(ctx, integration, () =>
+      sendTo(integration, JSON.parse(envelope), {
+        approverEmail,
+        keepRefreshToken: refreshTokenKeeper(ctx, integration),
+      }),
+    );
+    if (sent === "busy") throw new ConvexError("Vink is writing to this Integration right now. Try again in a moment.");
+    const { outcome, status, body, error } = sent;
     return { ok: outcome.kind === "delivered", status, body, error };
   },
 });

@@ -38,15 +38,11 @@ export const subscriptionsRoutes: ApiRoute[] = [
     return apiJson({ id, form_id: formId, url, created_at: iso(createdAt) }, 201, { Location: location });
   }),
   route("DELETE", "/v1/subscriptions/{id}", async (ctx, _request, { caller, params }) => {
-    const result = await ctx.runMutation(internal.subscriptions.unsubscribe, {
+    const { id } = await ctx.runMutation(internal.subscriptions.unsubscribe, {
       organisationId: caller.organisationId,
       subscriptionId: params.id,
     });
-    if ("refused" in result) {
-      const { status, code, message } = result.refused;
-      return apiError(status, code, message);
-    }
-    return apiJson({ id: result.id, deleted: true });
+    return apiJson({ id, deleted: true });
   }),
   route("GET", "/v1/forms/{form_id}/sample", async (ctx, _request, { caller, params }) => {
     const envelope = await ctx.runQuery(internal.subscriptions.sample, {

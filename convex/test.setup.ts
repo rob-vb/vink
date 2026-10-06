@@ -359,18 +359,16 @@ type GoogleAnswer = { status: number | null; retryAfter?: string } | "ok";
 export const fakeGoogle = {
   sheets: new Map<string, { title: string; rows: FilledValue[][]; owner: string }>(),
   revoked: new Set<string>(),
-  // Tokens Vink asked Google to revoke, in order; `revokeFails` makes Google not answer.
-  revokeCalls: [] as string[],
-  revokeFails: false,
   // The scopes the next consent grants.
   scopes: ["https://www.googleapis.com/auth/drive.file"],
   script: [] as GoogleAnswer[],
   redirectUris: [] as string[],
+  // Runs once, right after the next read: what another send does meanwhile.
+  afterRead: null as null | (() => Promise<unknown>),
   reset() {
+    fakeGoogle.afterRead = null;
     fakeGoogle.sheets.clear();
     fakeGoogle.revoked.clear();
-    fakeGoogle.revokeCalls = [];
-    fakeGoogle.revokeFails = false;
     fakeGoogle.scopes = ["https://www.googleapis.com/auth/drive.file"];
     fakeGoogle.script = [];
     fakeGoogle.redirectUris = [];
@@ -403,14 +401,6 @@ export const fakeGoogle = {
     fakeGoogle.revoked.delete(refreshToken);
     return { refreshToken, scopes: fakeGoogle.scopes };
   },
-  async revoke(token: string) {
-    fakeGoogle.revokeCalls.push(token);
-    if (fakeGoogle.revokeFails) {
-      const { GoogleFailure } = await import("./lib/google");
-      throw new GoogleFailure(null, "Google couldn't be reached");
-    }
-    fakeGoogle.revoked.add(token);
-  },
   async canOpen(token: string, spreadsheetId: string) {
     await fakeGoogle.next(token);
     return fakeGoogle.sheets.get(spreadsheetId)?.owner === token;
@@ -433,12 +423,17 @@ export const fakeGoogle = {
     const { rows } = fakeGoogle.sheets.get(sheet.spreadsheetId)!;
     const header = (rows[0] ?? []).map((c) => String(c ?? ""));
     const index = header.indexOf(column);
-    return { header, column: index === -1 ? [] : rows.slice(1).map((r) => r[index] ?? null) };
+    const columnCount = Math.max(26, header.length);
+    const read = { header, column: index === -1 ? [] : rows.slice(1).map((r) => r[index] ?? null), columnCount };
+    const meanwhile = fakeGoogle.afterRead;
+    fakeGoogle.afterRead = null;
+    await meanwhile?.();
+    return read;
   },
   async append(
     token: string,
     sheet: { spreadsheetId: string },
-    added: { from: number; cells: string[] },
+    added: { from: number; cells: string[]; columnCount: number },
     rows: FilledValue[][],
   ) {
     await fakeGoogle.next(token);
@@ -471,7 +466,10 @@ export const fakeMicrosoft = {
   scopes: ["https://graph.microsoft.com/Files.ReadWrite"],
   script: [] as MicrosoftAnswer[],
   redirectUris: [] as string[],
+  // Runs once, right after the next read: what another send does meanwhile.
+  afterRead: null as null | (() => Promise<unknown>),
   reset() {
+    fakeMicrosoft.afterRead = null;
     fakeMicrosoft.workbooks.clear();
     fakeMicrosoft.issued.clear();
     fakeMicrosoft.revoked.clear();
@@ -551,7 +549,11 @@ export const fakeMicrosoft = {
     const { rows } = fakeMicrosoft.workbooks.get(workbook.itemId)!;
     const header = (rows[0] ?? []).map((c) => String(c ?? ""));
     const index = header.indexOf(column);
-    return { header, column: index === -1 ? [] : rows.slice(1).map((r) => r[index] ?? null) };
+    const read = { header, column: index === -1 ? [] : rows.slice(1).map((r) => r[index] ?? null) };
+    const meanwhile = fakeMicrosoft.afterRead;
+    fakeMicrosoft.afterRead = null;
+    await meanwhile?.();
+    return read;
   },
   async append(token: string, workbook: { itemId: string }, added: string[], rows: FilledValue[][]) {
     await fakeMicrosoft.next(token);

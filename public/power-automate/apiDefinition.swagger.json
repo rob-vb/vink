@@ -297,7 +297,7 @@
       "delete": {
         "operationId": "deleteSubscription",
         "summary": "Unsubscribe",
-        "description": "Ends the Subscription and removes its Webhook. Any API Key of the Organisation can end it. Approvals that are still being sent to it are given up.",
+        "description": "Ends the Subscription and removes its Webhook. Any API Key of the Organisation can end it. Approvals that are still being sent to it are given up. Idempotent: a Subscription that has ended already (an Admin deleted its Webhook, or its `url` answered `410`), or an id Vink doesn't know, gets the same answer and nothing changes.",
         "produces": [
           "application/json"
         ],
@@ -313,19 +313,13 @@
         ],
         "responses": {
           "200": {
-            "description": "The Subscription ended.",
+            "description": "The Subscription ended, or had ended already.",
             "schema": {
               "$ref": "#/definitions/DeletedSubscription"
             }
           },
           "401": {
             "description": "The API Key is missing, unknown or revoked.",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          },
-          "404": {
-            "description": "No Subscription with that id in your Organisation.",
             "schema": {
               "$ref": "#/definitions/Error"
             }

@@ -4,7 +4,7 @@
 // test.setup.ts). Needs GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET
 // on the deployment.
 import { ConvexError } from "convex/values";
-import type { Cell } from "./rows";
+import { type Cell, columnLetter } from "./rows";
 
 export const DRIVE_FILE_SCOPE = "https://www.googleapis.com/auth/drive.file";
 
@@ -12,7 +12,6 @@ export const DRIVE_FILE_SCOPE = "https://www.googleapis.com/auth/drive.file";
 const TIMEOUT_MS = 15_000;
 
 const TOKEN_URL = "https://oauth2.googleapis.com/token";
-const REVOKE_URL = "https://oauth2.googleapis.com/revoke";
 const SHEETS_URL = "https://sheets.googleapis.com/v4/spreadsheets";
 
 /** The tab Vink makes and writes to. Found again by its id, so renaming it is fine. */
@@ -39,23 +38,29 @@ export type GoogleClient = {
   exchangeCode(code: string, redirectUri: string): Promise<{ refreshToken: string | null; scopes: string[] }>;
   /** A short-lived access token for a refresh token. */
   accessToken(refreshToken: string): Promise<string>;
-  /** Takes back Vink's access that this token gives (Google's whole grant for that account). */
-  revoke(token: string): Promise<void>;
   /** Whether the account can open the spreadsheet: drive.file lets Vink open only the files it made. */
   canOpen(accessToken: string, spreadsheetId: string): Promise<boolean>;
   /** Makes a spreadsheet with one tab, its header row filled in and frozen. */
   createSheet(accessToken: string, title: string, header: string[]): Promise<SheetRef & { url: string }>;
-  /** Row 1, and every value below it in the column headed `column` (none if there is no such column). */
-  read(accessToken: string, sheet: SheetRef, column: string): Promise<{ header: string[]; column: Cell[] }>;
   /**
-   * In one request: writes `added` into row 1 from column `from` on, and
+   * Row 1, every value below it in the column headed `column` (none if there
+   * is no such column), and how many columns the tab's grid has.
+   */
+  read(
+    accessToken: string,
+    sheet: SheetRef,
+    column: string,
+  ): Promise<{ header: string[]; column: Cell[]; columnCount: number }>;
+  /**
+   * In one request: writes `added` into row 1 from column `from` on (widening
+   * the grid of `columnCount` columns, as `read` gave it, if need be), and
    * appends `rows` below the last row with data. Values are stored as they
    * are, never read as formulas.
    */
   append(
     accessToken: string,
     sheet: SheetRef,
-    added: { from: number; cells: string[] },
+    added: { from: number; cells: string[]; columnCount: number },
     rows: Cell[][],
   ): Promise<void>;
 };
@@ -142,15 +147,6 @@ function cellData(value: Cell) {
   return { userEnteredValue: { stringValue: value } };
 }
 
-/** `A`, …, `Z`, `AA`, … for a 0-based column index. */
-function columnLetter(index: number) {
-  let letters = "";
-  for (let n = index + 1; n > 0; n = Math.floor((n - 1) / 26)) {
-    letters = String.fromCharCode(65 + ((n - 1) % 26)) + letters;
-  }
-  return letters;
-}
-
 type SheetProperties = { sheetId: number; title: string; gridProperties?: { columnCount?: number } };
 
 async function propertiesOf(token: string, sheet: SheetRef) {
@@ -202,10 +198,6 @@ export const google: GoogleClient = {
     return answer.access_token;
   },
 
-  async revoke(token) {
-    await call(REVOKE_URL, form({ token }));
-  },
-
   async canOpen(token, spreadsheetId) {
     try {
       await call(`${SHEETS_URL}/${spreadsheetId}?fields=spreadsheetId`, { token });
@@ -240,19 +232,20 @@ export const google: GoogleClient = {
   },
 
   async read(token, sheet, column) {
-    const { title } = await propertiesOf(token, sheet);
+    const { title, gridProperties } = await propertiesOf(token, sheet);
+    const columnCount = gridProperties?.columnCount ?? 0;
     const header = ((await values(token, sheet, title, "1:1"))[0] ?? []).map((c) => (c === null ? "" : String(c)));
     const index = header.indexOf(column);
-    if (index === -1) return { header, column: [] };
+    if (index === -1) return { header, column: [], columnCount };
     const letter = columnLetter(index);
-    return { header, column: (await values(token, sheet, title, `${letter}2:${letter}`)).map((row) => row[0] ?? null) };
+    const cells = (await values(token, sheet, title, `${letter}2:${letter}`)).map((row) => row[0] ?? null);
+    return { header, column: cells, columnCount };
   },
 
   async append(token, sheet, added, rows) {
     const requests: unknown[] = [];
     if (added.cells.length > 0) {
-      const { gridProperties } = await propertiesOf(token, sheet);
-      const missing = added.from + added.cells.length - (gridProperties?.columnCount ?? 0);
+      const missing = added.from + added.cells.length - added.columnCount;
       if (missing > 0) {
         requests.push({ appendDimension: { sheetId: sheet.sheetId, dimension: "COLUMNS", length: missing } });
       }

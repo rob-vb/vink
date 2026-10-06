@@ -96,15 +96,17 @@ export const subscriptions: OpenApiPart = {
         operationId: "deleteSubscription",
         summary: "Unsubscribe",
         description:
-          "Ends the Subscription and removes its Webhook. Any API Key of the Organisation can end it. Approvals that are still being sent to it are given up.",
+          "Ends the Subscription and removes its Webhook. Any API Key of the Organisation can end it. Approvals that are still being sent to it are given up. Idempotent: a Subscription that has ended already (an Admin deleted its Webhook, or its `url` answered `410`), or an id Vink doesn't know, gets the same answer and nothing changes.",
         tags: ["Subscriptions"],
         parameters: [
           { name: "id", in: "path", required: true, description: "The Subscription's id.", schema: { type: "string" } },
         ],
         responses: {
-          "200": json("The Subscription ended.", "DeletedSubscription", { id: exampleSubscription.id, deleted: true }),
+          "200": json("The Subscription ended, or had ended already.", "DeletedSubscription", {
+            id: exampleSubscription.id,
+            deleted: true,
+          }),
           "401": { $ref: "#/components/responses/Unauthorized" },
-          "404": notFound("Subscription"),
           "500": { $ref: "#/components/responses/InternalError" },
         },
       },

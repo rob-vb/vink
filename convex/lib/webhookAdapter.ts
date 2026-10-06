@@ -12,6 +12,8 @@ function outcomeOf(status: number | null, retryAfter: string | null, error: stri
   if (status === 408 || status === 429 || status >= 500) {
     return { kind: "retry", reason: `The receiver answered ${status}`, retryAfter };
   }
+  // Gone: a Subscription's receiver says the subscription is over (deliveries.ts ends it).
+  if (status === 410) return { kind: "failed", reason: `The receiver refused it (${status})`, cause: "gone" };
   return { kind: "failed", reason: `The receiver refused it (${status})` };
 }
 

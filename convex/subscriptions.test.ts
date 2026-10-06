@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { api } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
 import { openApiDocument } from "./publicApi/openapi";
 import {
   expectSignedBy,
@@ -126,7 +127,7 @@ test("the subscribe answer's Location header is the URL that unsubscribes, as Po
   expect(unsubscribe.status).toBe(200);
 });
 
-test("unsubscribing removes the Webhook; a second time, or an Admin's own Webhook, is not found", async () => {
+test("unsubscribing removes the Webhook; a second time, an unknown id or an Admin's own Webhook's id answers the same and removes nothing", async () => {
   const t = newBackend();
   const { user, organisationSlug, formId, call, subscribe } = await organisation(t, "ann", "Acme Fleet");
   const { integrationId: adminMade } = await user.mutation(api.integrations.create, {
@@ -144,11 +145,13 @@ test("unsubscribing removes the Webhook; a second time, or an Admin's own Webhoo
   expect((await user.query(api.integrations.list, { organisationSlug })).map((i) => i.name)).toEqual(["ERP"]);
   expect((await user.query(api.forms.get, { organisationSlug, formId })).keysLocked).toBe(false);
 
-  const again = await call(`/subscriptions/${body.id}`, { method: "DELETE" });
-  expect(again.status).toBe(404);
-  expect((await again.json()).error.code).toBe("not_found");
-  expect((await call(`/subscriptions/${adminMade}`, { method: "DELETE" })).status).toBe(404);
-  expect((await call("/subscriptions/nonsense", { method: "DELETE" })).status).toBe(404);
+  // Already gone or never there: platforms treat any 4xx on detach as an error, so this is a 200 too.
+  for (const id of [body.id, adminMade, "nonsense"]) {
+    const again = await call(`/subscriptions/${id}`, { method: "DELETE" });
+    expect(again.status).toBe(200);
+    expect(await again.json()).toEqual({ id, deleted: true });
+  }
+  expect((await user.query(api.integrations.list, { organisationSlug })).map((i) => i.name)).toEqual(["ERP"]);
 });
 
 test("revoking an API Key ends its Subscriptions and removes their Webhooks, and nothing else", async () => {
@@ -214,7 +217,31 @@ test("an Admin can delete a Subscription's Webhook in the app; that ends the Sub
   await user.mutation(api.integrations.remove, { organisationSlug, integrationId: integration.id });
 
   expect(await user.query(api.integrations.list, { organisationSlug })).toEqual([]);
-  expect((await call(`/subscriptions/${body.id}`, { method: "DELETE" })).status).toBe(404);
+  expect((await call(`/subscriptions/${body.id}`, { method: "DELETE" })).status).toBe(200);
+});
+
+test("an Admin can't detach a Subscription's Webhook from its Form, or attach it to another Form", async () => {
+  const t = newBackend();
+  const { user, organisationSlug, formId, subscribe } = await organisation(t, "ann", "Acme Fleet");
+  await subscribe();
+  const { formId: otherForm } = await user.mutation(api.forms.create, {
+    organisationSlug,
+    name: "Delivery note",
+    fields: workOrderFields,
+  });
+  const [integration] = await user.query(api.integrations.list, { organisationSlug });
+  const refusal =
+    "An automation platform made this Webhook, so it stays attached to its own Form only. Delete the Webhook to stop it.";
+
+  await expect(
+    user.mutation(api.integrations.detach, { organisationSlug, integrationId: integration.id, formId }),
+  ).rejects.toThrow(refusal);
+  await expect(
+    user.mutation(api.integrations.attach, { organisationSlug, integrationId: integration.id, formId: otherForm }),
+  ).rejects.toThrow(refusal);
+  expect((await user.query(api.integrations.list, { organisationSlug }))[0].forms).toEqual([
+    { id: formId, name: "Work order" },
+  ]);
 });
 
 test("tenancy: another Organisation's Form and Subscription can't be reached, and its list doesn't show them", async () => {
@@ -226,7 +253,8 @@ test("tenancy: another Organisation's Form and Subscription can't be reached, an
   const intoAcme = await other.subscribe("https://hooks.zapier.com/eve", acme.formId);
   expect(intoAcme.status).toBe(404);
   expect(intoAcme.body.error.code).toBe("not_found");
-  expect((await other.call(`/subscriptions/${body.id}`, { method: "DELETE" })).status).toBe(404);
+  // Answers as if gone, and ends nothing of Acme's.
+  expect((await other.call(`/subscriptions/${body.id}`, { method: "DELETE" })).status).toBe(200);
   expect((await other.call(`/forms/${acme.formId}/sample`)).status).toBe(404);
 
   expect(await other.user.query(api.integrations.list, { organisationSlug: other.organisationSlug })).toEqual([]);
@@ -371,6 +399,59 @@ test("an Approval reaches the subscribed url as a signed Delivery, like any Webh
   });
   const { deliveries } = await user.query(api.documents.get, { organisationSlug, documentId });
   expect(deliveries.map((d) => [d.integrationName, d.state])).toEqual([["Zapier", "delivered"]]);
+});
+
+async function approvedDocument(t: Backend, user: Awaited<ReturnType<typeof organisation>>["user"], organisationSlug: string, formId: Id<"forms">) {
+  fakePipeline.replay({
+    reading: { plate: { value: "OR18DH", _pages: [1] } },
+    matches: { license_plate: { path: "plate.value", probability: 0.97 } },
+    lists: { lines: { path: null, probability: 0.95, keys: {} } },
+    fills: { license_plate: "OR18DH" },
+  });
+  const documentId = (await uploadAndExtract(t, user, organisationSlug, formId))!;
+  await user.mutation(api.review.approve, { organisationSlug, documentId });
+  await t.finishAllScheduledFunctions(vi.runAllTimers);
+  return (await user.query(api.documents.get, { organisationSlug, documentId })).deliveries;
+}
+
+test("a 410 Gone from the subscribed url ends the Subscription and fails the Delivery, without a notice", async () => {
+  const t = newBackend();
+  const { user, organisationSlug, formId, subscribe } = await organisation(t, "ann", "Acme Fleet");
+  await subscribe("https://hooks.zapier.com/hooks/standard/1/abc");
+  fakeHttp.answer({ status: 410, body: "gone" });
+
+  const [delivery] = await approvedDocument(t, user, organisationSlug, formId);
+
+  expect(delivery).toMatchObject({
+    state: "failed",
+    failureReason: "The receiver answered 410 Gone: the Subscription ended",
+    canResend: false,
+  });
+  expect(await user.query(api.integrations.list, { organisationSlug })).toEqual([]);
+  expect(await t.run(async (ctx) => await ctx.db.query("subscriptions").collect())).toEqual([]);
+  expect((await user.query(api.forms.get, { organisationSlug, formId })).keysLocked).toBe(false);
+  expect(await user.query(api.notifications.list, { organisationSlug })).toEqual([]);
+});
+
+test("a 410 Gone from an Admin's own Webhook fails the Delivery as any refusal, and keeps the Webhook", async () => {
+  const t = newBackend();
+  const { user, organisationSlug, formId } = await organisation(t, "ann", "Acme Fleet");
+  const { integrationId } = await user.mutation(api.integrations.create, {
+    organisationSlug,
+    name: "ERP",
+    url: "https://erp.example.com/in",
+    headers: [],
+  });
+  await user.mutation(api.integrations.attach, { organisationSlug, integrationId, formId });
+  fakeHttp.answer({ status: 410 });
+
+  const [delivery] = await approvedDocument(t, user, organisationSlug, formId);
+
+  expect(delivery).toMatchObject({ state: "failed", failureReason: "The receiver refused it (410)", canResend: true });
+  expect(await user.query(api.integrations.list, { organisationSlug })).toHaveLength(1);
+  expect(await user.query(api.notifications.list, { organisationSlug })).toEqual([
+    expect.objectContaining({ text: expect.stringContaining("couldn't be delivered to ERP") }),
+  ]);
 });
 
 test("an Organisation can have 50 Subscriptions; one more is refused", async () => {

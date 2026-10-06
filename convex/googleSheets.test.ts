@@ -361,6 +361,25 @@ test("a test-send adds dummy rows marked as test", async () => {
   expect(row.slice(4)).toEqual(["Example Kenteken", "Example Positie", 123.45, '[{"size":"Example Maat"}]']);
 });
 
+test("a test-send while a Delivery writes to the sheet asks to try again, and writes nothing", async () => {
+  const t = newBackend();
+  const ann = await connected(t);
+  const testSend = () =>
+    ann.user.action(api.integrations.testSend, {
+      organisationSlug: ann.organisationSlug,
+      integrationId: ann.integrationId,
+      formId: ann.formId,
+      mode: "examples",
+    });
+  fakeGoogle.afterRead = async () => {
+    await expect(testSend()).rejects.toThrow("Vink is writing to this Integration right now. Try again in a moment.");
+  };
+  await approve(t, ann);
+  expect(fakeGoogle.onlySheet().rows).toHaveLength(2);
+  // Once that send is done, it is the test-send's turn.
+  expect(await testSend()).toMatchObject({ ok: true });
+});
+
 test("a Google Sheets Integration can be renamed, but has no endpoint or signing secret", async () => {
   const t = newBackend();
   const ann = await connected(t);
@@ -471,33 +490,26 @@ test("a Webhook has no account to reconnect", async () => {
   expect((await ann.user.query(api.integrations.list, { organisationSlug: ann.slug }))[0].needsReconnect).toBe(false);
 });
 
-test("removing a Google Sheets Integration revokes its access at Google, even if Google doesn't answer", async () => {
+test("removing a Google Sheets Integration deletes its token and leaves the account's grant at Google alone", async () => {
   const t = newBackend();
   const ann = await connected(t);
-  await ann.user.mutation(api.integrations.remove, { organisationSlug: ann.organisationSlug, integrationId: ann.integrationId });
-  await t.finishAllScheduledFunctions(vi.runAllTimers);
-  expect(fakeGoogle.revokeCalls).toEqual(["refresh-ann"]);
-
-  const again = await connected(t);
-  fakeGoogle.revokeFails = true;
-  await again.user.mutation(api.integrations.remove, {
-    organisationSlug: again.organisationSlug,
-    integrationId: again.integrationId,
-  });
-  await t.finishAllScheduledFunctions(vi.runAllTimers);
-  expect(fakeGoogle.revokeCalls).toEqual(["refresh-ann", "refresh-ann"]);
-  expect(await again.user.query(api.integrations.list, { organisationSlug: again.organisationSlug })).toEqual([]);
-});
-
-test("removing one of two Google Sheets Integrations keeps the access the other may share", async () => {
-  const t = newBackend();
-  const ann = await connected(t);
-  const { url } = await ann.user.action(api.googleSheets.connectUrl, { organisationSlug: ann.organisationSlug, name: "Rims" });
+  // The same Google account connects a sheet for another Organisation.
+  const bob = await signUp(t, "bob", "Bob's Garage");
+  const { url } = await bob.user.action(api.googleSheets.connectUrl, { organisationSlug: bob.slug, name: "Bob's log" });
   const state = new URL(url).searchParams.get("state")!;
-  await ann.user.action(api.googleSheets.connect, { organisationSlug: ann.organisationSlug, state, code: "code-ann" });
+  await bob.user.action(api.googleSheets.connect, { organisationSlug: bob.slug, state, code: "code-ann" });
+  const { formId } = await bob.user.mutation(api.forms.create, { organisationSlug: bob.slug, name: "Tyre service", fields });
+  const [bobsSheet] = await bob.user.query(api.integrations.list, { organisationSlug: bob.slug });
 
   await ann.user.mutation(api.integrations.remove, { organisationSlug: ann.organisationSlug, integrationId: ann.integrationId });
   await t.finishAllScheduledFunctions(vi.runAllTimers);
-  expect(fakeGoogle.revokeCalls).toEqual([]);
-  expect(await ann.user.query(api.integrations.list, { organisationSlug: ann.organisationSlug })).toHaveLength(1);
+
+  expect(await t.run(async (ctx) => await ctx.db.get(ann.integrationId))).toBeNull();
+  const answer = await bob.user.action(api.integrations.testSend, {
+    organisationSlug: bob.slug,
+    integrationId: bobsSheet.id,
+    formId,
+    mode: "examples",
+  });
+  expect(answer.ok).toBe(true);
 });

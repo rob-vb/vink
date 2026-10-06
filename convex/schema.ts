@@ -399,6 +399,9 @@ export default defineSchema({
         // The connected account no longer lets Vink in (a Delivery failed with
         // access expired): an Admin must reconnect. Cleared by a Reconnect.
         needsReconnect: v.optional(v.boolean()),
+        // Held by the send writing to the sheet now (lib/accounts.ts
+        // `sendAlone`); it ends by `until` even if that send never does.
+        writing: v.optional(v.object({ by: v.string(), until: v.number() })),
       }),
       // Excel: adds rows (ADR 0009) to a table in a workbook Vink made in the
       // OneDrive of the Microsoft 365 account an Admin connected (excel.ts).
@@ -416,6 +419,8 @@ export default defineSchema({
         workbookUrl: v.string(),
         // As for Google Sheets: set by access expired, cleared by a Reconnect.
         needsReconnect: v.optional(v.boolean()),
+        // As for Google Sheets.
+        writing: v.optional(v.object({ by: v.string(), until: v.number() })),
       }),
     ),
   ).index("by_organisationId", ["organisationId"]),

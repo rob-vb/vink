@@ -6,6 +6,7 @@
 import { ConvexError, v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import { internalMutation, internalQuery, type MutationCtx } from "./_generated/server";
+import { getVersion } from "./forms";
 import { createWebhook, dummyEnvelope, removeIntegration } from "./integrations";
 import { envelopeSchema } from "./lib/payload";
 
@@ -57,15 +58,21 @@ export const subscribe = internalMutation({
   },
 });
 
-/** Removes the Subscription's Webhook. Any key of the Organisation may end it. */
+/**
+ * Removes the Subscription's Webhook. Any key of the Organisation may end it.
+ * Idempotent: a Subscription that is gone already (an Admin deleted its
+ * Webhook, a 410 ended it) or was never this Organisation's ends nothing and
+ * answers the same, because platforms treat any 4xx on detach as an error.
+ */
 export const unsubscribe = internalMutation({
   args: { organisationId: v.id("organisations"), subscriptionId: v.string() },
   handler: async (ctx, { organisationId, subscriptionId }) => {
     const id = ctx.db.normalizeId("subscriptions", subscriptionId);
     const subscription = id && (await ctx.db.get(id));
-    if (!id || !subscription || subscription.organisationId !== organisationId) return notFound("Subscription");
-    await removeIntegration(ctx, subscription.integrationId);
-    return { id };
+    if (subscription && subscription.organisationId === organisationId) {
+      await removeIntegration(ctx, subscription.integrationId);
+    }
+    return { id: subscriptionId };
   },
 });
 
@@ -96,10 +103,6 @@ export const schema = internalQuery({
     const formId = ctx.db.normalizeId("forms", givenFormId);
     const form = formId && (await ctx.db.get(formId));
     if (!form || form.organisationId !== organisationId) return null;
-    const formVersion = (await ctx.db
-      .query("formVersions")
-      .withIndex("by_formId_and_number", (q) => q.eq("formId", form._id).eq("number", form.version))
-      .unique())!;
-    return envelopeSchema(formVersion.fields);
+    return envelopeSchema((await getVersion(ctx, form._id, form.version)).fields);
   },
 });

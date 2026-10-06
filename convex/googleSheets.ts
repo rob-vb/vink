@@ -6,7 +6,7 @@
 import { ConvexError, v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
-import { internalMutation, internalQuery } from "./_generated/server";
+import { internalMutation } from "./_generated/server";
 import { reconnect } from "./integrations";
 import { googleAccount } from "./lib/accounts";
 import { orgAction } from "./lib/functions";
@@ -21,7 +21,7 @@ export const connectUrl = orgAction({
   args: { name: v.string() },
   handler: async (ctx, { name }) => {
     if (name.trim() === "") throw new ConvexError("An Integration needs a name");
-    const organisation = await ctx.runQuery(internal.googleSheets.slugOf, {
+    const organisation = await ctx.runQuery(internal.organisations.slugOf, {
       organisationId: ctx.organisationId,
     });
     const state = await signState(organisation, {
@@ -31,11 +31,6 @@ export const connectUrl = orgAction({
     });
     return { url: googleAccount.consentUrl(state) };
   },
-});
-
-export const slugOf = internalQuery({
-  args: { organisationId: v.id("organisations") },
-  handler: async (ctx, { organisationId }) => (await ctx.db.get(organisationId))!.slug,
 });
 
 /**
