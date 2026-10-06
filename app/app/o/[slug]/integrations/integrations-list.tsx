@@ -42,6 +42,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { useErrorText } from "../../../error-text";
+import { AdminConsentLink } from "./admin-consent";
 import { IntegrationDialog } from "./integration-dialog";
 import { ReconnectButton } from "./reconnect-button";
 import { TestSendButton } from "./test-send";
@@ -119,35 +120,56 @@ function RecentDeliveries({
   );
 }
 
-// How connecting a Google account went (`?google=…`, from app/api/integrations/google/callback).
-const googleOutcomes = {
-  connected: "googleConnected",
-  reconnected: "googleReconnected",
-  no_access: "googleNoAccess",
-  no_sheet_access: "googleNoSheetAccess",
-  denied: "googleDenied",
-  failed: "googleFailed",
+// How connecting an account went: `?google=…` (app/api/integrations/google/callback)
+// or `?excel=…` (app/api/integrations/microsoft/callback).
+const connectOutcomes = {
+  google: {
+    connected: "googleConnected",
+    reconnected: "googleReconnected",
+    no_access: "googleNoAccess",
+    no_sheet_access: "googleNoSheetAccess",
+    denied: "googleDenied",
+    failed: "googleFailed",
+  },
+  excel: {
+    connected: "excelConnected",
+    reconnected: "excelReconnected",
+    no_access: "excelNoAccess",
+    no_sheet_access: "excelNoSheetAccess",
+    denied: "excelDenied",
+    failed: "excelFailed",
+  },
 } as const;
 
-/** Says once how connecting a Google account went, then clears it from the URL. */
-function useGoogleOutcome() {
+/**
+ * Says once how connecting an account went, then clears it from the URL.
+ * Returns whether Microsoft said the company's IT admin must approve Vink
+ * first (`?excel=admin_consent`): that stays in the URL, and on the page,
+ * until it is closed.
+ */
+function useConnectOutcome() {
   const t = useTranslations("appIntegrations");
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
-  const outcome = searchParams.get("google");
+  const provider = searchParams.has("excel") ? "excel" : "google";
+  const outcome = searchParams.get(provider);
+  const adminConsent = provider === "excel" && outcome === "admin_consent";
   useEffect(() => {
-    if (outcome === null) return;
-    if (outcome === "connected" || outcome === "reconnected") toast.success(t(googleOutcomes[outcome]));
-    else if (outcome in googleOutcomes) toast.error(t(googleOutcomes[outcome as keyof typeof googleOutcomes]));
+    if (outcome === null || adminConsent) return;
+    type Message = (typeof connectOutcomes)[typeof provider][keyof typeof connectOutcomes.excel];
+    const messages: Record<string, Message> = connectOutcomes[provider];
+    if (outcome === "connected" || outcome === "reconnected") toast.success(t(messages[outcome]));
+    else if (Object.hasOwn(messages, outcome)) toast.error(t(messages[outcome]));
     router.replace(pathname, { scroll: false });
-  }, [outcome, pathname, router, t]);
+  }, [provider, outcome, adminConsent, pathname, router, t]);
+  return [adminConsent, () => router.replace(pathname, { scroll: false })] as const;
 }
 
 /** The Organisation's Integrations, the Forms each is attached to, and a test-send. */
 export function IntegrationsList({ organisationSlug }: { organisationSlug: string }) {
   const t = useTranslations("appIntegrations");
-  useGoogleOutcome();
+  const [adminConsent, closeAdminConsent] = useConnectOutcome();
   const errorText = useErrorText();
   const failed = (error: unknown) => toast.error(errorText(error, t("tryAgain")));
   const integrations = useQuery(api.integrations.list, { organisationSlug });
@@ -172,6 +194,22 @@ export function IntegrationsList({ organisationSlug }: { organisationSlug: strin
         </div>
         <IntegrationDialog organisationSlug={organisationSlug} trigger={newButton} />
       </div>
+
+      {adminConsent && (
+        <Alert className="mb-6">
+          <TriangleAlert />
+          <AlertTitle>{t("adminConsentTitle")}</AlertTitle>
+          <AlertDescription>
+            <p>{t("adminConsentText")}</p>
+            <AdminConsentLink organisationSlug={organisationSlug} />
+          </AlertDescription>
+          <AlertAction>
+            <Button variant="ghost" size="icon-sm" aria-label={t("dismiss")} onClick={closeAdminConsent}>
+              <X />
+            </Button>
+          </AlertAction>
+        </Alert>
+      )}
 
       {integrations === undefined || forms === undefined ? (
         <Skeleton className="h-40" />
@@ -203,9 +241,9 @@ export function IntegrationsList({ organisationSlug }: { organisationSlug: strin
                       <Badge variant="outline">{t("viaApi", { key: integration.subscription.apiKeyName })}</Badge>
                     )}
                   </CardTitle>
-                  {integration.kind === "google_sheets" ? (
+                  {integration.kind !== "webhook" ? (
                     <CardDescription className="flex flex-wrap items-center gap-2">
-                      <Badge variant="outline">{t("googleSheets")}</Badge>
+                      <Badge variant="outline">{t(integration.kind === "excel" ? "excel" : "googleSheets")}</Badge>
                       {integration.needsReconnect && <Badge variant="destructive">{t("needsReconnect")}</Badge>}
                       <a
                         href={integration.url}
@@ -213,7 +251,7 @@ export function IntegrationsList({ organisationSlug }: { organisationSlug: strin
                         rel="noreferrer"
                         className="inline-flex items-center gap-1 underline-offset-4 hover:text-foreground hover:underline"
                       >
-                        {t("openSheet")}
+                        {t(integration.kind === "excel" ? "openWorkbook" : "openSheet")}
                         <ExternalLink className="size-3.5" />
                       </a>
                     </CardDescription>
@@ -269,7 +307,9 @@ export function IntegrationsList({ organisationSlug }: { organisationSlug: strin
                     <Alert variant="destructive">
                       <TriangleAlert />
                       <AlertTitle>{t("needsReconnect")}</AlertTitle>
-                      <AlertDescription>{t("needsReconnectText")}</AlertDescription>
+                      <AlertDescription>
+                        {t(integration.kind === "excel" ? "needsReconnectTextExcel" : "needsReconnectText")}
+                      </AlertDescription>
                       <AlertAction>
                         <ReconnectButton
                           organisationSlug={organisationSlug}

@@ -39,7 +39,9 @@ async function ownWebhook(
   integrationId: Id<"integrations">,
 ) {
   const integration = await ownIntegration(ctx, organisationId, integrationId);
-  if (kindOf(integration) !== "webhook") throw new ConvexError("This Integration isn't a Webhook");
+  if (integration.kind === "google_sheets" || integration.kind === "excel") {
+    throw new ConvexError("This Integration isn't a Webhook");
+  }
   return integration;
 }
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useAction, useMutation } from "convex/react";
-import { ExternalLink, Plus, Sheet, Webhook, X } from "lucide-react";
+import { ExternalLink, FileSpreadsheet, Plus, Sheet, Webhook, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { type ReactElement, useState } from "react";
 import { toast } from "sonner";
@@ -25,28 +25,30 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { useErrorText } from "../../../error-text";
+import { AdminConsentLink } from "./admin-consent";
 import { ReconnectButton } from "./reconnect-button";
 
 type Header = { name: string; value: string; secret: boolean; stored: boolean };
 
-type Kind = "webhook" | "google_sheets";
+type Kind = "webhook" | "google_sheets" | "excel";
 
 export type IntegrationValues = {
   id: Id<"integrations">;
   name: string;
   kind: Kind;
-  // A Webhook's endpoint, or the link to a Google Sheets Integration's sheet.
+  // A Webhook's endpoint, or the link to a spreadsheet Integration's sheet or workbook.
   url: string;
   headers: Array<{ name: string; value: string; secret: boolean }>;
-  // A Google Sheets Integration whose account no longer lets Vink in.
+  // A spreadsheet Integration whose account no longer lets Vink in.
   needsReconnect: boolean;
 };
 
 /**
  * Creates an Integration, or edits one. A stored secret header shows masked
- * and is kept unless the Admin types a new value. A Google Sheets Integration
- * is made by connecting a Google account: the Admin goes to Google's consent
- * page and comes back to the Integrations page (app/api/integrations/google).
+ * and is kept unless the Admin types a new value. A Google Sheets or Excel
+ * Integration is made by connecting an account: the Admin goes to Google's or
+ * Microsoft's page and comes back to the Integrations page
+ * (app/api/integrations/google, app/api/integrations/microsoft).
  */
 export function IntegrationDialog({
   organisationSlug,
@@ -63,7 +65,8 @@ export function IntegrationDialog({
   const create = useMutation(api.integrations.create);
   const update = useMutation(api.integrations.update);
   const rename = useMutation(api.integrations.rename);
-  const connectUrl = useAction(api.googleSheets.connectUrl);
+  const googleConnectUrl = useAction(api.googleSheets.connectUrl);
+  const microsoftConnectUrl = useAction(api.excel.connectUrl);
   const [open, setOpen] = useState(false);
   const [kind, setKind] = useState<Kind>("webhook");
   const [name, setName] = useState("");
@@ -94,11 +97,12 @@ export function IntegrationDialog({
     event.preventDefault();
     setPending(true);
     try {
-      if (kind === "google_sheets") {
+      if (kind !== "webhook") {
         if (integration) {
           await rename({ organisationSlug, integrationId: integration.id, name });
         } else {
-          // Off to Google; the page is left, so `pending` stays on.
+          // Off to Google or Microsoft; the page is left, so `pending` stays on.
+          const connectUrl = kind === "excel" ? microsoftConnectUrl : googleConnectUrl;
           const { url } = await connectUrl({ organisationSlug, name });
           window.location.assign(url);
           return;
@@ -131,7 +135,9 @@ export function IntegrationDialog({
     }
   }
 
-  const sheets = kind === "google_sheets";
+  // A spreadsheet kind: made by connecting an account, not by an endpoint.
+  const sheets = kind !== "webhook";
+  const excel = kind === "excel";
 
   return (
     <Dialog open={open} onOpenChange={reset}>
@@ -140,7 +146,9 @@ export function IntegrationDialog({
         <form onSubmit={submit} className="flex flex-col gap-6">
           <DialogHeader>
             <DialogTitle>{integration ? t("editTitle") : t("newTitle")}</DialogTitle>
-            <DialogDescription>{sheets ? t("sheetsDescription") : t("description")}</DialogDescription>
+            <DialogDescription>
+              {excel ? t("excelDescription") : sheets ? t("sheetsDescription") : t("description")}
+            </DialogDescription>
           </DialogHeader>
           <FieldGroup>
             {!integration && (
@@ -160,6 +168,10 @@ export function IntegrationDialog({
                     <Sheet />
                     {t("googleSheets")}
                   </ToggleGroupItem>
+                  <ToggleGroupItem value="excel">
+                    <FileSpreadsheet />
+                    {t("excel")}
+                  </ToggleGroupItem>
                 </ToggleGroup>
               </Field>
             )}
@@ -171,14 +183,23 @@ export function IntegrationDialog({
                 placeholder={sheets ? t("sheetNamePlaceholder") : t("namePlaceholder")}
                 onChange={(e) => setName(e.target.value)}
               />
-              {sheets && !integration && <FieldDescription>{t("sheetNameHint")}</FieldDescription>}
+              {sheets && !integration && (
+                <FieldDescription>{excel ? t("excelNameHint") : t("sheetNameHint")}</FieldDescription>
+              )}
             </Field>
             {sheets && !integration && (
               <ul className="flex list-disc flex-col gap-1 rounded-md border bg-muted/40 py-3 pr-3 pl-7 text-sm text-muted-foreground">
-                <li>{t("connectSignIn")}</li>
-                <li>{t("connectAccess")}</li>
+                <li>{excel ? t("excelConnectSignIn") : t("connectSignIn")}</li>
+                <li>{excel ? t("excelConnectAccess") : t("connectAccess")}</li>
                 <li>{t("connectRows")}</li>
               </ul>
+            )}
+            {excel && !integration && (
+              <div className="flex flex-col gap-2 rounded-md border p-3 text-sm">
+                <p className="font-medium">{t("adminTitle")}</p>
+                <p className="text-muted-foreground">{t("adminText")}</p>
+                <AdminConsentLink organisationSlug={organisationSlug} />
+              </div>
             )}
             {sheets && integration && (
               <>
@@ -188,7 +209,7 @@ export function IntegrationDialog({
                   rel="noreferrer"
                   className="flex w-fit items-center gap-1 text-sm underline-offset-4 hover:underline"
                 >
-                  {t("openSheet")}
+                  {excel ? t("openWorkbook") : t("openSheet")}
                   <ExternalLink className="size-3.5" />
                 </a>
                 <Field>
@@ -196,12 +217,16 @@ export function IntegrationDialog({
                     <ReconnectButton
                       organisationSlug={organisationSlug}
                       integrationId={integration.id}
-                      label={t("reconnect")}
+                      label={excel ? t("excelReconnect") : t("reconnect")}
                       variant={integration.needsReconnect ? "default" : "outline"}
                     />
                   </div>
                   <FieldDescription className={integration.needsReconnect ? "text-destructive" : undefined}>
-                    {integration.needsReconnect ? tList("needsReconnectText") : t("reconnectHint")}
+                    {integration.needsReconnect
+                      ? tList(excel ? "needsReconnectTextExcel" : "needsReconnectText")
+                      : excel
+                        ? t("excelReconnectHint")
+                        : t("reconnectHint")}
                   </FieldDescription>
                 </Field>
               </>
@@ -287,7 +312,7 @@ export function IntegrationDialog({
             <DialogClose render={<Button type="button" variant="outline" />}>{t("cancel")}</DialogClose>
             <Button type="submit" disabled={pending}>
               {pending && <Spinner />}
-              {integration ? t("save") : sheets ? t("connect") : t("create")}
+              {integration ? t("save") : excel ? t("excelConnect") : sheets ? t("connect") : t("create")}
             </Button>
           </DialogFooter>
         </form>

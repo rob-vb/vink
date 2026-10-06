@@ -68,6 +68,8 @@ const dutch: Record<string, string> = {
   "Google Sheets isn't set up on this deployment": "Google Sheets is hier nog niet ingesteld",
   "This Google sign-in has expired. Try again.": "Deze aanmelding bij Google is verlopen. Probeer het opnieuw.",
   "This Integration has no account to reconnect": "Deze Koppeling heeft geen account om opnieuw te koppelen",
+  "Excel isn't set up on this deployment": "Excel is hier nog niet ingesteld",
+  "This Microsoft sign-in has expired. Try again.": "Deze aanmelding bij Microsoft is verlopen. Probeer het opnieuw.",
 
   // API Keys
   "An API Key needs a name": "Een API-sleutel heeft een naam nodig",

@@ -39,6 +39,18 @@
   "needsReconnect": "Needs reconnecting",
   "needsReconnectText": "Google no longer lets Vink write to the sheet. Reconnect with the Google account that made it, then re-send the failed Deliveries.",
   "reconnect": "Reconnect",
+  "excel": "Excel",
+  "openWorkbook": "Open the workbook",
+  "excelConnected": "Connected. Vink made the workbook in your OneDrive.",
+  "excelNoAccess": "Vink didn't get access to your files, so it couldn't make the workbook. Connect again and accept.",
+  "excelDenied": "Microsoft wasn't connected. If it asked for admin approval, your IT admin has to approve Vink first. See \"Does your company need IT admin approval?\" under New Integration, Excel.",
+  "excelFailed": "Connecting Microsoft didn't work. Try again.",
+  "excelReconnected": "Reconnected. Re-send the failed Deliveries to add their rows.",
+  "excelNoSheetAccess": "That Microsoft account can't reach the workbook. Reconnect with the account that made it.",
+  "needsReconnectTextExcel": "Microsoft no longer lets Vink write to the workbook. Reconnect with the Microsoft account that made it, then re-send the failed Deliveries.",
+  "adminConsentTitle": "Your IT admin needs to approve Vink first",
+  "adminConsentText": "Your company lets only its IT admin give apps access to Microsoft 365. Send them this link. They sign in, check what Vink asks for, and approve it once for the whole company. Then connect again.",
+  "dismiss": "Close",
   "dialog": {
     "editTitle": "Edit Integration",
     "newTitle": "New Integration",
@@ -71,7 +83,21 @@
     "openSheet": "Open the sheet",
     "connect": "Connect Google account",
     "reconnectHint": "Signs in with Google again. The sheet stays the same, so use the Google account that made it.",
-    "reconnect": "Reconnect Google account"
+    "reconnect": "Reconnect Google account",
+    "excel": "Excel",
+    "excelDescription": "Vink adds a row per line of each approved Document to a table in a new workbook in your OneDrive.",
+    "excelConnectSignIn": "You sign in with your Microsoft 365 work account on Microsoft's page, then come back here. Personal Microsoft accounts can't be used.",
+    "excelConnectAccess": "Vink asks to read and write your OneDrive files. It only opens the workbook it makes.",
+    "excelNameHint": "Also the name of the workbook Vink makes.",
+    "excelConnect": "Connect Microsoft account",
+    "openWorkbook": "Open the workbook",
+    "excelReconnectHint": "Signs in with Microsoft again. The workbook stays the same, so use the Microsoft account that made it.",
+    "excelReconnect": "Reconnect Microsoft account",
+    "adminTitle": "Does your company need IT admin approval?",
+    "adminText": "Many companies let only their IT admin approve apps for Microsoft 365. Microsoft then says \"Need admin approval\" when you sign in. Send your IT admin this link. They sign in as a Cloud Application Administrator or Application Administrator and approve Vink once for the whole company. In the Microsoft Entra admin center this is Enterprise apps, Vink, Permissions, Grant admin consent.",
+    "adminLinkMissing": "Excel isn't set up here yet, so there is no link.",
+    "copyLink": "Copy link",
+    "copied": "Copied."
   },
   "test": {
     "button": "Send test",
@@ -87,6 +113,7 @@
     "notSent": "The test didn't go out.",
     "status": "Response status",
     "emptyBody": "(empty body)",
-    "sheetsDescription": "Adds rows from this data to the sheet, with <code>[test]</code> before the filename. It isn't a Delivery."
+    "sheetsDescription": "Adds rows from this data to the sheet, with <code>[test]</code> before the filename. It isn't a Delivery.",
+    "excelDescription": "Adds rows from this data to the workbook, with <code>[test]</code> before the filename. It isn't a Delivery."
   }
 }
