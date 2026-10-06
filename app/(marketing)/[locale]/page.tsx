@@ -1,8 +1,6 @@
-import { existsSync } from "node:fs";
-import { join } from "node:path";
 import { ArrowRight, Mail, Play, Upload } from "lucide-react";
 import type { Metadata } from "next";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { getTranslations } from "next-intl/server";
 import type { ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ClosingCard, Faq, TeamBlock, StartFree, TrustRow } from "@/components/marketing/blocks";
 import { VinkMark } from "@/components/marketing/brand";
 import { CodeBlock, PostBar } from "@/components/marketing/code-block";
+import { demoVideo } from "@/components/marketing/demo-video";
 import { JsonLd } from "@/components/marketing/json-ld";
 import { seedDocuments } from "@/components/demo/demo-data";
 import type { DemoDocumentId } from "@/components/demo/demo-papers";
@@ -20,7 +19,6 @@ import {
   DocumentFieldsStill,
   PapersRow,
   ReviewFrameTitle,
-  VideoBackdrop,
 } from "@/components/demo/home-stills";
 import { ScreenshotFrame } from "@/components/marketing/screenshot-frame";
 import { ScaledStill } from "@/components/features/scaled-still";
@@ -121,51 +119,24 @@ function Hero() {
   );
 }
 
-/**
- * The 15-second video. TODO(video): record it and add
- * public/video/vink-15s.mp4 (plus public/video/vink-15s.jpg as the poster);
- * until then a labelled placeholder shows.
- */
+/** The 30-second film, in the page's language. */
 function Video() {
   const t = useTranslations("home.video");
-  const hasVideo = existsSync(join(process.cwd(), "public/video/vink-15s.mp4"));
-  const hasPoster = existsSync(join(process.cwd(), "public/video/vink-15s.jpg"));
+  const video = demoVideo(useLocale());
   return (
     <section id="video" className="scroll-mt-20 py-16 sm:py-24">
       <Container>
         <SectionHeading title={t("title")} subtitle={t("subtitle")} center className="mb-10" />
-        <ScreenshotFrame title="Vink · 0:15" className="mx-auto max-w-4xl">
-          {hasVideo ? (
-            <video
-              className="aspect-video w-full bg-white"
-              src="/video/vink-15s.mp4"
-              poster={hasPoster ? "/video/vink-15s.jpg" : undefined}
-              controls
-              muted
-              playsInline
-              preload="metadata"
-              aria-label={t("label")}
-            />
-          ) : (
-            <div
-              data-todo="video public/video/vink-15s.mp4"
-              role="img"
-              aria-label={t("label")}
-              className="relative grid aspect-video place-items-center overflow-hidden bg-[#f5f7fa]"
-            >
-              <div className="absolute inset-0 opacity-40 blur-[1px]" aria-hidden>
-                <VideoBackdrop label={t("label")} className="size-full" />
-              </div>
-              <div className="relative flex flex-col items-center gap-3">
-                <span className="grid size-16 place-items-center rounded-full bg-[#0f1e36] text-white shadow-lg">
-                  <Play className="size-6 translate-x-0.5 fill-current" />
-                </span>
-                <span className="rounded-full border border-dashed border-[#c5ccd6] bg-white px-3 py-1 font-mono text-[11px] tracking-wide text-[#5b6577] uppercase">
-                  0:15 · {t("placeholder")}
-                </span>
-              </div>
-            </div>
-          )}
+        <ScreenshotFrame title="Vink · 0:30" className="mx-auto max-w-4xl">
+          <video
+            className="aspect-video w-full bg-white"
+            src={video.src}
+            poster={video.poster}
+            controls
+            playsInline
+            preload="metadata"
+            aria-label={t("label")}
+          />
         </ScreenshotFrame>
       </Container>
     </section>

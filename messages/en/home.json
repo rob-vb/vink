@@ -12,14 +12,13 @@
     "vink": "Vink.",
     "done": "Done.",
     "subtitle": "Vink reads any PDF, typed, scanned or handwritten, and turns it into clean data for your systems. You only check what it isn't sure about.",
-    "watch": "Watch 15 seconds",
+    "watch": "Watch 30 seconds",
     "screenLabel": "The Vink review screen with one value that needs review"
   },
   "video": {
     "title": "One PDF in, clean data out.",
-    "subtitle": "Fifteen seconds, no cuts.",
-    "placeholder": "Recording pending",
-    "label": "A 15-second recording of one PDF going through Vink"
+    "subtitle": "Thirty seconds, from paper work order to back office.",
+    "label": "A 30-second film of a handwritten work order going through Vink"
   },
   "journey": {
     "title": "What happens to one document.",

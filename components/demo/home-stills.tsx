@@ -6,7 +6,6 @@ import { FieldRowView } from "@/components/documents/field-row-view";
 import { useDocumentsLabels } from "@/components/documents/labels";
 import { ListGroupView } from "@/components/documents/list-group-view";
 import { ScaledStill } from "@/components/features/scaled-still";
-import { cn } from "cn";
 import { DEMO_THRESHOLD } from "./demo-data";
 import { demoPages, type DemoDocumentId } from "./demo-papers";
 import { DemoLabels } from "./demo-screens";
@@ -149,27 +148,6 @@ export function CheckStill({ label }: { label: string }) {
       <DemoLabels>
         <div className="p-4">
           <Fields document={document} keys={["customer_reference", "pallets", "received_by"]} prefix="home-check" />
-        </div>
-      </DemoLabels>
-    </ScaledStill>
-  );
-}
-
-/** The blurred picture behind the video's placeholder. */
-export function VideoBackdrop({ label, className }: { label: string; className?: string }) {
-  const document = useDemoDocument("delivery");
-  return (
-    <ScaledStill width={1000} always fade={false} label={label} className={cn("bg-transparent", className)}>
-      <DemoLabels>
-        <div className="grid grid-cols-[2fr_3fr] gap-6 p-8">
-          <div className="[zoom:0.85]">
-            <FirstPage documentId="delivery" />
-          </div>
-          <Fields
-            document={document}
-            keys={["delivery_number", "delivery_date", "customer_reference", "pallets"]}
-            prefix="home-video"
-          />
         </div>
       </DemoLabels>
     </ScaledStill>
