@@ -68,15 +68,19 @@ import type * as publicApi_auth from "../publicApi/auth.js";
 import type * as publicApi_documents from "../publicApi/documents.js";
 import type * as publicApi_forms from "../publicApi/forms.js";
 import type * as publicApi_openapi_common from "../publicApi/openapi/common.js";
+import type * as publicApi_openapi_documents from "../publicApi/openapi/documents.js";
 import type * as publicApi_openapi_forms from "../publicApi/openapi/forms.js";
 import type * as publicApi_openapi_index from "../publicApi/openapi/index.js";
+import type * as publicApi_openapi_subscriptions from "../publicApi/openapi/subscriptions.js";
 import type * as publicApi_openapi_types from "../publicApi/openapi/types.js";
 import type * as publicApi_respond from "../publicApi/respond.js";
 import type * as publicApi_router from "../publicApi/router.js";
 import type * as publicApi_routes from "../publicApi/routes.js";
+import type * as publicApi_subscriptions from "../publicApi/subscriptions.js";
 import type * as rejection from "../rejection.js";
 import type * as retention from "../retention.js";
 import type * as review from "../review.js";
+import type * as subscriptions from "../subscriptions.js";
 
 import type {
   ApiFromModules,
@@ -145,15 +149,19 @@ declare const fullApi: ApiFromModules<{
   "publicApi/documents": typeof publicApi_documents;
   "publicApi/forms": typeof publicApi_forms;
   "publicApi/openapi/common": typeof publicApi_openapi_common;
+  "publicApi/openapi/documents": typeof publicApi_openapi_documents;
   "publicApi/openapi/forms": typeof publicApi_openapi_forms;
   "publicApi/openapi/index": typeof publicApi_openapi_index;
+  "publicApi/openapi/subscriptions": typeof publicApi_openapi_subscriptions;
   "publicApi/openapi/types": typeof publicApi_openapi_types;
   "publicApi/respond": typeof publicApi_respond;
   "publicApi/router": typeof publicApi_router;
   "publicApi/routes": typeof publicApi_routes;
+  "publicApi/subscriptions": typeof publicApi_subscriptions;
   rejection: typeof rejection;
   retention: typeof retention;
   review: typeof review;
+  subscriptions: typeof subscriptions;
 }>;
 
 /**

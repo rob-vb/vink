@@ -44,7 +44,7 @@ function refusalOf(error: unknown): Refusal | null {
     return { status: 422, code: "too_many_pages", message: data };
   }
   // The Form was deleted after the request came in.
-  if (data === "Form not found") return { status: 404, code: "not_found", message: "There's no such Form." };
+  if (data === "Form not found") return { status: 404, code: "not_found", message: "There's no Form with that id in your Organisation." };
   return null;
 }
 
@@ -175,7 +175,7 @@ export const documentsRoutes: ApiRoute[] = [
       formId: params.form_id,
     });
     if (keyName === null) return apiError(401, "invalid_api_key", "This API Key doesn't exist or was revoked.");
-    if (formId === null) return apiError(404, "not_found", "There's no such Form.");
+    if (formId === null) return apiError(404, "not_found", "There's no Form with that id in your Organisation.");
 
     const pdf = await pdfOf(request);
     if (pdf instanceof Response) return pdf;

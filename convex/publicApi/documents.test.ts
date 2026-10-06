@@ -233,7 +233,7 @@ test("an unknown Form, or another Organisation's, is 404", async () => {
     const { status, body } = await send(t, `/v1/forms/${id}/documents`, bobsKey, await pdf(1));
     expect({ status, body }).toEqual({
       status: 404,
-      body: { error: { code: "not_found", message: "There's no such Form." } },
+      body: { error: { code: "not_found", message: "There's no Form with that id in your Organisation." } },
     });
   }
   await nothingCreated(t);

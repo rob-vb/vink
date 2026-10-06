@@ -4,9 +4,10 @@
 import { API_BASE_URL, commonErrors, errorSchema, securitySchemes, sharedResponses } from "./common";
 import { documents } from "./documents";
 import { forms } from "./forms";
+import { subscriptions } from "./subscriptions";
 import type { OpenApiPart } from "./types";
 
-export const parts: OpenApiPart[] = [forms, documents];
+export const parts: OpenApiPart[] = [forms, documents, subscriptions];
 
 export const openApiDocument = {
   openapi: "3.1.0",

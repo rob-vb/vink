@@ -70,7 +70,7 @@ export const documents: OpenApiPart = {
             "out_of_pages",
             "You have 5 pages left; this PDF has 8.",
           ),
-          "404": refusal("No Form with this id in your Organisation.", "not_found", "There's no such Form."),
+          "404": refusal("No Form with this id in your Organisation.", "not_found", "There's no Form with that id in your Organisation."),
           "413": refusal("The PDF is larger than 20 MB.", "file_too_large", "The PDF is larger than 20 MB."),
           "415": refusal(
             "The file isn't a PDF Vink can read (`not_a_pdf`), or the body is neither multipart/form-data nor a PDF (`unsupported_media_type`).",
