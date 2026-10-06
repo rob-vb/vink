@@ -384,6 +384,19 @@ export default defineSchema({
         // The HMAC-SHA256 key requests are signed with, encrypted.
         signingSecret: v.string(),
       }),
+      // Google Sheets: adds rows (ADR 0009) to a sheet Vink made in the Drive
+      // of the Google account an Admin connected (googleSheets.ts).
+      v.object({
+        organisationId: v.id("organisations"),
+        name: v.string(),
+        kind: v.literal("google_sheets"),
+        // The OAuth refresh token, encrypted (lib/secrets.ts).
+        refreshToken: v.string(),
+        spreadsheetId: v.string(),
+        // The tab Vink writes to; its id survives a rename.
+        sheetId: v.number(),
+        spreadsheetUrl: v.string(),
+      }),
     ),
   ).index("by_organisationId", ["organisationId"]),
 

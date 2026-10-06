@@ -12,6 +12,9 @@ export type Cell = FilledValue;
 /** One row, keyed by column header. */
 export type Row = Record<string, Cell>;
 
+/** The columns every row has, whatever the Form; a new sheet starts with these. */
+export const DOCUMENT_COLUMNS = ["document", "approved_at", "approved_by", "delivery_id"];
+
 /**
  * The rows a Document's envelope writes. `approved_by` is the approver's
  * email, or "Auto-Send"; a test-send's rows say "[test]" before the filename.
@@ -23,23 +26,23 @@ export function rowsOf(envelope: Envelope, approverEmail: string | null): Row[] 
     approved_by: envelope.approval.mode === "auto" ? "Auto-Send" : approverEmail,
     delivery_id: envelope.delivery_id,
   };
-  let first: { key: string; entries: Array<Record<string, Cell>> } | null = null;
   // The data's keys are in the Form's order (lib/payload.ts), so the first array is the first List.
-  for (const [key, value] of Object.entries(envelope.data)) {
-    if (!Array.isArray(value)) {
-      document[key] = value;
-    } else if (first === null) {
-      first = { key, entries: value };
-    } else {
-      document[key] = value.length === 0 ? null : JSON.stringify(value);
+  const first = Object.keys(envelope.data).find((key) => Array.isArray(envelope.data[key]));
+  const rowWith = (entry: Record<string, Cell> | null) => {
+    const row = { ...document };
+    for (const [key, value] of Object.entries(envelope.data)) {
+      if (key === first) {
+        for (const [sub, cell] of Object.entries(entry ?? {})) row[`${key}.${sub}`] = cell;
+      } else if (Array.isArray(value)) {
+        row[key] = value.length === 0 ? null : JSON.stringify(value);
+      } else {
+        row[key] = value;
+      }
     }
-  }
-  if (first === null || first.entries.length === 0) return [document];
-  const { key, entries } = first;
-  return entries.map((entry) => ({
-    ...document,
-    ...Object.fromEntries(Object.entries(entry).map(([sub, value]) => [`${key}.${sub}`, value])),
-  }));
+    return row;
+  };
+  const entries = first === undefined ? [] : (envelope.data[first] as Array<Record<string, Cell>>);
+  return entries.length === 0 ? [rowWith(null)] : entries.map(rowWith);
 }
 
 /**

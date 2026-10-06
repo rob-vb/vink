@@ -24,6 +24,16 @@ async function ownIntegration(
   return integration;
 }
 
+async function ownWebhook(
+  ctx: QueryCtx,
+  organisationId: Id<"organisations">,
+  integrationId: Id<"integrations">,
+) {
+  const integration = await ownIntegration(ctx, organisationId, integrationId);
+  if (integration.kind === "google_sheets") throw new ConvexError("This Integration isn't a Webhook");
+  return integration;
+}
+
 async function ownForm(ctx: QueryCtx, organisationId: Id<"organisations">, formId: Id<"forms">) {
   const form = await ctx.db.get(formId);
   if (form === null || form.organisationId !== organisationId) {
@@ -73,10 +83,18 @@ export const list = orgQuery({
           .withIndex("by_integrationId", (q) => q.eq("integrationId", integration._id))
           .take(200);
         const forms = await Promise.all(links.map((l) => ctx.db.get(l.formId)));
-        return {
+        const common = {
           id: integration._id,
           name: integration.name,
-          kind: kindOf(integration),
+          forms: forms.flatMap((f) => (f ? [{ id: f._id, name: f.name }] : [])),
+        };
+        // Where it sends to: a Webhook's endpoint, or the link to a sheet.
+        if (integration.kind === "google_sheets") {
+          return { ...common, kind: integration.kind, url: integration.spreadsheetUrl, headers: [] };
+        }
+        return {
+          ...common,
+          kind: kindOf(integration) as "webhook",
           url: integration.url,
           headers: await Promise.all(
             integration.headers.map(async (h) => ({
@@ -85,7 +103,6 @@ export const list = orgQuery({
               value: h.secret ? masked(await decryptSecret(h.value)) : h.value,
             })),
           ),
-          forms: forms.flatMap((f) => (f ? [{ id: f._id, name: f.name }] : [])),
         };
       }),
     );
@@ -97,7 +114,7 @@ export const signingSecret = orgQuery({
   role: "admin",
   args: { integrationId: v.id("integrations") },
   handler: async (ctx, { integrationId }) => {
-    const integration = await ownIntegration(ctx, ctx.organisationId, integrationId);
+    const integration = await ownWebhook(ctx, ctx.organisationId, integrationId);
     return { secret: await decryptSecret(integration.signingSecret) };
   },
 });
@@ -134,7 +151,7 @@ export const update = orgMutation({
     ),
   },
   handler: async (ctx, { integrationId, name, url, headers }) => {
-    const integration = await ownIntegration(ctx, ctx.organisationId, integrationId);
+    const integration = await ownWebhook(ctx, ctx.organisationId, integrationId);
     checkEndpoint(name, url);
     checkHeaders(headers);
     const stored = await Promise.all(
@@ -146,6 +163,17 @@ export const update = orgMutation({
       }),
     );
     await ctx.db.patch(integrationId, { name: name.trim(), url, headers: stored });
+  },
+});
+
+/** Renames an Integration of any kind; the rest of a Webhook is changed with `update`. */
+export const rename = orgMutation({
+  role: "admin",
+  args: { integrationId: v.id("integrations"), name: v.string() },
+  handler: async (ctx, { integrationId, name }) => {
+    await ownIntegration(ctx, ctx.organisationId, integrationId);
+    if (name.trim() === "") throw new ConvexError("An Integration needs a name");
+    await ctx.db.patch(integrationId, { name: name.trim() });
   },
 });
 
@@ -223,6 +251,7 @@ export const testSendInput = internalQuery({
     const form = await ownForm(ctx, organisationId, formId);
     const now = Date.now();
     let envelope;
+    let approverEmail = null;
     if (documentId) {
       const document = await ctx.db.get(documentId);
       if (document === null || document.formId !== formId || document.dataDeletedAt !== undefined) {
@@ -242,6 +271,7 @@ export const testSendInput = internalQuery({
           : { mode: "manual", by: null, at: now },
         data: await documentPayload(ctx, document),
       });
+      approverEmail = document.approval?.byEmail ?? null;
     } else {
       const formVersion = (await ctx.db
         .query("formVersions")
@@ -256,7 +286,8 @@ export const testSendInput = internalQuery({
         data: dummyPayload(formVersion.fields, mode),
       });
     }
-    return { integration, envelope };
+    // As JSON, like a Delivery's frozen envelope: the data's keys stay in the Form's order.
+    return { integration, envelope: JSON.stringify(envelope), approverEmail };
   },
 });
 
@@ -270,11 +301,11 @@ export const testSend = orgAction({
     documentId: v.optional(v.id("documents")),
   },
   handler: async (ctx, args) => {
-    const { integration, envelope } = await ctx.runQuery(internal.integrations.testSendInput, {
+    const { integration, envelope, approverEmail } = await ctx.runQuery(internal.integrations.testSendInput, {
       organisationId: ctx.organisationId,
       ...args,
     });
-    const { outcome, status, body, error } = await sendTo(integration, envelope);
+    const { outcome, status, body, error } = await sendTo(integration, JSON.parse(envelope), { approverEmail });
     return { ok: outcome.kind === "delivered", status, body, error };
   },
 });

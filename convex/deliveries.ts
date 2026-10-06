@@ -71,7 +71,8 @@ export const attemptInput = internalQuery({
     if (delivery.state !== "pending" && delivery.state !== "retrying") return null;
     const integration = await ctx.db.get(delivery.integrationId);
     if (integration === null) return null;
-    return { envelope: delivery.envelope, integration };
+    const document = await ctx.db.get(delivery.documentId);
+    return { envelope: delivery.envelope, integration, approverEmail: document?.approval?.byEmail ?? null };
   },
 });
 
@@ -79,7 +80,11 @@ export const attemptInput = internalQuery({
 const outcome = v.union(
   v.object({ kind: v.literal("delivered") }),
   v.object({ kind: v.literal("retry"), reason: v.string(), retryAfter: v.union(v.string(), v.null()) }),
-  v.object({ kind: v.literal("failed"), reason: v.string() }),
+  v.object({
+    kind: v.literal("failed"),
+    reason: v.string(),
+    cause: v.optional(v.literal("access_expired")),
+  }),
 );
 
 export const attempt = internalAction({
@@ -88,7 +93,9 @@ export const attempt = internalAction({
     const input = await ctx.runQuery(internal.deliveries.attemptInput, { id });
     if (input === null) return;
     const at = Date.now();
-    const sent = await sendTo(input.integration, JSON.parse(input.envelope));
+    const sent = await sendTo(input.integration, JSON.parse(input.envelope), {
+      approverEmail: input.approverEmail,
+    });
     await ctx.runMutation(internal.deliveries.recordAttempt, {
       id,
       attempt: {
