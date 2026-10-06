@@ -1,0 +1,19 @@
+# Polar owns the billing; Vink owns the Pages
+
+Paid Plans and Top-ups go through Polar: Checkout to start a Plan or buy Top-ups, the Customer Portal to change Plan, cancel, update the card and download invoices. Custom Plans stay by hand (`pages:setPlan`), paid by invoice.
+
+Polar is the **merchant of record** (it resells Vink, and its payments run on Stripe). It works out, collects and remits the VAT in each country, handles fraud, disputes and payment support, and sends the receipts and invoices. So Vink needs no VAT registrations abroad. We first built this on Stripe Managed Payments (branch `stripe-billing`) and moved to Polar before it went live. Checkout asks for a business buyer (`is_business_customer`): company name and address are required and a VAT number is optional, for reverse charge. Prices are excl. VAT (`tax_behavior: "exclusive"`), as on the Pricing page. Polar chooses the payment methods per customer, and no setting adds more (polar.sh/docs/features/checkout/payment-methods). Plans are paid by card, Apple Pay, Google Pay or Link. iDEAL/Wero (Netherlands) and Bancontact (Belgium) are for one-time purchases only, so for Top-ups and not for Plans. SEPA Direct Debit isn't offered.
+
+Polar is the source of truth for the **Subscription**; Vink never decides who pays. Each `subscription.created` or `subscription.updated` webhook (`convex/billing.ts`; `updated` also comes with every cancel, renewal, failed payment and revoke) reads the Customer's Subscriptions back from Polar and hands the live one to `billingState:applySubscription`, which is idempotent, so retried and out-of-order webhooks are harmless. `order.paid` for the Top-up Product credits its units × 100 Pages once per Order. Vink never makes a Polar Customer itself: Checkout sends the Organisation's ID as `external_customer_id`, Polar makes the Customer at the first payment, and every webhook carries that ID back.
+
+Vink stays the source of truth for the **Pages**. A Plan's Pages are per month also when it's billed annually, so a Pages period is not Polar's billing period: it is monthly, on the day the Subscription started, and the `pages periods` cron renews it as before. A change of Plan keeps the period and the Pages used, with the new allowance. A cancelled Plan runs to the end of its billing period; after that the Organisation is back on whatever Free Pages it has left, and its Top-ups lapse. A failed renewal keeps the Plan while Polar retries (`past_due`); when Polar gives up (`unpaid`) or revokes it, the Plan goes.
+
+The code knows Products by **metadata** (`vink_key`: `vink_<plan>_<monthly|annual>`, `vink_topup_100`), never by ID, so one codebase serves the sandbox and production. Polar fixes a Product's billing interval, so each Plan is two Products, monthly and annual. The Top-up is one one-time Product with a unit-based price (€10 per unit, 1–10 per Checkout). `scripts/polar-setup.mts` makes the catalog and the webhook endpoint in either environment; a new price in `lib/plans.ts` replaces the Product's price, and existing Subscriptions keep the old one.
+
+## Consequences
+
+- Each Convex deployment needs `POLAR_ACCESS_TOKEN` (an Organization Access Token), `POLAR_SERVER` (`sandbox` on dev; unset or `production` on prod) and `POLAR_WEBHOOK_SECRET` for its own Polar environment.
+- The Polar organisation's default payment currency must be EUR, or EUR-only Products count as free.
+- Plan changes in the Portal follow the organisation's proration setting in the Polar dashboard (Settings → Subscriptions); the Portal's "Change plan" is a dashboard toggle too (Settings → Customer portal). Neither lives in code.
+- Polar refuses a Checkout whose `customer_email` has an undeliverable domain (such as `example.com`).
+- Payment methods are Polar's own; the code never lists them.

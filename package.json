@@ -19,6 +19,7 @@
     "@convex-dev/workpool": "^0.4.12",
     "@firecrawl/pdf-inspector": "^1.24.0",
     "@google/genai": "^2.24.0",
+    "@polar-sh/sdk": "^1.0.2",
     "@typesafe-ai/sdk": "^0.6.0",
     "better-auth": "1.6.15",
     "class-variance-authority": "^0.7.1",

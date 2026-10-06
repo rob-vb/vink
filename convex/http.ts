@@ -1,4 +1,5 @@
 import { httpRouter } from "convex/server";
+import { internal } from "./_generated/api";
 import { httpAction } from "./_generated/server";
 import { createAuth } from "./auth";
 import { submit } from "./contact";
@@ -36,5 +37,24 @@ http.route({ path: "/contact", method: "POST", handler: submit });
 
 // Email-in: the Cloudflare Worker hands over each email sent to an Intake Address.
 http.route({ path: "/intake/email", method: "POST", handler: email });
+
+// Polar's webhooks: Subscriptions and Top-ups (billing.ts). Any status but
+// 2xx makes Polar send the event again later.
+http.route({
+  path: "/polar/webhook",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const header = (name: string) => request.headers.get(name) ?? "";
+    const handled = await ctx.runAction(internal.billing.webhook, {
+      payload: await request.text(),
+      headers: {
+        id: header("webhook-id"),
+        timestamp: header("webhook-timestamp"),
+        signature: header("webhook-signature"),
+      },
+    });
+    return handled ? new Response(null, { status: 202 }) : new Response("Bad signature", { status: 403 });
+  }),
+});
 
 export default http;

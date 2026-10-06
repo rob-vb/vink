@@ -86,6 +86,8 @@ export const planName = v.union(
   v.literal("internal_unlimited"),
 );
 
+export const billingInterval = v.union(v.literal("monthly"), v.literal("annual"));
+
 // Every table except `organisations` itself carries an indexed `organisationId`.
 export default defineSchema({
   organisations: defineTable({
@@ -118,10 +120,31 @@ export default defineSchema({
         used: v.number(),
       }),
     ),
+    // Its Polar Customer, made by its first Checkout (external ID: this
+    // Organisation's ID); set by the first webhook. See billing.ts.
+    polarCustomerId: v.optional(v.string()),
+    // Its Polar Subscription as the last webhook left it, for the Pages card.
+    // Unset without one; the Plan itself lives in `pages`.
+    subscription: v.optional(
+      v.object({
+        id: v.string(),
+        status: v.string(),
+        interval: billingInterval,
+        // When a cancelled Subscription stops; `null` while it renews.
+        endsAt: v.union(v.number(), v.null()),
+      }),
+    ),
   })
     .index("by_slug", ["slug"])
     .index("by_createdBy", ["createdBy"])
     .index("by_periodEndsAt", ["pages.periodEndsAt"]),
+
+  // Top-ups paid through Polar, by Order, so a webhook retry credits them once.
+  topUpPayments: defineTable({
+    organisationId: v.id("organisations"),
+    orderId: v.string(),
+    pages: v.number(),
+  }).index("by_orderId", ["orderId"]),
 
   memberships: defineTable({
     organisationId: v.id("organisations"),

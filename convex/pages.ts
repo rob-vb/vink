@@ -1,6 +1,7 @@
 // Plans and Pages: how many Pages an Organisation may still have read, and
-// charging them when Vink accepts a PDF. We set Plans by hand until billing
-// exists: the internal functions below run from the Convex dashboard or CLI.
+// charging them when Vink accepts a PDF. Polar sets the paid Plans (billing.ts);
+// Custom Plans we set by hand with the internal functions below, from the
+// Convex dashboard or CLI.
 import { ConvexError, v, type Infer } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
 import { internalMutation, type MutationCtx } from "./_generated/server";
@@ -22,7 +23,7 @@ const legacy: Pages = {
   used: 0,
 };
 
-function pagesOf(organisation: Doc<"organisations">): Pages {
+export function pagesOf(organisation: Doc<"organisations">): Pages {
   return organisation.pages ?? legacy;
 }
 
@@ -103,7 +104,8 @@ export async function chargePages(
 export const usage = orgQuery({
   args: {},
   handler: async (ctx) => {
-    const pages = pagesOf((await ctx.db.get(ctx.organisationId))!);
+    const organisation = (await ctx.db.get(ctx.organisationId))!;
+    const pages = pagesOf(organisation);
     const unlimited = isUnlimited(pages);
     const remaining = remainingOf(pages);
     const total = pages.used + remaining;
@@ -118,6 +120,11 @@ export const usage = orgQuery({
       topUpPages: pages.topUp,
       resetsAt: pages.periodEndsAt,
       warning: !unlimited && total > 0 && pages.used / total >= 0.8,
+      // Paid through Polar (billing.ts): the Customer Portal can manage it.
+      subscription: organisation.subscription
+        ? { interval: organisation.subscription.interval, endsAt: organisation.subscription.endsAt }
+        : null,
+      hasBillingCustomer: organisation.polarCustomerId !== undefined,
     };
   },
 });
@@ -168,7 +175,7 @@ export const setFreePages = internalMutation({
 });
 
 /** The first period end after `now`, a month at a time, on the anchor day or the month's last day. */
-function nextPeriodEnd(periodEndsAt: number, now: number, anchorDay: number) {
+export function nextPeriodEnd(periodEndsAt: number, now: number, anchorDay: number) {
   const end = new Date(periodEndsAt);
   while (end.getTime() <= now) {
     const year = end.getUTCFullYear();

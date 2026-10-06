@@ -9,6 +9,8 @@
  */
 
 import type * as auth from "../auth.js";
+import type * as billing from "../billing.js";
+import type * as billingState from "../billingState.js";
 import type * as changeForm from "../changeForm.js";
 import type * as contact from "../contact.js";
 import type * as crons from "../crons.js";
@@ -24,6 +26,7 @@ import type * as intake from "../intake.js";
 import type * as integrations from "../integrations.js";
 import type * as invitations from "../invitations.js";
 import type * as lib_backoff from "../lib/backoff.js";
+import type * as lib_billing from "../lib/billing.js";
 import type * as lib_clientIp from "../lib/clientIp.js";
 import type * as lib_confidence from "../lib/confidence.js";
 import type * as lib_documentPayload from "../lib/documentPayload.js";
@@ -41,6 +44,7 @@ import type * as lib_models from "../lib/models.js";
 import type * as lib_payload from "../lib/payload.js";
 import type * as lib_pdfStore from "../lib/pdfStore.js";
 import type * as lib_pipeline from "../lib/pipeline.js";
+import type * as lib_polar from "../lib/polar.js";
 import type * as lib_proposer from "../lib/proposer.js";
 import type * as lib_readThinking from "../lib/readThinking.js";
 import type * as lib_reader from "../lib/reader.js";
@@ -69,6 +73,8 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
+  billing: typeof billing;
+  billingState: typeof billingState;
   changeForm: typeof changeForm;
   contact: typeof contact;
   crons: typeof crons;
@@ -84,6 +90,7 @@ declare const fullApi: ApiFromModules<{
   integrations: typeof integrations;
   invitations: typeof invitations;
   "lib/backoff": typeof lib_backoff;
+  "lib/billing": typeof lib_billing;
   "lib/clientIp": typeof lib_clientIp;
   "lib/confidence": typeof lib_confidence;
   "lib/documentPayload": typeof lib_documentPayload;
@@ -101,6 +108,7 @@ declare const fullApi: ApiFromModules<{
   "lib/payload": typeof lib_payload;
   "lib/pdfStore": typeof lib_pdfStore;
   "lib/pipeline": typeof lib_pipeline;
+  "lib/polar": typeof lib_polar;
   "lib/proposer": typeof lib_proposer;
   "lib/readThinking": typeof lib_readThinking;
   "lib/reader": typeof lib_reader;
