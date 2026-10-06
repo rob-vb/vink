@@ -1,9 +1,9 @@
-// The database side of billing (billing.ts talks to Stripe). Stripe owns the
+// The database side of billing (billing.ts talks to Polar). Polar owns the
 // Subscription; each webhook hands its current state to `applySubscription`,
 // which sets the Organisation's Plan. Pages periods stay monthly, also on an
 // annual Subscription, and the `pages periods` cron renews them.
-import { v } from "convex/values";
-import { internalMutation, internalQuery, type QueryCtx } from "./_generated/server";
+import { v, type Infer } from "convex/values";
+import { internalMutation, internalQuery, type MutationCtx } from "./_generated/server";
 import { billingInterval } from "./schema";
 import { allowanceOf, isLive } from "./lib/billing";
 import { nextPeriodEnd, pagesOf } from "./pages";
@@ -19,29 +19,24 @@ export const organisation = internalQuery({
       name: organisation.name,
       slug: organisation.slug,
       plan: pagesOf(organisation).plan,
-      stripeCustomerId: organisation.stripeCustomerId ?? null,
+      hasCustomer: organisation.polarCustomerId !== undefined,
       hasLiveSubscription:
         organisation.subscription !== undefined && isLive(organisation.subscription.status),
     };
   },
 });
 
-/** Stores the Organisation's Stripe Customer, unless it already has one; returns the one it keeps. */
-export const setStripeCustomer = internalMutation({
-  args: { organisationId: v.id("organisations"), customerId: v.string() },
-  handler: async (ctx, { organisationId, customerId }) => {
-    const organisation = (await ctx.db.get(organisationId))!;
-    if (organisation.stripeCustomerId) return organisation.stripeCustomerId;
-    await ctx.db.patch(organisationId, { stripeCustomerId: customerId });
-    return customerId;
-  },
-});
+// Who paid: the Polar Customer, and its external ID, which Checkout set to
+// the Organisation's ID.
+const customer = v.object({ id: v.string(), externalId: v.union(v.string(), v.null()) });
 
-async function byCustomer(ctx: QueryCtx, customerId: string) {
-  return await ctx.db
-    .query("organisations")
-    .withIndex("by_stripeCustomerId", (q) => q.eq("stripeCustomerId", customerId))
-    .unique();
+/** The Customer's Organisation, remembering its Polar Customer; `null` for a stranger. */
+async function organisationOf(ctx: MutationCtx, { id, externalId }: Infer<typeof customer>) {
+  const organisationId = externalId && ctx.db.normalizeId("organisations", externalId);
+  const organisation = organisationId ? await ctx.db.get(organisationId) : null;
+  if (organisation === null) return null;
+  if (organisation.polarCustomerId !== id) await ctx.db.patch(organisation._id, { polarCustomerId: id });
+  return { ...organisation, polarCustomerId: id };
 }
 
 /**
@@ -53,7 +48,7 @@ async function byCustomer(ctx: QueryCtx, customerId: string) {
  */
 export const applySubscription = internalMutation({
   args: {
-    customerId: v.string(),
+    customer,
     subscription: v.union(
       v.null(),
       v.object({
@@ -62,15 +57,15 @@ export const applySubscription = internalMutation({
         plan: paidPlan,
         interval: billingInterval,
         endsAt: v.union(v.number(), v.null()),
-        // The billing cycle anchor, ms: Pages periods end on its day of the month.
+        // When the Subscription started, ms: Pages periods end on its day of the month.
         anchor: v.number(),
       }),
     ),
   },
-  handler: async (ctx, { customerId, subscription }) => {
-    const organisation = await byCustomer(ctx, customerId);
+  handler: async (ctx, { customer, subscription }) => {
+    const organisation = await organisationOf(ctx, customer);
     if (organisation === null) {
-      console.warn(`Stripe Customer ${customerId} belongs to no Organisation`);
+      console.warn(`Polar Customer ${customer.id} belongs to no Organisation`);
       return;
     }
     const pages = pagesOf(organisation);
@@ -113,24 +108,20 @@ export const applySubscription = internalMutation({
   },
 });
 
-/** Credits a paid Top-up Checkout once, however often its webhook arrives. */
+/** Credits a paid Top-up Order once, however often its webhook arrives. */
 export const creditTopUp = internalMutation({
-  args: { customerId: v.string(), checkoutSessionId: v.string(), pages: v.number() },
-  handler: async (ctx, { customerId, checkoutSessionId, pages: added }) => {
-    const organisation = await byCustomer(ctx, customerId);
+  args: { customer, orderId: v.string(), pages: v.number() },
+  handler: async (ctx, { customer, orderId, pages: added }) => {
+    const organisation = await organisationOf(ctx, customer);
     if (organisation === null) {
-      throw new Error(`Stripe Customer ${customerId} belongs to no Organisation`);
+      throw new Error(`Polar Customer ${customer.id} belongs to no Organisation`);
     }
     const credited = await ctx.db
       .query("topUpPayments")
-      .withIndex("by_checkoutSessionId", (q) => q.eq("checkoutSessionId", checkoutSessionId))
+      .withIndex("by_orderId", (q) => q.eq("orderId", orderId))
       .unique();
     if (credited !== null) return;
-    await ctx.db.insert("topUpPayments", {
-      organisationId: organisation._id,
-      checkoutSessionId,
-      pages: added,
-    });
+    await ctx.db.insert("topUpPayments", { organisationId: organisation._id, orderId, pages: added });
     const pages = pagesOf(organisation);
     await ctx.db.patch(organisation._id, { pages: { ...pages, topUp: pages.topUp + added } });
   },

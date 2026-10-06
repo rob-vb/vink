@@ -1,5 +1,5 @@
 // Plans and Pages: how many Pages an Organisation may still have read, and
-// charging them when Vink accepts a PDF. Stripe sets the paid Plans (billing.ts);
+// charging them when Vink accepts a PDF. Polar sets the paid Plans (billing.ts);
 // Custom Plans we set by hand with the internal functions below, from the
 // Convex dashboard or CLI.
 import { ConvexError, v, type Infer } from "convex/values";
@@ -120,11 +120,11 @@ export const usage = orgQuery({
       topUpPages: pages.topUp,
       resetsAt: pages.periodEndsAt,
       warning: !unlimited && total > 0 && pages.used / total >= 0.8,
-      // Paid through Stripe (billing.ts): the Customer Portal can manage it.
+      // Paid through Polar (billing.ts): the Customer Portal can manage it.
       subscription: organisation.subscription
         ? { interval: organisation.subscription.interval, endsAt: organisation.subscription.endsAt }
         : null,
-      hasStripeCustomer: organisation.stripeCustomerId !== undefined,
+      hasBillingCustomer: organisation.polarCustomerId !== undefined,
     };
   },
 });

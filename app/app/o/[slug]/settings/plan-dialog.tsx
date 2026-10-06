@@ -29,7 +29,7 @@ function contactUrl(locale: string) {
   return locale === routing.defaultLocale ? "/contact" : `/${locale}/contact`;
 }
 
-/** The three Plans as on the Pricing page; choosing one goes to Stripe Checkout. */
+/** The three Plans as on the Pricing page; choosing one goes to Polar Checkout. */
 export function PlanDialog({
   organisationSlug,
   open,

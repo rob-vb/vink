@@ -1,80 +1,62 @@
+import { createHmac } from "node:crypto";
 import { ConvexError } from "convex/values";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { api, internal } from "./_generated/api";
 import { addMembership, asUser, newBackend, signUp } from "./test.setup";
 
-// A fake Stripe: what billing.ts asks of it, and what it was asked.
+// A fake Polar: what billing.ts asks of it, and what it was asked. Webhooks
+// go through the real signature check (lib/polar.ts), signed with SECRET.
 const fake = vi.hoisted(() => {
   const state = {
-    customers: [] as { id: string; params: Record<string, unknown> }[],
-    sessions: [] as { id: string; url: string; params: Record<string, unknown> }[],
+    checkouts: [] as Record<string, unknown>[],
     subscriptions: [] as Record<string, unknown>[],
-    lineItems: new Map<string, { price: { lookup_key: string }; quantity: number }[]>(),
     portals: [] as Record<string, unknown>[],
   };
   const client = {
-    customers: {
-      create: async (params: Record<string, unknown>) => {
-        const customer = { id: `cus_${state.customers.length + 1}`, params };
-        state.customers.push(customer);
-        return customer;
-      },
-    },
-    prices: {
-      list: async ({ lookup_keys }: { lookup_keys: string[] }) => ({
-        data: [{ id: `price_${lookup_keys[0]}` }],
+    products: {
+      list: async ({ metadata }: { metadata: { vink_key: string } }) => ({
+        items: [{ id: `prod_${metadata.vink_key}` }],
       }),
     },
-    checkout: {
-      sessions: {
-        create: async (params: Record<string, unknown>) => {
-          const session = { id: `cs_${state.sessions.length + 1}`, url: "https://checkout.stripe.test", params };
-          state.sessions.push(session);
-          return session;
-        },
-        listLineItems: async (id: string) => ({ data: state.lineItems.get(id) ?? [] }),
+    checkouts: {
+      create: async (params: Record<string, unknown>) => {
+        state.checkouts.push(params);
+        return { id: `co_${state.checkouts.length}`, url: "https://sandbox.polar.test/checkout" };
       },
     },
-    billingPortal: {
-      sessions: {
-        create: async (params: Record<string, unknown>) => {
-          state.portals.push(params);
-          return { url: "https://billing.stripe.test" };
-        },
+    customerSessions: {
+      create: async (params: Record<string, unknown>) => {
+        state.portals.push(params);
+        return { customer_portal_url: "https://sandbox.polar.test/portal" };
       },
     },
     subscriptions: {
-      list: async ({ customer }: { customer: string }) => ({
-        data: state.subscriptions.filter((s) => s.customer === customer),
+      list: async ({ customer_id }: { customer_id: string }) => ({
+        items: state.subscriptions.filter((s) => s.customer_id === customer_id),
       }),
     },
   };
-  return {
-    state,
-    client,
-    // The "signature" is the event itself, or "bad".
-    webhookEvent: async (payload: string, signature: string) => {
-      if (signature === "bad") throw new Error("No signatures found matching the expected signature");
-      return JSON.parse(payload);
-    },
-  };
+  return { state, client };
 });
 
-vi.mock("./lib/stripe", () => ({ stripe: () => fake.client, webhookEvent: fake.webhookEvent }));
+vi.mock("./lib/polar", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("./lib/polar")>()),
+  polar: () => fake.client,
+}));
 
 type Backend = ReturnType<typeof newBackend>;
 
 const DAY = 24 * 60 * 60 * 1000;
 const NOW = new Date("2026-10-06T09:00:00Z").getTime();
+const SECRET = `whsec_${Buffer.from("a test secret of thirty-two bytes").toString("base64")}`;
 
 beforeEach(() => {
   vi.useFakeTimers();
   vi.setSystemTime(NOW);
   vi.stubEnv("SITE_URL", "https://vink.page");
-  fake.state.customers = [];
-  fake.state.sessions = [];
+  vi.stubEnv("POLAR_WEBHOOK_SECRET", SECRET);
+  fake.state.checkouts = [];
   fake.state.subscriptions = [];
-  fake.state.lineItems.clear();
   fake.state.portals = [];
 });
 
@@ -91,25 +73,41 @@ function usage(t: Backend, slug: string) {
   return asUser(t, "ann").query(api.pages.usage, { organisationSlug: slug });
 }
 
-function subscription(overrides: Record<string, unknown> = {}) {
+async function organisationId(t: Backend) {
+  return await t.run(async (ctx) => (await ctx.db.query("organisations").first())!._id);
+}
+
+function customer(externalId: string) {
+  return { id: "cust_1", external_id: externalId };
+}
+
+async function subscription(t: Backend, overrides: Record<string, unknown> = {}) {
   return {
     id: "sub_1",
-    customer: "cus_1",
+    customer_id: "cust_1",
+    customer: customer(await organisationId(t)),
     status: "active",
-    cancel_at: null,
     cancel_at_period_end: false,
-    billing_cycle_anchor: NOW / 1000,
-    items: {
-      data: [{ price: { id: "price_x", lookup_key: "vink_team_monthly" }, current_period_end: (NOW + 31 * DAY) / 1000 }],
-    },
+    ends_at: null,
+    started_at: new Date(NOW).toISOString(),
+    current_period_start: new Date(NOW).toISOString(),
+    current_period_end: new Date(NOW + 31 * DAY).toISOString(),
+    product_id: "prod_vink_team_monthly",
+    product: { metadata: { vink_key: "vink_team_monthly" } },
     ...overrides,
   };
 }
 
-async function deliver(t: Backend, type: string, object: Record<string, unknown>) {
+/** Signs like Polar (Standard Webhooks) and hands the event to the webhook action. */
+async function deliver(t: Backend, type: string, data: Record<string, unknown>, secret = SECRET) {
+  const payload = JSON.stringify({ type, timestamp: new Date(NOW).toISOString(), data });
+  const id = `msg_${Math.random()}`;
+  const timestamp = String(Math.floor(NOW / 1000));
+  const key = Buffer.from(secret.slice("whsec_".length), "base64");
+  const signature = createHmac("sha256", key).update(`${id}.${timestamp}.${payload}`).digest("base64");
   return await t.action(internal.billing.webhook, {
-    payload: JSON.stringify({ type, data: { object } }),
-    signature: "t=1,v1=ok",
+    payload,
+    headers: { id, timestamp, signature: `v1,${signature}` },
   });
 }
 
@@ -120,11 +118,28 @@ async function subscribe(t: Backend, slug: string, overrides: Record<string, unk
     interval: "monthly",
     locale: "nl",
   });
-  fake.state.subscriptions = [subscription(overrides)];
-  await deliver(t, "customer.subscription.created", fake.state.subscriptions[0]);
+  fake.state.subscriptions = [await subscription(t, overrides)];
+  await deliver(t, "subscription.created", fake.state.subscriptions[0]);
 }
 
-test("Checkout makes one Stripe Customer per Organisation and sells the Plan through Managed Payments", async () => {
+/** A Subscription in Polar changed: the webhook says so. */
+async function change(t: Backend, overrides: Record<string, unknown>) {
+  fake.state.subscriptions = [await subscription(t, overrides)];
+  await deliver(t, "subscription.updated", fake.state.subscriptions[0]);
+}
+
+async function topUpOrder(t: Backend, overrides: Record<string, unknown> = {}) {
+  return {
+    id: "ord_1",
+    status: "paid",
+    units: 3,
+    customer: customer(await organisationId(t)),
+    product: { metadata: { vink_key: "vink_topup_100" } },
+    ...overrides,
+  };
+}
+
+test("Checkout sells the Plan to the Organisation, as a business, through Polar", async () => {
   const t = newBackend();
   const { user, slug } = await freshSignUp(t);
 
@@ -134,33 +149,20 @@ test("Checkout makes one Stripe Customer per Organisation and sells the Plan thr
     interval: "annual",
     locale: "nl",
   });
-  await user.action(api.billing.checkout, {
-    organisationSlug: slug,
-    plan: "starter",
-    interval: "monthly",
-    locale: "nl",
-  });
 
-  expect(url).toBe("https://checkout.stripe.test");
-  expect(fake.state.customers).toHaveLength(1);
-  expect(fake.state.customers[0].params).toMatchObject({ name: "Kantoor Noord", email: "ann@example.com" });
-  expect(fake.state.sessions[0].params).toMatchObject({
-    mode: "subscription",
-    customer: "cus_1",
-    line_items: [{ price: "price_vink_team_annual", quantity: 1 }],
-    managed_payments: { enabled: true },
+  expect(url).toBe("https://sandbox.polar.test/checkout");
+  expect(fake.state.checkouts[0]).toEqual({
+    products: ["prod_vink_team_annual"],
+    // Polar makes the Customer at the first Checkout and finds it again by this.
+    external_customer_id: await organisationId(t),
+    customer_email: "ann@example.com",
+    customer_billing_name: "Kantoor Noord",
+    is_business_customer: true,
+    allow_discount_codes: false,
+    locale: "nl",
     success_url: `https://vink.page/app/o/${slug}/settings?billing=subscribed`,
+    return_url: `https://vink.page/app/o/${slug}/settings?billing=cancelled`,
   });
-  // Stripe is the merchant of record: these would make Checkout refuse the session.
-  for (const unsupported of [
-    "payment_method_types",
-    "automatic_tax",
-    "tax_id_collection",
-    "customer_update",
-    "invoice_creation",
-  ]) {
-    expect(fake.state.sessions[0].params).not.toHaveProperty(unsupported);
-  }
 });
 
 test("only Admins can open Checkout or the Customer Portal", async () => {
@@ -175,7 +177,7 @@ test("only Admins can open Checkout or the Customer Portal", async () => {
   await expect(bob.action(api.billing.portal, { organisationSlug: slug, locale: "en" })).rejects.toThrow(
     ConvexError,
   );
-  expect(fake.state.sessions).toHaveLength(0);
+  expect(fake.state.checkouts).toHaveLength(0);
 });
 
 test("a new Subscription puts the Organisation on its Plan, with a monthly Pages period", async () => {
@@ -192,6 +194,7 @@ test("a new Subscription puts the Organisation on its Plan, with a monthly Pages
     remaining: 1020,
     resetsAt: new Date("2026-11-06T09:00:00Z").getTime(),
     subscription: { interval: "monthly", endsAt: null },
+    hasBillingCustomer: true,
   });
 });
 
@@ -200,7 +203,8 @@ test("an annual Subscription still renews its Pages every month", async () => {
   const { slug } = await freshSignUp(t);
 
   await subscribe(t, slug, {
-    items: { data: [{ price: { lookup_key: "vink_starter_annual" }, current_period_end: (NOW + 365 * DAY) / 1000 }] },
+    product: { metadata: { vink_key: "vink_starter_annual" } },
+    current_period_end: new Date(NOW + 365 * DAY).toISOString(),
   });
 
   expect(await usage(t, slug)).toMatchObject({
@@ -220,7 +224,7 @@ test("the same webhook twice changes nothing more", async () => {
     await ctx.db.patch(organisation._id, { pages: { ...organisation.pages!, allowanceUsed: 400, used: 400 } });
   });
 
-  await deliver(t, "customer.subscription.updated", fake.state.subscriptions[0]);
+  await deliver(t, "subscription.updated", fake.state.subscriptions[0]);
 
   expect(await usage(t, slug)).toMatchObject({ plan: "team", allowanceLeft: 600 });
 });
@@ -235,10 +239,7 @@ test("a change of Plan keeps the period and the Pages used", async () => {
   });
   const before = await usage(t, slug);
 
-  fake.state.subscriptions = [
-    subscription({ items: { data: [{ price: { lookup_key: "vink_business_monthly" }, current_period_end: 0 }] } }),
-  ];
-  await deliver(t, "customer.subscription.updated", fake.state.subscriptions[0]);
+  await change(t, { product: { metadata: { vink_key: "vink_business_monthly" } } });
 
   expect(await usage(t, slug)).toMatchObject({
     plan: "business",
@@ -254,12 +255,12 @@ test("a cancelled Subscription runs to its end, then the Organisation is back on
   await subscribe(t, slug);
   const endsAt = NOW + 31 * DAY;
 
-  fake.state.subscriptions = [subscription({ cancel_at: endsAt / 1000, cancel_at_period_end: true })];
-  await deliver(t, "customer.subscription.updated", fake.state.subscriptions[0]);
+  // Cancelled in the Portal: still active, until the period ends.
+  await change(t, { cancel_at_period_end: true, ends_at: new Date(endsAt).toISOString() });
   expect(await usage(t, slug)).toMatchObject({ plan: "team", subscription: { endsAt } });
 
-  fake.state.subscriptions = [subscription({ status: "canceled" })];
-  await deliver(t, "customer.subscription.deleted", fake.state.subscriptions[0]);
+  // The period ended: Polar revokes it.
+  await change(t, { status: "canceled", ended_at: new Date(endsAt).toISOString() });
   expect(await usage(t, slug)).toMatchObject({
     plan: null,
     allowance: 0,
@@ -271,44 +272,47 @@ test("a cancelled Subscription runs to its end, then the Organisation is back on
   });
 });
 
-test("a paid Top-up adds its Pages once, however often Stripe sends it", async () => {
+test("a failed renewal keeps the Plan while Polar retries; unpaid ends it", async () => {
+  const t = newBackend();
+  const { slug } = await freshSignUp(t);
+  await subscribe(t, slug);
+
+  await change(t, { status: "past_due" });
+  expect(await usage(t, slug)).toMatchObject({ plan: "team" });
+
+  await change(t, { status: "unpaid" });
+  expect(await usage(t, slug)).toMatchObject({ plan: null, subscription: null });
+});
+
+test("a paid Top-up adds its Pages once, however often Polar sends it", async () => {
   const t = newBackend();
   const { user, slug } = await freshSignUp(t);
   await subscribe(t, slug);
 
   await user.action(api.billing.topUp, { organisationSlug: slug, locale: "nl" });
-  expect(fake.state.sessions[1].params).toMatchObject({
-    mode: "payment",
-    customer: "cus_1",
-    line_items: [{ price: "price_vink_topup_100", quantity: 1 }],
-    managed_payments: { enabled: true },
+  expect(fake.state.checkouts[1]).toMatchObject({
+    products: ["prod_vink_topup_100"],
+    min_units: 1,
+    max_units: 10,
+    external_customer_id: await organisationId(t),
+    success_url: `https://vink.page/app/o/${slug}/settings?billing=topped-up`,
   });
-  expect(fake.state.sessions[1].params).not.toHaveProperty("invoice_creation");
 
-  fake.state.lineItems.set("cs_2", [{ price: { lookup_key: "vink_topup_100" }, quantity: 3 }]);
-  const session = { id: "cs_2", mode: "payment", payment_status: "paid", customer: "cus_1" };
-  await deliver(t, "checkout.session.completed", session);
-  await deliver(t, "checkout.session.completed", session);
+  const order = await topUpOrder(t);
+  await deliver(t, "order.paid", order);
+  await deliver(t, "order.paid", order);
 
   expect(await usage(t, slug)).toMatchObject({ topUpPages: 300, remaining: 1320 });
 });
 
-test("a Top-up paid by bank later is added when the payment succeeds", async () => {
+test("a paid Plan Order is no Top-up", async () => {
   const t = newBackend();
   const { slug } = await freshSignUp(t);
   await subscribe(t, slug);
-  fake.state.lineItems.set("cs_9", [{ price: { lookup_key: "vink_topup_100" }, quantity: 1 }]);
 
-  await deliver(t, "checkout.session.completed", { id: "cs_9", mode: "payment", payment_status: "unpaid", customer: "cus_1" });
+  await deliver(t, "order.paid", await topUpOrder(t, { units: null, product: { metadata: { vink_key: "vink_team_monthly" } } }));
+
   expect(await usage(t, slug)).toMatchObject({ topUpPages: 0 });
-
-  await deliver(t, "checkout.session.async_payment_succeeded", {
-    id: "cs_9",
-    mode: "payment",
-    payment_status: "paid",
-    customer: "cus_1",
-  });
-  expect(await usage(t, slug)).toMatchObject({ topUpPages: 100 });
 });
 
 test("Top-ups need a Plan", async () => {
@@ -320,7 +324,16 @@ test("Top-ups need a Plan", async () => {
   );
 });
 
-test("an Organisation that already pays gets no second Subscription", async () => {
+test("the Customer Portal needs a Polar Customer first", async () => {
+  const t = newBackend();
+  const { user, slug } = await freshSignUp(t);
+
+  await expect(user.action(api.billing.portal, { organisationSlug: slug, locale: "nl" })).rejects.toThrow(
+    ConvexError,
+  );
+});
+
+test("an Organisation that already pays gets no second Subscription, but the Portal", async () => {
   const t = newBackend();
   const { user, slug } = await freshSignUp(t);
   await subscribe(t, slug);
@@ -329,18 +342,36 @@ test("an Organisation that already pays gets no second Subscription", async () =
     user.action(api.billing.checkout, { organisationSlug: slug, plan: "business", interval: "monthly", locale: "nl" }),
   ).rejects.toThrow(ConvexError);
   expect(await user.action(api.billing.portal, { organisationSlug: slug, locale: "nl" })).toBe(
-    "https://billing.stripe.test",
+    "https://sandbox.polar.test/portal",
   );
-  expect(fake.state.portals[0]).toMatchObject({
-    customer: "cus_1",
+  expect(fake.state.portals[0]).toEqual({
+    external_customer_id: await organisationId(t),
     return_url: `https://vink.page/app/o/${slug}/settings?billing=portal`,
   });
 });
 
+test("a Customer that is no Organisation changes nothing", async () => {
+  const t = newBackend();
+  const { slug } = await freshSignUp(t);
+
+  fake.state.subscriptions = [{ ...(await subscription(t)), customer: { id: "cust_1", external_id: null } }];
+  await deliver(t, "subscription.created", fake.state.subscriptions[0]);
+
+  expect(await usage(t, slug)).toMatchObject({ plan: null, hasBillingCustomer: false });
+});
+
 test("a webhook with a bad signature is refused", async () => {
   const t = newBackend();
+  const { slug } = await freshSignUp(t);
+  fake.state.subscriptions = [await subscription(t)];
 
-  const handled = await t.action(internal.billing.webhook, { payload: "{}", signature: "bad" });
+  const wrong = `whsec_${Buffer.from("another secret, not the real one").toString("base64")}`;
+  expect(await deliver(t, "subscription.created", fake.state.subscriptions[0], wrong)).toBe(false);
+  expect(await usage(t, slug)).toMatchObject({ plan: null });
+});
 
-  expect(handled).toBe(false);
+test("a signed event Vink doesn't know is taken and ignored", async () => {
+  const t = newBackend();
+
+  expect(await deliver(t, "something.new", {})).toBe(true);
 });

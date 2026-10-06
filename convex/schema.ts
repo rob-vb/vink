@@ -120,9 +120,10 @@ export default defineSchema({
         used: v.number(),
       }),
     ),
-    // Its Stripe Customer, made at its first Checkout (see billing.ts).
-    stripeCustomerId: v.optional(v.string()),
-    // Its Stripe Subscription as the last webhook left it, for the Pages card.
+    // Its Polar Customer, made by its first Checkout (external ID: this
+    // Organisation's ID); set by the first webhook. See billing.ts.
+    polarCustomerId: v.optional(v.string()),
+    // Its Polar Subscription as the last webhook left it, for the Pages card.
     // Unset without one; the Plan itself lives in `pages`.
     subscription: v.optional(
       v.object({
@@ -136,15 +137,14 @@ export default defineSchema({
   })
     .index("by_slug", ["slug"])
     .index("by_createdBy", ["createdBy"])
-    .index("by_periodEndsAt", ["pages.periodEndsAt"])
-    .index("by_stripeCustomerId", ["stripeCustomerId"]),
+    .index("by_periodEndsAt", ["pages.periodEndsAt"]),
 
-  // Top-ups paid through Stripe Checkout, so a webhook retry credits them once.
+  // Top-ups paid through Polar, by Order, so a webhook retry credits them once.
   topUpPayments: defineTable({
     organisationId: v.id("organisations"),
-    checkoutSessionId: v.string(),
+    orderId: v.string(),
     pages: v.number(),
-  }).index("by_checkoutSessionId", ["checkoutSessionId"]),
+  }).index("by_orderId", ["orderId"]),
 
   memberships: defineTable({
     organisationId: v.id("organisations"),

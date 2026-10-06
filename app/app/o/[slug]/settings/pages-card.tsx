@@ -21,14 +21,14 @@ const planNames = {
   custom: "Custom",
 } as const;
 
-// Where Stripe sends the Admin back to (convex/billing.ts), and what to say.
+// Where Polar sends the Admin back to (convex/billing.ts), and what to say.
 const returns = {
   subscribed: "subscribed",
   "topped-up": "toppedUp",
 } as const;
 
-/** Opens a Stripe page (Checkout or the Customer Portal) from a Convex action. */
-function useStripeRedirect() {
+/** Opens a Polar page (Checkout or the Customer Portal) from a Convex action. */
+function useBillingRedirect() {
   const t = useTranslations("appSettings.billing");
   const [busy, setBusy] = useState<string | null>(null);
   async function go(what: string, url: () => Promise<string>) {
@@ -51,11 +51,11 @@ export function PagesCard({ organisationSlug }: { organisationSlug: string }) {
   const usage = useQuery(api.pages.usage, { organisationSlug });
   const portal = useAction(api.billing.portal);
   const topUp = useAction(api.billing.topUp);
-  const { busy, go } = useStripeRedirect();
+  const { busy, go } = useBillingRedirect();
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
-  // `?billing=…`: open the plan chooser, or say how a Stripe page went. Once.
+  // `?billing=…`: open the plan chooser, or say how a Polar page went. Once.
   const outcome = searchParams.get("billing");
   const [choosing, setChoosing] = useState(outcome === "plans");
   useEffect(() => {
@@ -90,7 +90,7 @@ export function PagesCard({ organisationSlug }: { organisationSlug: string }) {
                 {tb("topUp")}
               </Button>
             )}
-            {usage.hasStripeCustomer && (
+            {usage.hasBillingCustomer && (
               <Button
                 size="sm"
                 variant={usage.subscription ? "default" : "outline"}
