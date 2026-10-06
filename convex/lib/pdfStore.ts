@@ -12,6 +12,11 @@ export const pdfStore = {
     return (await r2.generateUploadUrl(key)).url;
   },
 
+  /** Stores bytes the server received itself (the public API), under `key`. */
+  async store(ctx: ActionCtx, key: string, bytes: Uint8Array): Promise<void> {
+    await r2.store(ctx, bytes, { key, type: "application/pdf" });
+  },
+
   /** The stored bytes, or `null` if nothing was uploaded under `key`. */
   async read(key: string): Promise<Uint8Array | null> {
     const response = await fetch(await r2.getUrl(key));

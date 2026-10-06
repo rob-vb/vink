@@ -27,6 +27,12 @@ import { documentState } from "./schema";
 // is never split.
 const MAX_PAGES = 20;
 
+// checkPdf's refusals. The app translates them by this exact text
+// (lib/server-errors.ts); the public API maps them to its codes.
+export const NOT_A_PDF = "This file isn't a PDF Vink can read.";
+export const tooManyPages = (pages: number) =>
+  `This PDF has ${pages} pages. Vink reads up to ${MAX_PAGES} pages per Document.`;
+
 /** Step 1 of an upload: where the browser PUTs the PDF. */
 export const generateUploadUrl = orgMutation({
   args: {},
@@ -56,11 +62,15 @@ export async function checkUpload(
   organisationId: Id<"organisations">,
   key: string,
 ) {
-  // The key must be one issued to this Organisation by generateUploadUrl.
+  checkIssued(organisationId, key);
+  return await checkPdf(ctx, key);
+}
+
+/** The key must be one issued to this Organisation by generateUploadUrl. */
+function checkIssued(organisationId: Id<"organisations">, key: string) {
   if (!key.startsWith(`${organisationId}/`)) {
     throw new ConvexError("Forbidden");
   }
-  return await checkPdf(ctx, key);
 }
 
 /**
@@ -75,12 +85,10 @@ export async function checkPdf(ctx: ActionCtx, key: string) {
   }
   try {
     const pdf = await PDFDocument.load(bytes, { ignoreEncryption: true }).catch(() => {
-      throw new ConvexError("This file isn't a PDF Vink can read.");
+      throw new ConvexError(NOT_A_PDF);
     });
     if (pdf.getPageCount() > MAX_PAGES) {
-      throw new ConvexError(
-        `This PDF has ${pdf.getPageCount()} pages. Vink reads up to ${MAX_PAGES} pages per Document.`,
-      );
+      throw new ConvexError(tooManyPages(pdf.getPageCount()));
     }
     return pdf.getPageCount();
   } catch (error) {
@@ -94,24 +102,44 @@ export async function checkPdf(ctx: ActionCtx, key: string) {
 export const create = orgAction({
   args: { formId: v.id("forms"), key: v.string(), filename: v.string() },
   handler: async (ctx, { formId, key, filename }) => {
-    const pageCount = await checkUpload(ctx, ctx.organisationId, key);
+    checkIssued(ctx.organisationId, key);
     const identity = (await ctx.auth.getUserIdentity())!;
-    try {
-      await ctx.runMutation(internal.documents.insert, {
-        organisationId: ctx.organisationId,
-        formId,
-        key,
-        filename,
-        pageCount,
-        uploadedBy: ctx.userId,
-        uploaderEmail: identity.email?.toLowerCase() ?? "",
-      });
-    } catch (error) {
-      await pdfStore.remove(ctx, key);
-      throw error;
-    }
+    await acceptPdf(ctx, {
+      organisationId: ctx.organisationId,
+      formId,
+      key,
+      filename,
+      uploadedBy: ctx.userId,
+      uploaderEmail: identity.email?.toLowerCase() ?? "",
+    });
   },
 });
+
+/**
+ * The one way a stored PDF becomes a Document of a Form, for every way in
+ * (upload, Intake Address, public API): checkPdf, then charge its Pages and
+ * create the Document in one transaction. A refused PDF creates nothing,
+ * charges nothing and is removed from storage; the refusal is thrown.
+ */
+export async function acceptPdf(
+  ctx: ActionCtx,
+  document: {
+    organisationId: Id<"organisations">;
+    formId: Id<"forms">;
+    key: string;
+    filename: string;
+    uploadedBy: string;
+    uploaderEmail: string;
+  },
+): Promise<Id<"documents">> {
+  const pageCount = await checkPdf(ctx, document.key);
+  try {
+    return await ctx.runMutation(internal.documents.insert, { ...document, pageCount });
+  } catch (error) {
+    await pdfStore.remove(ctx, document.key);
+    throw error;
+  }
+}
 
 export const insert = internalMutation({
   args: {
@@ -125,7 +153,7 @@ export const insert = internalMutation({
   },
   handler: async (ctx, args) => {
     await chargePages(ctx, args.organisationId, args.pageCount);
-    await createDocument(ctx, args);
+    return await createDocument(ctx, args);
   },
 });
 
