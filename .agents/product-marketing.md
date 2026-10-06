@@ -59,7 +59,7 @@ Source of the decisions: [Positioning and messaging](../.scratch/vink-marketing/
 | Where does our data go? | Stored in the EU, deleted 30 days after sending, full subprocessor list. |
 | Do I need to set up templates? | No. Describe your fields, or let Vink propose them from one example. After that, Vink matches every new document to your fields by itself, whatever the layout. |
 
-**Anti-persona (internal, not on the site):** needs photo or other non-PDF intake, PDFs over 20 pages, an upload API, ready-made Exact/AFAS connectors, or fully autonomous processing without any human check. On the site only the hard limit appears: "PDF attachments, up to 20 pages each" (Home intake line, Pricing FAQ). Email intake is live since 2026-10-01, so it is no longer a reason to say no.
+**Anti-persona (internal, not on the site):** needs photo or other non-PDF intake, PDFs over 20 pages, ready-made Exact/AFAS connectors, or fully autonomous processing without any human check. On the site only the hard limit appears: "PDF attachments, up to 20 pages each" (Home intake line, Pricing FAQ). Email intake is live since 2026-10-01, so it is no longer a reason to say no. A public API (send Documents in, read results after Approval) and standard integrations (Zapier, Make, Google Sheets, Excel, Power Automate) were decided on 2026-10-06, see `.scratch/integrations/spec.md`; the site names an integration only once it works.
 
 ## Switching Dynamics
 **Push:** retyping is slow and error-prone; template tools break.

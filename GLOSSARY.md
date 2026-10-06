@@ -97,8 +97,20 @@ _Avoid_: declined, archived, deleted
 The JSON built from a Document's Field Values, keyed by the Form's Fields.
 
 **Integration**:
-An external endpoint that receives a Payload by HTTP POST. It belongs to the Organisation and can be attached to several Forms.
+A destination outside Vink that receives Payloads after Approval. Its kind says how: a Webhook posts the Payload to an endpoint; a spreadsheet kind (Google Sheets, Excel) writes it into a sheet. It belongs to the Organisation and can be attached to several Forms.
 _Avoid_: koppeling, connector
+
+**Webhook**:
+The Integration kind that sends a Payload by HTTP POST to an external endpoint, signed so the receiver can check it came from Vink. Zapier, Make, n8n and Power Automate can receive it. A Webhook is made by an Admin, or by a Subscription.
+_Avoid_: callback, hook
+
+**API Key**:
+A named secret an Admin makes for the Organisation, so a program can use Vink without a user: send in Documents, read a Document's state and, after Approval, its Payload, and manage Subscriptions. It is shown once, and an Admin can revoke one key without touching the others.
+_Avoid_: token, access key
+
+**Subscription**:
+A request from an automation platform (Zapier, Make), made with an API Key, to hear about Approvals of one Form. It creates a Webhook attached to that Form; ending the Subscription removes that Webhook.
+_Avoid_: hook, trigger registration
 
 **Delivery**:
 One attempt-series to send one Document's Payload to one Integration. It is pending, retrying, delivered or failed, and a failed Delivery can be sent again by hand. A test-send is not a Delivery.
@@ -109,14 +121,14 @@ _Avoid_: webhook call, send
 - An **Extraction** writes one **Reading** per **Document**; **Match** and **Fill** turn it into **Field Values** for the Document's **Form Version**
 - An **Organisation** owns its **Forms**, **Integrations** and **Documents**; users reach them only through a **Membership**
 - An **Organisation** has at most one **Plan**; without one it runs on its **Free Pages**, if it got any
-- A **Document** is processed against exactly one **Form**, chosen by the user at upload or by the **Intake Address** it was sent to
+- A **Document** is processed against exactly one **Form**, chosen by the user at upload, by the **Intake Address** it was sent to, or in the API request that sent it in
 - A **Form** has at most one **Intake Address**
 - A **Form** has many **Fields**; each **Document** yields one **Field Value** per **Field** (per sub-Field per entry for a **List Field**)
 - A **Field Value** below the Form's **Review Threshold** is **Needs Review**. So is a required Field without a value, and a value that doesn't fit its Field's type.
 - **Auto-Send** approves a **Document** only when none of its **Field Values** is **Needs Review**
 - A **Form Proposal** is made from one sample's **Reading** and becomes a **Form Version** when an Admin saves it
 - A **Document** belongs to exactly one **Form Version**. Editing a Form creates a new version and leaves existing Documents alone.
-- A **Payload** reaches an **Integration** only after **Approval**
+- A **Payload** reaches an **Integration** only after **Approval**; through an **API Key** too, a Document's Payload can be read only after Approval
 - An **Integration** is attached to one or more **Forms**; a **Form** can have several **Integrations**
 - **Approval** of a **Document** creates one **Delivery** per **Integration** attached to its **Form**
 - Before **Approval**, a user can move a **Document** to another **Form** (it takes that Form's current **Form Version**, and **Match** and **Fill** run again on its **Reading**) or mark it **Rejected**; after **Approval**, neither is possible
