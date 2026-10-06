@@ -1,9 +1,18 @@
 import { custom, formatEuro, formatNumber, FREE_PAGES, plans } from "@/lib/plans";
+import { platforms, type Platform } from "@/lib/platforms";
 import { localeUrl } from "@/lib/seo";
 
 // A small English fact sheet for AI assistants (ticket 14). Built once at
 // build time from the same plan data as the Pricing page.
 export const dynamic = "force-static";
+
+// What each platform needs on its own side to receive the Webhook.
+const platformPlan: Record<Platform["id"], string> = {
+  make: "works on Make's free plan (Webhooks app, Custom webhook trigger)",
+  n8n: "free when self-hosted, n8n Cloud is paid (Webhook node)",
+  zapier: "needs a paid Zapier plan (Webhooks by Zapier, Catch Hook trigger)",
+  "power-automate": "needs a Premium licence (When an HTTP request is received trigger)",
+};
 
 export function GET() {
   const price = (amount: number) => formatEuro(amount, "en");
@@ -19,6 +28,14 @@ export function GET() {
     "- Review: every value shows what was read and on which page; values below the Review Threshold are flagged Needs Review. Auto-Send is off by default.",
     "- Data: stored in the EU; deleted 30 days after sending by default (configurable 1 to 365 days). Subprocessors include two in the United States (TypeSafe, Resend); payments go through Stripe, also in the United States.",
     "- No templates: describe your Fields, or let Vink propose them from one example.",
+    "",
+    "## Integrations",
+    "",
+    "Approved Documents go out as a signed JSON POST (the Webhook) to any HTTPS endpoint attached to their Form. These automation platforms receive it today, each with a step-by-step guide on the Developers page:",
+    "",
+    ...platforms.map(
+      (p) => `- [${p.name}, via webhook](${localeUrl("en", "/developers")}#${p.id}): ${platformPlan[p.id]}.`,
+    ),
     "",
     "## Pricing (EUR, excl. VAT)",
     "",
@@ -37,6 +54,8 @@ export function GET() {
     `- [Features](${localeUrl("en", "/features")})`,
     `- [Pricing](${localeUrl("en", "/pricing")})`,
     `- [Developers: Payload, signature, retries](${localeUrl("en", "/developers")})`,
+    `- [Guides: Make, n8n, Zapier and Power Automate via webhook](${localeUrl("en", "/developers")}#platforms)`,
+    `- [API reference](${localeUrl("en", "/developers/api")})`,
     `- [Terms, data and subprocessors](${localeUrl("en", "/terms")})`,
     `- [Contact](${localeUrl("en", "/contact")})`,
     `- [Dutch site](${localeUrl("nl", "/")})`,

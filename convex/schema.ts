@@ -509,6 +509,21 @@ export default defineSchema({
     .index("by_ipHash", ["ipHash"])
     .index("by_lastAt", ["lastAt"]),
 
+  // A named secret for the public API (/v1). Only its SHA-256 hash is kept;
+  // revoking deletes the row, so the key stops at once (see apiKeys.ts).
+  apiKeys: defineTable({
+    organisationId: v.id("organisations"),
+    name: v.string(),
+    keyHash: v.string(),
+    // The key's last 4 characters, to tell keys apart in the list.
+    last4: v.string(),
+    createdBy: v.string(),
+    // Coarse: written at most once an hour (see publicApi/auth.ts).
+    lastUsedAt: v.optional(v.number()),
+  })
+    .index("by_keyHash", ["keyHash"])
+    .index("by_organisationId", ["organisationId"]),
+
   // How many Documents an Organisation has in each state, for the list's tabs.
   // Kept in step by every state change, so the tabs never scan Documents.
   documentCounts: defineTable({

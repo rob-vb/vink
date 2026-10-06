@@ -24,7 +24,7 @@ export function languageAlternates(path: string) {
 
 const ogLocale = { en: "en_GB", nl: "nl_NL" } as const;
 
-type Namespace = "home" | "features" | "pricing" | "developers" | "contact" | "legal";
+type Namespace = "home" | "features" | "pricing" | "developers" | "developersApi" | "contact" | "legal";
 
 /**
  * Every marketing page's metadata: localized title and description from the
