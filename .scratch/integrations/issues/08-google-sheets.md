@@ -34,3 +34,11 @@ Open checks (need real accounts or a person with access):
 2. Set `GOOGLE_OAUTH_CLIENT_ID` and `GOOGLE_OAUTH_CLIENT_SECRET` on the Convex deployments (dev and prod). `SITE_URL` must be the public origin, because it makes the redirect URI.
 3. On prod, connect a real Google account, then check the sheet, its header row and its "Vink" tab. Do a test-send, then a real Approval of a Form with a List, and check the rows.
 4. Revoke Vink's access in the Google account, then check that the Delivery fails with "Access expired". The Reconnect itself is ticket 09.
+
+**2026-10-06 (review fixes, `int/13-review-fixes`):**
+- A Field keyed `document`, `approved_at`, `approved_by` or `delivery_id` is now headed `<key> (Field)`, so it can't overwrite Vink's columns, and the duplicate check always reads Vink's own `delivery_id` (`lib/rows.ts`). Chosen over reserving the keys in the Form editor: existing Forms may have such keys, and the fix in the row builder covers them all.
+- Sends to one spreadsheet Integration go one at a time: two parallel Deliveries each read the header and each added a new Field's column (a lease `writing` on the Integration, `integrations.claimWriting/releaseWriting`, `lib/accounts.ts` `sendAlone`; ends by itself after 2 minutes). A Delivery that finds it held tries again in 5-10 s without counting an attempt; a test-send says "Vink is writing to this Integration right now. Try again in a moment." (NL + EN). Chosen over re-reading the header before adding: that narrows the gap but rows can still land under the wrong columns.
+- `google.read` returns the grid's `columnCount`; `append` takes it instead of fetching the tab's properties again.
+- Removing a Sheets Integration no longer revokes at Google (see 09).
+- Proof: `convex/lib/rows.test.ts`, `convex/googleSheets.test.ts` (busy test-send), `convex/lib/google.test.ts` (append is one request). The fakes have an `afterRead` hook for "another send meanwhile".
+- Known flaky (not new): "an Approval adds a row per tyre change…" matches `approved_at` against `/^2026-10-06T09:/`; on a loaded machine the workpool's fake timers can pass 10:00 and it fails.
