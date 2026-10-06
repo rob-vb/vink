@@ -17,6 +17,11 @@ export function kindOf(integration: Integration): IntegrationKind {
   return integration.kind ?? "webhook";
 }
 
+/** Whether it is a Webhook (whatever other kinds there are). */
+export function isWebhook(integration: Integration): integration is Extract<Integration, { kind?: "webhook" }> {
+  return kindOf(integration) === "webhook";
+}
+
 export type Envelope = ReturnType<typeof envelopeOf>;
 
 /** How one send settles a Delivery attempt. */

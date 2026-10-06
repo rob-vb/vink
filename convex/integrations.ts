@@ -14,7 +14,7 @@ import { failOpenDeliveries } from "./deliveries";
 import { accountProviderOf, refreshTokenKeeper, sendAlone } from "./lib/accounts";
 import { documentPayload } from "./lib/documentPayload";
 import { orgAction, orgMutation, orgQuery } from "./lib/functions";
-import { kindOf, sendTo } from "./lib/integrationAdapters";
+import { isWebhook, sendTo } from "./lib/integrationAdapters";
 import { signState } from "./lib/oauthState";
 import { dummyPayload, envelopeOf } from "./lib/payload";
 import { decryptSecret, encryptSecret, masked } from "./lib/secrets";
@@ -38,9 +38,7 @@ async function ownWebhook(
   integrationId: Id<"integrations">,
 ) {
   const integration = await ownIntegration(ctx, organisationId, integrationId);
-  if (integration.kind === "google_sheets" || integration.kind === "excel") {
-    throw new ConvexError("This Integration isn't a Webhook");
-  }
+  if (!isWebhook(integration)) throw new ConvexError("This Integration isn't a Webhook");
   return integration;
 }
 
@@ -113,24 +111,24 @@ export const list = orgQuery({
           needsReconnect: "needsReconnect" in integration && integration.needsReconnect === true,
         };
         // Where it sends to: a Webhook's endpoint, or the link to a sheet or workbook.
+        if (isWebhook(integration)) {
+          return {
+            ...common,
+            kind: "webhook" as const,
+            url: integration.url,
+            headers: await Promise.all(
+              integration.headers.map(async (h) => ({
+                name: h.name,
+                secret: h.secret,
+                value: h.secret ? masked(await decryptSecret(h.value)) : h.value,
+              })),
+            ),
+          };
+        }
         if (integration.kind === "google_sheets") {
           return { ...common, kind: integration.kind, url: integration.spreadsheetUrl, headers: [] };
         }
-        if (integration.kind === "excel") {
-          return { ...common, kind: integration.kind, url: integration.workbookUrl, headers: [] };
-        }
-        return {
-          ...common,
-          kind: kindOf(integration) as "webhook",
-          url: integration.url,
-          headers: await Promise.all(
-            integration.headers.map(async (h) => ({
-              name: h.name,
-              secret: h.secret,
-              value: h.secret ? masked(await decryptSecret(h.value)) : h.value,
-            })),
-          ),
-        };
+        return { ...common, kind: integration.kind, url: integration.workbookUrl, headers: [] };
       }),
     );
   },
