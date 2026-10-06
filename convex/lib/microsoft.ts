@@ -12,7 +12,7 @@
 // itself (a tenant can still ask for it). A SharePoint site would need
 // `Sites.ReadWrite.All`, which always needs an admin, so Vink uses OneDrive.
 import { ConvexError } from "convex/values";
-import type { Cell } from "./rows";
+import { type Cell, columnLetter } from "./rows";
 
 const LOGIN_URL = "https://login.microsoftonline.com/organizations";
 const GRAPH_URL = "https://graph.microsoft.com/v1.0";
@@ -183,15 +183,6 @@ function cellValue(value: Cell) {
   if (value === null) return "";
   if (typeof value === "string") return value === "" ? "" : `'${value}`;
   return value;
-}
-
-/** `A`, …, `Z`, `AA`, … for a 0-based column index. */
-function columnLetter(index: number) {
-  let letters = "";
-  for (let n = index + 1; n > 0; n = Math.floor((n - 1) / 26)) {
-    letters = String.fromCharCode(65 + ((n - 1) % 26)) + letters;
-  }
-  return letters;
 }
 
 /** A OneDrive file name: no characters OneDrive refuses, and not empty. */

@@ -6,6 +6,7 @@
 import { ConvexError, v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import { internalMutation, internalQuery, type MutationCtx } from "./_generated/server";
+import { getVersion } from "./forms";
 import { createWebhook, dummyEnvelope, removeIntegration } from "./integrations";
 import { envelopeSchema } from "./lib/payload";
 
@@ -102,10 +103,6 @@ export const schema = internalQuery({
     const formId = ctx.db.normalizeId("forms", givenFormId);
     const form = formId && (await ctx.db.get(formId));
     if (!form || form.organisationId !== organisationId) return null;
-    const formVersion = (await ctx.db
-      .query("formVersions")
-      .withIndex("by_formId_and_number", (q) => q.eq("formId", form._id).eq("number", form.version))
-      .unique())!;
-    return envelopeSchema(formVersion.fields);
+    return envelopeSchema((await getVersion(ctx, form._id, form.version)).fields);
   },
 });

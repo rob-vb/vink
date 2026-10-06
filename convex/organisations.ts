@@ -1,7 +1,13 @@
 import { ConvexError, v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
-import { internalMutation } from "./_generated/server";
+import { internalMutation, internalQuery } from "./_generated/server";
 import { orgMutation, orgQuery, userQuery } from "./lib/functions";
+
+/** The Organisation's slug, for an action that signs an OAuth state with it. */
+export const slugOf = internalQuery({
+  args: { organisationId: v.id("organisations") },
+  handler: async (ctx, { organisationId }) => (await ctx.db.get(organisationId))!.slug,
+});
 
 export const home = orgQuery({
   args: {},

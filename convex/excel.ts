@@ -9,7 +9,7 @@
 import { ConvexError, v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
-import { internalMutation, internalQuery } from "./_generated/server";
+import { internalMutation } from "./_generated/server";
 import { reconnect } from "./integrations";
 import { microsoftAccount } from "./lib/accounts";
 import { orgAction, orgQuery } from "./lib/functions";
@@ -24,7 +24,7 @@ export const connectUrl = orgAction({
   args: { name: v.string() },
   handler: async (ctx, { name }) => {
     if (name.trim() === "") throw new ConvexError("An Integration needs a name");
-    const organisation = await ctx.runQuery(internal.excel.slugOf, { organisationId: ctx.organisationId });
+    const organisation = await ctx.runQuery(internal.organisations.slugOf, { organisationId: ctx.organisationId });
     const state = await signState(organisation, {
       organisationId: ctx.organisationId,
       userId: ctx.userId,
@@ -32,11 +32,6 @@ export const connectUrl = orgAction({
     });
     return { url: microsoftAccount.consentUrl(state) };
   },
-});
-
-export const slugOf = internalQuery({
-  args: { organisationId: v.id("organisations") },
-  handler: async (ctx, { organisationId }) => (await ctx.db.get(organisationId))!.slug,
 });
 
 /** The page where a company's IT admin consents to Vink for everyone; null when Excel isn't set up here. */

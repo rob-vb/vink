@@ -4,7 +4,7 @@
 // test.setup.ts). Needs GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET
 // on the deployment.
 import { ConvexError } from "convex/values";
-import type { Cell } from "./rows";
+import { type Cell, columnLetter } from "./rows";
 
 export const DRIVE_FILE_SCOPE = "https://www.googleapis.com/auth/drive.file";
 
@@ -137,15 +137,6 @@ function cellData(value: Cell) {
   if (typeof value === "number") return { userEnteredValue: { numberValue: value } };
   if (typeof value === "boolean") return { userEnteredValue: { boolValue: value } };
   return { userEnteredValue: { stringValue: value } };
-}
-
-/** `A`, …, `Z`, `AA`, … for a 0-based column index. */
-function columnLetter(index: number) {
-  let letters = "";
-  for (let n = index + 1; n > 0; n = Math.floor((n - 1) / 26)) {
-    letters = String.fromCharCode(65 + ((n - 1) % 26)) + letters;
-  }
-  return letters;
 }
 
 type SheetProperties = { sheetId: number; title: string; gridProperties?: { columnCount?: number } };
