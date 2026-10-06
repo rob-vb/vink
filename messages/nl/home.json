@@ -8,10 +8,8 @@
     "alt": "Vink. Document. Vink. Klaar. Geen PDF's meer overtikken."
   },
   "hero": {
-    "document": "Document.",
-    "vink": "Vink.",
-    "done": "Klaar.",
-    "subtitle": "Laat je team geen PDF's meer overtikken. Vink leest facturen, pakbonnen en werkbonnen, ook handgeschreven, en zet de gegevens in je systeem. Je team controleert alleen wat Vink niet zeker weet.",
+    "title": "Niemand hoeft meer PDF's over te tikken.",
+    "subtitle": "Vink leest facturen, pakbonnen en werkbonnen, ook handgeschreven, en zet de gegevens in je systeem. Je team controleert alleen wat Vink niet zeker weet.",
     "watch": "Bekijk 30 seconden",
     "screenLabel": "Het controlescherm van Vink met één waarde die gecontroleerd moet worden"
   },
