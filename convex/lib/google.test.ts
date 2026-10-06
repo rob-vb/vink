@@ -48,7 +48,7 @@ test("an old-style 403 rate limit counts as a 429; another 403 doesn't", async (
   });
 });
 
-test("reading finds the tab by its id and the column under its header", async () => {
+test("reading finds the tab by its id, its width and the column under its header", async () => {
   answers = [
     tabs(),
     Response.json({ values: [["document", "approved_at", "approved_by", "delivery_id"]] }),
@@ -57,16 +57,20 @@ test("reading finds the tab by its id and the column under its header", async ()
   expect(await google.read("t", sheet, "delivery_id")).toEqual({
     header: ["document", "approved_at", "approved_by", "delivery_id"],
     column: ["dlv_1", null, "dlv_2"],
+    columnCount: 5,
   });
   expect(decodeURIComponent(sent[1].url)).toContain("/values/'Tyre''s log'!1:1");
   expect(decodeURIComponent(sent[2].url)).toContain("/values/'Tyre''s log'!D2:D");
 });
 
-test("appending widens the grid for new columns and writes values, never formulas", async () => {
-  answers = [tabs(), Response.json({})];
-  await google.append("t", sheet, { from: 4, cells: ["license_plate", "vin"] }, [["=HYPERLINK(1)", 3, true, null]]);
-  const { requests } = JSON.parse(sent[1].body!);
-  expect(sent[1].url).toBe("https://sheets.googleapis.com/v4/spreadsheets/abc:batchUpdate");
+test("appending widens the grid for new columns and writes values, never formulas, in one request", async () => {
+  answers = [Response.json({})];
+  await google.append("t", sheet, { from: 4, cells: ["license_plate", "vin"], columnCount: 5 }, [
+    ["=HYPERLINK(1)", 3, true, null],
+  ]);
+  expect(sent).toHaveLength(1);
+  const { requests } = JSON.parse(sent[0].body!);
+  expect(sent[0].url).toBe("https://sheets.googleapis.com/v4/spreadsheets/abc:batchUpdate");
   expect(requests).toEqual([
     { appendDimension: { sheetId: 7, dimension: "COLUMNS", length: 1 } },
     {

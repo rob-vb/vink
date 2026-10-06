@@ -42,17 +42,25 @@ export type GoogleClient = {
   canOpen(accessToken: string, spreadsheetId: string): Promise<boolean>;
   /** Makes a spreadsheet with one tab, its header row filled in and frozen. */
   createSheet(accessToken: string, title: string, header: string[]): Promise<SheetRef & { url: string }>;
-  /** Row 1, and every value below it in the column headed `column` (none if there is no such column). */
-  read(accessToken: string, sheet: SheetRef, column: string): Promise<{ header: string[]; column: Cell[] }>;
   /**
-   * In one request: writes `added` into row 1 from column `from` on, and
+   * Row 1, every value below it in the column headed `column` (none if there
+   * is no such column), and how many columns the tab's grid has.
+   */
+  read(
+    accessToken: string,
+    sheet: SheetRef,
+    column: string,
+  ): Promise<{ header: string[]; column: Cell[]; columnCount: number }>;
+  /**
+   * In one request: writes `added` into row 1 from column `from` on (widening
+   * the grid of `columnCount` columns, as `read` gave it, if need be), and
    * appends `rows` below the last row with data. Values are stored as they
    * are, never read as formulas.
    */
   append(
     accessToken: string,
     sheet: SheetRef,
-    added: { from: number; cells: string[] },
+    added: { from: number; cells: string[]; columnCount: number },
     rows: Cell[][],
   ): Promise<void>;
 };
@@ -224,19 +232,20 @@ export const google: GoogleClient = {
   },
 
   async read(token, sheet, column) {
-    const { title } = await propertiesOf(token, sheet);
+    const { title, gridProperties } = await propertiesOf(token, sheet);
+    const columnCount = gridProperties?.columnCount ?? 0;
     const header = ((await values(token, sheet, title, "1:1"))[0] ?? []).map((c) => (c === null ? "" : String(c)));
     const index = header.indexOf(column);
-    if (index === -1) return { header, column: [] };
+    if (index === -1) return { header, column: [], columnCount };
     const letter = columnLetter(index);
-    return { header, column: (await values(token, sheet, title, `${letter}2:${letter}`)).map((row) => row[0] ?? null) };
+    const cells = (await values(token, sheet, title, `${letter}2:${letter}`)).map((row) => row[0] ?? null);
+    return { header, column: cells, columnCount };
   },
 
   async append(token, sheet, added, rows) {
     const requests: unknown[] = [];
     if (added.cells.length > 0) {
-      const { gridProperties } = await propertiesOf(token, sheet);
-      const missing = added.from + added.cells.length - (gridProperties?.columnCount ?? 0);
+      const missing = added.from + added.cells.length - added.columnCount;
       if (missing > 0) {
         requests.push({ appendDimension: { sheetId: sheet.sheetId, dimension: "COLUMNS", length: missing } });
       }

@@ -423,7 +423,8 @@ export const fakeGoogle = {
     const { rows } = fakeGoogle.sheets.get(sheet.spreadsheetId)!;
     const header = (rows[0] ?? []).map((c) => String(c ?? ""));
     const index = header.indexOf(column);
-    const read = { header, column: index === -1 ? [] : rows.slice(1).map((r) => r[index] ?? null) };
+    const columnCount = Math.max(26, header.length);
+    const read = { header, column: index === -1 ? [] : rows.slice(1).map((r) => r[index] ?? null), columnCount };
     const meanwhile = fakeGoogle.afterRead;
     fakeGoogle.afterRead = null;
     await meanwhile?.();
@@ -432,7 +433,7 @@ export const fakeGoogle = {
   async append(
     token: string,
     sheet: { spreadsheetId: string },
-    added: { from: number; cells: string[] },
+    added: { from: number; cells: string[]; columnCount: number },
     rows: FilledValue[][],
   ) {
     await fakeGoogle.next(token);
