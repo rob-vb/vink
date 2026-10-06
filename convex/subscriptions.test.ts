@@ -283,6 +283,62 @@ test("the sample is the test-send's example envelope for the Form's current Vers
   expect((await call("/forms/nonsense/sample")).status).toBe(404);
 });
 
+test("the schema describes the envelope for the Form's current Version, Fields by their labels", async () => {
+  const t = newBackend();
+  const { user, organisationSlug, formId, call } = await organisation(t, "ann", "Acme Fleet");
+  await user.mutation(api.forms.save, {
+    organisationSlug,
+    formId,
+    name: "Work order",
+    fields: [
+      ...workOrderFields,
+      { type: "choice", label: "Soort", key: "kind", required: false, options: [{ value: "repair" }, { value: "service" }] },
+      { type: "date", label: "Datum", key: "date", required: false },
+      { type: "boolean", label: "Klaar", key: "done", required: false },
+    ],
+  });
+
+  const response = await call(`/forms/${formId}/schema`);
+
+  expect(response.status).toBe(200);
+  const { schema } = await response.json();
+  expect(schema.type).toBe("object");
+  expect(Object.keys(schema.properties).sort()).toEqual(
+    Object.keys(openApiDocument.components.schemas.Envelope.properties!).sort(),
+  );
+  expect(schema.properties.document.properties.filename).toMatchObject({ type: "string" });
+  expect(schema.properties.approval.properties.by).toMatchObject({ type: "string", "x-nullable": true });
+  expect(schema.properties.data).toEqual({
+    type: "object",
+    "x-ms-summary": "Data",
+    properties: {
+      license_plate: { type: "string", title: "Kenteken", "x-ms-summary": "Kenteken", "x-nullable": true },
+      lines: {
+        type: "array",
+        title: "Regels",
+        "x-ms-summary": "Regels",
+        items: {
+          type: "object",
+          properties: {
+            description: { type: "string", title: "Omschrijving", "x-ms-summary": "Omschrijving", "x-nullable": true },
+            quantity: { type: "number", title: "Aantal", "x-ms-summary": "Aantal", "x-nullable": true },
+          },
+        },
+      },
+      kind: {
+        type: "string",
+        enum: ["repair", "service"],
+        title: "Soort",
+        "x-ms-summary": "Soort",
+        "x-nullable": true,
+      },
+      date: { type: "string", format: "date", title: "Datum", "x-ms-summary": "Datum", "x-nullable": true },
+      done: { type: "boolean", title: "Klaar", "x-ms-summary": "Klaar", "x-nullable": true },
+    },
+  });
+  expect((await call("/forms/nonsense/schema")).status).toBe(404);
+});
+
 test("an Approval reaches the subscribed url as a signed Delivery, like any Webhook", async () => {
   const t = newBackend();
   const { user, organisationSlug, formId, subscribe } = await organisation(t, "ann", "Acme Fleet");

@@ -1,6 +1,6 @@
 // Subscriptions for automation platforms (Zapier, Make, Power Automate):
-// subscribe to a Form's Approvals, unsubscribe, and a sample envelope to show
-// the Form's fields before the first real Approval. See ../subscriptions.ts.
+// subscribe to a Form's Approvals, unsubscribe, and a sample envelope (and its
+// JSON Schema) to show the Form's fields before the first real Approval. See ../subscriptions.ts.
 import { internal } from "../_generated/api";
 import { apiError, apiJson } from "./respond";
 import { type ApiRoute, route } from "./router";
@@ -55,5 +55,13 @@ export const subscriptionsRoutes: ApiRoute[] = [
     });
     if (envelope === null) return apiError(404, "not_found", "There's no Form with that id in your Organisation.");
     return apiJson(envelope);
+  }),
+  route("GET", "/v1/forms/{form_id}/schema", async (ctx, _request, { caller, params }) => {
+    const schema = await ctx.runQuery(internal.subscriptions.schema, {
+      organisationId: caller.organisationId,
+      formId: params.form_id,
+    });
+    if (schema === null) return apiError(404, "not_found", "There's no Form with that id in your Organisation.");
+    return apiJson({ schema });
   }),
 ];
