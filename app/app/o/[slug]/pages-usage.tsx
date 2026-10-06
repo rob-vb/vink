@@ -3,23 +3,26 @@
 import { useQuery } from "convex/react";
 import { TriangleAlert } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import Link from "next/link";
 import { Alert, AlertAction, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { api } from "@/convex/_generated/api";
-import { routing } from "@/i18n/routing";
 
-// Until online billing exists, a Plan is arranged through the marketing
-// site's Contact page, in the app's language: outside the app's root layout,
-// so a full page load.
-function upgradeUrl(locale: string) {
-  return locale === routing.defaultLocale ? "/contact" : `/${locale}/contact`;
-}
-
-export function UpgradeButton({ size = "sm" }: { size?: "sm" | "default" }) {
+/** For Admins: to the Plans on the Settings page, which opens the plan chooser. */
+export function UpgradeButton({
+  organisationSlug,
+  size = "sm",
+}: {
+  organisationSlug: string;
+  size?: "sm" | "default";
+}) {
   const t = useTranslations("app.pages");
-  const locale = useLocale();
   return (
-    <Button size={size} nativeButton={false} render={<a href={upgradeUrl(locale)} />}>
+    <Button
+      size={size}
+      nativeButton={false}
+      render={<Link href={`/app/o/${organisationSlug}/settings?billing=plans`} />}
+    >
       {t("upgrade")}
     </Button>
   );
@@ -64,7 +67,7 @@ export function PagesWarning({ organisationSlug }: { organisationSlug: string })
         {usage.resetsAt !== null && t("resetsOn", { date: formatResetDate(usage.resetsAt, locale) })}
       </AlertDescription>
       <AlertAction>
-        <UpgradeButton />
+        <UpgradeButton organisationSlug={organisationSlug} />
       </AlertAction>
     </Alert>
   );

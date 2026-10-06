@@ -5,7 +5,7 @@ import type { ConvexError } from "convex/values";
 import { CircleCheck, FileUp, Upload, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { useState, type DragEvent, type FormEvent } from "react";
+import { useState, type DragEvent, type FormEvent, type ReactNode } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -73,9 +73,11 @@ function put(url: string, file: File, onProgress: (fraction: number) => void) {
 export function UploadDialog({
   organisationSlug,
   forms,
+  isAdmin,
 }: {
   organisationSlug: string;
   forms: Form[];
+  isAdmin: boolean;
 }) {
   const t = useTranslations("appDocuments");
   const errorText = useErrorText();
@@ -251,6 +253,7 @@ export function UploadDialog({
                     <FileRow
                       key={item.id}
                       item={item}
+                      upgrade={isAdmin && <UpgradeButton organisationSlug={organisationSlug} />}
                       disabled={uploading}
                       onRemove={() =>
                         setItems((current) => current.filter((i) => i.id !== item.id))
@@ -280,10 +283,13 @@ export function UploadDialog({
 
 function FileRow({
   item,
+  upgrade,
   disabled,
   onRemove,
 }: {
   item: Item;
+  /** For Admins, next to an out-of-Pages refusal. */
+  upgrade: ReactNode;
   disabled: boolean;
   onRemove: () => void;
 }) {
@@ -317,7 +323,7 @@ function FileRow({
           <p role="alert" className="text-destructive">
             {item.error}
           </p>
-          {item.outOfPages && <UpgradeButton />}
+          {item.outOfPages && upgrade}
         </div>
       )}
     </li>

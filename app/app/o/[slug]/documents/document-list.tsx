@@ -96,7 +96,7 @@ export function DocumentList({
               </Badge>
             </Button>
             <EmailInDialog organisationSlug={organisationSlug} forms={forms} isAdmin={isAdmin} />
-            <UploadDialog organisationSlug={organisationSlug} forms={forms} />
+            <UploadDialog organisationSlug={organisationSlug} forms={forms} isAdmin={isAdmin} />
           </>
         }
       />
