@@ -1,7 +1,8 @@
 // A spreadsheet Integration (Google Sheets, Excel) writes as the account an
-// Admin connected with OAuth. Reconnecting it (integrations.reconnect) and
-// taking its access back when it is removed work the same for every kind;
-// this is what each provider gives for that.
+// Admin connected with OAuth. Reconnecting it (integrations.reconnect) works
+// the same for every kind; this is what each provider gives for that. When
+// it is removed its token is deleted; the grant at the provider is left
+// alone (integrations.removeIntegration says why).
 import { internal } from "../_generated/api";
 import type { ActionCtx } from "../_generated/server";
 import { DRIVE_FILE_SCOPE, google, googleConsentUrl } from "./google";
@@ -18,8 +19,6 @@ export type AccountProvider = {
   exchangeCode(code: string): Promise<string | null>;
   /** Whether the account of `refreshToken` can open the Integration's spreadsheet. */
   canReach(refreshToken: string, integration: Integration): Promise<boolean>;
-  /** Takes Vink's access back at the provider. Throws when it didn't answer. */
-  revoke(refreshToken: string): Promise<void>;
 };
 
 /** Where Google sends the Admin back to; must be listed on the OAuth client. */
@@ -36,9 +35,6 @@ export const googleAccount: AccountProvider = {
   async canReach(refreshToken, integration) {
     if (integration.kind !== "google_sheets") return false;
     return await google.canOpen(await google.accessToken(refreshToken), integration.spreadsheetId);
-  },
-  async revoke(refreshToken) {
-    await google.revoke(refreshToken);
   },
 };
 
@@ -60,10 +56,6 @@ export const microsoftAccount: AccountProvider = {
     const { accessToken } = await microsoft.accessToken(refreshToken);
     return await microsoft.canOpen(accessToken, integration);
   },
-  // Microsoft has no way to take back one app's refresh token: the token is
-  // deleted with the Integration, and the account can remove Vink from its
-  // apps (myapps.microsoft.com, or its IT admin in Entra).
-  async revoke() {},
 };
 
 const providers: { [K in AccountKind]: AccountProvider } = {

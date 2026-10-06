@@ -359,9 +359,6 @@ type GoogleAnswer = { status: number | null; retryAfter?: string } | "ok";
 export const fakeGoogle = {
   sheets: new Map<string, { title: string; rows: FilledValue[][]; owner: string }>(),
   revoked: new Set<string>(),
-  // Tokens Vink asked Google to revoke, in order; `revokeFails` makes Google not answer.
-  revokeCalls: [] as string[],
-  revokeFails: false,
   // The scopes the next consent grants.
   scopes: ["https://www.googleapis.com/auth/drive.file"],
   script: [] as GoogleAnswer[],
@@ -372,8 +369,6 @@ export const fakeGoogle = {
     fakeGoogle.afterRead = null;
     fakeGoogle.sheets.clear();
     fakeGoogle.revoked.clear();
-    fakeGoogle.revokeCalls = [];
-    fakeGoogle.revokeFails = false;
     fakeGoogle.scopes = ["https://www.googleapis.com/auth/drive.file"];
     fakeGoogle.script = [];
     fakeGoogle.redirectUris = [];
@@ -405,14 +400,6 @@ export const fakeGoogle = {
     const refreshToken = `refresh-${code.slice(5)}`;
     fakeGoogle.revoked.delete(refreshToken);
     return { refreshToken, scopes: fakeGoogle.scopes };
-  },
-  async revoke(token: string) {
-    fakeGoogle.revokeCalls.push(token);
-    if (fakeGoogle.revokeFails) {
-      const { GoogleFailure } = await import("./lib/google");
-      throw new GoogleFailure(null, "Google couldn't be reached");
-    }
-    fakeGoogle.revoked.add(token);
   },
   async canOpen(token: string, spreadsheetId: string) {
     await fakeGoogle.next(token);

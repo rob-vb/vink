@@ -5,14 +5,13 @@ import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import {
   type ActionCtx,
-  internalAction,
   internalMutation,
   internalQuery,
   type MutationCtx,
   type QueryCtx,
 } from "./_generated/server";
 import { failOpenDeliveries } from "./deliveries";
-import { accountProviderFor, accountProviderOf, refreshTokenKeeper, sendAlone } from "./lib/accounts";
+import { accountProviderOf, refreshTokenKeeper, sendAlone } from "./lib/accounts";
 import { documentPayload } from "./lib/documentPayload";
 import { orgAction, orgMutation, orgQuery } from "./lib/functions";
 import { kindOf, sendTo } from "./lib/integrationAdapters";
@@ -202,9 +201,13 @@ export const update = orgMutation({
   },
 });
 
-/** Also ends the Subscription that made it, if any, and revokes a connected account's access. */
+/**
+ * Also ends the Subscription that made it, if any. A connected account's
+ * token is deleted with it, but its grant at the provider is left alone:
+ * Google's revoke ends the account's whole grant to Vink, which the same
+ * account's Integrations in other Organisations still use.
+ */
 export async function removeIntegration(ctx: MutationCtx, integrationId: Id<"integrations">) {
-  const integration = (await ctx.db.get(integrationId))!;
   const links = await ctx.db
     .query("formIntegrations")
     .withIndex("by_integrationId", (q) => q.eq("integrationId", integrationId))
@@ -217,38 +220,7 @@ export async function removeIntegration(ctx: MutationCtx, integrationId: Id<"int
   if (subscription !== null) await ctx.db.delete(subscription._id);
   await failOpenDeliveries(ctx, integrationId);
   await ctx.db.delete(integrationId);
-  if ("refreshToken" in integration && !(await hasOtherOfKind(ctx, integration))) {
-    await ctx.scheduler.runAfter(0, internal.integrations.revokeAccess, {
-      kind: kindOf(integration),
-      refreshToken: integration.refreshToken,
-    });
-  }
 }
-
-/**
- * Whether the Organisation has another Integration of the same kind. A revoke
- * ends the account's whole grant to Vink, and that Integration may use the
- * same account (Vink can't tell accounts apart), so its access is kept then.
- */
-async function hasOtherOfKind(ctx: QueryCtx, integration: Doc<"integrations">) {
-  const others = await ctx.db
-    .query("integrations")
-    .withIndex("by_organisationId", (q) => q.eq("organisationId", integration.organisationId))
-    .take(100);
-  return others.some((o) => o._id !== integration._id && kindOf(o) === kindOf(integration));
-}
-
-/** Best-effort: the Integration is already gone, whether or not the provider answers. */
-export const revokeAccess = internalAction({
-  args: { kind: v.string(), refreshToken: v.string() },
-  handler: async (_ctx, { kind, refreshToken }) => {
-    try {
-      await accountProviderFor(kind)?.revoke(await decryptSecret(refreshToken));
-    } catch (error) {
-      console.warn(`Revoking a removed ${kind} Integration's access didn't work`, error);
-    }
-  },
-});
 
 /** Renames an Integration of any kind; the rest of a Webhook is changed with `update`. */
 export const rename = orgMutation({
