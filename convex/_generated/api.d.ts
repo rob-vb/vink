@@ -35,6 +35,7 @@ import type * as lib_clientIp from "../lib/clientIp.js";
 import type * as lib_confidence from "../lib/confidence.js";
 import type * as lib_documentPayload from "../lib/documentPayload.js";
 import type * as lib_documentStates from "../lib/documentStates.js";
+import type * as lib_excelAdapter from "../lib/excelAdapter.js";
 import type * as lib_extract from "../lib/extract.js";
 import type * as lib_fieldKeys from "../lib/fieldKeys.js";
 import type * as lib_fieldTypes from "../lib/fieldTypes.js";
@@ -126,6 +127,7 @@ declare const fullApi: ApiFromModules<{
   "lib/confidence": typeof lib_confidence;
   "lib/documentPayload": typeof lib_documentPayload;
   "lib/documentStates": typeof lib_documentStates;
+  "lib/excelAdapter": typeof lib_excelAdapter;
   "lib/extract": typeof lib_extract;
   "lib/fieldKeys": typeof lib_fieldKeys;
   "lib/fieldTypes": typeof lib_fieldTypes;
