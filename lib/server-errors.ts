@@ -64,6 +64,10 @@ const dutch: Record<string, string> = {
   "Only a failed Delivery can be sent again": "Alleen een mislukte Levering kan opnieuw worden verstuurd",
   "Integration removed: this Delivery can't be sent again":
     "Koppeling verwijderd: deze Levering kan niet opnieuw worden verstuurd",
+
+  // API Keys
+  "An API Key needs a name": "Een API-sleutel heeft een naam nodig",
+  "API Key not found": "API-sleutel niet gevonden",
 };
 
 // What a corrected value must be (convex/review.ts `expectedType`).

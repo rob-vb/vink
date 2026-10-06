@@ -13,6 +13,7 @@ export const marketingNamespaces = [
   "demo",
   "pricing",
   "developers",
+  "developersApi",
   "security",
   "contact",
   "legal",

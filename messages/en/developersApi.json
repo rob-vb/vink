@@ -1,0 +1,56 @@
+{
+  "meta": {
+    "title": "API reference",
+    "description": "Vink's REST API: authenticate with an API Key, list Forms and their Fields, and handle errors. Generated from the OpenAPI 3.1 document."
+  },
+  "header": {
+    "eyebrow": "API reference",
+    "title": "The Vink API",
+    "subtitle": "Let your own program or automation platform talk to Vink. Everything on this page comes from the same OpenAPI document the API serves."
+  },
+  "toc": {
+    "label": "On this page",
+    "overview": "Overview",
+    "auth": "Authentication",
+    "errors": "Errors",
+    "objects": "Objects"
+  },
+  "overview": {
+    "title": "Overview",
+    "base": "Every endpoint lives under one base URL. The version is in the path: <code>/v1</code>.",
+    "json": "Requests and answers are JSON, and every key is snake_case, the same as in the webhook Payload. Ids are strings.",
+    "versioning": "Within <code>/v1</code> we only add: new endpoints, new optional parameters and new keys in answers. Ignore keys you don't know. Anything that would break your code gets a new version.",
+    "openapi": "Download the <link>OpenAPI 3.1 document</link> to generate a client or import it into a tool."
+  },
+  "auth": {
+    "title": "Authentication",
+    "keys": "Send an API Key with every request. An Admin makes one under <b>Organisation settings → API Keys</b> in the app, gives it a name and sees it once. A key belongs to one Organisation and only reaches that Organisation's data.",
+    "secret": "Treat a key like a password: keep it on your server, never in a browser or app. A missing, unknown or revoked key gets <code>401</code>. Revoking one key leaves your other keys working."
+  },
+  "errors": {
+    "title": "Errors",
+    "intro": "A failed request gets a 4xx or 5xx status and the same JSON body. Branch on <code>code</code>; <code>message</code> is for people and may change.",
+    "code": "Code",
+    "meaning": "Meaning"
+  },
+  "endpoint": {
+    "parameters": "Parameters",
+    "requestBody": "Request body",
+    "responses": "Responses",
+    "request": "Request",
+    "example": "Example answer",
+    "name": "Name",
+    "type": "Type",
+    "required": "required",
+    "description": "Description",
+    "status": "Status"
+  },
+  "objects": {
+    "title": "Objects",
+    "intro": "The objects the endpoints return."
+  },
+  "code": {
+    "copy": "Copy",
+    "copied": "Copied"
+  }
+}

@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/convex/_generated/api";
 import { useErrorText } from "../../../error-text";
+import { ApiKeysCard } from "./api-keys-card";
 import { PagesCard } from "./pages-card";
 
 function Settings({
@@ -98,11 +99,13 @@ function Settings({
           </div>
         </CardContent>
       </Card>
+
+      <ApiKeysCard organisationSlug={organisationSlug} />
     </div>
   );
 }
 
-/** Organisation settings: its name, and how long Document data is kept. */
+/** Organisation settings: its name, how long Document data is kept, and API Keys. */
 export function OrganisationSettings({ organisationSlug }: { organisationSlug: string }) {
   const t = useTranslations("appSettings");
   const settings = useQuery(api.organisations.settings, { organisationSlug });

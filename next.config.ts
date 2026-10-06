@@ -29,9 +29,13 @@ const securityHeaders = [
 ];
 
 const OG_IMAGE = "(?:.*/)?opengraph-image";
-// Paths that never get the /nl rewrite: the product, the API, Next internals,
+// Paths that never get the /nl rewrite: the product, the APIs, Next internals,
 // locale-prefixed paths and files (anything with a dot, like /robots.txt).
-const NOT_MARKETING = "(?:app|api|_next|en|nl)(?:/|$)|.*\\..*";
+const NOT_MARKETING = "(?:app|api|v1|_next|en|nl)(?:/|$)|.*\\..*";
+
+// The public API lives in Convex's HTTP router (convex/publicApi/); vink.page/v1
+// passes it through.
+const CONVEX_SITE_URL = process.env.NEXT_PUBLIC_CONVEX_SITE_URL;
 
 const nextConfig: NextConfig = {
   // The smoke test builds into its own folder so it never touches the build prod serves.
@@ -43,6 +47,10 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     globalNotFound: true,
+    // Next buffers a request body up to this size and silently cuts the rest,
+    // also when it proxies /v1 to Convex. A PDF sent to the API may be up to
+    // 20 MB (Convex's HTTP limit); nginx allows 32 MB.
+    proxyClientMaxBodySize: "25mb",
   },
   async headers() {
     return [
@@ -78,6 +86,7 @@ const nextConfig: NextConfig = {
     // the prerendered /nl tree. No browser-language detection anywhere.
     return {
       beforeFiles: [
+        ...(CONVEX_SITE_URL ? [{ source: "/v1/:path*", destination: `${CONVEX_SITE_URL}/v1/:path*` }] : []),
         { source: "/", destination: "/nl" },
         { source: `/:path((?!${NOT_MARKETING}).+)`, destination: "/nl/:path" },
       ],
