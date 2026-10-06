@@ -4,9 +4,11 @@ import { api } from "@/convex/_generated/api";
 import { fetchAuthAction, isAuthenticated } from "@/lib/auth-server";
 
 // Google sends the Admin back here after the consent page of a new Google
-// Sheets Integration (convex/googleSheets.ts). Finishes the connection as the
-// signed-in Admin, then returns to the Integrations page with `?google=`
-// connected · no_access (the drive.file box wasn't ticked) · denied · failed.
+// Sheets Integration, or of a Reconnect (convex/googleSheets.ts). Finishes the
+// connection as the signed-in Admin, then returns to the Integrations page
+// with `?google=` connected · reconnected · no_access (the drive.file box
+// wasn't ticked) · no_sheet_access (a Reconnect with an account that can't
+// reach the sheet) · denied · failed.
 export async function GET(request: NextRequest) {
   const params = request.nextUrl.searchParams;
   const state = params.get("state") ?? "";

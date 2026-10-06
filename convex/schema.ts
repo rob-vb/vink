@@ -396,6 +396,9 @@ export default defineSchema({
         // The tab Vink writes to; its id survives a rename.
         sheetId: v.number(),
         spreadsheetUrl: v.string(),
+        // The connected account no longer lets Vink in (a Delivery failed with
+        // access expired): an Admin must reconnect. Cleared by a Reconnect.
+        needsReconnect: v.optional(v.boolean()),
       }),
     ),
   ).index("by_organisationId", ["organisationId"]),

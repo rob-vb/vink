@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery } from "convex/react";
-import { Copy, ExternalLink, Eye, Pencil, Plug, Plus, Trash2, X } from "lucide-react";
+import { Copy, ExternalLink, Eye, Pencil, Plug, Plus, Trash2, TriangleAlert, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -19,6 +19,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { DeliveryRow, ResendButton } from "@/components/deliveries/delivery-log";
+import { Alert, AlertAction, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -42,6 +43,7 @@ import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { useErrorText } from "../../../error-text";
 import { IntegrationDialog } from "./integration-dialog";
+import { ReconnectButton } from "./reconnect-button";
 import { TestSendButton } from "./test-send";
 
 function SigningSecret({
@@ -120,7 +122,9 @@ function RecentDeliveries({
 // How connecting a Google account went (`?google=…`, from app/api/integrations/google/callback).
 const googleOutcomes = {
   connected: "googleConnected",
+  reconnected: "googleReconnected",
   no_access: "googleNoAccess",
+  no_sheet_access: "googleNoSheetAccess",
   denied: "googleDenied",
   failed: "googleFailed",
 } as const;
@@ -134,7 +138,7 @@ function useGoogleOutcome() {
   const outcome = searchParams.get("google");
   useEffect(() => {
     if (outcome === null) return;
-    if (outcome === "connected") toast.success(t("googleConnected"));
+    if (outcome === "connected" || outcome === "reconnected") toast.success(t(googleOutcomes[outcome]));
     else if (outcome in googleOutcomes) toast.error(t(googleOutcomes[outcome as keyof typeof googleOutcomes]));
     router.replace(pathname, { scroll: false });
   }, [outcome, pathname, router, t]);
@@ -202,6 +206,7 @@ export function IntegrationsList({ organisationSlug }: { organisationSlug: strin
                   {integration.kind === "google_sheets" ? (
                     <CardDescription className="flex flex-wrap items-center gap-2">
                       <Badge variant="outline">{t("googleSheets")}</Badge>
+                      {integration.needsReconnect && <Badge variant="destructive">{t("needsReconnect")}</Badge>}
                       <a
                         href={integration.url}
                         target="_blank"
@@ -260,6 +265,20 @@ export function IntegrationsList({ organisationSlug }: { organisationSlug: strin
                   </CardAction>
                 </CardHeader>
                 <CardContent className="flex flex-col gap-4 text-sm">
+                  {integration.needsReconnect && (
+                    <Alert variant="destructive">
+                      <TriangleAlert />
+                      <AlertTitle>{t("needsReconnect")}</AlertTitle>
+                      <AlertDescription>{t("needsReconnectText")}</AlertDescription>
+                      <AlertAction>
+                        <ReconnectButton
+                          organisationSlug={organisationSlug}
+                          integrationId={integration.id}
+                          label={t("reconnect")}
+                        />
+                      </AlertAction>
+                    </Alert>
+                  )}
                   {integration.headers.length > 0 && (
                     <dl className="grid gap-1">
                       {integration.headers.map((h) => (

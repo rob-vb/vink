@@ -3,11 +3,20 @@
 import { ConvexError, v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
-import { internalMutation, internalQuery, type MutationCtx, type QueryCtx } from "./_generated/server";
+import {
+  type ActionCtx,
+  internalAction,
+  internalMutation,
+  internalQuery,
+  type MutationCtx,
+  type QueryCtx,
+} from "./_generated/server";
 import { failOpenDeliveries } from "./deliveries";
+import { accountProviderFor, accountProviderOf } from "./lib/accounts";
 import { documentPayload } from "./lib/documentPayload";
 import { orgAction, orgMutation, orgQuery } from "./lib/functions";
 import { kindOf, sendTo } from "./lib/integrationAdapters";
+import { signState } from "./lib/oauthState";
 import { dummyPayload, envelopeOf } from "./lib/payload";
 import { decryptSecret, encryptSecret, masked } from "./lib/secrets";
 import { newSigningSecret, SIGNATURE_HEADER } from "./lib/signing";
@@ -99,6 +108,8 @@ export const list = orgQuery({
           name: integration.name,
           forms: forms.flatMap((f) => (f ? [{ id: f._id, name: f.name }] : [])),
           subscription: await subscriptionOf(ctx, integration._id),
+          // Its connected account no longer lets Vink in; only a spreadsheet kind can.
+          needsReconnect: "needsReconnect" in integration && integration.needsReconnect === true,
         };
         // Where it sends to: a Webhook's endpoint, or the link to a sheet.
         if (integration.kind === "google_sheets") {
@@ -186,8 +197,9 @@ export const update = orgMutation({
   },
 });
 
-/** Also ends the Subscription that made it, if any. */
+/** Also ends the Subscription that made it, if any, and revokes a connected account's access. */
 export async function removeIntegration(ctx: MutationCtx, integrationId: Id<"integrations">) {
+  const integration = (await ctx.db.get(integrationId))!;
   const links = await ctx.db
     .query("formIntegrations")
     .withIndex("by_integrationId", (q) => q.eq("integrationId", integrationId))
@@ -200,7 +212,38 @@ export async function removeIntegration(ctx: MutationCtx, integrationId: Id<"int
   if (subscription !== null) await ctx.db.delete(subscription._id);
   await failOpenDeliveries(ctx, integrationId);
   await ctx.db.delete(integrationId);
+  if ("refreshToken" in integration && !(await hasOtherOfKind(ctx, integration))) {
+    await ctx.scheduler.runAfter(0, internal.integrations.revokeAccess, {
+      kind: kindOf(integration),
+      refreshToken: integration.refreshToken,
+    });
+  }
 }
+
+/**
+ * Whether the Organisation has another Integration of the same kind. A revoke
+ * ends the account's whole grant to Vink, and that Integration may use the
+ * same account (Vink can't tell accounts apart), so its access is kept then.
+ */
+async function hasOtherOfKind(ctx: QueryCtx, integration: Doc<"integrations">) {
+  const others = await ctx.db
+    .query("integrations")
+    .withIndex("by_organisationId", (q) => q.eq("organisationId", integration.organisationId))
+    .take(100);
+  return others.some((o) => o._id !== integration._id && kindOf(o) === kindOf(integration));
+}
+
+/** Best-effort: the Integration is already gone, whether or not the provider answers. */
+export const revokeAccess = internalAction({
+  args: { kind: v.string(), refreshToken: v.string() },
+  handler: async (_ctx, { kind, refreshToken }) => {
+    try {
+      await accountProviderFor(kind)?.revoke(await decryptSecret(refreshToken));
+    } catch (error) {
+      console.warn(`Revoking a removed ${kind} Integration's access didn't work`, error);
+    }
+  },
+});
 
 /** Renames an Integration of any kind; the rest of a Webhook is changed with `update`. */
 export const rename = orgMutation({
@@ -219,6 +262,70 @@ export const remove = orgMutation({
   handler: async (ctx, { integrationId }) => {
     await ownIntegration(ctx, ctx.organisationId, integrationId);
     await removeIntegration(ctx, integrationId);
+  },
+});
+
+/** The provider's consent page, to connect a spreadsheet Integration's account again. */
+export const reconnectUrl = orgAction({
+  role: "admin",
+  args: { integrationId: v.id("integrations") },
+  handler: async (ctx, { integrationId }): Promise<{ url: string }> => {
+    const { slug, integration } = await ctx.runQuery(internal.integrations.reconnectTarget, {
+      organisationId: ctx.organisationId,
+      integrationId,
+    });
+    const state = await signState(slug, {
+      organisationId: ctx.organisationId,
+      userId: ctx.userId,
+      name: integration.name,
+      integrationId,
+    });
+    return { url: accountProviderOf(integration)!.consentUrl(state) };
+  },
+});
+
+export const reconnectTarget = internalQuery({
+  args: { organisationId: v.id("organisations"), integrationId: v.id("integrations") },
+  handler: async (ctx, { organisationId, integrationId }) => {
+    const integration = await ownIntegration(ctx, organisationId, integrationId);
+    if (accountProviderOf(integration) === null) {
+      throw new ConvexError("This Integration has no account to reconnect");
+    }
+    return { slug: (await ctx.db.get(organisationId))!.slug, integration };
+  },
+});
+
+/**
+ * Finishes a Reconnect, from the provider's `connect` once it has checked the
+ * state. The new account must reach the same spreadsheet, which is kept.
+ * `no_sheet_access`: it can't (another account than the one that made it).
+ */
+export async function reconnect(
+  ctx: ActionCtx,
+  organisationId: Id<"organisations">,
+  integrationId: Id<"integrations">,
+  code: string,
+): Promise<{ result: "reconnected" | "no_access" | "no_sheet_access" }> {
+  const { integration } = await ctx.runQuery(internal.integrations.reconnectTarget, {
+    organisationId,
+    integrationId,
+  });
+  const provider = accountProviderOf(integration)!;
+  const refreshToken = await provider.exchangeCode(code);
+  if (refreshToken === null) return { result: "no_access" };
+  // Not revoked when it can't: that account may be the one of another Integration.
+  if (!(await provider.canReach(refreshToken, integration))) return { result: "no_sheet_access" };
+  await ctx.runMutation(internal.integrations.reconnected, {
+    integrationId,
+    refreshToken: await encryptSecret(refreshToken),
+  });
+  return { result: "reconnected" };
+}
+
+export const reconnected = internalMutation({
+  args: { integrationId: v.id("integrations"), refreshToken: v.string() },
+  handler: async (ctx, { integrationId, refreshToken }) => {
+    await ctx.db.patch(integrationId, { refreshToken, needsReconnect: undefined });
   },
 });
 

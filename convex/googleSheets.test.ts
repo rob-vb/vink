@@ -374,3 +374,130 @@ test("a Google Sheets Integration can be renamed, but has no endpoint or signing
     "This Integration isn't a Webhook",
   );
 });
+
+test("access expired marks the Integration as needing reconnecting; other failures don't", async () => {
+  const t = newBackend();
+  const ann = await connected(t);
+  const listed = async () => (await ann.user.query(api.integrations.list, { organisationSlug: ann.organisationSlug }))[0];
+  fakeGoogle.answer({ status: 403 });
+  await approve(t, ann);
+  expect((await listed()).needsReconnect).toBe(false);
+
+  fakeGoogle.revoked.add("refresh-ann");
+  await approve(t, ann);
+  expect((await listed()).needsReconnect).toBe(true);
+});
+
+/** Ann clicks Reconnect, signs in on Google's page as `code`'s account, and comes back. */
+async function reconnect(ann: Awaited<ReturnType<typeof connected>>, code: string) {
+  const { organisationSlug, integrationId } = ann;
+  const { url } = await ann.user.action(api.integrations.reconnectUrl, { organisationSlug, integrationId });
+  const consent = new URL(url);
+  expect(consent.searchParams.get("redirect_uri")).toBe("https://vink.page/api/integrations/google/callback");
+  const state = consent.searchParams.get("state")!;
+  return await ann.user.action(api.googleSheets.connect, { organisationSlug, state, code });
+}
+
+test("after Reconnect, a re-send writes to the same sheet and skips rows already there", async () => {
+  const t = newBackend();
+  const ann = await connected(t);
+  // The rows land, the answer gets lost, and then the account takes Vink's access back.
+  const append = fakeGoogle.append;
+  fakeGoogle.append = async (...args) => {
+    fakeGoogle.append = append;
+    await append(...args);
+    fakeGoogle.revoked.add("refresh-ann");
+    const { GoogleFailure } = await import("./lib/google");
+    throw new GoogleFailure(null, "Google didn't answer within 15 s");
+  };
+  const first = await approve(t, ann);
+  const second = await approve(t, ann);
+  expect((await deliveryOf(t, ann, first)).failureReason).toBe(ACCESS_EXPIRED);
+  expect((await deliveryOf(t, ann, second)).failureReason).toBe(ACCESS_EXPIRED);
+
+  expect(await reconnect(ann, "code-ann")).toEqual({ result: "reconnected" });
+  const [listed] = await ann.user.query(api.integrations.list, { organisationSlug: ann.organisationSlug });
+  expect(listed).toMatchObject({ needsReconnect: false, url: "https://docs.google.com/spreadsheets/d/sheet1/edit" });
+
+  for (const documentId of [first, second]) {
+    const failed = await deliveryOf(t, ann, documentId);
+    await ann.user.mutation(api.deliveries.resend, { organisationSlug: ann.organisationSlug, id: failed.id });
+  }
+  await t.finishAllScheduledFunctions(vi.runAllTimers);
+  expect((await deliveryOf(t, ann, first)).attempts.at(-1)?.body).toBe("Already in the sheet: no rows added");
+  expect((await deliveryOf(t, ann, second)).attempts.at(-1)?.body).toBe("2 rows added to the sheet");
+  expect(fakeGoogle.onlySheet().rows).toHaveLength(4);
+});
+
+test("Reconnect with a Google account that can't reach the sheet is refused and changes nothing", async () => {
+  const t = newBackend();
+  const ann = await connected(t);
+  fakeGoogle.revoked.add("refresh-ann");
+  await approve(t, ann);
+
+  expect(await reconnect(ann, "code-bob")).toEqual({ result: "no_sheet_access" });
+  const [listed] = await ann.user.query(api.integrations.list, { organisationSlug: ann.organisationSlug });
+  expect(listed.needsReconnect).toBe(true);
+  const stored = await t.run(async (ctx) => await ctx.db.get(ann.integrationId));
+  if (stored?.kind !== "google_sheets") throw new Error("not a Google Sheets Integration");
+  expect(await decryptSecret(stored.refreshToken)).toBe("refresh-ann");
+  expect(fakeGoogle.sheets.size).toBe(1);
+});
+
+test("Reconnect without the Drive box ticked, or of another Organisation's Integration, does nothing", async () => {
+  const t = newBackend();
+  const ann = await connected(t);
+  fakeGoogle.scopes = [];
+  expect(await reconnect(ann, "code-ann")).toEqual({ result: "no_access" });
+
+  const bob = await signUp(t, "bob", "Bob Transport");
+  await expect(
+    bob.user.action(api.integrations.reconnectUrl, { organisationSlug: bob.slug, integrationId: ann.integrationId }),
+  ).rejects.toThrow("Integration not found");
+});
+
+test("a Webhook has no account to reconnect", async () => {
+  const t = newBackend();
+  const ann = await signUp(t, "ann", "Acme Fleet");
+  const { integrationId } = await ann.user.mutation(api.integrations.create, {
+    organisationSlug: ann.slug,
+    name: "Hook",
+    url: "https://example.com/hook",
+    headers: [],
+  });
+  await expect(ann.user.action(api.integrations.reconnectUrl, { organisationSlug: ann.slug, integrationId })).rejects.toThrow(
+    "This Integration has no account to reconnect",
+  );
+  expect((await ann.user.query(api.integrations.list, { organisationSlug: ann.slug }))[0].needsReconnect).toBe(false);
+});
+
+test("removing a Google Sheets Integration revokes its access at Google, even if Google doesn't answer", async () => {
+  const t = newBackend();
+  const ann = await connected(t);
+  await ann.user.mutation(api.integrations.remove, { organisationSlug: ann.organisationSlug, integrationId: ann.integrationId });
+  await t.finishAllScheduledFunctions(vi.runAllTimers);
+  expect(fakeGoogle.revokeCalls).toEqual(["refresh-ann"]);
+
+  const again = await connected(t);
+  fakeGoogle.revokeFails = true;
+  await again.user.mutation(api.integrations.remove, {
+    organisationSlug: again.organisationSlug,
+    integrationId: again.integrationId,
+  });
+  await t.finishAllScheduledFunctions(vi.runAllTimers);
+  expect(fakeGoogle.revokeCalls).toEqual(["refresh-ann", "refresh-ann"]);
+  expect(await again.user.query(api.integrations.list, { organisationSlug: again.organisationSlug })).toEqual([]);
+});
+
+test("removing one of two Google Sheets Integrations keeps the access the other may share", async () => {
+  const t = newBackend();
+  const ann = await connected(t);
+  const { url } = await ann.user.action(api.googleSheets.connectUrl, { organisationSlug: ann.organisationSlug, name: "Rims" });
+  const state = new URL(url).searchParams.get("state")!;
+  await ann.user.action(api.googleSheets.connect, { organisationSlug: ann.organisationSlug, state, code: "code-ann" });
+
+  await ann.user.mutation(api.integrations.remove, { organisationSlug: ann.organisationSlug, integrationId: ann.integrationId });
+  await t.finishAllScheduledFunctions(vi.runAllTimers);
+  expect(fakeGoogle.revokeCalls).toEqual([]);
+  expect(await ann.user.query(api.integrations.list, { organisationSlug: ann.organisationSlug })).toHaveLength(1);
+});

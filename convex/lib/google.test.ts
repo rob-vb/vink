@@ -94,3 +94,22 @@ test("appending widens the grid for new columns and writes values, never formula
     },
   ]);
 });
+
+test("revoking posts the token to Google's revoke endpoint", async () => {
+  await google.revoke("refresh-1");
+  expect(sent).toEqual([{ url: "https://oauth2.googleapis.com/revoke", method: "POST", body: "token=refresh-1" }]);
+});
+
+test("a spreadsheet opens with a cheap read; 403 or 404 means the account can't reach it", async () => {
+  answers = [
+    Response.json({ spreadsheetId: "abc" }),
+    Response.json({ error: { code: 404, message: "Requested entity was not found." } }, { status: 404 }),
+    Response.json({ error: { code: 403, message: "The caller does not have permission" } }, { status: 403 }),
+    new Response("", { status: 503 }),
+  ];
+  expect(await google.canOpen("t", "abc")).toBe(true);
+  expect(sent[0].url).toBe("https://sheets.googleapis.com/v4/spreadsheets/abc?fields=spreadsheetId");
+  expect(await google.canOpen("t", "abc")).toBe(false);
+  expect(await google.canOpen("t", "abc")).toBe(false);
+  await expect(google.canOpen("t", "abc")).rejects.toMatchObject({ status: 503 });
+});

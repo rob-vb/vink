@@ -34,6 +34,11 @@
   "googleNoAccess": "Vink didn't get access to make the sheet. Connect again and tick the box for Google Drive.",
   "googleDenied": "Google wasn't connected.",
   "googleFailed": "Connecting Google didn't work. Try again.",
+  "googleReconnected": "Reconnected. Re-send the failed Deliveries to add their rows.",
+  "googleNoSheetAccess": "That Google account can't reach the sheet. Reconnect with the account that made it.",
+  "needsReconnect": "Needs reconnecting",
+  "needsReconnectText": "Google no longer lets Vink write to the sheet. Reconnect with the Google account that made it, then re-send the failed Deliveries.",
+  "reconnect": "Reconnect",
   "dialog": {
     "editTitle": "Edit Integration",
     "newTitle": "New Integration",
@@ -64,7 +69,9 @@
     "connectAccess": "Vink can only open the sheet it makes, none of your other files.",
     "connectRows": "Columns are the Form's Field keys. A new Field gets a new column on the right.",
     "openSheet": "Open the sheet",
-    "connect": "Connect Google account"
+    "connect": "Connect Google account",
+    "reconnectHint": "Signs in with Google again. The sheet stays the same, so use the Google account that made it.",
+    "reconnect": "Reconnect Google account"
   },
   "test": {
     "button": "Send test",
