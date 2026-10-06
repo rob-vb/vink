@@ -64,6 +64,9 @@ const dutch: Record<string, string> = {
   "Only a failed Delivery can be sent again": "Alleen een mislukte Levering kan opnieuw worden verstuurd",
   "Integration removed: this Delivery can't be sent again":
     "Koppeling verwijderd: deze Levering kan niet opnieuw worden verstuurd",
+  "This Integration isn't a Webhook": "Deze Koppeling is geen Webhook",
+  "Google Sheets isn't set up on this deployment": "Google Sheets is hier nog niet ingesteld",
+  "This Google sign-in has expired. Try again.": "Deze aanmelding bij Google is verlopen. Probeer het opnieuw.",
 
   // API Keys
   "An API Key needs a name": "Een API-sleutel heeft een naam nodig",

@@ -41,10 +41,12 @@ const EXAMPLE = "example";
 export function TestSendButton({
   organisationSlug,
   integrationId,
+  kind,
   forms,
 }: {
   organisationSlug: string;
   integrationId: Id<"integrations">;
+  kind: "webhook" | "google_sheets";
   forms: Array<{ id: Id<"forms">; name: string }>;
 }) {
   const t = useTranslations("appIntegrations.test");
@@ -102,7 +104,9 @@ export function TestSendButton({
         <DialogHeader>
           <DialogTitle>{t("title")}</DialogTitle>
           <DialogDescription>
-            {t.rich("description", { code: (chunks) => <code className="font-mono">{chunks}</code> })}
+            {t.rich(kind === "google_sheets" ? "sheetsDescription" : "description", {
+              code: (chunks) => <code className="font-mono">{chunks}</code>,
+            })}
           </DialogDescription>
         </DialogHeader>
         <FieldGroup>

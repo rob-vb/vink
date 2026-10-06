@@ -342,3 +342,85 @@ export function expectSignedBy(secret: string, request: { headers: Record<string
   expect(v1).toBe(createHmac("sha256", secret).update(`${t}.${request.body}`).digest("hex"));
   return Number(t);
 }
+
+/**
+ * Stands in for Google (lib/google.ts): OAuth and spreadsheets in memory.
+ * A code `code-<x>` trades for refresh token `refresh-<x>`; `revoke` makes a
+ * refresh token refused. `answer` scripts failures for the next Sheets calls.
+ * Install with `vi.mock("./lib/google", …)`.
+ */
+type GoogleAnswer = { status: number | null; retryAfter?: string } | "ok";
+
+export const fakeGoogle = {
+  sheets: new Map<string, { title: string; rows: FilledValue[][] }>(),
+  revoked: new Set<string>(),
+  // The scopes the next consent grants.
+  scopes: ["https://www.googleapis.com/auth/drive.file"],
+  script: [] as GoogleAnswer[],
+  redirectUris: [] as string[],
+  reset() {
+    fakeGoogle.sheets.clear();
+    fakeGoogle.revoked.clear();
+    fakeGoogle.scopes = ["https://www.googleapis.com/auth/drive.file"];
+    fakeGoogle.script = [];
+    fakeGoogle.redirectUris = [];
+  },
+  /** The next Sheets calls (create, read, append) get these answers, in order. */
+  answer(...answers: GoogleAnswer[]) {
+    fakeGoogle.script.push(...answers);
+  },
+  /** The only sheet made so far: its header row and the rows below it. */
+  onlySheet() {
+    expect(fakeGoogle.sheets.size).toBe(1);
+    const [sheet] = fakeGoogle.sheets.values();
+    return { title: sheet.title, header: sheet.rows[0] ?? [], rows: sheet.rows.slice(1) };
+  },
+  async next(token: string) {
+    const { GoogleFailure } = await import("./lib/google");
+    if (!token.startsWith("access-")) throw new GoogleFailure(401, "Google answered 401", null, true);
+    const answer = fakeGoogle.script.shift() ?? "ok";
+    if (answer !== "ok") {
+      throw new GoogleFailure(answer.status, answer.status === null ? "Google couldn't be reached" : `Google answered ${answer.status}`, answer.retryAfter ?? null);
+    }
+  },
+  async exchangeCode(code: string, redirectUri: string) {
+    fakeGoogle.redirectUris.push(redirectUri);
+    if (!code.startsWith("code-")) {
+      const { GoogleFailure } = await import("./lib/google");
+      throw new GoogleFailure(400, "Google answered 400: invalid_grant", null, true);
+    }
+    return { refreshToken: `refresh-${code.slice(5)}`, scopes: fakeGoogle.scopes };
+  },
+  async accessToken(refreshToken: string) {
+    if (fakeGoogle.revoked.has(refreshToken)) {
+      const { GoogleFailure } = await import("./lib/google");
+      throw new GoogleFailure(400, "Google answered 400: invalid_grant", null, true);
+    }
+    return `access-${refreshToken}`;
+  },
+  async createSheet(token: string, title: string, header: string[]) {
+    await fakeGoogle.next(token);
+    const spreadsheetId = `sheet${fakeGoogle.sheets.size + 1}`;
+    fakeGoogle.sheets.set(spreadsheetId, { title, rows: [header] });
+    return { spreadsheetId, sheetId: 0, url: `https://docs.google.com/spreadsheets/d/${spreadsheetId}/edit` };
+  },
+  async read(token: string, sheet: { spreadsheetId: string }, column: string) {
+    await fakeGoogle.next(token);
+    const { rows } = fakeGoogle.sheets.get(sheet.spreadsheetId)!;
+    const header = (rows[0] ?? []).map((c) => String(c ?? ""));
+    const index = header.indexOf(column);
+    return { header, column: index === -1 ? [] : rows.slice(1).map((r) => r[index] ?? null) };
+  },
+  async append(
+    token: string,
+    sheet: { spreadsheetId: string },
+    added: { from: number; cells: string[] },
+    rows: FilledValue[][],
+  ) {
+    await fakeGoogle.next(token);
+    const stored = fakeGoogle.sheets.get(sheet.spreadsheetId)!;
+    const header = [...(stored.rows[0] ?? [])];
+    added.cells.forEach((cell, i) => (header[added.from + i] = cell));
+    stored.rows = [header, ...stored.rows.slice(1), ...rows];
+  },
+};

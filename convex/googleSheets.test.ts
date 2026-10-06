@@ -1,0 +1,376 @@
+import { afterEach, beforeEach, expect, test, vi } from "vitest";
+import { api } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
+import { ACCESS_EXPIRED } from "./lib/googleSheetsAdapter";
+import { decryptSecret } from "./lib/secrets";
+import {
+  addMembership,
+  fakeGoogle,
+  fakePdfStore,
+  fakePipeline,
+  newBackend,
+  signUp,
+  uploadAndExtract,
+  type Recording,
+} from "./test.setup";
+
+vi.mock("./lib/google", async (original) => ({
+  ...(await original<typeof import("./lib/google")>()),
+  google: (await import("./test.setup")).fakeGoogle,
+}));
+vi.mock("./lib/pdfStore", async () => ({
+  pdfStore: (await import("./test.setup")).fakePdfStore,
+}));
+vi.mock("./lib/reader", async () => ({
+  reader: (await import("./test.setup")).fakeReader,
+}));
+vi.mock("./lib/matcher", async () => ({
+  matcher: (await import("./test.setup")).fakeMatcher,
+}));
+vi.mock("./lib/filler", async () => ({
+  filler: (await import("./test.setup")).fakeFiller,
+}));
+vi.mock("./lib/verifier", async () => ({
+  verifier: (await import("./test.setup")).fakeVerifier,
+}));
+
+type Backend = ReturnType<typeof newBackend>;
+
+beforeEach(() => {
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date("2026-10-06T09:00:00Z"));
+  vi.stubEnv("INTEGRATION_SECRETS_KEY", Buffer.alloc(32, 5).toString("base64"));
+  vi.stubEnv("GOOGLE_OAUTH_CLIENT_ID", "client-123.apps.googleusercontent.com");
+  vi.stubEnv("GOOGLE_OAUTH_CLIENT_SECRET", "client-secret");
+  vi.stubEnv("SITE_URL", "https://vink.page");
+  fakePdfStore.objects.clear();
+  fakePipeline.reset();
+  fakeGoogle.reset();
+});
+
+afterEach(() => {
+  vi.useRealTimers();
+  vi.unstubAllEnvs();
+});
+
+const fields = [
+  { type: "text" as const, label: "Kenteken", key: "license_plate", required: true },
+  {
+    type: "list" as const,
+    label: "Banden",
+    key: "tyre_changes",
+    required: false,
+    fields: [
+      { type: "text" as const, label: "Positie", key: "position", required: false },
+      { type: "number" as const, label: "Profiel", key: "tread_depth_mm", required: false },
+    ],
+  },
+  {
+    type: "list" as const,
+    label: "Velgen",
+    key: "rims",
+    required: false,
+    fields: [{ type: "text" as const, label: "Maat", key: "size", required: false }],
+  },
+];
+
+// Two tyre changes, no rims; everything clears review.
+const tyreService: Recording = {
+  reading: {
+    vehicle: { license_plate: "OR18DH", _pages: [1] },
+    tyre_changes: [
+      { position: "2L1", depth: "3", _pages: [2] },
+      { position: "2R1", depth: "4", _pages: [2] },
+    ],
+  },
+  matches: { license_plate: { path: "vehicle.license_plate", probability: 0.97 } },
+  lists: {
+    tyre_changes: {
+      path: "tyre_changes",
+      probability: 0.96,
+      keys: {
+        position: { path: "position", probability: 0.99 },
+        tread_depth_mm: { path: "depth", probability: 0.95 },
+      },
+    },
+    rims: { path: null, probability: 0.92, keys: {} },
+  },
+  fills: {
+    license_plate: "OR18DH",
+    "tyre_changes[0].position": "2L1",
+    "tyre_changes[0].tread_depth_mm": 3,
+    "tyre_changes[1].position": "2R1",
+    "tyre_changes[1].tread_depth_mm": 4,
+  },
+};
+
+/** Ann, Admin of Acme Fleet, connects a Google account and gets a sheet. */
+async function connected(t: Backend) {
+  const ann = await signUp(t, "ann", "Acme Fleet");
+  const organisationSlug = ann.slug;
+  const { url } = await ann.user.action(api.googleSheets.connectUrl, { organisationSlug, name: "Tyre log" });
+  const state = new URL(url).searchParams.get("state")!;
+  expect(await ann.user.action(api.googleSheets.connect, { organisationSlug, state, code: "code-ann" })).toEqual({
+    result: "connected",
+  });
+  const [integration] = await ann.user.query(api.integrations.list, { organisationSlug });
+  const { formId } = await ann.user.mutation(api.forms.create, { organisationSlug, name: "Tyre service", fields });
+  await ann.user.mutation(api.integrations.attach, { organisationSlug, integrationId: integration.id, formId });
+  return { ...ann, organisationSlug, formId, integrationId: integration.id };
+}
+
+async function approve(t: Backend, ctx: Awaited<ReturnType<typeof connected>>) {
+  fakePipeline.replay(tyreService);
+  const documentId = (await uploadAndExtract(t, ctx.user, ctx.organisationSlug, ctx.formId, 2))!;
+  await ctx.user.mutation(api.review.approve, { organisationSlug: ctx.organisationSlug, documentId });
+  await t.finishAllScheduledFunctions(vi.runAllTimers);
+  return documentId;
+}
+
+async function deliveryOf(t: Backend, ctx: Awaited<ReturnType<typeof connected>>, documentId: Id<"documents">) {
+  const { deliveries } = await ctx.user.query(api.documents.get, {
+    organisationSlug: ctx.organisationSlug,
+    documentId,
+  });
+  expect(deliveries).toHaveLength(1);
+  return deliveries[0];
+}
+
+test("an Admin is sent to Google's consent page for the files Vink makes, with offline access", async () => {
+  const t = newBackend();
+  const ann = await signUp(t, "ann", "Acme Fleet");
+  const { url } = await ann.user.action(api.googleSheets.connectUrl, {
+    organisationSlug: ann.slug,
+    name: "Tyre log",
+  });
+  const consent = new URL(url);
+  expect(consent.origin + consent.pathname).toBe("https://accounts.google.com/o/oauth2/v2/auth");
+  expect(Object.fromEntries(consent.searchParams)).toMatchObject({
+    client_id: "client-123.apps.googleusercontent.com",
+    redirect_uri: "https://vink.page/api/integrations/google/callback",
+    scope: "https://www.googleapis.com/auth/drive.file",
+    access_type: "offline",
+    response_type: "code",
+  });
+  expect(consent.searchParams.get("state")).toMatch(new RegExp(`^${ann.slug}\\.`));
+});
+
+test("connecting makes a sheet with the header row, lists its link and stores the token encrypted", async () => {
+  const t = newBackend();
+  const ann = await connected(t);
+  expect(fakeGoogle.onlySheet()).toEqual({
+    title: "Tyre log",
+    header: ["document", "approved_at", "approved_by", "delivery_id"],
+    rows: [],
+  });
+  expect(fakeGoogle.redirectUris).toEqual(["https://vink.page/api/integrations/google/callback"]);
+  const [listed] = await ann.user.query(api.integrations.list, { organisationSlug: ann.organisationSlug });
+  expect(listed).toMatchObject({
+    name: "Tyre log",
+    kind: "google_sheets",
+    url: "https://docs.google.com/spreadsheets/d/sheet1/edit",
+    forms: [{ name: "Tyre service" }],
+  });
+  const stored = await t.run(async (ctx) => await ctx.db.get(ann.integrationId));
+  if (stored?.kind !== "google_sheets") throw new Error("not a Google Sheets Integration");
+  expect(stored.refreshToken).not.toContain("refresh-ann");
+  expect(await decryptSecret(stored.refreshToken)).toBe("refresh-ann");
+});
+
+test("a state from another Admin, another Organisation, or too long ago connects nothing", async () => {
+  const t = newBackend();
+  const ann = await signUp(t, "ann", "Acme Fleet");
+  const bob = await signUp(t, "bob", "Bob Transport");
+  await addMembership(t, "cas", ann.slug, "admin");
+  const { url } = await ann.user.action(api.googleSheets.connectUrl, { organisationSlug: ann.slug, name: "Log" });
+  const state = new URL(url).searchParams.get("state")!;
+  const expired = "This Google sign-in has expired. Try again.";
+
+  const cas = t.withIdentity({ subject: "cas", email: "cas@example.com" });
+  await expect(cas.action(api.googleSheets.connect, { organisationSlug: ann.slug, state, code: "code-x" })).rejects.toThrow(expired);
+  await expect(bob.user.action(api.googleSheets.connect, { organisationSlug: bob.slug, state, code: "code-x" })).rejects.toThrow(expired);
+  await expect(
+    ann.user.action(api.googleSheets.connect, { organisationSlug: ann.slug, state: state.replace(/.$/, "A"), code: "code-x" }),
+  ).rejects.toThrow(expired);
+  vi.advanceTimersByTime(16 * 60 * 1000);
+  await expect(ann.user.action(api.googleSheets.connect, { organisationSlug: ann.slug, state, code: "code-x" })).rejects.toThrow(expired);
+
+  expect(fakeGoogle.sheets.size).toBe(0);
+});
+
+test("a Member can't connect a Google account", async () => {
+  const t = newBackend();
+  const ann = await signUp(t, "ann", "Acme Fleet");
+  const mia = await addMembership(t, "mia", ann.slug, "member");
+  await expect(mia.action(api.googleSheets.connectUrl, { organisationSlug: ann.slug, name: "Log" })).rejects.toThrow(
+    "Forbidden",
+  );
+});
+
+test("consent without access to Vink's files connects nothing", async () => {
+  const t = newBackend();
+  const ann = await signUp(t, "ann", "Acme Fleet");
+  const { url } = await ann.user.action(api.googleSheets.connectUrl, { organisationSlug: ann.slug, name: "Log" });
+  fakeGoogle.scopes = [];
+  const state = new URL(url).searchParams.get("state")!;
+  expect(await ann.user.action(api.googleSheets.connect, { organisationSlug: ann.slug, state, code: "code-ann" })).toEqual({
+    result: "no_access",
+  });
+  expect(await ann.user.query(api.integrations.list, { organisationSlug: ann.slug })).toEqual([]);
+});
+
+test("an Approval adds a row per tyre change, the second List as an empty cell", async () => {
+  const t = newBackend();
+  const ann = await connected(t);
+  const documentId = await approve(t, ann);
+
+  const delivery = await deliveryOf(t, ann, documentId);
+  expect(delivery).toMatchObject({ state: "delivered", attempts: [{ status: 200, body: "2 rows added to the sheet" }] });
+  const sheet = fakeGoogle.onlySheet();
+  expect(sheet.header).toEqual([
+    "document",
+    "approved_at",
+    "approved_by",
+    "delivery_id",
+    "license_plate",
+    "tyre_changes.position",
+    "tyre_changes.tread_depth_mm",
+    "rims",
+  ]);
+  const document = { approved_at: expect.stringMatching(/^2026-10-06T09:/), approved_by: "ann@example.com" };
+  expect(sheet.rows).toEqual([
+    [expect.stringMatching(/\.pdf$/), document.approved_at, document.approved_by, delivery.deliveryId, "OR18DH", "2L1", 3, null],
+    [expect.stringMatching(/\.pdf$/), document.approved_at, document.approved_by, delivery.deliveryId, "OR18DH", "2R1", 4, null],
+  ]);
+});
+
+test("a Field added in a new Form Version gets a column on the right", async () => {
+  const t = newBackend();
+  const ann = await connected(t);
+  await approve(t, ann);
+  await ann.user.mutation(api.forms.save, {
+    organisationSlug: ann.organisationSlug,
+    formId: ann.formId,
+    name: "Tyre service",
+    fields: [...fields, { type: "text", label: "Werkplaats", key: "workshop", required: false }],
+  });
+  await approve(t, ann);
+
+  const sheet = fakeGoogle.onlySheet();
+  expect(sheet.header.slice(-2)).toEqual(["rims", "workshop"]);
+  expect(sheet.rows.map((r) => r.length)).toEqual([8, 8, 9, 9]);
+  expect(sheet.rows[3][8]).toBeNull();
+});
+
+test("Google's rate limits and 5xx are retried", async () => {
+  const t = newBackend();
+  const ann = await connected(t);
+  fakeGoogle.answer({ status: 429, retryAfter: "30" }, { status: 503 });
+  const documentId = await approve(t, ann);
+
+  const delivery = await deliveryOf(t, ann, documentId);
+  expect(delivery.state).toBe("delivered");
+  expect(delivery.attempts.map((a) => a.status)).toEqual([429, 503, 200]);
+  expect(fakeGoogle.onlySheet().rows).toHaveLength(2);
+});
+
+test("a write Google refuses fails the Delivery with a clear reason", async () => {
+  const t = newBackend();
+  const ann = await connected(t);
+  fakeGoogle.answer({ status: 403 });
+  const documentId = await approve(t, ann);
+
+  const delivery = await deliveryOf(t, ann, documentId);
+  expect(delivery).toMatchObject({ state: "failed", failureReason: "Google refused the write (403)" });
+  expect(delivery.attempts).toHaveLength(1);
+});
+
+test("a deleted sheet fails the Delivery at once", async () => {
+  const t = newBackend();
+  const ann = await connected(t);
+  fakeGoogle.answer({ status: 404 });
+  const documentId = await approve(t, ann);
+  expect(await deliveryOf(t, ann, documentId)).toMatchObject({
+    state: "failed",
+    failureReason: "The sheet is gone: it, or its Vink tab, was deleted",
+  });
+});
+
+test("access the Google account took back fails the Delivery at once as access expired", async () => {
+  const t = newBackend();
+  const ann = await connected(t);
+  fakeGoogle.revoked.add("refresh-ann");
+  const documentId = await approve(t, ann);
+
+  const delivery = await deliveryOf(t, ann, documentId);
+  expect(delivery).toMatchObject({ state: "failed", failureReason: ACCESS_EXPIRED });
+  expect(delivery.attempts).toHaveLength(1);
+  const notifications = await ann.user.query(api.notifications.list, { organisationSlug: ann.organisationSlug });
+  expect(notifications[0].text).toMatch(/couldn't be delivered to Tyre log$/);
+});
+
+test("rows that reached the sheet before an answer got lost aren't added again", async () => {
+  const t = newBackend();
+  const ann = await connected(t);
+  // The first write lands, but its answer never arrives.
+  const append = fakeGoogle.append;
+  fakeGoogle.append = async (...args) => {
+    fakeGoogle.append = append;
+    await append(...args);
+    const { GoogleFailure } = await import("./lib/google");
+    throw new GoogleFailure(null, "Google didn't answer within 15 s");
+  };
+  const documentId = await approve(t, ann);
+
+  const delivery = await deliveryOf(t, ann, documentId);
+  expect(delivery.state).toBe("delivered");
+  expect(delivery.attempts.map((a) => a.body ?? a.error)).toEqual([
+    "Google didn't answer within 15 s",
+    "Already in the sheet: no rows added",
+  ]);
+  expect(fakeGoogle.onlySheet().rows).toHaveLength(2);
+});
+
+test("a re-send after a failure adds the rows once", async () => {
+  const t = newBackend();
+  const ann = await connected(t);
+  fakeGoogle.answer({ status: 400 });
+  const documentId = await approve(t, ann);
+  const failed = await deliveryOf(t, ann, documentId);
+  expect(failed.state).toBe("failed");
+
+  await ann.user.mutation(api.deliveries.resend, { organisationSlug: ann.organisationSlug, id: failed.id });
+  await t.finishAllScheduledFunctions(vi.runAllTimers);
+  expect((await deliveryOf(t, ann, documentId)).state).toBe("delivered");
+  expect(fakeGoogle.onlySheet().rows).toHaveLength(2);
+});
+
+test("a test-send adds dummy rows marked as test", async () => {
+  const t = newBackend();
+  const ann = await connected(t);
+  const answer = await ann.user.action(api.integrations.testSend, {
+    organisationSlug: ann.organisationSlug,
+    integrationId: ann.integrationId,
+    formId: ann.formId,
+    mode: "examples",
+  });
+  expect(answer).toEqual({ ok: true, status: 200, body: "1 row added to the sheet", error: null });
+  const [row] = fakeGoogle.onlySheet().rows;
+  expect(row.slice(0, 3)).toEqual(["[test] example.pdf", "2026-10-06T09:00:00.000Z", null]);
+  expect(row[3]).toMatch(/^test_/);
+  expect(row.slice(4)).toEqual(["Example Kenteken", "Example Positie", 123.45, '[{"size":"Example Maat"}]']);
+});
+
+test("a Google Sheets Integration can be renamed, but has no endpoint or signing secret", async () => {
+  const t = newBackend();
+  const ann = await connected(t);
+  const { organisationSlug, integrationId } = ann;
+  await ann.user.mutation(api.integrations.rename, { organisationSlug, integrationId, name: "Banden" });
+  expect((await ann.user.query(api.integrations.list, { organisationSlug }))[0].name).toBe("Banden");
+  await expect(
+    ann.user.mutation(api.integrations.update, { organisationSlug, integrationId, name: "x", url: "https://x.example", headers: [] }),
+  ).rejects.toThrow("This Integration isn't a Webhook");
+  await expect(ann.user.query(api.integrations.signingSecret, { organisationSlug, integrationId })).rejects.toThrow(
+    "This Integration isn't a Webhook",
+  );
+});
