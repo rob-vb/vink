@@ -64,11 +64,11 @@ afterEach(() => {
 
 const invoice: Recording = {
   reading: { invoice: { number: "F-2026-118", _pages: [1] } },
-  matches: { invoiceNumber: { path: "invoice.number", probability: 0.97 } },
-  fills: { invoiceNumber: "F-2026-118" },
+  matches: { invoice_number: { path: "invoice.number", probability: 0.97 } },
+  fills: { invoice_number: "F-2026-118" },
   proposal: [
     {
-      field: { type: "text", label: "Invoice number", key: "invoiceNumber", required: false },
+      field: { type: "text", label: "Invoice number", key: "invoice_number", required: false },
       ticked: true,
     },
   ],
@@ -80,7 +80,7 @@ async function freshSignUp(t: Backend) {
   const { formId } = await ann.user.mutation(api.forms.create, {
     organisationSlug: ann.slug,
     name: "Invoice",
-    fields: [{ type: "text", label: "Invoice number", key: "invoiceNumber", required: true }],
+    fields: [{ type: "text", label: "Invoice number", key: "invoice_number", required: true }],
   });
   return { ...ann, formId };
 }
@@ -241,7 +241,7 @@ test("a Form Proposal's sample is charged, and becoming the first Document costs
     organisationSlug: slug,
     proposalId,
     name: "Invoice",
-    fields: [{ type: "text", label: "Invoice number", key: "invoiceNumber", required: true }],
+    fields: [{ type: "text", label: "Invoice number", key: "invoice_number", required: true }],
     processSample: true,
   });
   await t.finishAllScheduledFunctions(vi.runAllTimers);
@@ -277,7 +277,7 @@ test("a retry after Extraction Failed and a Change Form cost no Pages", async ()
   const { formId: otherFormId } = await user.mutation(api.forms.create, {
     organisationSlug: slug,
     name: "Delivery note",
-    fields: [{ type: "text", label: "Invoice number", key: "invoiceNumber", required: true }],
+    fields: [{ type: "text", label: "Invoice number", key: "invoice_number", required: true }],
   });
   fakePipeline.failTimes("read", 10);
   await upload(user, slug, formId, 2);

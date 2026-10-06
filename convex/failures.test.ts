@@ -41,12 +41,12 @@ afterEach(() => {
 });
 
 const workOrder: Recording = {
-  reading: { vehicle: { licensePlate: "NWA-30-E", mileage: "9899", _pages: [1] } },
+  reading: { vehicle: { license_plate: "NWA-30-E", mileage: "9899", _pages: [1] } },
   matches: {
-    licensePlate: { path: "vehicle.licensePlate", probability: 0.97 },
-    mileageKm: { path: "vehicle.mileage", probability: 0.55 },
+    license_plate: { path: "vehicle.license_plate", probability: 0.97 },
+    mileage_km: { path: "vehicle.mileage", probability: 0.55 },
   },
-  fills: { licensePlate: "NWA30E", mileageKm: 9899 },
+  fills: { license_plate: "NWA30E", mileage_km: 9899 },
 };
 
 /** Uploads a PDF and lets the Extraction run, however it ends. */
@@ -56,8 +56,8 @@ async function uploaded(t: Backend) {
     organisationSlug: ann.slug,
     name: "Work order",
     fields: [
-      { type: "text", label: "Kenteken", key: "licensePlate", required: true },
-      { type: "number", label: "Kilometerstand", key: "mileageKm", required: false },
+      { type: "text", label: "Kenteken", key: "license_plate", required: true },
+      { type: "number", label: "Kilometerstand", key: "mileage_km", required: false },
     ],
   });
   fakePipeline.replay(workOrder);
@@ -175,10 +175,10 @@ test("nobody can retry another Organisation's Extraction", async () => {
 test("a run that comes late never overwrites a user's corrections", async () => {
   const t = newBackend();
   const { user, slug, documentId, read } = await uploaded(t);
-  const mileageKm = (await read()).fieldValues.find((f) => f.key === "mileageKm")!;
+  const mileage_km = (await read()).fieldValues.find((f) => f.key === "mileage_km")!;
   await user.mutation(api.review.correct, {
     organisationSlug: slug,
-    fieldValueId: mileageKm.id,
+    fieldValueId: mileage_km.id,
     value: 9800,
   });
 
@@ -186,7 +186,7 @@ test("a run that comes late never overwrites a user's corrections", async () => 
 
   const document = await read();
   expect(document.fieldValues).toHaveLength(2);
-  expect(document.fieldValues.find((f) => f.key === "mileageKm")).toMatchObject({
+  expect(document.fieldValues.find((f) => f.key === "mileage_km")).toMatchObject({
     value: 9800,
     review: { state: "corrected" },
   });

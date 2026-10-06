@@ -42,16 +42,16 @@ afterEach(() => {
 const workOrder: Recording = {
   reading: {
     _pages: [1, 2],
-    vehicle: { licensePlate: "NWA-30-E", mileage: "9.899 km", _pages: [1] },
+    vehicle: { license_plate: "NWA-30-E", mileage: "9.899 km", _pages: [1] },
     workOrder: { number: "WO-0142", _pages: [2] },
   },
   matches: {
-    licensePlate: { path: "vehicle.licensePlate", probability: 0.97 },
-    mileageKm: { path: "vehicle.mileage", probability: 0.91 },
-    orderNumber: { path: "workOrder.number", probability: 0.88 },
-    purchaseOrderNumber: { path: null, probability: 0.93 },
+    license_plate: { path: "vehicle.license_plate", probability: 0.97 },
+    mileage_km: { path: "vehicle.mileage", probability: 0.91 },
+    order_number: { path: "workOrder.number", probability: 0.88 },
+    purchase_order_number: { path: null, probability: 0.93 },
   },
-  fills: { licensePlate: "NWA30E", mileageKm: 9899, orderNumber: "WO-0142" },
+  fills: { license_plate: "NWA30E", mileage_km: 9899, order_number: "WO-0142" },
 };
 
 async function acmeWithWorkOrderForm(t: Backend) {
@@ -60,10 +60,10 @@ async function acmeWithWorkOrderForm(t: Backend) {
     organisationSlug: ann.slug,
     name: "Work order",
     fields: [
-      { type: "text", label: "Kenteken", key: "licensePlate", required: true },
-      { type: "number", label: "Kilometerstand", key: "mileageKm", required: false },
-      { type: "text", label: "Werkorder", key: "orderNumber", required: false },
-      { type: "text", label: "Bestelbon", key: "purchaseOrderNumber", required: false },
+      { type: "text", label: "Kenteken", key: "license_plate", required: true },
+      { type: "number", label: "Kilometerstand", key: "mileage_km", required: false },
+      { type: "text", label: "Werkorder", key: "order_number", required: false },
+      { type: "text", label: "Bestelbon", key: "purchase_order_number", required: false },
     ],
   });
   return { ...ann, formId };
@@ -83,11 +83,11 @@ test("an uploaded PDF is extracted into a Field Value per Field, and its Documen
   expect(document.state).toBe("needs_review");
   expect(document.fieldValues).toMatchObject([
     {
-      key: "licensePlate",
+      key: "license_plate",
       label: "Kenteken",
       value: "NWA30E",
       readText: "NWA-30-E",
-      sourcePath: "vehicle.licensePlate",
+      sourcePath: "vehicle.license_plate",
       pages: [1],
       confidence: 0.97,
       lowestSignal: "match",
@@ -95,7 +95,7 @@ test("an uploaded PDF is extracted into a Field Value per Field, and its Documen
       reviewReasons: [],
     },
     {
-      key: "mileageKm",
+      key: "mileage_km",
       label: "Kilometerstand",
       value: 9899,
       readText: "9.899 km",
@@ -107,7 +107,7 @@ test("an uploaded PDF is extracted into a Field Value per Field, and its Documen
       reviewReasons: [],
     },
     {
-      key: "orderNumber",
+      key: "order_number",
       label: "Werkorder",
       value: "WO-0142",
       readText: "WO-0142",
@@ -119,7 +119,7 @@ test("an uploaded PDF is extracted into a Field Value per Field, and its Documen
       reviewReasons: [],
     },
     {
-      key: "purchaseOrderNumber",
+      key: "purchase_order_number",
       label: "Bestelbon",
       value: null,
       readText: null,
@@ -145,13 +145,13 @@ test("an Extraction reads, then matches the stored Reading, fills only the match
     {
       step: "match",
       reading: workOrder.reading,
-      fields: ["licensePlate", "mileageKm", "orderNumber", "purchaseOrderNumber"],
+      fields: ["license_plate", "mileage_km", "order_number", "purchase_order_number"],
       lists: [],
     },
-    { step: "fill", fields: ["licensePlate", "mileageKm", "orderNumber"] },
+    { step: "fill", fields: ["license_plate", "mileage_km", "order_number"] },
     {
       step: "verify",
-      fields: ["licensePlate", "mileageKm", "orderNumber"],
+      fields: ["license_plate", "mileage_km", "order_number"],
       supportAskedFor: [],
     },
   ]);
@@ -209,12 +209,44 @@ const fixtures = Object.keys(
   .map((path) => path.split("/")[3])
   .filter((fixture, i, all) => all.indexOf(fixture) !== i);
 
+// The fixtures were recorded when Field keys were camelCase; Field keys are
+// snake_case now (ADR 0005). Their Reading keys and paths stay as recorded.
+const snake = (key: string) => key.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`);
+const snakeKeys = <T,>(record: Record<string, T>, value: (v: T) => T = (v) => v) =>
+  Object.fromEntries(Object.entries(record).map(([k, v]) => [snake(k), value(v)]));
+/** A value id (`key`, `list[0].sub`, either with `@path`): only the part before `@` is Field keys. */
+const snakeValueId = (id: string) => {
+  const [keys, ...path] = id.split("@");
+  return [keys.replace(/[A-Za-z][A-Za-z0-9]*/g, snake), ...path].join("@");
+};
+
+function snakeRecording(recording: Recording): Recording {
+  const byValueId = <T,>(record: Record<string, T>) =>
+    Object.fromEntries(Object.entries(record).map(([k, v]) => [snakeValueId(k), v]));
+  return {
+    ...recording,
+    matches: snakeKeys(recording.matches),
+    lists: recording.lists && snakeKeys(recording.lists, (l) => ({ ...l, keys: snakeKeys(l.keys) })),
+    fills: byValueId(recording.fills),
+    verifications: recording.verifications && byValueId(recording.verifications),
+  };
+}
+
 function recordingOf(fixture: string) {
   const dir = `../fixtures/documents/${fixture}`;
   const expected = recorded(`${dir}/expected.json`) as { form: string; pages: number };
+  const extracted = recorded(`${dir}/extracted.json`) as Extracted;
   return {
-    recording: recorded(`${dir}/recording.json`) as Recording,
-    extracted: recorded(`${dir}/extracted.json`) as Extracted,
+    recording: snakeRecording(recorded(`${dir}/recording.json`) as Recording),
+    extracted: {
+      ...extracted,
+      lists: extracted.lists.map((l) => ({ ...l, key: snake(l.key) })),
+      fieldValues: extracted.fieldValues.map((v) => ({
+        ...v,
+        key: snake(v.key),
+        ...(v.list ? { list: { ...v.list, key: snake(v.list.key) } } : {}),
+      })),
+    },
     form: fixtureForms[`../fixtures/forms/${expected.form}.json`].default,
     pages: expected.pages,
   };
@@ -226,7 +258,7 @@ function fieldsOf(form: FixtureForm) {
   const flat = (f: { name: string; type: "string" | "number" | "date"; description?: string }) => ({
     type: type(f.type),
     label: f.name,
-    key: f.name,
+    key: snake(f.name),
     required: false,
     ...(f.description ? { description: f.description } : {}),
   });

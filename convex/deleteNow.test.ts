@@ -54,10 +54,10 @@ afterEach(() => {
 const invoice: Recording = {
   reading: { invoice: { number: "F-2026-118", total: "1.249,50", _pages: [1] } },
   matches: {
-    invoiceNumber: { path: "invoice.number", probability: 0.97 },
+    invoice_number: { path: "invoice.number", probability: 0.97 },
     total: { path: "invoice.total", probability: 0.4 },
   },
-  fills: { invoiceNumber: "F-2026-118", total: 1249.5 },
+  fills: { invoice_number: "F-2026-118", total: 1249.5 },
 };
 
 /** Kantoor Noord with an invoice Form sending to one Integration, and one extracted invoice. */
@@ -68,7 +68,7 @@ async function kantoorNoord(t: Backend) {
     organisationSlug,
     name: "Invoice",
     fields: [
-      { type: "text", label: "Invoice number", key: "invoiceNumber", required: true },
+      { type: "text", label: "Invoice number", key: "invoice_number", required: true },
       { type: "number", label: "Total", key: "total", required: false },
     ],
   });

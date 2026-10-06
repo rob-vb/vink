@@ -51,32 +51,32 @@ const settle = (t: Backend) => t.finishAllScheduledFunctions(vi.runAllTimers);
 const secondSupplier: Recording = {
   reading: {
     _pages: [1],
-    vehicle: { licensePlate: "OR18DH", mileage: "229546", _pages: [1] },
+    vehicle: { license_plate: "OR18DH", mileage: "229546", _pages: [1] },
     order: { purchaseOrder: "HKPB018899", _pages: [1] },
-    tyreChanges: [{ position: "6", serial: "6135366435", _pages: [1] }],
+    tyre_changes: [{ position: "6", serial: "6135366435", _pages: [1] }],
   },
   matches: {
-    licensePlate: { path: "vehicle.licensePlate", probability: 0.96 },
+    license_plate: { path: "vehicle.license_plate", probability: 0.96 },
   },
   lists: {
-    tyreChanges: {
-      path: "tyreChanges",
+    tyre_changes: {
+      path: "tyre_changes",
       probability: 0.93,
       keys: { position: { path: "position", probability: 0.97 } },
     },
   },
-  fills: { licensePlate: "OR18DH" },
+  fills: { license_plate: "OR18DH" },
   proposal: [
     {
-      field: { type: "number", label: "Km. stand", key: "mileageKm", required: false },
+      field: { type: "number", label: "Km. stand", key: "mileage_km", required: false },
       ticked: true,
     },
     {
-      field: { type: "text", label: "Bestelbon", key: "purchaseOrderNumber", required: false },
+      field: { type: "text", label: "Bestelbon", key: "purchase_order_number", required: false },
       ticked: true,
     },
     // Another plate-like Field: its key is taken on the Form, so it gets a new one.
-    { field: { type: "text", label: "Nummerplaat", key: "licensePlate", required: false }, ticked: false },
+    { field: { type: "text", label: "Nummerplaat", key: "license_plate", required: false }, ticked: false },
   ],
 };
 
@@ -87,11 +87,11 @@ async function suggested(t: Backend, recording: Recording = secondSupplier) {
     organisationSlug,
     name: "Tyre service",
     fields: [
-      { type: "text", label: "Kenteken", key: "licensePlate", required: true },
+      { type: "text", label: "Kenteken", key: "license_plate", required: true },
       {
         type: "list",
         label: "Banden",
-        key: "tyreChanges",
+        key: "tyre_changes",
         required: false,
         fields: [{ type: "text", label: "Positie", key: "position", required: false }],
       },
@@ -116,7 +116,7 @@ test("the new sample is matched against the current Form, and only the parts tha
   await suggested(t);
 
   expect(fakePipeline.calls.map((c) => c.step)).toEqual(["read", "match", "propose"]);
-  expect(fakePipeline.calls[1]).toMatchObject({ fields: ["licensePlate"], lists: ["tyreChanges"] });
+  expect(fakePipeline.calls[1]).toMatchObject({ fields: ["license_plate"], lists: ["tyre_changes"] });
   expect(fakePipeline.calls[2]).toEqual({
     step: "propose",
     reading: {
@@ -135,9 +135,9 @@ test("a Field the Form already has is never proposed again: a clashing key gets 
   expect(proposal.state).toBe("ready");
   expect(proposal.formId).not.toBeNull();
   expect(proposal.fields.map((f) => f.field.key)).toEqual([
-    "mileageKm",
-    "purchaseOrderNumber",
-    "licensePlate2",
+    "mileage_km",
+    "purchase_order_number",
+    "license_plate_2",
   ]);
 });
 
@@ -146,8 +146,8 @@ test("when the Form already places everything, nothing is proposed", async () =>
   const { read } = await suggested(t, {
     ...secondSupplier,
     reading: {
-      vehicle: { licensePlate: "OR18DH", _pages: [1] },
-      tyreChanges: [{ position: "6", _pages: [1] }],
+      vehicle: { license_plate: "OR18DH", _pages: [1] },
+      tyre_changes: [{ position: "6", _pages: [1] }],
     },
   });
 
@@ -173,10 +173,10 @@ test("saving the kept suggestions creates a new Form Version and leaves existing
   expect(version).toBe(2);
   const saved = await user.query(api.forms.get, { organisationSlug, formId });
   expect(saved.fields.map((f) => f.key)).toEqual([
-    "licensePlate",
-    "tyreChanges",
-    "mileageKm",
-    "purchaseOrderNumber",
+    "license_plate",
+    "tyre_changes",
+    "mileage_km",
+    "purchase_order_number",
   ]);
   expect(
     (await user.query(api.documents.get, { organisationSlug, documentId })).formVersion,

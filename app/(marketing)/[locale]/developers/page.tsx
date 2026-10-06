@@ -56,7 +56,7 @@ export default async function DevelopersPage({ params }: PageProps<"/[locale]/de
   const tc = await getTranslations({ locale, namespace: "common" });
   const copyLabels = { copy: t("code.copy"), copied: t("code.copied") };
 
-  const envelopeKeys = ["event", "deliveryId", "test", "document", "form", "approval", "data"] as const;
+  const envelopeKeys = ["event", "delivery_id", "test", "document", "form", "approval", "data"] as const;
 
   return (
     <main>

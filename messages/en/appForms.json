@@ -11,7 +11,7 @@
   },
   "problems": {
     "label": "Add a label.",
-    "key": "A key is camelCase letters and digits, starting with a lowercase letter.",
+    "key": "A key is snake_case: lowercase letters, digits and single underscores, starting with a letter.",
     "duplicate": "Another Field already uses this key.",
     "duplicateSub": "Another sub-Field of this List already uses this key.",
     "noOptions": "Add at least one option.",
@@ -109,7 +109,7 @@
     "labelPlaceholder": "Licence plate",
     "labelDescription": "Shown to your team. Any language.",
     "key": "Key",
-    "keyDescription": "The name in the Payload your system receives, in camelCase.",
+    "keyDescription": "The name in the Payload your system receives, in snake_case.",
     "keyLocked": "Locked while an Integration is attached, so your system keeps receiving it.",
     "deriveKey": "Derive from label",
     "type": "Type",

@@ -11,7 +11,7 @@
   },
   "problems": {
     "label": "Voeg een label toe.",
-    "key": "Een sleutel bestaat uit letters en cijfers in camelCase en begint met een kleine letter.",
+    "key": "Een sleutel is in snake_case: kleine letters, cijfers en losse liggende streepjes. Hij begint met een letter.",
     "duplicate": "Een ander Veld gebruikt deze sleutel al.",
     "duplicateSub": "Een ander subveld van deze Lijst gebruikt deze sleutel al.",
     "noOptions": "Voeg minstens één optie toe.",
@@ -109,7 +109,7 @@
     "labelPlaceholder": "Kenteken",
     "labelDescription": "Zichtbaar voor je team. In elke taal.",
     "key": "Sleutel",
-    "keyDescription": "De naam in de Payload die je systeem ontvangt, in camelCase.",
+    "keyDescription": "De naam in de Payload die je systeem ontvangt, in snake_case.",
     "keyLocked": "Vergrendeld zolang er een Koppeling is, zodat je systeem hem blijft ontvangen.",
     "deriveKey": "Afleiden van label",
     "type": "Type",

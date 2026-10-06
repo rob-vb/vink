@@ -29,7 +29,7 @@
       "method": "Eén <code>POST</code> per Delivery, <code>Content-Type: application/json</code>",
       "signed": "Ondertekend met HMAC-SHA256 in de header <code>X-Vink-Signature</code>",
       "retries": "Ongeveer 8 uur lang opnieuw geprobeerd bij timeouts, 408, 429 en 5xx",
-      "atLeastOnce": "At-least-once: ontdubbel op <code>deliveryId</code>"
+      "atLeastOnce": "At-least-once: ontdubbel op <code>delivery_id</code>"
     },
     "reading": "Vink leest PDF's met Gemini op Vertex AI, EU-regio.",
     "inboundTitle": "Documenten naar binnen krijgen",
@@ -48,7 +48,7 @@
       "key": "Sleutel",
       "meaning": "Betekenis",
       "event": "Altijd <code>document.approved</code>.",
-      "deliveryId": "Uniek per Delivery. Blijft gelijk als een Delivery opnieuw wordt geprobeerd of opnieuw verstuurd, dus gebruik het om te ontdubbelen.",
+      "delivery_id": "Uniek per Delivery. Blijft gelijk als een Delivery opnieuw wordt geprobeerd of opnieuw verstuurd, dus gebruik het om te ontdubbelen.",
       "test": "<code>true</code> bij een test-send, <code>false</code> bij een echte Delivery.",
       "document": "Het id van het document, de bestandsnaam en wanneer het is geüpload (ISO 8601, UTC).",
       "form": "Het id van het formulier en de formulierversie waarmee het document is gelezen.",
@@ -84,7 +84,7 @@
     },
     "retryAfter": "Een <code>Retry-After</code>-header (seconden of een HTTP-datum) wordt gerespecteerd, tot 24 uur.",
     "redirects": "Redirects worden niet gevolgd. Je endpoint moet HTTPS gebruiken.",
-    "atLeastOnce": "Bezorging is at-least-once. Dezelfde Delivery kan twee keer aankomen, bijvoorbeeld als je ontvanger hem opsloeg maar een timeout gaf voordat hij antwoordde. Bewaar <code>deliveryId</code> en sla een Delivery over die je al hebt verwerkt.",
+    "atLeastOnce": "Bezorging is at-least-once. Dezelfde Delivery kan twee keer aankomen, bijvoorbeeld als je ontvanger hem opsloeg maar een timeout gaf voordat hij antwoordde. Bewaar <code>delivery_id</code> en sla een Delivery over die je al hebt verwerkt.",
     "headersTitle": "Headers",
     "headers": "Je kunt eigen headers aan een Integration toevoegen, zoals een API-sleutel of Basic auth. Markeer een header als geheim en de waarde wordt versleuteld opgeslagen en daarna alleen gemaskeerd getoond. Vink zet <code>Content-Type</code> en <code>X-Vink-Signature</code> zelf.",
     "screenshot": "De bezorgstatus van een document in Vink, met een nieuwe poging"

@@ -41,15 +41,15 @@ afterEach(() => {
 const tyreReport: Recording = {
   reading: {
     _pages: [1, 2],
-    tyreChanges: [
+    tyre_changes: [
       { position: "2L1", serial: "6135366435", _pages: [1] },
       { serial: "BPP10930524", _pages: [2] },
     ],
   },
   matches: {},
   lists: {
-    tyreChanges: {
-      path: "tyreChanges",
+    tyre_changes: {
+      path: "tyre_changes",
       probability: 0.6,
       keys: {
         position: { path: "position", probability: 0.99 },
@@ -58,9 +58,9 @@ const tyreReport: Recording = {
     },
   },
   fills: {
-    "tyreChanges[0].position": "2L1",
-    "tyreChanges[0].serial": "6135366435",
-    "tyreChanges[1].serial": "BPP10930524",
+    "tyre_changes[0].position": "2L1",
+    "tyre_changes[0].serial": "6135366435",
+    "tyre_changes[1].serial": "BPP10930524",
   },
 };
 
@@ -74,7 +74,7 @@ async function reviewing(recording: Recording = tyreReport, listRequired = false
       {
         type: "list",
         label: "Bandenwissels",
-        key: "tyreChanges",
+        key: "tyre_changes",
         required: listRequired,
         fields: [
           { type: "text", label: "Positie", key: "position", required: true },
@@ -88,16 +88,16 @@ async function reviewing(recording: Recording = tyreReport, listRequired = false
   const organisationSlug = ann.slug;
   const read = () => ann.user.query(api.documents.get, { organisationSlug, documentId });
   const list = async () => (await read()).lists[0];
-  const on = { organisationSlug, documentId, listKey: "tyreChanges" };
+  const on = { organisationSlug, documentId, listKey: "tyre_changes" };
   return { t, ...ann, documentId, read, list, on };
 }
 
 test("a List Field's entries each list a Field Value per sub-Field, and its completeness and sub-Fields count towards Needs Review", async () => {
   const { read, list } = await reviewing();
 
-  const tyreChanges = await list();
-  expect(tyreChanges.needsReview).toBe(true);
-  expect(tyreChanges.entries.map((e) => e.fieldValues.map((f) => f.value))).toEqual([
+  const tyre_changes = await list();
+  expect(tyre_changes.needsReview).toBe(true);
+  expect(tyre_changes.entries.map((e) => e.fieldValues.map((f) => f.value))).toEqual([
     ["2L1", "6135366435"],
     [null, "BPP10930524"],
   ]);

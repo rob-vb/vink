@@ -48,12 +48,12 @@ afterEach(() => {
 });
 
 const clean: Recording = {
-  reading: { vehicle: { licensePlate: "OR18DH", mileage: "229546", _pages: [1] } },
+  reading: { vehicle: { license_plate: "OR18DH", mileage: "229546", _pages: [1] } },
   matches: {
-    licensePlate: { path: "vehicle.licensePlate", probability: 0.97 },
-    mileageKm: { path: "vehicle.mileage", probability: 0.94 },
+    license_plate: { path: "vehicle.license_plate", probability: 0.97 },
+    mileage_km: { path: "vehicle.mileage", probability: 0.94 },
   },
-  fills: { licensePlate: "OR18DH", mileageKm: 229546 },
+  fills: { license_plate: "OR18DH", mileage_km: 229546 },
 };
 
 async function acme(t: Backend, autoSend: boolean, requiredPlate = true) {
@@ -63,8 +63,8 @@ async function acme(t: Backend, autoSend: boolean, requiredPlate = true) {
     organisationSlug,
     name: "Work order",
     fields: [
-      { type: "text", label: "Kenteken", key: "licensePlate", required: requiredPlate },
-      { type: "number", label: "Km", key: "mileageKm", required: false },
+      { type: "text", label: "Kenteken", key: "license_plate", required: requiredPlate },
+      { type: "number", label: "Km", key: "mileage_km", required: false },
     ],
   });
   await ann.user.mutation(api.forms.updateSettings, {
@@ -124,7 +124,7 @@ test.each([
   [
     "something is Needs Review",
     true,
-    { ...clean, matches: { ...clean.matches, mileageKm: { path: "vehicle.mileage", probability: 0.5 } } },
+    { ...clean, matches: { ...clean.matches, mileage_km: { path: "vehicle.mileage", probability: 0.5 } } },
   ],
 ])("no Auto-Send when %s", async (_, autoSend, recording) => {
   const t = newBackend();
@@ -166,7 +166,7 @@ test("no Auto-Send when a user touched the Document: Change Form re-runs without
   const { formId: other } = await user.mutation(api.forms.create, {
     organisationSlug,
     name: "Work order v2",
-    fields: [{ type: "text", label: "Kenteken", key: "licensePlate", required: true }],
+    fields: [{ type: "text", label: "Kenteken", key: "license_plate", required: true }],
   });
   await user.mutation(api.forms.updateSettings, {
     organisationSlug,
@@ -176,7 +176,7 @@ test("no Auto-Send when a user touched the Document: Change Form re-runs without
   });
   const { on, read } = await upload({
     ...clean,
-    matches: { ...clean.matches, mileageKm: { path: "vehicle.mileage", probability: 0.5 } },
+    matches: { ...clean.matches, mileage_km: { path: "vehicle.mileage", probability: 0.5 } },
   });
 
   await user.mutation(api.changeForm.changeForm, { ...on, formId: other as Id<"forms"> });
@@ -192,12 +192,12 @@ test("Auto-Send is evaluated once: turning it on or checking values later approv
   const { user, organisationSlug, formId, upload } = await acme(t, false);
   const { on, read } = await upload({
     ...clean,
-    matches: { ...clean.matches, mileageKm: { path: "vehicle.mileage", probability: 0.5 } },
+    matches: { ...clean.matches, mileage_km: { path: "vehicle.mileage", probability: 0.5 } },
   });
 
   await user.mutation(api.forms.updateSettings, { organisationSlug, formId, reviewThreshold: 0.8, autoSend: true });
-  const mileageKm = (await read()).fieldValues.find((f) => f.key === "mileageKm")!;
-  await user.mutation(api.review.check, { organisationSlug, fieldValueId: mileageKm.id });
+  const mileage_km = (await read()).fieldValues.find((f) => f.key === "mileage_km")!;
+  await user.mutation(api.review.check, { organisationSlug, fieldValueId: mileage_km.id });
   await t.finishAllScheduledFunctions(vi.runAllTimers);
 
   expect((await read()).state).toBe("needs_review");
