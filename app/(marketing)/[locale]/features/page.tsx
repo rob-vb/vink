@@ -96,7 +96,7 @@ export default async function FeaturesPage() {
         <p className="mt-3 text-sm text-muted-foreground">{t("hero.note")}</p>
       </section>
 
-      {/* The 15-second video, as on Home */}
+      {/* The 30-second film, as on Home */}
       <section className="mx-auto max-w-5xl px-4 pb-20 sm:px-6 sm:pb-28">
         <FeatureVideo label={t("video.label")} caption={t("video.caption")} />
       </section>

@@ -12,14 +12,13 @@
     "vink": "Vink.",
     "done": "Klaar.",
     "subtitle": "Vink leest elke PDF, getypt, gescand of handgeschreven, en maakt er schone data van voor jouw systemen. Jij controleert alleen waar Vink twijfelt.",
-    "watch": "Bekijk 15 seconden",
+    "watch": "Bekijk 30 seconden",
     "screenLabel": "Het controlescherm van Vink met één waarde die gecontroleerd moet worden"
   },
   "video": {
     "title": "Eén PDF erin, schone data eruit.",
-    "subtitle": "Vijftien seconden, zonder knippen.",
-    "placeholder": "Opname volgt",
-    "label": "Een opname van 15 seconden waarin één PDF door Vink gaat"
+    "subtitle": "Dertig seconden, van papieren werkbon tot back-office.",
+    "label": "Een film van 30 seconden waarin een handgeschreven werkbon door Vink gaat"
   },
   "journey": {
     "title": "Wat er met één document gebeurt.",
