@@ -7,6 +7,7 @@ import { ConvexError, v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import { internalMutation, internalQuery, type MutationCtx } from "./_generated/server";
 import { createWebhook, dummyEnvelope, removeIntegration } from "./integrations";
+import { envelopeSchema } from "./lib/payload";
 
 // More would crowd out the Admin's own Integrations in the app's list.
 export const MAX_SUBSCRIPTIONS = 50;
@@ -85,5 +86,20 @@ export const sample = internalQuery({
     const form = formId && (await ctx.db.get(formId));
     if (!form || form.organisationId !== organisationId) return null;
     return await dummyEnvelope(ctx, form, "examples");
+  },
+});
+
+/** The JSON Schema of the envelope for a Form's current Version; null for no such Form. */
+export const schema = internalQuery({
+  args: { organisationId: v.id("organisations"), formId: v.string() },
+  handler: async (ctx, { organisationId, formId: givenFormId }) => {
+    const formId = ctx.db.normalizeId("forms", givenFormId);
+    const form = formId && (await ctx.db.get(formId));
+    if (!form || form.organisationId !== organisationId) return null;
+    const formVersion = (await ctx.db
+      .query("formVersions")
+      .withIndex("by_formId_and_number", (q) => q.eq("formId", form._id).eq("number", form.version))
+      .unique())!;
+    return envelopeSchema(formVersion.fields);
   },
 });

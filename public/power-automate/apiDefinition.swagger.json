@@ -1,0 +1,651 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Vink",
+    "description": "Vink reads PDFs into the Fields of your Forms. Start a flow when a Document is approved, and send PDFs in to be read.",
+    "version": "1.0",
+    "contact": {
+      "name": "Vink",
+      "url": "https://vink.page/developers"
+    }
+  },
+  "host": "vink.page",
+  "basePath": "/v1",
+  "schemes": [
+    "https"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/forms": {
+      "get": {
+        "operationId": "listForms",
+        "summary": "List Forms",
+        "description": "Every Form of the key's Organisation, with the Fields of its current version. Automation platforms use it to show your Fields as dynamic fields.",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The Forms.",
+            "schema": {
+              "type": "object",
+              "required": [
+                "data"
+              ],
+              "properties": {
+                "data": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/Form"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The API Key is missing, unknown or revoked.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Something went wrong on our side.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        },
+        "x-ms-visibility": "internal"
+      }
+    },
+    "/forms/{form_id}/documents": {
+      "post": {
+        "operationId": "sendDocument",
+        "summary": "Send in a Document",
+        "description": "Sends a PDF to a Form in Vink, as if it was emailed to the Form's Intake Address. Vink reads it; it is approved later, in Vink or by Auto-Send.",
+        "consumes": [
+          "application/octet-stream"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "form_id",
+            "in": "path",
+            "required": true,
+            "description": "The Form's `id`, from List Forms.",
+            "type": "string",
+            "x-ms-summary": "Form",
+            "x-ms-dynamic-values": {
+              "operationId": "listForms",
+              "value-collection": "data",
+              "value-path": "id",
+              "value-title": "name",
+              "parameters": {}
+            }
+          },
+          {
+            "name": "filename",
+            "in": "query",
+            "required": false,
+            "description": "The name the Document shows in Vink, for example the attachment's name. Without it: document.pdf.",
+            "type": "string",
+            "x-ms-summary": "File name"
+          },
+          {
+            "name": "file",
+            "in": "body",
+            "required": true,
+            "description": "The PDF's file content, for example from an email attachment or a OneDrive file.",
+            "x-ms-summary": "File content",
+            "schema": {
+              "type": "string",
+              "format": "binary"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Vink accepted the PDF and is reading it.",
+            "schema": {
+              "$ref": "#/definitions/SentDocument"
+            }
+          },
+          "400": {
+            "description": "The request has no PDF in it.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "The API Key is missing, unknown or revoked.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "402": {
+            "description": "Your Organisation has fewer Pages left than the PDF has.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "No Form with this id in your Organisation.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "413": {
+            "description": "The PDF is larger than 20 MB.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "415": {
+            "description": "The file isn't a PDF Vink can read (`not_a_pdf`), or the body is neither multipart/form-data nor a PDF (`unsupported_media_type`).",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "422": {
+            "description": "The PDF has more than 20 pages.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Something went wrong on our side.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        },
+        "x-ms-visibility": "important"
+      }
+    },
+    "/subscriptions": {
+      "post": {
+        "operationId": "createSubscription",
+        "summary": "When a Document is approved",
+        "description": "Starts the flow every time a Document of the Form is approved in Vink. The outputs are the Form's Fields, under Data.",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": [
+                "form_id",
+                "url"
+              ],
+              "properties": {
+                "form_id": {
+                  "type": "string",
+                  "description": "The Form whose Approvals you want.",
+                  "x-ms-summary": "Form",
+                  "x-ms-dynamic-values": {
+                    "operationId": "listForms",
+                    "value-collection": "data",
+                    "value-path": "id",
+                    "value-title": "name",
+                    "parameters": {}
+                  }
+                },
+                "url": {
+                  "type": "string",
+                  "description": "Receives the envelopes. https only.",
+                  "x-ms-notification-url": true,
+                  "x-ms-visibility": "internal"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "The Subscription.",
+            "schema": {
+              "$ref": "#/definitions/Subscription"
+            },
+            "headers": {
+              "Location": {
+                "type": "string",
+                "description": "The Subscription's URL: a `DELETE` on it unsubscribes (Power Automate does that itself)."
+              }
+            }
+          },
+          "400": {
+            "description": "The body isn't JSON with `form_id` and `url`.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "The API Key is missing, unknown or revoked.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "No Form with that id in your Organisation.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "409": {
+            "description": "The Organisation already has 50 Subscriptions.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "422": {
+            "description": "`url` isn't an https URL.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Something went wrong on our side.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        },
+        "x-ms-trigger": "single",
+        "x-ms-trigger-hint": "To see it work, approve a Document of this Form in Vink."
+      },
+      "x-ms-notification-content": {
+        "description": "The envelope of the approved Document.",
+        "schema": {
+          "type": "object",
+          "x-ms-dynamic-schema": {
+            "operationId": "getFormSchema",
+            "parameters": {
+              "form_id": {
+                "parameter": "form_id"
+              }
+            },
+            "value-path": "schema"
+          },
+          "x-ms-dynamic-properties": {
+            "operationId": "getFormSchema",
+            "parameters": {
+              "form_id": {
+                "parameterReference": "body/form_id"
+              }
+            },
+            "itemValuePath": "schema"
+          }
+        }
+      }
+    },
+    "/subscriptions/{id}": {
+      "delete": {
+        "operationId": "deleteSubscription",
+        "summary": "Unsubscribe",
+        "description": "Ends the Subscription and removes its Webhook. Any API Key of the Organisation can end it. Approvals that are still being sent to it are given up.",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The Subscription's id.",
+            "type": "string",
+            "x-ms-summary": "Subscription ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The Subscription ended.",
+            "schema": {
+              "$ref": "#/definitions/DeletedSubscription"
+            }
+          },
+          "401": {
+            "description": "The API Key is missing, unknown or revoked.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "No Subscription with that id in your Organisation.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Something went wrong on our side.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        },
+        "x-ms-visibility": "internal"
+      }
+    },
+    "/forms/{form_id}/schema": {
+      "get": {
+        "operationId": "getFormSchema",
+        "summary": "Envelope schema",
+        "description": "The JSON Schema of the envelope a Subscription receives for this Form, with one property per Field of its current version under `data`. Power Automate uses it to show your Fields as dynamic content.",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "form_id",
+            "in": "path",
+            "required": true,
+            "description": "The Form's id, from List Forms.",
+            "type": "string",
+            "x-ms-summary": "Form",
+            "x-ms-dynamic-values": {
+              "operationId": "listForms",
+              "value-collection": "data",
+              "value-path": "id",
+              "value-title": "name",
+              "parameters": {}
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The schema.",
+            "schema": {
+              "$ref": "#/definitions/EnvelopeSchema"
+            }
+          },
+          "401": {
+            "description": "The API Key is missing, unknown or revoked.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "No Form with that id in your Organisation.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Something went wrong on our side.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        },
+        "x-ms-visibility": "internal"
+      }
+    }
+  },
+  "definitions": {
+    "DeletedSubscription": {
+      "type": "object",
+      "required": [
+        "id",
+        "deleted"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "deleted": {
+          "type": "boolean",
+          "description": "Always `true`."
+        }
+      }
+    },
+    "EnvelopeSchema": {
+      "type": "object",
+      "required": [
+        "schema"
+      ],
+      "properties": {
+        "schema": {
+          "type": "object",
+          "description": "A JSON Schema of the envelope, in Swagger 2.0 style: one `type` per property, `x-nullable: true` where the value can be `null`, and each Field's label as `title` and `x-ms-summary`."
+        }
+      }
+    },
+    "Error": {
+      "type": "object",
+      "required": [
+        "error"
+      ],
+      "properties": {
+        "error": {
+          "type": "object",
+          "required": [
+            "code",
+            "message"
+          ],
+          "properties": {
+            "code": {
+              "type": "string",
+              "description": "Stable, snake_case. Branch on this.",
+              "example": "invalid_api_key"
+            },
+            "message": {
+              "type": "string",
+              "description": "A sentence for people. It may change.",
+              "example": "This API Key doesn't exist or was revoked."
+            }
+          }
+        }
+      }
+    },
+    "Field": {
+      "type": "object",
+      "required": [
+        "key",
+        "label",
+        "type",
+        "required"
+      ],
+      "properties": {
+        "key": {
+          "type": "string",
+          "description": "The Field's name in the Payload, snake_case.",
+          "example": "license_plate"
+        },
+        "label": {
+          "type": "string",
+          "description": "What users see in Vink.",
+          "example": "Kenteken"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "text",
+            "number",
+            "date",
+            "boolean",
+            "choice",
+            "list"
+          ],
+          "description": "`choice` has `options`; `list` has `fields`, the sub-Fields of each entry."
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "options": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Only on `choice`: the values the Payload can hold."
+        },
+        "fields": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SubField"
+          },
+          "description": "Only on `list`: the sub-Fields of each entry."
+        }
+      }
+    },
+    "Form": {
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "description",
+        "version",
+        "fields"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Use it in the Form's other endpoints."
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string",
+          "x-nullable": true
+        },
+        "version": {
+          "type": "integer",
+          "description": "Goes up by one every time the Form is saved."
+        },
+        "fields": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Field"
+          }
+        }
+      }
+    },
+    "SentDocument": {
+      "type": "object",
+      "required": [
+        "id",
+        "state"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "The Document's id."
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "processing"
+          ],
+          "description": "Always `processing` here: Vink is reading the PDF."
+        }
+      }
+    },
+    "SubField": {
+      "type": "object",
+      "required": [
+        "key",
+        "label",
+        "type",
+        "required"
+      ],
+      "properties": {
+        "key": {
+          "type": "string",
+          "description": "The Field's name in the Payload, snake_case.",
+          "example": "license_plate"
+        },
+        "label": {
+          "type": "string",
+          "description": "What users see in Vink.",
+          "example": "Kenteken"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "text",
+            "number",
+            "date",
+            "boolean",
+            "choice"
+          ],
+          "description": "`choice` has `options`."
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "options": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Only on `choice`: the values the Payload can hold."
+        }
+      }
+    },
+    "Subscription": {
+      "type": "object",
+      "required": [
+        "id",
+        "form_id",
+        "url",
+        "created_at"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Use it to unsubscribe."
+        },
+        "form_id": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    }
+  },
+  "securityDefinitions": {
+    "api_key": {
+      "type": "apiKey",
+      "in": "header",
+      "name": "Authorization"
+    }
+  },
+  "security": [
+    {
+      "api_key": []
+    }
+  ],
+  "x-ms-connector-metadata": [
+    {
+      "propertyName": "Website",
+      "propertyValue": "https://vink.page"
+    },
+    {
+      "propertyName": "Privacy policy",
+      "propertyValue": "https://vink.page/privacy"
+    },
+    {
+      "propertyName": "Categories",
+      "propertyValue": "Productivity;Business Management"
+    }
+  ]
+}
