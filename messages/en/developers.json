@@ -98,6 +98,23 @@
       "powerAutomate": {
         "title": "Power Automate",
         "plan": "<b>Plan:</b> needs a Premium licence. The trigger <b>When an HTTP request is received</b> is a Premium trigger.",
+        "connector": {
+          "title": "With the Vink connector",
+          "intro": "Import Vink's custom connector once. Then a flow can start with the trigger <b>When a Document is approved</b>: you pick the Form from a list, and its Fields show up as dynamic content without a test-send. The action <b>Send in a Document</b> sends a PDF to a Form.",
+          "needs": "<b>You need:</b> a Premium licence, because custom connectors are Premium. You also need an API Key. An Admin makes one in Vink under <b>Organisation settings → API Keys</b>.",
+          "downloads": "Connector files",
+          "steps": {
+            "download": "Download <b>apiDefinition.swagger.json</b>.",
+            "import": "In Power Automate, open <b>Custom connectors</b> (in the left menu, under <b>More</b>). Choose <b>New custom connector</b> → <b>Import an OpenAPI file</b>. Name it <b>Vink</b>, pick the file and choose <b>Continue</b>.",
+            "security": "On the <b>Security</b> tab, keep what the file set: <b>API Key</b>, parameter name <code>Authorization</code>, location <b>Header</b>. Choose <b>Create connector</b>.",
+            "connect": "In a cloud flow, add the trigger <b>When a Document is approved</b> from the Vink connector. Make a connection. In the <b>API Key</b> field, type <code>Bearer</code>, a space and your key: <code>Bearer vink_live_…</code>.",
+            "form": "Pick the <b>Form</b> and save the flow. Vink now makes a Subscription for the flow. Admins see it under <b>Integrations</b>, and the Form's Field keys are locked while it exists. When you turn the flow off or delete it, the Subscription ends.",
+            "action": "To send PDFs in, add the action <b>Send in a Document</b>. Pick the Form and put the file content, for example from an email attachment, in <b>File content</b>."
+          },
+          "cli": "Prefer the command line? <code>pac connector create</code> takes both files: <code>--api-definition-file apiDefinition.swagger.json --api-properties-file apiProperties.json</code>.",
+          "webhookTitle": "Via the webhook",
+          "webhookIntro": "No custom connector? The Premium HTTP trigger receives the Webhook too."
+        },
         "steps": {
           "hook": "In Power Automate, make a cloud flow that starts with the trigger <b>When an HTTP request is received</b>. If the trigger shows <b>Who can trigger the flow?</b>, set it to <b>Anyone</b>. The other options only let in signed-in users from your own tenant, so they refuse Vink.",
           "url": "Save the flow. The trigger now shows the <b>HTTP URL</b>. Copy it.",
