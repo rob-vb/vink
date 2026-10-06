@@ -4,6 +4,7 @@
 // A new kind is a new member of the `integrations` table plus an adapter here.
 import { ConvexError } from "convex/values";
 import type { Doc } from "../_generated/dataModel";
+import { excelAdapter } from "./excelAdapter";
 import { googleSheetsAdapter } from "./googleSheetsAdapter";
 import type { envelopeOf } from "./payload";
 import { webhookAdapter } from "./webhookAdapter";
@@ -32,6 +33,9 @@ export type Outcome =
 export type SendDetails = {
   // The approver's email, for a spreadsheet's `approved_by` column; null for Auto-Send or a dummy test.
   approverEmail: string | null;
+  // Stores a new refresh token the provider handed out (Microsoft rotates
+  // them); see lib/accounts.ts `refreshTokenKeeper`.
+  keepRefreshToken(refreshToken: string): Promise<void>;
 };
 
 /** One send: its Outcome, and what the attempt log and the test-send panel show of it. */
@@ -60,6 +64,7 @@ export type IntegrationAdapter<K extends IntegrationKind = IntegrationKind> = {
 const adapters: { [K in IntegrationKind]: IntegrationAdapter<K> } = {
   webhook: webhookAdapter,
   google_sheets: googleSheetsAdapter,
+  excel: excelAdapter,
 };
 
 export function adapterFor(kind: string): IntegrationAdapter {

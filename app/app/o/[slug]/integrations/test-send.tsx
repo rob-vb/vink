@@ -46,7 +46,7 @@ export function TestSendButton({
 }: {
   organisationSlug: string;
   integrationId: Id<"integrations">;
-  kind: "webhook" | "google_sheets";
+  kind: "webhook" | "google_sheets" | "excel";
   forms: Array<{ id: Id<"forms">; name: string }>;
 }) {
   const t = useTranslations("appIntegrations.test");
@@ -104,7 +104,7 @@ export function TestSendButton({
         <DialogHeader>
           <DialogTitle>{t("title")}</DialogTitle>
           <DialogDescription>
-            {t.rich(kind === "google_sheets" ? "sheetsDescription" : "description", {
+            {t.rich(kind === "excel" ? "excelDescription" : kind === "google_sheets" ? "sheetsDescription" : "description", {
               code: (chunks) => <code className="font-mono">{chunks}</code>,
             })}
           </DialogDescription>

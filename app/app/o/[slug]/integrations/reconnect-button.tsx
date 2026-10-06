@@ -13,8 +13,8 @@ import { useErrorText } from "../../../error-text";
 
 /**
  * Connects a spreadsheet Integration's account again: off to the provider's
- * consent page, back on the Integrations page (`?google=reconnected`). The
- * sheet stays the same.
+ * consent page, back on the Integrations page (`?google=reconnected`, or
+ * `?excel=reconnected`). The sheet or workbook stays the same.
  */
 export function ReconnectButton({
   organisationSlug,

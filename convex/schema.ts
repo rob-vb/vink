@@ -400,6 +400,23 @@ export default defineSchema({
         // access expired): an Admin must reconnect. Cleared by a Reconnect.
         needsReconnect: v.optional(v.boolean()),
       }),
+      // Excel: adds rows (ADR 0009) to a table in a workbook Vink made in the
+      // OneDrive of the Microsoft 365 account an Admin connected (excel.ts).
+      v.object({
+        organisationId: v.id("organisations"),
+        name: v.string(),
+        kind: v.literal("excel"),
+        // The OAuth refresh token, encrypted (lib/secrets.ts). Microsoft hands
+        // out a new one with every access token; the newest is stored.
+        refreshToken: v.string(),
+        // The workbook by drive and item id, so a move or rename is fine, and its table.
+        driveId: v.string(),
+        itemId: v.string(),
+        tableId: v.string(),
+        workbookUrl: v.string(),
+        // As for Google Sheets: set by access expired, cleared by a Reconnect.
+        needsReconnect: v.optional(v.boolean()),
+      }),
     ),
   ).index("by_organisationId", ["organisationId"]),
 

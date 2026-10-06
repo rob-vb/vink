@@ -13,6 +13,7 @@ import {
   type QueryCtx,
 } from "./_generated/server";
 import { MAX_ATTEMPTS, nextAttemptAt } from "./lib/backoff";
+import { refreshTokenKeeper } from "./lib/accounts";
 import { documentPayload } from "./lib/documentPayload";
 import { orgMutation, orgQuery } from "./lib/functions";
 import { kindOf, sendTo } from "./lib/integrationAdapters";
@@ -95,6 +96,7 @@ export const attempt = internalAction({
     const at = Date.now();
     const sent = await sendTo(input.integration, JSON.parse(input.envelope), {
       approverEmail: input.approverEmail,
+      keepRefreshToken: refreshTokenKeeper(ctx, input.integration),
     });
     await ctx.runMutation(internal.deliveries.recordAttempt, {
       id,
