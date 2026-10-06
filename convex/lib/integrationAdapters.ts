@@ -52,7 +52,8 @@ export type IntegrationAdapter<K extends IntegrationKind = IntegrationKind> = {
   /**
    * Sends one envelope to the Integration as it is configured now, decrypting
    * its secrets itself. Runs in an action. Every answer, and the lack of one,
-   * is settled as an Outcome; it throws only on a bug.
+   * is settled as an Outcome; it throws only when Vink itself breaks, which
+   * `sendTo` settles as a retry.
    */
   send(
     integration: Extract<Integration, { kind?: K }>,
@@ -74,7 +75,23 @@ export function adapterFor(kind: string): IntegrationAdapter {
   return adapters[kind as IntegrationKind] as IntegrationAdapter;
 }
 
-/** Sends an envelope through the adapter of the Integration's kind. */
-export async function sendTo(integration: Integration, envelope: Envelope, details: SendDetails) {
-  return await adapterFor(kindOf(integration)).send(integration, envelope, details);
+/**
+ * Sends an envelope through the adapter of the Integration's kind. A send
+ * that breaks inside Vink (a missing setting, a secret it can't read, an
+ * answer it can't parse) is retried like a lost answer, with the reason.
+ */
+export async function sendTo(integration: Integration, envelope: Envelope, details: SendDetails): Promise<SendResult> {
+  const adapter = adapterFor(kindOf(integration));
+  try {
+    return await adapter.send(integration, envelope, details);
+  } catch (error) {
+    const message =
+      error instanceof ConvexError && typeof error.data === "string"
+        ? error.data
+        : error instanceof Error
+          ? error.message
+          : String(error);
+    const reason = `Vink couldn't send it: ${message}`;
+    return { outcome: { kind: "retry", reason, retryAfter: null }, status: null, body: null, error: reason };
+  }
 }
