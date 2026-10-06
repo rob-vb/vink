@@ -1,0 +1,101 @@
+const nock = require('nock');
+const zapier = require('zapier-platform-core');
+
+const App = require('../index');
+const { API, authData, workOrder } = require('./helpers');
+
+const appTester = zapier.createAppTester(App);
+const trigger = App.triggers.document_approved.operation;
+
+const targetUrl = 'https://hooks.zapier.com/hooks/standard/123456/abcdef/';
+const subscription = { id: 'j57sub', form_id: workOrder.id, url: targetUrl, created_at: '2026-10-06T09:00:00.000Z' };
+
+// The envelope every Webhook gets on an Approval (and GET /forms/{id}/sample returns).
+const envelope = {
+  event: 'document.approved',
+  delivery_id: 'd8f1c2a4-0b9e-4c57-9a3d-2e6f7b1c5a90',
+  test: false,
+  document: { id: 'j57doc', filename: 'werkbon-118.pdf', uploaded_at: '2026-10-06T08:59:00.000Z' },
+  form: { id: workOrder.id, version: 3 },
+  approval: { mode: 'manual', by: 'user_1', at: '2026-10-06T09:00:00.000Z' },
+  data: {
+    license_plate: '12-ABC-3',
+    kind: 'repair',
+    done_on: '2026-10-05',
+    paid: false,
+    lines: [
+      { description: 'Oil change', quantity: 1 },
+      { description: 'Brake pads', quantity: 2 },
+    ],
+  },
+};
+
+describe('Document Approved', () => {
+  it("subscribes Zapier's hook URL to the chosen Form", async () => {
+    const scope = nock(API)
+      .post('/v1/subscriptions', { form_id: workOrder.id, url: targetUrl })
+      .reply(201, subscription);
+
+    const subscribeData = await appTester(trigger.performSubscribe, {
+      authData,
+      inputData: { form_id: workOrder.id },
+      targetUrl,
+    });
+
+    expect(scope.isDone()).toBe(true);
+    expect(subscribeData).toEqual(subscription);
+  });
+
+  it('ends the Subscription when the Zap is turned off', async () => {
+    const scope = nock(API).delete('/v1/subscriptions/j57sub').reply(200, { id: 'j57sub', deleted: true });
+
+    await appTester(trigger.performUnsubscribe, { authData, subscribeData: subscription });
+
+    expect(scope.isDone()).toBe(true);
+  });
+
+  it('treats a Subscription that is already gone as ended', async () => {
+    nock(API)
+      .delete('/v1/subscriptions/j57sub')
+      .reply(404, { error: { code: 'not_found', message: "There's no Subscription with that id in your Organisation." } });
+
+    await expect(
+      appTester(trigger.performUnsubscribe, { authData, subscribeData: subscription }),
+    ).resolves.toBeDefined();
+  });
+
+  it('turns a Webhook POST into one approved Document, its List Field as line items', async () => {
+    const results = await appTester(trigger.perform, {
+      authData,
+      inputData: { form_id: workOrder.id },
+      cleanedRequest: envelope,
+    });
+
+    expect(results).toEqual([{ id: envelope.delivery_id, ...envelope }]);
+    expect(results[0].data.lines).toHaveLength(2);
+  });
+
+  it("loads the Form's sample envelope while the Zap is being set up", async () => {
+    const sample = { ...envelope, delivery_id: 'test_3f2a', test: true };
+    nock(API).get(`/v1/forms/${workOrder.id}/sample`).reply(200, sample);
+
+    const results = await appTester(trigger.performList, { authData, inputData: { form_id: workOrder.id } });
+
+    expect(results).toEqual([{ id: 'test_3f2a', ...sample }]);
+  });
+
+  it("names the output after the chosen Form's Fields", async () => {
+    nock(API).get('/v1/forms').reply(200, { data: [workOrder] });
+
+    const fields = await appTester(trigger.outputFields.at(-1), { authData, inputData: { form_id: workOrder.id } });
+
+    expect(fields).toEqual([
+      { key: 'data__license_plate', label: 'Kenteken', type: 'string' },
+      { key: 'data__kind', label: 'Soort', type: 'string' },
+      { key: 'data__done_on', label: 'Datum', type: 'datetime' },
+      { key: 'data__paid', label: 'Betaald', type: 'boolean' },
+      { key: 'data__lines[]description', label: 'Regels: Omschrijving', type: 'string' },
+      { key: 'data__lines[]quantity', label: 'Regels: Aantal', type: 'number' },
+    ]);
+  });
+});
