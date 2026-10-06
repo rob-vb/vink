@@ -1,0 +1,13 @@
+{
+  "event": "document.approved",
+  "delivery_id": "test_3f2a7c1e-9b4d-4e8a-a1f0-6c5d2b7e9a10",
+  "test": true,
+  "document": { "id": "test", "filename": "example.pdf", "uploaded_at": "2026-10-06T09:00:00.000Z" },
+  "form": { "id": "k17c9z1fx3q8d2v0n6e5w4t8hs7bm2ra", "version": 3 },
+  "approval": { "mode": "manual", "by": null, "at": "2026-10-06T09:00:00.000Z" },
+  "data": {
+    "license_plate": "Example Kenteken",
+    "kind": "repair",
+    "lines": [{ "description": "Example Omschrijving", "quantity": 123.45 }]
+  }
+}
