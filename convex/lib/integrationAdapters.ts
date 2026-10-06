@@ -4,6 +4,7 @@
 // A new kind is a new member of the `integrations` table plus an adapter here.
 import { ConvexError } from "convex/values";
 import type { Doc } from "../_generated/dataModel";
+import { googleSheetsAdapter } from "./googleSheetsAdapter";
 import type { envelopeOf } from "./payload";
 import { webhookAdapter } from "./webhookAdapter";
 
@@ -22,8 +23,16 @@ export type Outcome =
   | { kind: "delivered" }
   // Tried again on the backoff schedule, not before `retryAfter` (a Retry-After value) if given.
   | { kind: "retry"; reason: string; retryAfter: string | null }
-  // Not tried again until an Admin re-sends it.
-  | { kind: "failed"; reason: string };
+  // Not tried again until an Admin re-sends it. `access_expired`: the
+  // connected account no longer lets Vink in (a spreadsheet kind), so it
+  // needs connecting again before a re-send can work.
+  | { kind: "failed"; reason: string; cause?: "access_expired" };
+
+/** What a send needs besides the envelope, which leaves it out. */
+export type SendDetails = {
+  // The approver's email, for a spreadsheet's `approved_by` column; null for Auto-Send or a dummy test.
+  approverEmail: string | null;
+};
 
 /** One send: its Outcome, and what the attempt log and the test-send panel show of it. */
 export type SendResult = {
@@ -41,21 +50,26 @@ export type IntegrationAdapter<K extends IntegrationKind = IntegrationKind> = {
    * its secrets itself. Runs in an action. Every answer, and the lack of one,
    * is settled as an Outcome; it throws only on a bug.
    */
-  send(integration: Extract<Integration, { kind?: K }>, envelope: Envelope): Promise<SendResult>;
+  send(
+    integration: Extract<Integration, { kind?: K }>,
+    envelope: Envelope,
+    details: SendDetails,
+  ): Promise<SendResult>;
 };
 
 const adapters: { [K in IntegrationKind]: IntegrationAdapter<K> } = {
   webhook: webhookAdapter,
+  google_sheets: googleSheetsAdapter,
 };
 
 export function adapterFor(kind: string): IntegrationAdapter {
   if (!Object.hasOwn(adapters, kind)) {
     throw new ConvexError(`Vink can't send to an Integration of kind "${kind}"`);
   }
-  return adapters[kind as IntegrationKind];
+  return adapters[kind as IntegrationKind] as IntegrationAdapter;
 }
 
 /** Sends an envelope through the adapter of the Integration's kind. */
-export async function sendTo(integration: Integration, envelope: Envelope) {
-  return await adapterFor(kindOf(integration)).send(integration, envelope);
+export async function sendTo(integration: Integration, envelope: Envelope, details: SendDetails) {
+  return await adapterFor(kindOf(integration)).send(integration, envelope, details);
 }

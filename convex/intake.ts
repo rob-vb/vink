@@ -12,7 +12,7 @@ import {
   type MutationCtx,
   type QueryCtx,
 } from "./_generated/server";
-import { checkPdf } from "./documents";
+import { acceptPdf } from "./documents";
 import { escapeHtml, sendEmail } from "./email";
 import { orgMutation, orgQuery } from "./lib/functions";
 import { pdfStore } from "./lib/pdfStore";
@@ -239,21 +239,14 @@ export const receive = internalAction({
         continue;
       }
       try {
-        const pageCount = await checkPdf(ctx, a.key);
-        try {
-          await ctx.runMutation(internal.documents.insert, {
-            organisationId: target.organisationId,
-            formId: target.formId,
-            key: a.key,
-            filename: a.filename,
-            pageCount,
-            uploadedBy: "email",
-            uploaderEmail: `email from ${from}`,
-          });
-        } catch (error) {
-          await pdfStore.remove(ctx, a.key);
-          throw error;
-        }
+        await acceptPdf(ctx, {
+          organisationId: target.organisationId,
+          formId: target.formId,
+          key: a.key,
+          filename: a.filename,
+          uploadedBy: "email",
+          uploaderEmail: `email from ${from}`,
+        });
         outcomes.push({ filename: a.filename, outcome: "created" as const, reason: null });
       } catch (error) {
         const refused = reasonOf(error);

@@ -28,6 +28,12 @@
   "lockedNote": "De sleutels van een gekoppeld Formulier liggen vast. Documenten die vóór het koppelen zijn goedgekeurd, worden niet verstuurd.",
   "recentDeliveries": "Recente Leveringen",
   "nothingSent": "Nog niets verstuurd.",
+  "googleSheets": "Google Sheets",
+  "openSheet": "Sheet openen",
+  "googleConnected": "Gekoppeld. Vink heeft de sheet in je Google Drive gemaakt.",
+  "googleNoAccess": "Vink kreeg geen toegang om de sheet te maken. Koppel opnieuw en vink het vakje voor Google Drive aan.",
+  "googleDenied": "Google is niet gekoppeld.",
+  "googleFailed": "Google koppelen is niet gelukt. Probeer het opnieuw.",
   "dialog": {
     "editTitle": "Koppeling bewerken",
     "newTitle": "Nieuwe Koppeling",
@@ -47,7 +53,18 @@
     "cancel": "Annuleren",
     "save": "Opslaan",
     "create": "Koppeling maken",
-    "notSaved": "Dat is niet opgeslagen. Probeer het opnieuw."
+    "notSaved": "Dat is niet opgeslagen. Probeer het opnieuw.",
+    "kind": "Soort",
+    "webhook": "Webhook",
+    "googleSheets": "Google Sheets",
+    "sheetsDescription": "Vink zet elk goedgekeurd Document als rijen, één per regel, in een nieuwe sheet in je Google Drive.",
+    "sheetNamePlaceholder": "Werkbonnen",
+    "sheetNameHint": "Dit is ook de naam van de sheet die Vink maakt.",
+    "connectSignIn": "Je logt in bij Google op een eigen pagina. Daarna kom je hier terug.",
+    "connectAccess": "Vink kan alleen de sheet openen die Vink maakt. Je andere bestanden niet.",
+    "connectRows": "De kolommen zijn de sleutels van de Velden. Een nieuw Veld krijgt een nieuwe kolom rechts.",
+    "openSheet": "Sheet openen",
+    "connect": "Google-account koppelen"
   },
   "test": {
     "button": "Test versturen",
@@ -62,6 +79,7 @@
     "empty": "Optionele waarden leeg",
     "notSent": "De test is niet verstuurd.",
     "status": "Antwoordstatus",
-    "emptyBody": "(lege body)"
+    "emptyBody": "(lege body)",
+    "sheetsDescription": "Zet rijen met deze data in de sheet, met <code>[test]</code> voor de bestandsnaam. Het is geen Levering."
   }
 }
