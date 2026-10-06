@@ -8,6 +8,7 @@
     "pending": "Het volledige privacybeleid wordt geschreven en vervangt deze pagina voor de lancering. Tot die tijd staat hier kort wat nu al geldt.",
     "points": {
       "security": "Waar documenten worden opgeslagen, hoe lang ze bewaard worden en wie ze verwerkt, staat in de <terms>Voorwaarden</terms>, inclusief de <subprocessors>lijst van subverwerkers</subprocessors>.",
+      "payments": "Een abonnement of Top-up betaal je via Polar. Polar verkoopt Vink aan je als verkoper (merchant of record) en laat kaartbetalingen verwerken door Stripe. Vink geeft Polar alleen het ID van je organisatie, de naam en het e-mailadres van wie betaalt. Je kaartgegevens ziet Vink nooit, en je factuuradres bewaart Vink niet. Polar en Stripe gebruiken je gegevens onder hun eigen privacyverklaring: <polar>Polar</polar>, <stripe>Stripe</stripe>.",
       "contact": "Contactaanvragen via deze site worden naar ons gemaild en niet op de site bewaard.",
       "analytics": "Google Analytics draait alleen op de publieke website, en alleen nadat je statistiekcookies accepteert. De app onder /app laadt het nooit. Je kunt je keuze aanpassen via Cookie-instellingen.",
       "cookies": "Twee functionele cookies hebben geen toestemming nodig: één onthoudt je taal, één onthoudt je cookiekeuze.",

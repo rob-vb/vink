@@ -8,6 +8,7 @@
     "pending": "The full privacy policy is being written and will replace this page before launch. Until then, this is a short summary of what already holds.",
     "points": {
       "security": "Where documents are stored, how long they are kept and who processes them is described in the <terms>Terms</terms>, including the <subprocessors>list of subprocessors</subprocessors>.",
+      "payments": "You pay for a plan or a Top-up through Polar. Polar sells Vink to you as merchant of record and has card payments processed by Stripe. Vink gives Polar only your organisation's ID and the payer's name and email address. Vink never sees your card details and doesn't keep your billing address. Polar and Stripe use your data under their own privacy policies: <polar>Polar</polar>, <stripe>Stripe</stripe>.",
       "contact": "Contact requests sent through this site are emailed to us and not stored on the site.",
       "analytics": "Google Analytics only runs on the public website, and only after you accept statistics cookies. The app under /app never loads it. You can change your choice under Cookie settings.",
       "cookies": "Two functional cookies need no consent: one remembers your language, one remembers your cookie choice.",

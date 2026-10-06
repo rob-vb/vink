@@ -15,7 +15,7 @@
     "database": "<b>De database</b> staat in Ierland (Convex, AWS eu-west-1). Daarin staat alles behalve de PDF's.",
     "pdfs": "<b>Pdf's</b> worden opgeslagen in Cloudflare R2 met EU-jurisdictie.",
     "reading": "<b>Het lezen</b> gebeurt met Gemini op Vertex AI, in de EU-multiregio van Google Cloud.",
-    "us": "Het koppelen van de gelezen tekst aan je velden gebeurt bij TypeSafe in de Verenigde Staten, en inlogmails gaan via Resend in de Verenigde Staten. Zie <link>Wie het verwerkt</link>."
+    "us": "Het koppelen van de gelezen tekst aan je velden gebeurt bij TypeSafe in de Verenigde Staten, inlogmails gaan via Resend in de Verenigde Staten, en betalingen lopen via Polar en Stripe in de Verenigde Staten. Zie <link>Wie het verwerkt</link>."
   },
   "retention": {
     "title": "Hoe lang we het bewaren, en verwijderen",
@@ -70,6 +70,16 @@
         "purpose": "Documenten ontvangen die naar een Intake Address zijn gemaild",
         "region": "Nog te bevestigen",
         "data": "Mails naar een Intake Address, met hun PDF-bijlagen"
+      },
+      "polar": {
+        "purpose": "Betalingen, abonnementen en facturen, als verkoper (merchant of record)",
+        "region": "Verenigde Staten",
+        "data": "ID van je organisatie, naam en e-mailadres van wie betaalt, en wat je bij Polar invult. Polar is zelf verantwoordelijk, onder <link>eigen privacyverklaring</link>."
+      },
+      "stripe": {
+        "purpose": "Kaartbetalingen voor Polar",
+        "region": "Verenigde Staten",
+        "data": "Kaartgegevens die je bij Polar invult. Onder <link>eigen privacyverklaring</link>."
       }
     },
     "transfers": "Doorgifte naar de Verenigde Staten gebeurt op basis van het EU-VS Data Privacy Framework of standaardcontractbepalingen."
