@@ -22,9 +22,9 @@
     "freeNote": "20 free pages. No credit card."
   },
   "trust": {
-    "anyPdf": "Typed, scanned or handwritten",
+    "anyPdf": "Even scanned and handwritten",
     "fields": "Your own fields, no templates",
-    "approval": "Nothing sent without your approval"
+    "approval": "Nothing is sent without your approval"
   },
   "closing": {
     "title": "Stop retyping. Start with 20 pages.",

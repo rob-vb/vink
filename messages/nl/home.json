@@ -1,49 +1,64 @@
 {
   "meta": {
     "title": "Vink: AI-data-extractie uit documenten voor operationele teams",
-    "description": "Vink leest elke PDF, getypt, gescand of handgeschreven, en maakt er schone data van voor jouw systemen. Jij controleert alleen waar Vink twijfelt. 20 pagina's gratis."
+    "description": "Stop met PDF's overtikken. Vink leest facturen, pakbonnen en werkbonnen, ook handgeschreven, en zet de gegevens in je systeem. 20 pagina's gratis."
   },
   "og": {
     "title": "Document. Vink. Klaar.",
-    "alt": "Vink. Document. Vink. Klaar. Elke PDF erin, schone data eruit."
+    "alt": "Vink. Document. Vink. Klaar. Geen PDF's meer overtikken."
   },
   "hero": {
     "document": "Document.",
     "vink": "Vink.",
     "done": "Klaar.",
-    "subtitle": "Vink leest elke PDF, getypt, gescand of handgeschreven, en maakt er schone data van voor jouw systemen. Jij controleert alleen waar Vink twijfelt.",
+    "subtitle": "Laat je team geen PDF's meer overtikken. Vink leest facturen, pakbonnen en werkbonnen, ook handgeschreven, en zet de gegevens in je systeem. Je team controleert alleen wat Vink niet zeker weet.",
     "watch": "Bekijk 30 seconden",
     "screenLabel": "Het controlescherm van Vink met één waarde die gecontroleerd moet worden"
   },
   "video": {
-    "title": "Eén PDF erin, schone data eruit.",
-    "subtitle": "Dertig seconden, van papieren werkbon tot back-office.",
+    "title": "Een handgeschreven werkbon, zonder overtikken.",
+    "subtitle": "Van papier tot in de back-office.",
     "label": "Een film van 30 seconden waarin een handgeschreven werkbon door Vink gaat"
   },
+  "calculator": {
+    "title": "Wat overtikken je nu kost.",
+    "subtitle": "Vul je eigen cijfers in. Je ziet wat overtikken per maand kost, en wat Vink kost.",
+    "documentsLabel": "Documenten per dag",
+    "minutesLabel": "Minuten overtikken per document",
+    "minutesValue": "{count} min",
+    "hourlyLabel": "Loonkosten per uur",
+    "hoursLabel": "Uren overtikken per maand",
+    "hoursValue": "{count} uur",
+    "byHand": "Met de hand",
+    "withVink": "Met Vink ({plan})",
+    "perMonth": "/mnd",
+    "from": "vanaf",
+    "note": "Uitgaande van {days} werkdagen per maand en 1 pagina per document. Je team besteedt nog wel tijd aan de waarden die Vink markeert."
+  },
   "journey": {
-    "title": "Wat er met één document gebeurt.",
-    "subtitle": "Vier stops, van de PDF op je bureau tot de data in je systeem. Jij stapt pas in bij de derde.",
+    "title": "Van PDF tot in je systeem.",
+    "subtitle": "Vink doet het overtikken. Je team doet alleen de controle.",
     "arrives": {
       "kicker": "Het komt binnen",
-      "title": "Elke PDF. Zelfs handschrift.",
-      "body": "Getypt, gescand of handgeschreven, één pagina of een stapel papieren. Geen templates om te bouwen.",
-      "intake": "Upload het of mail het in. Sleep meerdere PDF's tegelijk, of geef een formulier een eigen e-mailadres. Pdf-bijlagen, tot 20 pagina's per stuk."
+      "title": "Mail de PDF door, of sleep hem erin.",
+      "body": "Het werkt met elk soort document, ook gescand of met de hand ingevuld. Je hoeft geen sjablonen te bouwen.",
+      "intake": "Sleep meerdere PDF's tegelijk naar binnen, of geef een formulier een eigen e-mailadres. Leveranciers en collega's mailen hun PDF's dan direct naar Vink. Pdf-bijlagen tot 20 pagina's per stuk."
     },
     "reads": {
       "kicker": "Vink leest het",
-      "title": "Elke waarde, met zijn bron.",
-      "body": "Bij elke waarde zie je wat er gelezen is en op welke pagina. De meeste documenten zijn binnen een minuut klaar.",
+      "title": "Vink vult je velden in.",
+      "body": "Bij de meeste documenten staan factuurnummer, bedragen en regels binnen een minuut klaar. Bij elke waarde zie je op welke pagina Vink hem vond.",
       "demo": "Probeer de demo"
     },
     "check": {
       "kicker": "Jij controleert",
-      "title": "Je controleert alleen waar Vink twijfelt.",
-      "body": "Bij elke waarde zie je wat er gelezen is en op welke pagina. Vink markeert waar het niet zeker van is, en er gaat niets weg tot jij het goedkeurt."
+      "title": "Je team controleert alleen de twijfelgevallen.",
+      "body": "Vink markeert elke waarde die het niet zeker weet. Je bevestigt die, of je typt de juiste waarde. Niets wordt verstuurd zonder jouw akkoord."
     },
     "lands": {
       "kicker": "Het komt aan",
-      "title": "Direct in je systemen.",
-      "body": "Goedgekeurde data gaat als schone JSON naar je systeem, en Auto-Send handelt de documenten af waar Vink zeker van is."
+      "title": "De gegevens staan in je systeem.",
+      "body": "Na akkoord gaan de gegevens naar je boekhouding, ERP of database. Zet je Auto-Send aan, dan stuurt Vink documenten zonder twijfelgevallen zelf door."
     }
   },
   "tabs": {

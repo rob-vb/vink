@@ -6,7 +6,7 @@
   "hero": {
     "eyebrow": "Functies",
     "title": "Alles tussen de PDF en je systeem.",
-    "lede": "Vier stappen, van de PDF in je inbox tot de data in je systeem. Kijk hoe één document erdoorheen gaat en open daarna elke stap.",
+    "lede": "Zo neemt Vink het overtikken over. Kijk hoe één document erdoorheen gaat, en open daarna elke stap.",
     "startFree": "Gratis starten",
     "tryDemo": "Probeer de demo",
     "note": "20 gratis pagina's. Geen creditcard."
@@ -38,7 +38,7 @@
     "check": {
       "label": "Jij controleert",
       "title": "Je controleert alleen wat onzeker is.",
-      "lede": "Vink markeert waar het niet zeker van is, en er gaat niets weg voordat iemand het goedkeurt."
+      "lede": "Vink markeert waar het niet zeker van is. Niets wordt verstuurd voordat iemand het goedkeurt."
     },
     "lands": {
       "label": "Het komt aan",
@@ -65,7 +65,7 @@
     "placeholder": "Uploadvenster en e-mailadres"
   },
   "anyPdf": {
-    "title": "Elke PDF. Ook handschrift.",
+    "title": "Ook gescand of met de hand ingevuld.",
     "text": "Getypt, gescand, gefaxt of met de hand ingevuld; één pagina of een bundel papieren. Alle pagina's van een document vullen één set waarden.",
     "bullets": [
       "Handschrift, stempels en doorgestreepte getallen",
@@ -106,7 +106,7 @@
     "alt": "Een demopakbon met twee waarden om te controleren, elk met de reden en een knop om hem te bevestigen."
   },
   "approve": {
-    "title": "Niets gaat weg zonder goedkeuring.",
+    "title": "Niets wordt verstuurd zonder goedkeuring.",
     "text": "Iemand in je team keurt elk Document goed voordat het verstuurd wordt. Voor Formulieren die je vertrouwt zet je Auto-Send aan: een Document gaat dan vanzelf weg, maar alleen als er niets op te controleren is.",
     "bullets": [
       "Goedkeuren, of een leeg of verkeerd document afwijzen met een reden",
