@@ -26,6 +26,12 @@
   "lockedNote": "An attached Form's keys are locked. Documents approved before attaching aren't sent.",
   "recentDeliveries": "Recent Deliveries",
   "nothingSent": "Nothing sent yet.",
+  "googleSheets": "Google Sheets",
+  "openSheet": "Open the sheet",
+  "googleConnected": "Connected. Vink made the sheet in your Google Drive.",
+  "googleNoAccess": "Vink didn't get access to make the sheet. Connect again and tick the box for Google Drive.",
+  "googleDenied": "Google wasn't connected.",
+  "googleFailed": "Connecting Google didn't work. Try again.",
   "dialog": {
     "editTitle": "Edit Integration",
     "newTitle": "New Integration",
@@ -45,7 +51,18 @@
     "cancel": "Cancel",
     "save": "Save",
     "create": "Create Integration",
-    "notSaved": "That didn't save. Try again."
+    "notSaved": "That didn't save. Try again.",
+    "kind": "Kind",
+    "webhook": "Webhook",
+    "googleSheets": "Google Sheets",
+    "sheetsDescription": "Vink adds a row per line of each approved Document to a new sheet in your Google Drive.",
+    "sheetNamePlaceholder": "Work orders",
+    "sheetNameHint": "Also the name of the sheet Vink makes.",
+    "connectSignIn": "You sign in with Google on its own page, then come back here.",
+    "connectAccess": "Vink can only open the sheet it makes, none of your other files.",
+    "connectRows": "Columns are the Form's Field keys. A new Field gets a new column on the right.",
+    "openSheet": "Open the sheet",
+    "connect": "Connect Google account"
   },
   "test": {
     "button": "Send test",
@@ -60,6 +77,7 @@
     "empty": "Optional values empty",
     "notSent": "The test didn't go out.",
     "status": "Response status",
-    "emptyBody": "(empty body)"
+    "emptyBody": "(empty body)",
+    "sheetsDescription": "Adds rows from this data to the sheet, with <code>[test]</code> before the filename. It isn't a Delivery."
   }
 }

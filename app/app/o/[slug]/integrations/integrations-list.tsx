@@ -1,10 +1,11 @@
 "use client";
 
 import { useMutation, useQuery } from "convex/react";
-import { Copy, Eye, Pencil, Plug, Plus, Trash2, X } from "lucide-react";
+import { Copy, ExternalLink, Eye, Pencil, Plug, Plus, Trash2, X } from "lucide-react";
 import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -116,9 +117,33 @@ function RecentDeliveries({
   );
 }
 
+// How connecting a Google account went (`?google=…`, from app/api/integrations/google/callback).
+const googleOutcomes = {
+  connected: "googleConnected",
+  no_access: "googleNoAccess",
+  denied: "googleDenied",
+  failed: "googleFailed",
+} as const;
+
+/** Says once how connecting a Google account went, then clears it from the URL. */
+function useGoogleOutcome() {
+  const t = useTranslations("appIntegrations");
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+  const outcome = searchParams.get("google");
+  useEffect(() => {
+    if (outcome === null) return;
+    if (outcome === "connected") toast.success(t("googleConnected"));
+    else if (outcome in googleOutcomes) toast.error(t(googleOutcomes[outcome as keyof typeof googleOutcomes]));
+    router.replace(pathname, { scroll: false });
+  }, [outcome, pathname, router, t]);
+}
+
 /** The Organisation's Integrations, the Forms each is attached to, and a test-send. */
 export function IntegrationsList({ organisationSlug }: { organisationSlug: string }) {
   const t = useTranslations("appIntegrations");
+  useGoogleOutcome();
   const errorText = useErrorText();
   const failed = (error: unknown) => toast.error(errorText(error, t("tryAgain")));
   const integrations = useQuery(api.integrations.list, { organisationSlug });
@@ -169,9 +194,24 @@ export function IntegrationsList({ organisationSlug }: { organisationSlug: strin
               <Card key={integration.id}>
                 <CardHeader>
                   <CardTitle>{integration.name}</CardTitle>
-                  <CardDescription className="truncate font-mono text-xs">
-                    {integration.url}
-                  </CardDescription>
+                  {integration.kind === "google_sheets" ? (
+                    <CardDescription className="flex flex-wrap items-center gap-2">
+                      <Badge variant="outline">{t("googleSheets")}</Badge>
+                      <a
+                        href={integration.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1 underline-offset-4 hover:text-foreground hover:underline"
+                      >
+                        {t("openSheet")}
+                        <ExternalLink className="size-3.5" />
+                      </a>
+                    </CardDescription>
+                  ) : (
+                    <CardDescription className="truncate font-mono text-xs">
+                      {integration.url}
+                    </CardDescription>
+                  )}
                   <CardAction className="flex gap-1">
                     <IntegrationDialog
                       organisationSlug={organisationSlug}
@@ -221,17 +261,19 @@ export function IntegrationsList({ organisationSlug }: { organisationSlug: strin
                       ))}
                     </dl>
                   )}
-                  <div className="flex flex-col gap-1">
-                    <p className="font-medium">{t("signingSecret")}</p>
-                    <p className="text-muted-foreground">
-                      {t.rich("signingSecretText", {
-                        format: `t=<${t("unixTime")}>,v1=<hex>`,
-                        signed: "{t}.{body}",
-                        code: (chunks) => <code className="font-mono">{chunks}</code>,
-                      })}
-                    </p>
-                    <SigningSecret organisationSlug={organisationSlug} integrationId={integration.id} />
-                  </div>
+                  {integration.kind === "webhook" && (
+                    <div className="flex flex-col gap-1">
+                      <p className="font-medium">{t("signingSecret")}</p>
+                      <p className="text-muted-foreground">
+                        {t.rich("signingSecretText", {
+                          format: `t=<${t("unixTime")}>,v1=<hex>`,
+                          signed: "{t}.{body}",
+                          code: (chunks) => <code className="font-mono">{chunks}</code>,
+                        })}
+                      </p>
+                      <SigningSecret organisationSlug={organisationSlug} integrationId={integration.id} />
+                    </div>
+                  )}
                   <div className="flex flex-col gap-2">
                     <p className="font-medium">{t("forms")}</p>
                     <div className="flex flex-wrap items-center gap-2">
@@ -294,6 +336,7 @@ export function IntegrationsList({ organisationSlug }: { organisationSlug: strin
                     <TestSendButton
                       organisationSlug={organisationSlug}
                       integrationId={integration.id}
+                      kind={integration.kind}
                       forms={forms.map((f) => ({ id: f.id, name: f.name }))}
                     />
                   </div>
