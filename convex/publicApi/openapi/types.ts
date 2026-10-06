@@ -16,7 +16,11 @@ export type Schema = {
 
 export type MediaType = { schema: Schema; example?: unknown };
 
-export type Response = { description: string; content?: { "application/json": MediaType } };
+export type Response = {
+  description: string;
+  headers?: Record<string, { description: string; schema: Schema }>;
+  content?: { "application/json": MediaType };
+};
 
 export type Parameter = {
   name: string;

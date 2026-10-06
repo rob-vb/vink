@@ -1,7 +1,9 @@
+import { Download } from "lucide-react";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import type { ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
+import { buttonVariants } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { VinkMark } from "@/components/marketing/brand";
 import { CodeBlock, PostBar } from "@/components/marketing/code-block";
@@ -150,6 +152,41 @@ export default async function DevelopersPage({ params }: PageProps<"/[locale]/de
                   <Badge variant="secondary">{t("platforms.via")}</Badge>
                 </h3>
                 <p>{t.rich(`${guide}.plan`, rich)}</p>
+                {"connectorFiles" in platform && (
+                  <>
+                    <h4 className="mt-2 text-lg font-semibold text-foreground">{t(`${guide}.connector.title`)}</h4>
+                    <p>{t.rich(`${guide}.connector.intro`, rich)}</p>
+                    <p>{t.rich(`${guide}.connector.needs`, rich)}</p>
+                    <div role="group" aria-label={t(`${guide}.connector.downloads`)} className="flex flex-wrap gap-2">
+                      {platform.connectorFiles.map((file) => (
+                        <a
+                          key={file}
+                          href={file}
+                          download
+                          className={buttonVariants({ variant: "outline", className: "font-mono text-[13px]" })}
+                        >
+                          <Download aria-hidden="true" />
+                          {file.split("/").pop()}
+                        </a>
+                      ))}
+                    </div>
+                    <ol
+                      aria-label={t(`${guide}.connector.title`)}
+                      className="flex list-decimal flex-col gap-2 pl-5 marker:font-mono marker:text-foreground"
+                    >
+                      {Object.keys(t.raw(`${guide}.connector.steps`) as Record<string, string>).map((step) => (
+                        <li key={step} className="pl-1">
+                          {t.rich(`${guide}.connector.steps.${step}`, rich)}
+                        </li>
+                      ))}
+                    </ol>
+                    <p>{t.rich(`${guide}.connector.cli`, rich)}</p>
+                    <h4 className="mt-2 text-lg font-semibold text-foreground">
+                      {t(`${guide}.connector.webhookTitle`)}
+                    </h4>
+                    <p>{t(`${guide}.connector.webhookIntro`)}</p>
+                  </>
+                )}
                 <ol
                   aria-label={t("platforms.stepsLabel", { name: platform.name })}
                   className="flex list-decimal flex-col gap-2 pl-5 marker:font-mono marker:text-foreground"

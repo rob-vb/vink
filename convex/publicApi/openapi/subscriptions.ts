@@ -1,5 +1,5 @@
-// POST /v1/subscriptions, DELETE /v1/subscriptions/{id} and
-// GET /v1/forms/{form_id}/sample (publicApi/subscriptions.ts).
+// POST /v1/subscriptions, DELETE /v1/subscriptions/{id},
+// GET /v1/forms/{form_id}/sample and /schema (publicApi/subscriptions.ts).
 import type { OpenApiPart, Response } from "./types";
 
 const exampleSubscription = {
@@ -64,7 +64,15 @@ export const subscriptions: OpenApiPart = {
           },
         },
         responses: {
-          "201": json("The Subscription.", "Subscription", exampleSubscription),
+          "201": {
+            ...json("The Subscription.", "Subscription", exampleSubscription),
+            headers: {
+              Location: {
+                description: "The Subscription's URL: a `DELETE` on it unsubscribes (Power Automate does that itself).",
+                schema: { type: "string", example: `https://vink.page/v1/subscriptions/${exampleSubscription.id}` },
+              },
+            },
+          },
           "400": {
             description: "The body isn't JSON with `form_id` and `url`.",
             content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } },
@@ -125,8 +133,57 @@ export const subscriptions: OpenApiPart = {
         },
       },
     },
+    "/forms/{form_id}/schema": {
+      get: {
+        operationId: "getFormSchema",
+        summary: "Envelope schema",
+        description:
+          "The JSON Schema of the envelope a Subscription receives for this Form, with one property per Field of its current version under `data`. Power Automate uses it to show your Fields as dynamic content.",
+        tags: ["Subscriptions"],
+        parameters: [
+          {
+            name: "form_id",
+            in: "path",
+            required: true,
+            description: "The Form's id, from List Forms.",
+            schema: { type: "string" },
+          },
+        ],
+        responses: {
+          "200": json("The schema.", "EnvelopeSchema", {
+            schema: {
+              type: "object",
+              properties: {
+                event: { type: "string", "x-ms-summary": "Event" },
+                data: {
+                  type: "object",
+                  "x-ms-summary": "Data",
+                  properties: {
+                    license_plate: { type: "string", title: "Kenteken", "x-ms-summary": "Kenteken", "x-nullable": true },
+                  },
+                },
+              },
+            },
+          }),
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "404": notFound("Form"),
+          "500": { $ref: "#/components/responses/InternalError" },
+        },
+      },
+    },
   },
   schemas: {
+    EnvelopeSchema: {
+      type: "object",
+      required: ["schema"],
+      properties: {
+        schema: {
+          type: "object",
+          description:
+            "A JSON Schema of the envelope, in Swagger 2.0 style: one `type` per property, `x-nullable: true` where the value can be `null`, and each Field's label as `title` and `x-ms-summary`.",
+        },
+      },
+    },
     SubscriptionRequest: {
       type: "object",
       required: ["form_id", "url"],

@@ -1,5 +1,6 @@
 import { expect, test } from "vitest";
 import { localeUrl } from "@/lib/seo";
+import { absoluteUrl } from "@/lib/site";
 import { GET } from "./route";
 
 const llms = async () => await GET().text();
@@ -18,4 +19,10 @@ test("names the four automation platforms as working via the webhook, with a lin
 
 test("links the API reference", async () => {
   expect(await llms()).toContain(`(${localeUrl("en", "/developers/api")})`);
+});
+
+test("names the Power Automate custom connector and its download", async () => {
+  const text = await llms();
+  expect(text).toContain("Vink's custom connector");
+  expect(text).toContain(absoluteUrl("/power-automate/apiDefinition.swagger.json"));
 });
