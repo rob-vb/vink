@@ -12,7 +12,7 @@ import {
   type QueryCtx,
 } from "./_generated/server";
 import { failOpenDeliveries } from "./deliveries";
-import { accountProviderFor, accountProviderOf } from "./lib/accounts";
+import { accountProviderFor, accountProviderOf, refreshTokenKeeper } from "./lib/accounts";
 import { documentPayload } from "./lib/documentPayload";
 import { orgAction, orgMutation, orgQuery } from "./lib/functions";
 import { kindOf, sendTo } from "./lib/integrationAdapters";
@@ -39,7 +39,7 @@ async function ownWebhook(
   integrationId: Id<"integrations">,
 ) {
   const integration = await ownIntegration(ctx, organisationId, integrationId);
-  if (integration.kind === "google_sheets") throw new ConvexError("This Integration isn't a Webhook");
+  if (kindOf(integration) !== "webhook") throw new ConvexError("This Integration isn't a Webhook");
   return integration;
 }
 
@@ -111,9 +111,12 @@ export const list = orgQuery({
           // Its connected account no longer lets Vink in; only a spreadsheet kind can.
           needsReconnect: "needsReconnect" in integration && integration.needsReconnect === true,
         };
-        // Where it sends to: a Webhook's endpoint, or the link to a sheet.
+        // Where it sends to: a Webhook's endpoint, or the link to a sheet or workbook.
         if (integration.kind === "google_sheets") {
           return { ...common, kind: integration.kind, url: integration.spreadsheetUrl, headers: [] };
+        }
+        if (integration.kind === "excel") {
+          return { ...common, kind: integration.kind, url: integration.workbookUrl, headers: [] };
         }
         return {
           ...common,
@@ -329,6 +332,20 @@ export const reconnected = internalMutation({
   },
 });
 
+/**
+ * Stores the refresh token a provider handed out with an access token (lib/
+ * accounts.ts `refreshTokenKeeper`), encrypted. Only while the stored one is
+ * still `previous`: a Reconnect meanwhile wins, and so does a newer token.
+ */
+export const keepRefreshToken = internalMutation({
+  args: { integrationId: v.id("integrations"), previous: v.string(), refreshToken: v.string() },
+  handler: async (ctx, { integrationId, previous, refreshToken }) => {
+    const integration = await ctx.db.get(integrationId);
+    if (integration === null || !("refreshToken" in integration) || integration.refreshToken !== previous) return;
+    await ctx.db.patch(integrationId, { refreshToken });
+  },
+});
+
 async function linkOf(ctx: QueryCtx, integrationId: Id<"integrations">, formId: Id<"forms">) {
   const links = await ctx.db
     .query("formIntegrations")
@@ -451,7 +468,10 @@ export const testSend = orgAction({
       organisationId: ctx.organisationId,
       ...args,
     });
-    const { outcome, status, body, error } = await sendTo(integration, JSON.parse(envelope), { approverEmail });
+    const { outcome, status, body, error } = await sendTo(integration, JSON.parse(envelope), {
+      approverEmail,
+      keepRefreshToken: refreshTokenKeeper(ctx, integration),
+    });
     return { ok: outcome.kind === "delivered", status, body, error };
   },
 });

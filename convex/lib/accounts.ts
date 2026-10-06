@@ -1,9 +1,13 @@
-// A spreadsheet Integration (Google Sheets, later Excel) writes as the account
-// an Admin connected with OAuth. Reconnecting it (integrations.reconnect) and
+// A spreadsheet Integration (Google Sheets, Excel) writes as the account an
+// Admin connected with OAuth. Reconnecting it (integrations.reconnect) and
 // taking its access back when it is removed work the same for every kind;
 // this is what each provider gives for that.
+import { internal } from "../_generated/api";
+import type { ActionCtx } from "../_generated/server";
 import { DRIVE_FILE_SCOPE, google, googleConsentUrl } from "./google";
 import { type Integration, type IntegrationKind, kindOf } from "./integrationAdapters";
+import { FILES_SCOPE, microsoft, microsoftConsentUrl } from "./microsoft";
+import { encryptSecret } from "./secrets";
 
 export type AccountKind = Exclude<IntegrationKind, "webhook">;
 
@@ -38,9 +42,49 @@ export const googleAccount: AccountProvider = {
   },
 };
 
+/** Where Microsoft sends the Admin back to; must be a Web redirect URI of the app registration. */
+function microsoftRedirectUri() {
+  return `${process.env.SITE_URL}/api/integrations/microsoft/callback`;
+}
+
+export const microsoftAccount: AccountProvider = {
+  consentUrl: (state) => microsoftConsentUrl(microsoftRedirectUri(), state),
+  async exchangeCode(code) {
+    const { refreshToken, scopes } = await microsoft.exchangeCode(code, microsoftRedirectUri());
+    // Microsoft names the scope with or without its https://graph.microsoft.com/ prefix.
+    const files = scopes.some((s) => [FILES_SCOPE, "Files.ReadWrite"].some((f) => f.toLowerCase() === s.toLowerCase()));
+    return refreshToken !== null && files ? refreshToken : null;
+  },
+  async canReach(refreshToken, integration) {
+    if (integration.kind !== "excel") return false;
+    const { accessToken } = await microsoft.accessToken(refreshToken);
+    return await microsoft.canOpen(accessToken, integration);
+  },
+  // Microsoft has no way to take back one app's refresh token: the token is
+  // deleted with the Integration, and the account can remove Vink from its
+  // apps (myapps.microsoft.com, or its IT admin in Entra).
+  async revoke() {},
+};
+
 const providers: { [K in AccountKind]: AccountProvider } = {
   google_sheets: googleAccount,
+  excel: microsoftAccount,
 };
+
+/**
+ * What an adapter calls with the new refresh token a provider handed out
+ * (Microsoft rotates them), so the next send starts from it.
+ */
+export function refreshTokenKeeper(ctx: ActionCtx, integration: Integration) {
+  return async (refreshToken: string) => {
+    if (!("refreshToken" in integration)) return;
+    await ctx.runMutation(internal.integrations.keepRefreshToken, {
+      integrationId: integration._id,
+      previous: integration.refreshToken,
+      refreshToken: await encryptSecret(refreshToken),
+    });
+  };
+}
 
 /** The provider of a kind's connected accounts; null for a Webhook, which has none. */
 export function accountProviderFor(kind: string): AccountProvider | null {

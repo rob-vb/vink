@@ -448,3 +448,114 @@ export const fakeGoogle = {
     stored.rows = [header, ...stored.rows.slice(1), ...rows];
   },
 };
+
+/**
+ * Stands in for Microsoft (lib/microsoft.ts): sign-in and workbooks in memory.
+ * A code `code-<x>` trades for refresh token `refresh-<x>-<n>` (account
+ * `<x>`); every access token comes with the next one, `refresh-<x>-<n+1>`,
+ * and any token handed out keeps working until the account is `revoked`.
+ * A workbook opens only for the account that made it (Files.ReadWrite).
+ * `consentBlocked`: the account's company lets only its IT admin consent.
+ * `answer` scripts failures for the next Graph calls.
+ * Install with `vi.mock("./lib/microsoft", …)`.
+ */
+type MicrosoftAnswer = { status: number | null; retryAfter?: string } | "ok";
+
+export const fakeMicrosoft = {
+  workbooks: new Map<string, { title: string; rows: FilledValue[][]; owner: string }>(),
+  // The last refresh token number handed out per account.
+  issued: new Map<string, number>(),
+  revoked: new Set<string>(),
+  consentBlocked: false,
+  // The scopes the next sign-in grants.
+  scopes: ["https://graph.microsoft.com/Files.ReadWrite"],
+  script: [] as MicrosoftAnswer[],
+  redirectUris: [] as string[],
+  reset() {
+    fakeMicrosoft.workbooks.clear();
+    fakeMicrosoft.issued.clear();
+    fakeMicrosoft.revoked.clear();
+    fakeMicrosoft.consentBlocked = false;
+    fakeMicrosoft.scopes = ["https://graph.microsoft.com/Files.ReadWrite"];
+    fakeMicrosoft.script = [];
+    fakeMicrosoft.redirectUris = [];
+  },
+  /** The next Graph calls (create, read, append) get these answers, in order. */
+  answer(...answers: MicrosoftAnswer[]) {
+    fakeMicrosoft.script.push(...answers);
+  },
+  /** The only workbook made so far: its table's header row and the rows below it. */
+  onlyWorkbook() {
+    expect(fakeMicrosoft.workbooks.size).toBe(1);
+    const [workbook] = fakeMicrosoft.workbooks.values();
+    return { title: workbook.title, header: workbook.rows[0] ?? [], rows: workbook.rows.slice(1) };
+  },
+  /** The newest refresh token handed out to the account. */
+  newest(account: string) {
+    return `refresh-${account}-${fakeMicrosoft.issued.get(account)}`;
+  },
+  issue(account: string) {
+    const n = (fakeMicrosoft.issued.get(account) ?? 0) + 1;
+    fakeMicrosoft.issued.set(account, n);
+    return `refresh-${account}-${n}`;
+  },
+  async next(token: string) {
+    const { MicrosoftFailure } = await import("./lib/microsoft");
+    if (!token.startsWith("access-")) throw new MicrosoftFailure(401, "Microsoft answered 401", null, true);
+    const answer = fakeMicrosoft.script.shift() ?? "ok";
+    if (answer !== "ok") {
+      throw new MicrosoftFailure(
+        answer.status,
+        answer.status === null ? "Microsoft couldn't be reached" : `Microsoft answered ${answer.status}`,
+        answer.retryAfter ?? null,
+      );
+    }
+  },
+  async exchangeCode(code: string, redirectUri: string) {
+    fakeMicrosoft.redirectUris.push(redirectUri);
+    const { MicrosoftFailure } = await import("./lib/microsoft");
+    if (fakeMicrosoft.consentBlocked) {
+      throw new MicrosoftFailure(400, "Microsoft answered 400: AADSTS65001: The user or administrator has not consented", null, true, true);
+    }
+    if (!code.startsWith("code-")) throw new MicrosoftFailure(400, "Microsoft answered 400: AADSTS70000", null, true);
+    const account = code.slice(5);
+    fakeMicrosoft.revoked.delete(account);
+    return { refreshToken: fakeMicrosoft.issue(account), scopes: fakeMicrosoft.scopes };
+  },
+  async accessToken(refreshToken: string) {
+    const match = /^refresh-(.+)-(\d+)$/.exec(refreshToken);
+    if (match === null || fakeMicrosoft.revoked.has(match[1]) || Number(match[2]) > (fakeMicrosoft.issued.get(match[1]) ?? 0)) {
+      const { MicrosoftFailure } = await import("./lib/microsoft");
+      throw new MicrosoftFailure(400, "Microsoft answered 400: AADSTS70008: The refresh token has expired", null, true);
+    }
+    return { accessToken: `access-${match[1]}`, refreshToken: fakeMicrosoft.issue(match[1]) };
+  },
+  async canOpen(token: string, workbook: { itemId: string }) {
+    await fakeMicrosoft.next(token);
+    return `access-${fakeMicrosoft.workbooks.get(workbook.itemId)?.owner}` === token;
+  },
+  async createWorkbook(token: string, title: string, header: string[]) {
+    await fakeMicrosoft.next(token);
+    const owner = token.slice("access-".length);
+    const itemId = `item${fakeMicrosoft.workbooks.size + 1}`;
+    fakeMicrosoft.workbooks.set(itemId, { title, rows: [header], owner });
+    return {
+      driveId: `drive-${owner}`,
+      itemId,
+      tableId: "{00000000-0001-0000-0100-000000000000}",
+      url: `https://acme-my.sharepoint.com/personal/${owner}/Documents/${encodeURIComponent(title)}.xlsx`,
+    };
+  },
+  async read(token: string, workbook: { itemId: string }, column: string) {
+    await fakeMicrosoft.next(token);
+    const { rows } = fakeMicrosoft.workbooks.get(workbook.itemId)!;
+    const header = (rows[0] ?? []).map((c) => String(c ?? ""));
+    const index = header.indexOf(column);
+    return { header, column: index === -1 ? [] : rows.slice(1).map((r) => r[index] ?? null) };
+  },
+  async append(token: string, workbook: { itemId: string }, added: string[], rows: FilledValue[][]) {
+    await fakeMicrosoft.next(token);
+    const stored = fakeMicrosoft.workbooks.get(workbook.itemId)!;
+    stored.rows = [[...(stored.rows[0] ?? []), ...added], ...stored.rows.slice(1), ...rows];
+  },
+};

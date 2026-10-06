@@ -36,7 +36,7 @@ async function webhook(): Promise<Integration> {
 test("a Webhook is sent through the Webhook adapter", async () => {
   fakeHttp.answer({ status: 503, retryAfter: "120" });
 
-  expect(await sendTo(await webhook(), envelope, { approverEmail: null })).toEqual({
+  expect(await sendTo(await webhook(), envelope, { approverEmail: null, keepRefreshToken: async () => {} })).toEqual({
     outcome: { kind: "retry", reason: "The receiver answered 503", retryAfter: "120" },
     status: 503,
     body: "",
@@ -48,7 +48,7 @@ test("a Webhook is sent through the Webhook adapter", async () => {
 test("an Integration of an unknown kind can't be sent", async () => {
   const unknown = { ...(await webhook()), kind: "carrier_pigeon" } as unknown as Integration;
 
-  await expect(sendTo(unknown, envelope, { approverEmail: null })).rejects.toThrow(
+  await expect(sendTo(unknown, envelope, { approverEmail: null, keepRefreshToken: async () => {} })).rejects.toThrow(
     `Vink can't send to an Integration of kind "carrier_pigeon"`,
   );
   expect(() => adapterFor("toString")).toThrow("kind");
