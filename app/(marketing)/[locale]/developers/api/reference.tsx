@@ -135,12 +135,17 @@ function curlOf(method: string, path: string, op: Operation) {
   const body = op.requestBody && Object.entries(op.requestBody.content)[0];
   if (body) {
     const [type, media] = body;
-    lines.push(`  -H "Content-Type: ${type}"`);
-    lines.push(
-      type === "application/json"
-        ? `  -d '${JSON.stringify(media.example ?? {})}'`
-        : `  --data-binary @${type === "application/pdf" ? "document.pdf" : "file"}`,
-    );
+    if (type === "multipart/form-data") {
+      // curl sets the Content-Type, with its boundary, itself.
+      lines.push(`  -F "file=@document.pdf"`);
+    } else {
+      lines.push(`  -H "Content-Type: ${type}"`);
+      lines.push(
+        type === "application/json"
+          ? `  -d '${JSON.stringify(media.example ?? {})}'`
+          : `  --data-binary @${type === "application/pdf" ? "document.pdf" : "file"}`,
+      );
+    }
   }
   return lines.join(" \\\n");
 }

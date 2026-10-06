@@ -106,6 +106,9 @@ export const fakePdfStore = {
   async uploadUrl(key: string) {
     return `https://r2.test/upload/${key}`;
   },
+  async store(_ctx: unknown, key: string, bytes: Uint8Array) {
+    fakePdfStore.objects.set(key, bytes);
+  },
   async read(key: string) {
     return fakePdfStore.objects.get(key) ?? null;
   },

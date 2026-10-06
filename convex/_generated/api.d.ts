@@ -65,6 +65,7 @@ import type * as organisations from "../organisations.js";
 import type * as pages from "../pages.js";
 import type * as proposalRun from "../proposalRun.js";
 import type * as publicApi_auth from "../publicApi/auth.js";
+import type * as publicApi_documents from "../publicApi/documents.js";
 import type * as publicApi_forms from "../publicApi/forms.js";
 import type * as publicApi_openapi_common from "../publicApi/openapi/common.js";
 import type * as publicApi_openapi_forms from "../publicApi/openapi/forms.js";
@@ -141,6 +142,7 @@ declare const fullApi: ApiFromModules<{
   pages: typeof pages;
   proposalRun: typeof proposalRun;
   "publicApi/auth": typeof publicApi_auth;
+  "publicApi/documents": typeof publicApi_documents;
   "publicApi/forms": typeof publicApi_forms;
   "publicApi/openapi/common": typeof publicApi_openapi_common;
   "publicApi/openapi/forms": typeof publicApi_openapi_forms;
