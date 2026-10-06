@@ -1,0 +1,15 @@
+{
+    "url": "https://vink.page/v1/subscriptions/{{webhook.subscriptionId}}",
+    "method": "DELETE",
+    "headers": {
+        "authorization": "Bearer {{connection.apiKey}}"
+    },
+    "response": {
+        "error": {
+            "message": "{{ifempty(body.error.message, 'Vink answered with HTTP ' + statusCode + '.')}}"
+        }
+    },
+    "log": {
+        "sanitize": ["request.headers.authorization"]
+    }
+}

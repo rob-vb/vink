@@ -1,0 +1,26 @@
+{
+    "baseUrl": "https://vink.page/v1",
+    "headers": {
+        "authorization": "Bearer {{connection.apiKey}}"
+    },
+    "response": {
+        "error": {
+            "message": "{{ifempty(body.error.message, 'Vink answered with HTTP ' + statusCode + '.')}}",
+            "401": {
+                "type": "InvalidAccessTokenError"
+            },
+            "413": {
+                "type": "DataError"
+            },
+            "415": {
+                "type": "DataError"
+            },
+            "422": {
+                "type": "DataError"
+            }
+        }
+    },
+    "log": {
+        "sanitize": ["request.headers.authorization"]
+    }
+}
