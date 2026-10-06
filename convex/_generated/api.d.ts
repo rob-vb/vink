@@ -73,9 +73,11 @@ import type * as publicApi_openapi_types from "../publicApi/openapi/types.js";
 import type * as publicApi_respond from "../publicApi/respond.js";
 import type * as publicApi_router from "../publicApi/router.js";
 import type * as publicApi_routes from "../publicApi/routes.js";
+import type * as publicApi_subscriptions from "../publicApi/subscriptions.js";
 import type * as rejection from "../rejection.js";
 import type * as retention from "../retention.js";
 import type * as review from "../review.js";
+import type * as subscriptions from "../subscriptions.js";
 
 import type {
   ApiFromModules,
@@ -149,9 +151,11 @@ declare const fullApi: ApiFromModules<{
   "publicApi/respond": typeof publicApi_respond;
   "publicApi/router": typeof publicApi_router;
   "publicApi/routes": typeof publicApi_routes;
+  "publicApi/subscriptions": typeof publicApi_subscriptions;
   rejection: typeof rejection;
   retention: typeof retention;
   review: typeof review;
+  subscriptions: typeof subscriptions;
 }>;
 
 /**

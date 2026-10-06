@@ -3,9 +3,10 @@
 // connector. A new resource adds its own file here and one entry to `parts`.
 import { API_BASE_URL, commonErrors, errorSchema, securitySchemes, sharedResponses } from "./common";
 import { forms } from "./forms";
+import { subscriptions } from "./subscriptions";
 import type { OpenApiPart } from "./types";
 
-export const parts: OpenApiPart[] = [forms];
+export const parts: OpenApiPart[] = [forms, subscriptions];
 
 export const openApiDocument = {
   openapi: "3.1.0",

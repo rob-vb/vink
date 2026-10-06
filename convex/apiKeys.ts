@@ -1,9 +1,11 @@
 // API Keys: named secrets an Admin makes so a program can use the public API
 // (/v1, see publicApi/). A key is shown once, at creation; only its SHA-256
-// hash is stored. Revoking one deletes its row and leaves the others alone.
+// hash is stored. Revoking one deletes its row and ends its Subscriptions,
+// and leaves the other keys alone.
 import { ConvexError, v } from "convex/values";
 import { internalMutation, internalQuery } from "./_generated/server";
 import { orgMutation, orgQuery } from "./lib/functions";
+import { endSubscriptionsOf } from "./subscriptions";
 
 export const KEY_PREFIX = "vink_live_";
 
@@ -71,6 +73,7 @@ export const revoke = orgMutation({
     if (key === null || key.organisationId !== ctx.organisationId) {
       throw new ConvexError("API Key not found");
     }
+    await endSubscriptionsOf(ctx, apiKeyId);
     await ctx.db.delete(apiKeyId);
   },
 });

@@ -2,8 +2,8 @@
 // secrets and the signing secret are stored encrypted (lib/secrets.ts).
 import { ConvexError, v } from "convex/values";
 import { internal } from "./_generated/api";
-import type { Id } from "./_generated/dataModel";
-import { internalMutation, internalQuery, type QueryCtx } from "./_generated/server";
+import type { Doc, Id } from "./_generated/dataModel";
+import { internalMutation, internalQuery, type MutationCtx, type QueryCtx } from "./_generated/server";
 import { failOpenDeliveries } from "./deliveries";
 import { documentPayload } from "./lib/documentPayload";
 import { orgAction, orgMutation, orgQuery } from "./lib/functions";
@@ -58,6 +58,17 @@ async function sealed(header: { name: string; value: string; secret: boolean }) 
   return { ...header, value: header.secret ? await encryptSecret(header.value) : header.value };
 }
 
+/** The API Key whose Subscription made this Webhook, or null for one an Admin made. */
+async function subscriptionOf(ctx: QueryCtx, integrationId: Id<"integrations">) {
+  const subscription = await ctx.db
+    .query("subscriptions")
+    .withIndex("by_integrationId", (q) => q.eq("integrationId", integrationId))
+    .unique();
+  if (subscription === null) return null;
+  const apiKey = await ctx.db.get(subscription.apiKeyId);
+  return { apiKeyName: apiKey?.name ?? "" };
+}
+
 export const list = orgQuery({
   role: "admin",
   args: {},
@@ -86,6 +97,7 @@ export const list = orgQuery({
             })),
           ),
           forms: forms.flatMap((f) => (f ? [{ id: f._id, name: f.name }] : [])),
+          subscription: await subscriptionOf(ctx, integration._id),
         };
       }),
     );
@@ -104,21 +116,29 @@ export const signingSecret = orgQuery({
 
 const headerInput = v.object({ name: v.string(), value: v.string(), secret: v.boolean() });
 
+/** Made by an Admin, or by a Subscription (subscriptions.ts). */
+export async function createWebhook(
+  ctx: MutationCtx,
+  organisationId: Id<"organisations">,
+  { name, url, headers }: { name: string; url: string; headers: Array<{ name: string; value: string; secret: boolean }> },
+) {
+  checkEndpoint(name, url);
+  checkHeaders(headers);
+  return await ctx.db.insert("integrations", {
+    organisationId,
+    name: name.trim(),
+    kind: "webhook",
+    url,
+    headers: await Promise.all(headers.map(sealed)),
+    signingSecret: await encryptSecret(newSigningSecret()),
+  });
+}
+
 export const create = orgMutation({
   role: "admin",
   args: { name: v.string(), url: v.string(), headers: v.array(headerInput) },
   handler: async (ctx, { name, url, headers }) => {
-    checkEndpoint(name, url);
-    checkHeaders(headers);
-    const integrationId = await ctx.db.insert("integrations", {
-      organisationId: ctx.organisationId,
-      name: name.trim(),
-      kind: "webhook",
-      url,
-      headers: await Promise.all(headers.map(sealed)),
-      signingSecret: await encryptSecret(newSigningSecret()),
-    });
-    return { integrationId };
+    return { integrationId: await createWebhook(ctx, ctx.organisationId, { name, url, headers }) };
   },
 });
 
@@ -149,18 +169,28 @@ export const update = orgMutation({
   },
 });
 
+/** Also ends the Subscription that made it, if any. */
+export async function removeIntegration(ctx: MutationCtx, integrationId: Id<"integrations">) {
+  const links = await ctx.db
+    .query("formIntegrations")
+    .withIndex("by_integrationId", (q) => q.eq("integrationId", integrationId))
+    .take(200);
+  for (const link of links) await ctx.db.delete(link._id);
+  const subscription = await ctx.db
+    .query("subscriptions")
+    .withIndex("by_integrationId", (q) => q.eq("integrationId", integrationId))
+    .unique();
+  if (subscription !== null) await ctx.db.delete(subscription._id);
+  await failOpenDeliveries(ctx, integrationId);
+  await ctx.db.delete(integrationId);
+}
+
 export const remove = orgMutation({
   role: "admin",
   args: { integrationId: v.id("integrations") },
   handler: async (ctx, { integrationId }) => {
     await ownIntegration(ctx, ctx.organisationId, integrationId);
-    const links = await ctx.db
-      .query("formIntegrations")
-      .withIndex("by_integrationId", (q) => q.eq("integrationId", integrationId))
-      .take(200);
-    for (const link of links) await ctx.db.delete(link._id);
-    await failOpenDeliveries(ctx, integrationId);
-    await ctx.db.delete(integrationId);
+    await removeIntegration(ctx, integrationId);
   },
 });
 
@@ -210,6 +240,26 @@ export async function hasIntegrations(ctx: QueryCtx, formId: Id<"forms">) {
   );
 }
 
+/**
+ * A test envelope with dummy data for the Form's current Form Version: what a
+ * test-send without a Document sends, and the public API's sample.
+ */
+export async function dummyEnvelope(ctx: QueryCtx, form: Doc<"forms">, mode: "examples" | "empty") {
+  const now = Date.now();
+  const formVersion = (await ctx.db
+    .query("formVersions")
+    .withIndex("by_formId_and_number", (q) => q.eq("formId", form._id).eq("number", form.version))
+    .unique())!;
+  return envelopeOf({
+    deliveryId: `test_${crypto.randomUUID()}`,
+    test: true,
+    document: { id: "test", filename: "example.pdf", uploadedAt: now },
+    form: { id: form._id, version: form.version },
+    approval: { mode: "manual", by: null, at: now },
+    data: dummyPayload(formVersion.fields, mode),
+  });
+}
+
 export const testSendInput = internalQuery({
   args: {
     organisationId: v.id("organisations"),
@@ -243,18 +293,7 @@ export const testSendInput = internalQuery({
         data: await documentPayload(ctx, document),
       });
     } else {
-      const formVersion = (await ctx.db
-        .query("formVersions")
-        .withIndex("by_formId_and_number", (q) => q.eq("formId", formId).eq("number", form.version))
-        .unique())!;
-      envelope = envelopeOf({
-        deliveryId: `test_${crypto.randomUUID()}`,
-        test: true,
-        document: { id: "test", filename: "example.pdf", uploadedAt: now },
-        form: { id: formId, version: form.version },
-        approval: { mode: "manual", by: null, at: now },
-        data: dummyPayload(formVersion.fields, mode),
-      });
+      envelope = await dummyEnvelope(ctx, form, mode);
     }
     return { integration, envelope };
   },

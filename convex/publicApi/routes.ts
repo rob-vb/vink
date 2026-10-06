@@ -4,6 +4,7 @@ import { formsRoutes } from "./forms";
 import { openApiDocument } from "./openapi";
 import { apiJson } from "./respond";
 import { type ApiRoute, publicRoute } from "./router";
+import { subscriptionsRoutes } from "./subscriptions";
 
 export const routes: ApiRoute[] = [
   // No key: the document is public, and tools fetch it from the browser.
@@ -11,4 +12,5 @@ export const routes: ApiRoute[] = [
     apiJson(openApiDocument, 200, { "Access-Control-Allow-Origin": "*" }),
   ),
   ...formsRoutes,
+  ...subscriptionsRoutes,
 ];
