@@ -6,7 +6,7 @@ import { DocSection, TocLayout } from "@/components/marketing/toc";
 import { Link } from "@/i18n/navigation";
 import { isLocale, routing, type Locale } from "@/i18n/routing";
 import { pageMetadata } from "@/lib/seo";
-import { POLAR_PRIVACY, SECURITY_EMAIL, STRIPE_PRIVACY } from "@/lib/site";
+import { SECURITY_EMAIL, STRIPE_PRIVACY } from "@/lib/site";
 
 function localeOf(value: string): Locale {
   return isLocale(value) ? value : routing.defaultLocale;
@@ -38,7 +38,6 @@ const subprocessors = [
   { key: "typesafe", name: "TypeSafe (Jev)" },
   { key: "resend", name: "Resend" },
   { key: "email", name: "Cloudflare Email Routing and Workers" },
-  { key: "polar", name: "Polar" },
   { key: "stripe", name: "Stripe" },
 ] as const;
 
@@ -49,7 +48,6 @@ const TYPESAFE_TERMS = "https://typesafe.ai/legal/mca";
 // What a row's <link> points to: the party's own terms or privacy policy.
 const rowLinks: Partial<Record<(typeof subprocessors)[number]["key"], string>> = {
   typesafe: TYPESAFE_TERMS,
-  polar: POLAR_PRIVACY,
   stripe: STRIPE_PRIVACY,
 };
 

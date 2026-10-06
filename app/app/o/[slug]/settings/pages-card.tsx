@@ -21,13 +21,13 @@ const planNames = {
   custom: "Custom",
 } as const;
 
-// Where Polar sends the Admin back to (convex/billing.ts), and what to say.
+// Where Stripe sends the Admin back to (convex/billing.ts), and what to say.
 const returns = {
   subscribed: "subscribed",
   "topped-up": "toppedUp",
 } as const;
 
-/** Opens a Polar page (Checkout or the Customer Portal) from a Convex action. */
+/** Opens a Stripe page (Checkout or the Customer Portal) from a Convex action. */
 function useBillingRedirect() {
   const t = useTranslations("appSettings.billing");
   const [busy, setBusy] = useState<string | null>(null);
@@ -55,7 +55,7 @@ export function PagesCard({ organisationSlug }: { organisationSlug: string }) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
-  // `?billing=…`: open the plan chooser, or say how a Polar page went. Once.
+  // `?billing=…`: open the plan chooser, or say how a Stripe page went. Once.
   const outcome = searchParams.get("billing");
   const [choosing, setChoosing] = useState(outcome === "plans");
   useEffect(() => {

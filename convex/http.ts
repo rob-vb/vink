@@ -38,22 +38,19 @@ http.route({ path: "/contact", method: "POST", handler: submit });
 // Email-in: the Cloudflare Worker hands over each email sent to an Intake Address.
 http.route({ path: "/intake/email", method: "POST", handler: email });
 
-// Polar's webhooks: Subscriptions and Top-ups (billing.ts). Any status but
-// 2xx makes Polar send the event again later.
+// Stripe's webhooks: Subscriptions and Top-ups (billing.ts). Any status but
+// 2xx makes Stripe send the event again later.
 http.route({
-  path: "/polar/webhook",
+  path: "/stripe/webhook",
   method: "POST",
   handler: httpAction(async (ctx, request) => {
-    const header = (name: string) => request.headers.get(name) ?? "";
+    const signature = request.headers.get("stripe-signature");
+    if (signature === null) return new Response("Missing signature", { status: 400 });
     const handled = await ctx.runAction(internal.billing.webhook, {
       payload: await request.text(),
-      headers: {
-        id: header("webhook-id"),
-        timestamp: header("webhook-timestamp"),
-        signature: header("webhook-signature"),
-      },
+      signature,
     });
-    return handled ? new Response(null, { status: 202 }) : new Response("Bad signature", { status: 403 });
+    return handled ? new Response(null, { status: 200 }) : new Response("Bad signature", { status: 400 });
   }),
 });
 

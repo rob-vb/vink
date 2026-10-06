@@ -1,5 +1,7 @@
 # Polar owns the billing; Vink owns the Pages
 
+Status: superseded by [ADR 0007](0007-stripe-billing-vink-sells-owns-pages.md) (2026-10-06): Vink bills through its own Stripe account and is the seller. The split between Subscription and Pages still holds.
+
 Paid Plans and Top-ups go through Polar: Checkout to start a Plan or buy Top-ups, the Customer Portal to change Plan, cancel, update the card and download invoices. Custom Plans stay by hand (`pages:setPlan`), paid by invoice.
 
 Polar is the **merchant of record** (it resells Vink, and its payments run on Stripe). It works out, collects and remits the VAT in each country, handles fraud, disputes and payment support, and sends the receipts and invoices. So Vink needs no VAT registrations abroad. We first built this on Stripe Managed Payments (branch `stripe-billing`) and moved to Polar before it went live. Checkout asks for a business buyer (`is_business_customer`): company name and address are required and a VAT number is optional, for reverse charge. Prices are excl. VAT (`tax_behavior: "exclusive"`), as on the Pricing page. Polar chooses the payment methods per customer, and no setting adds more (polar.sh/docs/features/checkout/payment-methods). Plans are paid by card, Apple Pay, Google Pay or Link. iDEAL/Wero (Netherlands) and Bancontact (Belgium) are for one-time purchases only, so for Top-ups and not for Plans. SEPA Direct Debit isn't offered.
