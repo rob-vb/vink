@@ -93,13 +93,9 @@ function Hero() {
     <section className="overflow-hidden pt-12 pb-14 sm:pt-20 sm:pb-20">
       <Container className="grid grid-cols-[minmax(0,1fr)] items-center gap-12 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-14">
         <div>
-          <h1 className="text-[3.25rem] leading-[0.98] font-semibold tracking-[-0.035em] sm:text-7xl lg:text-[5.25rem]">
-            <span className="block">{t("document")}</span>
-            <span className="flex items-baseline gap-[0.14em]">
-              {t("vink")}
-              <VinkMark className="h-[0.6em] w-auto text-navy" />
-            </span>
-            <span className="block">{t("done")}</span>
+          <h1 className="text-[2.75rem] leading-[1.02] font-semibold tracking-[-0.035em] text-balance sm:text-6xl lg:text-[3.75rem]">
+            {t("title")}
+            <VinkMark className="ml-[0.2em] inline-block h-[0.6em] w-auto align-baseline text-navy" />
           </h1>
           <p className="mt-6 max-w-[44ch] text-lg text-pretty text-muted-foreground">{t("subtitle")}</p>
           <div className="mt-8 flex flex-wrap items-center gap-3">

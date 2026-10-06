@@ -82,9 +82,9 @@ Source of the decisions: [Positioning and messaging](../.scratch/vink-marketing/
 ## Messaging
 Dutch is the default: the marketing site at `/` is Dutch, English lives under `/en`. Write Dutch copy first, then English.
 
-**Hero:** "Document. Vink. Klaar." (EN: "Document. Vink. Done."). The logo is a checkmark, so the image carries the pun for English readers.
+**Hero:** "Niemand hoeft meer PDF's over te tikken." (EN: "Nobody has to retype PDFs anymore."), with the checkmark logo after it. "Document. Vink. Klaar." stays as the OG image title.
 **Core message:** teams stop retyping documents by hand; Vink takes that work over, which saves hours and labour cost. Lead with that outcome, not with what Vink reads.
-**Subtitle:** "Laat je team geen PDF's meer overtikken. Vink leest facturen, pakbonnen en werkbonnen, ook handgeschreven, en zet de gegevens in je systeem. Je team controleert alleen wat Vink niet zeker weet." (EN: "Stop retyping PDFs. Vink reads invoices, delivery notes and work orders, even handwritten ones, and puts the data in your system. Your team only checks what Vink isn't sure about.")
+**Subtitle:** "Vink leest facturen, pakbonnen en werkbonnen, ook handgeschreven, en zet de gegevens in je systeem. Je team controleert alleen wat Vink niet zeker weet." (EN: "Vink reads invoices, delivery notes and work orders, even handwritten ones, and puts the data in your system. Your team only checks what Vink isn't sure about.")
 **CTA:** "Gratis starten" / "Start free" everywhere, with "20 gratis pagina's. Geen creditcard nodig." / "20 free pages. No credit card." underneath. "Log in" quiet; "Open app" when logged in. Secondary hero link: "Bekijk 30 seconden" / "Watch 30 seconds" (the demo film).
 **Trust row:** "Ook gescand en handgeschreven · Je eigen velden, geen sjablonen · Niets wordt verstuurd zonder jouw akkoord" (EN: "Even scanned and handwritten · Your own fields, no templates · Nothing is sent without your approval"). The EU and 30-day claims moved to the Security section of the Terms page.
 **Cost calculator** ("Wat overtikken je nu kost." / "What retyping costs you now."), right after the film: the reader sets documents per day, minutes of retyping per document and labour cost per hour; it shows hours per month, cost by hand and the fitting Plan. No fixed savings claim in copy: the numbers are always the reader's own.
@@ -126,6 +126,6 @@ Dutch is the default: the marketing site at `/` is Dutch, English lives under `/
 
 ## Changelog
 *Newest first. One line per revision: what changed and why.*
-- v3 (2026-10-06): Copy refocused on the outcome (stop retyping, save labour cost) after the owner found it read like AI slop. New subtitle, journey and trust row; added the cost calculator; "Niets wordt verstuurd" replaces "Niets weg/verstuurd".
+- v3 (2026-10-06): Copy refocused on the outcome (stop retyping, save labour cost) after the owner found it read like AI slop. New subtitle, journey and trust row; added the cost calculator; new H1 "Niemand hoeft meer PDF's over te tikken."; "Niets wordt verstuurd" replaces "Niets weg/verstuurd".
 - v2 (2026-10-06): Fixed stale items after launch. Email intake (Intake Address) added to product, objections and glossary, and removed from the anti-persona. Messaging is now Dutch-first and follows the current Home (journey of four stops, new trust row, demo film link). Demo film and screenshots added to proof. Gemini-on-Vertex-EU claim closed (bridge retired; prod routes via our LiteLLM gateway to Vertex `eu`, checked 2026-10-06). Goals now say live since 10-02.
 - v1 (2026-09-29): Initial context, from the Positioning and messaging grilling.

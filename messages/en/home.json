@@ -8,10 +8,8 @@
     "alt": "Vink. Document. Vink. Done. No more retyping PDFs."
   },
   "hero": {
-    "document": "Document.",
-    "vink": "Vink.",
-    "done": "Done.",
-    "subtitle": "Stop retyping PDFs. Vink reads invoices, delivery notes and work orders, even handwritten ones, and puts the data in your system. Your team only checks what Vink isn't sure about.",
+    "title": "Nobody has to retype PDFs anymore.",
+    "subtitle": "Vink reads invoices, delivery notes and work orders, even handwritten ones, and puts the data in your system. Your team only checks what Vink isn't sure about.",
     "watch": "Watch 30 seconds",
     "screenLabel": "The Vink review screen with one value that needs review"
   },
