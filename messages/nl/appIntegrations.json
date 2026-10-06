@@ -34,6 +34,11 @@
   "googleNoAccess": "Vink kreeg geen toegang om de sheet te maken. Koppel opnieuw en vink het vakje voor Google Drive aan.",
   "googleDenied": "Google is niet gekoppeld.",
   "googleFailed": "Google koppelen is niet gelukt. Probeer het opnieuw.",
+  "googleReconnected": "Opnieuw gekoppeld. Verstuur de mislukte Leveringen opnieuw om hun rijen toe te voegen.",
+  "googleNoSheetAccess": "Dat Google-account kan niet bij de sheet. Koppel opnieuw met het account dat de sheet heeft gemaakt.",
+  "needsReconnect": "Opnieuw koppelen nodig",
+  "needsReconnectText": "Google laat Vink niet meer in de sheet schrijven. Koppel opnieuw met het Google-account dat de sheet heeft gemaakt. Verstuur daarna de mislukte Leveringen opnieuw.",
+  "reconnect": "Opnieuw koppelen",
   "dialog": {
     "editTitle": "Koppeling bewerken",
     "newTitle": "Nieuwe Koppeling",
@@ -64,7 +69,9 @@
     "connectAccess": "Vink kan alleen de sheet openen die Vink maakt. Je andere bestanden niet.",
     "connectRows": "De kolommen zijn de sleutels van de Velden. Een nieuw Veld krijgt een nieuwe kolom rechts.",
     "openSheet": "Sheet openen",
-    "connect": "Google-account koppelen"
+    "connect": "Google-account koppelen",
+    "reconnectHint": "Je logt opnieuw in bij Google. De sheet blijft dezelfde, dus gebruik het Google-account dat de sheet heeft gemaakt.",
+    "reconnect": "Google-account opnieuw koppelen"
   },
   "test": {
     "button": "Test versturen",
