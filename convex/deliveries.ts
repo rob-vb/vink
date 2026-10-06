@@ -1,6 +1,7 @@
 // Delivery (spec, Payload and Delivery): after Approval, one Delivery per
-// attached Integration POSTs the envelope, signed with the Integration's
-// current configuration at every attempt.
+// attached Integration sends the envelope through the adapter of its kind
+// (lib/integrationAdapters.ts), with the Integration's current configuration
+// at every attempt.
 import { ConvexError, v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
@@ -11,10 +12,10 @@ import {
   type MutationCtx,
   type QueryCtx,
 } from "./_generated/server";
-import { endpointOf, sendSigned } from "./integrations";
 import { MAX_ATTEMPTS, nextAttemptAt } from "./lib/backoff";
 import { documentPayload } from "./lib/documentPayload";
 import { orgMutation, orgQuery } from "./lib/functions";
+import { sendTo } from "./lib/integrationAdapters";
 import { envelopeOf } from "./lib/payload";
 
 // What the attempt log keeps of a response body.
@@ -70,24 +71,16 @@ export const attemptInput = internalQuery({
     if (delivery.state !== "pending" && delivery.state !== "retrying") return null;
     const integration = await ctx.db.get(delivery.integrationId);
     if (integration === null) return null;
-    return { envelope: delivery.envelope, endpoint: await endpointOf(integration) };
+    return { envelope: delivery.envelope, integration };
   },
 });
 
-export type Outcome =
-  | { kind: "delivered" }
-  | { kind: "failed"; reason: string }
-  | { kind: "retry"; reason: string; retryAfter: string | null };
-
-/** How an answer (or the lack of one) settles an attempt. */
-function outcomeOf(status: number | null, retryAfter: string | null, error: string | null): Outcome {
-  if (status === null) return { kind: "retry", reason: error!, retryAfter: null };
-  if (status >= 200 && status < 300) return { kind: "delivered" };
-  if (status === 408 || status === 429 || status >= 500) {
-    return { kind: "retry", reason: `The receiver answered ${status}`, retryAfter };
-  }
-  return { kind: "failed", reason: `The receiver refused it (${status})` };
-}
+// An adapter's Outcome (lib/integrationAdapters.ts).
+const outcome = v.union(
+  v.object({ kind: v.literal("delivered") }),
+  v.object({ kind: v.literal("retry"), reason: v.string(), retryAfter: v.union(v.string(), v.null()) }),
+  v.object({ kind: v.literal("failed"), reason: v.string() }),
+);
 
 export const attempt = internalAction({
   args: { id: v.id("deliveries") },
@@ -95,16 +88,16 @@ export const attempt = internalAction({
     const input = await ctx.runQuery(internal.deliveries.attemptInput, { id });
     if (input === null) return;
     const at = Date.now();
-    const { answer, failure } = await sendSigned(input.endpoint, JSON.parse(input.envelope));
+    const sent = await sendTo(input.integration, JSON.parse(input.envelope));
     await ctx.runMutation(internal.deliveries.recordAttempt, {
       id,
       attempt: {
         at,
-        status: answer?.status ?? null,
-        body: answer ? answer.body.slice(0, BODY_LOGGED) : null,
-        error: failure?.message ?? null,
+        status: sent.status,
+        body: sent.body === null ? null : sent.body.slice(0, BODY_LOGGED),
+        error: sent.error,
       },
-      retryAfter: answer?.retryAfter ?? null,
+      outcome: sent.outcome,
     });
   },
 });
@@ -118,9 +111,9 @@ export const recordAttempt = internalMutation({
       body: v.union(v.string(), v.null()),
       error: v.union(v.string(), v.null()),
     }),
-    retryAfter: v.union(v.string(), v.null()),
+    outcome,
   },
-  handler: async (ctx, { id, attempt, retryAfter }) => {
+  handler: async (ctx, { id, attempt, outcome }) => {
     const delivery = (await ctx.db.get(id))!;
     // Settled meanwhile (e.g. its Integration was removed, or its Document
     // deleted): keep the log only, and no response body once the data is gone.
@@ -130,7 +123,6 @@ export const recordAttempt = internalMutation({
       await ctx.db.patch(id, { attempts });
       return;
     }
-    const outcome = outcomeOf(attempt.status, retryAfter, attempt.error);
     if (outcome.kind === "delivered") {
       await ctx.db.patch(id, { attempts, state: "delivered", nextAttemptAt: undefined });
       // The retention clock runs from the last successful Delivery.
