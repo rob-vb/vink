@@ -86,6 +86,26 @@ export function refreshTokenKeeper(ctx: ActionCtx, integration: Integration) {
   };
 }
 
+/**
+ * Runs `send` while no other send writes to the same spreadsheet Integration;
+ * "busy" when another one does. Two at once would each read the header, and
+ * each add a new Field's column. A Webhook needs no turn.
+ */
+export async function sendAlone<T>(
+  ctx: ActionCtx,
+  integration: Integration,
+  send: () => Promise<T>,
+): Promise<T | "busy"> {
+  if (accountProviderOf(integration) === null) return await send();
+  const turn = { integrationId: integration._id, by: crypto.randomUUID() };
+  if (!(await ctx.runMutation(internal.integrations.claimWriting, turn))) return "busy";
+  try {
+    return await send();
+  } finally {
+    await ctx.runMutation(internal.integrations.releaseWriting, turn);
+  }
+}
+
 /** The provider of a kind's connected accounts; null for a Webhook, which has none. */
 export function accountProviderFor(kind: string): AccountProvider | null {
   return Object.hasOwn(providers, kind) ? providers[kind as AccountKind] : null;

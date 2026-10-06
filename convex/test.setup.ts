@@ -366,7 +366,10 @@ export const fakeGoogle = {
   scopes: ["https://www.googleapis.com/auth/drive.file"],
   script: [] as GoogleAnswer[],
   redirectUris: [] as string[],
+  // Runs once, right after the next read: what another send does meanwhile.
+  afterRead: null as null | (() => Promise<unknown>),
   reset() {
+    fakeGoogle.afterRead = null;
     fakeGoogle.sheets.clear();
     fakeGoogle.revoked.clear();
     fakeGoogle.revokeCalls = [];
@@ -433,7 +436,11 @@ export const fakeGoogle = {
     const { rows } = fakeGoogle.sheets.get(sheet.spreadsheetId)!;
     const header = (rows[0] ?? []).map((c) => String(c ?? ""));
     const index = header.indexOf(column);
-    return { header, column: index === -1 ? [] : rows.slice(1).map((r) => r[index] ?? null) };
+    const read = { header, column: index === -1 ? [] : rows.slice(1).map((r) => r[index] ?? null) };
+    const meanwhile = fakeGoogle.afterRead;
+    fakeGoogle.afterRead = null;
+    await meanwhile?.();
+    return read;
   },
   async append(
     token: string,
@@ -471,7 +478,10 @@ export const fakeMicrosoft = {
   scopes: ["https://graph.microsoft.com/Files.ReadWrite"],
   script: [] as MicrosoftAnswer[],
   redirectUris: [] as string[],
+  // Runs once, right after the next read: what another send does meanwhile.
+  afterRead: null as null | (() => Promise<unknown>),
   reset() {
+    fakeMicrosoft.afterRead = null;
     fakeMicrosoft.workbooks.clear();
     fakeMicrosoft.issued.clear();
     fakeMicrosoft.revoked.clear();
@@ -551,7 +561,11 @@ export const fakeMicrosoft = {
     const { rows } = fakeMicrosoft.workbooks.get(workbook.itemId)!;
     const header = (rows[0] ?? []).map((c) => String(c ?? ""));
     const index = header.indexOf(column);
-    return { header, column: index === -1 ? [] : rows.slice(1).map((r) => r[index] ?? null) };
+    const read = { header, column: index === -1 ? [] : rows.slice(1).map((r) => r[index] ?? null) };
+    const meanwhile = fakeMicrosoft.afterRead;
+    fakeMicrosoft.afterRead = null;
+    await meanwhile?.();
+    return read;
   },
   async append(token: string, workbook: { itemId: string }, added: string[], rows: FilledValue[][]) {
     await fakeMicrosoft.next(token);

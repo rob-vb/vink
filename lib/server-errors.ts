@@ -70,6 +70,8 @@ const dutch: Record<string, string> = {
   "This Integration has no account to reconnect": "Deze Koppeling heeft geen account om opnieuw te koppelen",
   "Excel isn't set up on this deployment": "Excel is hier nog niet ingesteld",
   "This Microsoft sign-in has expired. Try again.": "Deze aanmelding bij Microsoft is verlopen. Probeer het opnieuw.",
+  "Vink is writing to this Integration right now. Try again in a moment.":
+    "Vink schrijft nu naar deze Koppeling. Probeer het zo opnieuw.",
 
   // API Keys
   "An API Key needs a name": "Een API-sleutel heeft een naam nodig",

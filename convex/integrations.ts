@@ -12,7 +12,7 @@ import {
   type QueryCtx,
 } from "./_generated/server";
 import { failOpenDeliveries } from "./deliveries";
-import { accountProviderFor, accountProviderOf, refreshTokenKeeper } from "./lib/accounts";
+import { accountProviderFor, accountProviderOf, refreshTokenKeeper, sendAlone } from "./lib/accounts";
 import { documentPayload } from "./lib/documentPayload";
 import { orgAction, orgMutation, orgQuery } from "./lib/functions";
 import { kindOf, sendTo } from "./lib/integrationAdapters";
@@ -348,6 +348,35 @@ export const keepRefreshToken = internalMutation({
   },
 });
 
+// How long a send may hold a spreadsheet Integration: several calls of up to 15 s each.
+const WRITING_MS = 2 * 60_000;
+
+/**
+ * Lets one send at a time write to a spreadsheet Integration (lib/accounts.ts
+ * `sendAlone`): true when `by` may write now. Gone Integrations and Webhooks
+ * need no turn.
+ */
+export const claimWriting = internalMutation({
+  args: { integrationId: v.id("integrations"), by: v.string() },
+  handler: async (ctx, { integrationId, by }) => {
+    const integration = await ctx.db.get(integrationId);
+    if (integration === null || !("refreshToken" in integration)) return true;
+    const now = Date.now();
+    if (integration.writing && integration.writing.by !== by && integration.writing.until > now) return false;
+    await ctx.db.patch(integrationId, { writing: { by, until: now + WRITING_MS } });
+    return true;
+  },
+});
+
+export const releaseWriting = internalMutation({
+  args: { integrationId: v.id("integrations"), by: v.string() },
+  handler: async (ctx, { integrationId, by }) => {
+    const integration = await ctx.db.get(integrationId);
+    if (integration === null || !("writing" in integration) || integration.writing?.by !== by) return;
+    await ctx.db.patch(integrationId, { writing: undefined });
+  },
+});
+
 async function linkOf(ctx: QueryCtx, integrationId: Id<"integrations">, formId: Id<"forms">) {
   const links = await ctx.db
     .query("formIntegrations")
@@ -470,10 +499,14 @@ export const testSend = orgAction({
       organisationId: ctx.organisationId,
       ...args,
     });
-    const { outcome, status, body, error } = await sendTo(integration, JSON.parse(envelope), {
-      approverEmail,
-      keepRefreshToken: refreshTokenKeeper(ctx, integration),
-    });
+    const sent = await sendAlone(ctx, integration, () =>
+      sendTo(integration, JSON.parse(envelope), {
+        approverEmail,
+        keepRefreshToken: refreshTokenKeeper(ctx, integration),
+      }),
+    );
+    if (sent === "busy") throw new ConvexError("Vink is writing to this Integration right now. Try again in a moment.");
+    const { outcome, status, body, error } = sent;
     return { ok: outcome.kind === "delivered", status, body, error };
   },
 });

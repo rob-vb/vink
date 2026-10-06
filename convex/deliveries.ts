@@ -13,7 +13,7 @@ import {
   type QueryCtx,
 } from "./_generated/server";
 import { MAX_ATTEMPTS, nextAttemptAt } from "./lib/backoff";
-import { refreshTokenKeeper } from "./lib/accounts";
+import { refreshTokenKeeper, sendAlone } from "./lib/accounts";
 import { documentPayload } from "./lib/documentPayload";
 import { orgMutation, orgQuery } from "./lib/functions";
 import { kindOf, sendTo } from "./lib/integrationAdapters";
@@ -21,6 +21,9 @@ import { envelopeOf } from "./lib/payload";
 
 // What the attempt log keeps of a response body.
 const BODY_LOGGED = 500;
+
+// How long an attempt waits (plus up to as long again) while another send writes to the same sheet.
+const BUSY_WAIT_MS = 5_000;
 
 /**
  * Creates a Delivery for every Integration attached to the Document's Form
@@ -94,10 +97,17 @@ export const attempt = internalAction({
     const input = await ctx.runQuery(internal.deliveries.attemptInput, { id });
     if (input === null) return;
     const at = Date.now();
-    const sent = await sendTo(input.integration, JSON.parse(input.envelope), {
-      approverEmail: input.approverEmail,
-      keepRefreshToken: refreshTokenKeeper(ctx, input.integration),
-    });
+    const sent = await sendAlone(ctx, input.integration, () =>
+      sendTo(input.integration, JSON.parse(input.envelope), {
+        approverEmail: input.approverEmail,
+        keepRefreshToken: refreshTokenKeeper(ctx, input.integration),
+      }),
+    );
+    if (sent === "busy") {
+      // Another send is writing to the same sheet: this one goes after it, not counted as an attempt.
+      await ctx.scheduler.runAfter(BUSY_WAIT_MS + Math.random() * BUSY_WAIT_MS, internal.deliveries.attempt, { id });
+      return;
+    }
     await ctx.runMutation(internal.deliveries.recordAttempt, {
       id,
       attempt: {

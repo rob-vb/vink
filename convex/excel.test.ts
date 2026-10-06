@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
-import { api } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { ACCESS_EXPIRED } from "./lib/excelAdapter";
 import { decryptSecret } from "./lib/secrets";
@@ -134,6 +134,12 @@ async function deliveryOf(t: Backend, ctx: Awaited<ReturnType<typeof connected>>
   });
   expect(deliveries).toHaveLength(1);
   return deliveries[0];
+}
+
+async function deliveryRow(t: Backend, documentId: Id<"documents">) {
+  return await t.run(
+    async (ctx) => await ctx.db.query("deliveries").withIndex("by_documentId", (q) => q.eq("documentId", documentId)).unique(),
+  );
 }
 
 async function storedToken(t: Backend, integrationId: Id<"integrations">) {
@@ -294,6 +300,35 @@ test("a Field added in a new Form Version gets a column on the right", async () 
   expect(workbook.header.slice(-2)).toEqual(["rims", "workshop"]);
   expect(workbook.rows.map((r) => r.length)).toEqual([8, 8, 9, 9]);
   expect(workbook.rows[3][8]).toBeNull();
+});
+
+test("two Deliveries at once write one after the other: a new Field's column is added once", async () => {
+  const t = newBackend();
+  const ann = await connected(t);
+  await approve(t, ann);
+  await ann.user.mutation(api.forms.save, {
+    organisationSlug: ann.organisationSlug,
+    formId: ann.formId,
+    name: "Tyre service",
+    fields: [...fields, { type: "text", label: "Werkplaats", key: "workshop", required: false }],
+  });
+  fakePipeline.replay(tyreService);
+  const first = (await uploadAndExtract(t, ann.user, ann.organisationSlug, ann.formId, 2))!;
+  const second = (await uploadAndExtract(t, ann.user, ann.organisationSlug, ann.formId, 2))!;
+  await ann.user.mutation(api.review.approve, { organisationSlug: ann.organisationSlug, documentId: first });
+  // The second Delivery's attempt starts while the first is between reading the header and writing.
+  fakeMicrosoft.afterRead = async () => {
+    await ann.user.mutation(api.review.approve, { organisationSlug: ann.organisationSlug, documentId: second });
+    const { _id } = (await deliveryRow(t, second))!;
+    await t.action(internal.deliveries.attempt, { id: _id });
+  };
+  await t.finishAllScheduledFunctions(vi.runAllTimers);
+
+  expect((await deliveryOf(t, ann, first)).state).toBe("delivered");
+  expect((await deliveryOf(t, ann, second)).state).toBe("delivered");
+  const workbook = fakeMicrosoft.onlyWorkbook();
+  expect(workbook.header.filter((c) => c === "workshop")).toHaveLength(1);
+  expect(workbook.rows.map((r) => r.length)).toEqual([8, 8, 9, 9, 9, 9]);
 });
 
 test("Microsoft's rate limits and 5xx are retried", async () => {

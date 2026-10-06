@@ -361,6 +361,25 @@ test("a test-send adds dummy rows marked as test", async () => {
   expect(row.slice(4)).toEqual(["Example Kenteken", "Example Positie", 123.45, '[{"size":"Example Maat"}]']);
 });
 
+test("a test-send while a Delivery writes to the sheet asks to try again, and writes nothing", async () => {
+  const t = newBackend();
+  const ann = await connected(t);
+  const testSend = () =>
+    ann.user.action(api.integrations.testSend, {
+      organisationSlug: ann.organisationSlug,
+      integrationId: ann.integrationId,
+      formId: ann.formId,
+      mode: "examples",
+    });
+  fakeGoogle.afterRead = async () => {
+    await expect(testSend()).rejects.toThrow("Vink is writing to this Integration right now. Try again in a moment.");
+  };
+  await approve(t, ann);
+  expect(fakeGoogle.onlySheet().rows).toHaveLength(2);
+  // Once that send is done, it is the test-send's turn.
+  expect(await testSend()).toMatchObject({ ok: true });
+});
+
 test("a Google Sheets Integration can be renamed, but has no endpoint or signing secret", async () => {
   const t = newBackend();
   const ann = await connected(t);
