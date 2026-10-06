@@ -6,7 +6,7 @@ import { DocSection, TocLayout } from "@/components/marketing/toc";
 import { Link } from "@/i18n/navigation";
 import { isLocale, routing, type Locale } from "@/i18n/routing";
 import { pageMetadata } from "@/lib/seo";
-import { SECURITY_EMAIL } from "@/lib/site";
+import { POLAR_PRIVACY, SECURITY_EMAIL, STRIPE_PRIVACY } from "@/lib/site";
 
 function localeOf(value: string): Locale {
   return isLocale(value) ? value : routing.defaultLocale;
@@ -38,11 +38,20 @@ const subprocessors = [
   { key: "typesafe", name: "TypeSafe (Jev)" },
   { key: "resend", name: "Resend" },
   { key: "email", name: "Cloudflare Email Routing and Workers" },
+  { key: "polar", name: "Polar" },
+  { key: "stripe", name: "Stripe" },
 ] as const;
 
 // TypeSafe's own terms, linked from the "may keep logs" clause. Drop that
 // clause (and this link) if TypeSafe grants zero retention before launch.
 const TYPESAFE_TERMS = "https://typesafe.ai/legal/mca";
+
+// What a row's <link> points to: the party's own terms or privacy policy.
+const rowLinks: Partial<Record<(typeof subprocessors)[number]["key"], string>> = {
+  typesafe: TYPESAFE_TERMS,
+  polar: POLAR_PRIVACY,
+  stripe: STRIPE_PRIVACY,
+};
 
 const inlineLink = "font-medium text-foreground underline underline-offset-3";
 
@@ -136,7 +145,7 @@ export default async function TermsPage({ params }: PageProps<"/[locale]/terms">
                     <td className="px-4 py-3 align-top">
                       {t.rich(`subprocessors.rows.${row.key}.data`, {
                         link: (chunks) => (
-                          <a href={TYPESAFE_TERMS} className={inlineLink} rel="noopener noreferrer">
+                          <a href={rowLinks[row.key]} className={inlineLink} rel="noopener noreferrer">
                             {chunks}
                           </a>
                         ),

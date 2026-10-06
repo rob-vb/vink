@@ -15,7 +15,7 @@
     "database": "<b>The database</b> is in Ireland (Convex, AWS eu-west-1). It holds everything except the PDFs.",
     "pdfs": "<b>PDFs</b> are stored in Cloudflare R2 with EU jurisdiction.",
     "reading": "<b>Reading</b> happens with Gemini on Vertex AI, in Google Cloud's EU multi-region.",
-    "us": "Matching the read text to your Fields happens at TypeSafe in the United States, and sign-in emails go through Resend in the United States. See <link>Who processes it</link>."
+    "us": "Matching the read text to your Fields happens at TypeSafe in the United States, sign-in emails go through Resend in the United States, and payments go through Polar and Stripe in the United States. See <link>Who processes it</link>."
   },
   "retention": {
     "title": "How long we keep it, and deletion",
@@ -70,6 +70,16 @@
         "purpose": "Receiving documents sent to an Intake Address",
         "region": "To confirm",
         "data": "Emails sent to an Intake Address, with their PDF attachments"
+      },
+      "polar": {
+        "purpose": "Payments, subscriptions and invoices, as seller (merchant of record)",
+        "region": "United States",
+        "data": "Your organisation's ID, the payer's name and email address, and what you enter at Polar. Polar is a controller itself, under <link>its own privacy policy</link>."
+      },
+      "stripe": {
+        "purpose": "Card payments for Polar",
+        "region": "United States",
+        "data": "Card details you enter at Polar. Under <link>its own privacy policy</link>."
       }
     },
     "transfers": "Transfers to the United States rely on the EU–US Data Privacy Framework or Standard Contractual Clauses."

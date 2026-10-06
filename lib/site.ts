@@ -17,3 +17,7 @@ export const SECURITY_EMAIL = process.env.SECURITY_EMAIL ?? `security@${SITE_HOS
 /** The product lives under its own root layout: links to it are plain `<a>`, never next/link. */
 export const APP_PATH = "/app";
 export const SIGN_UP_PATH = "/app/sign-up";
+
+// The payment parties' own privacy policies (Privacy, Terms → Subprocessors).
+export const POLAR_PRIVACY = "https://polar.sh/legal/privacy-policy";
+export const STRIPE_PRIVACY = "https://stripe.com/privacy";
