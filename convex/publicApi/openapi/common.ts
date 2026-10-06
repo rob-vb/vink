@@ -8,7 +8,7 @@ export const securitySchemes = {
     type: "http",
     scheme: "bearer",
     description:
-      "An API Key, made by an Admin under Settings → API Keys. Send it as `Authorization: Bearer <key>`.",
+      "An API Key, made by an Admin under Organisation settings → API Keys. Send it as `Authorization: Bearer <key>`.",
   },
 };
 

@@ -4,7 +4,9 @@ import type { OpenApiPart, Schema } from "./types";
 const fieldType = (types: string[]): Schema => ({
   type: "string",
   enum: types,
-  description: "`choice` has `options`; `list` has `fields`, one per column of an entry.",
+  description: types.includes("list")
+    ? "`choice` has `options`; `list` has `fields`, the sub-Fields of each entry."
+    : "`choice` has `options`.",
 });
 
 const fieldProperties = (types: string[]): Record<string, Schema> => ({
