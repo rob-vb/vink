@@ -64,7 +64,15 @@ export const subscriptions: OpenApiPart = {
           },
         },
         responses: {
-          "201": json("The Subscription.", "Subscription", exampleSubscription),
+          "201": {
+            ...json("The Subscription.", "Subscription", exampleSubscription),
+            headers: {
+              Location: {
+                description: "The Subscription's URL: a `DELETE` on it unsubscribes (Power Automate does that itself).",
+                schema: { type: "string", example: `https://vink.page/v1/subscriptions/${exampleSubscription.id}` },
+              },
+            },
+          },
           "400": {
             description: "The body isn't JSON with `form_id` and `url`.",
             content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } },

@@ -107,6 +107,25 @@ test("subscribing makes a Webhook attached to the Form, shown in the app as made
   });
 });
 
+test("the subscribe answer's Location header is the URL that unsubscribes, as Power Automate needs", async () => {
+  vi.stubEnv("SITE_URL", "https://vink.page");
+  const t = newBackend();
+  const { formId, key, call } = await organisation(t, "ann", "Acme Fleet");
+  const response = await call("/subscriptions", {
+    method: "POST",
+    body: { form_id: formId, url: "https://hooks.example.com/1" },
+  });
+  const { id } = await response.json();
+
+  const location = response.headers.get("Location");
+  expect(location).toBe(`https://vink.page/v1/subscriptions/${id}`);
+  const unsubscribe = await t.fetch(new URL(location!).pathname, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${key}` },
+  });
+  expect(unsubscribe.status).toBe(200);
+});
+
 test("unsubscribing removes the Webhook; a second time, or an Admin's own Webhook, is not found", async () => {
   const t = newBackend();
   const { user, organisationSlug, formId, call, subscribe } = await organisation(t, "ann", "Acme Fleet");

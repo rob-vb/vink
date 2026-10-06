@@ -33,7 +33,9 @@ export const subscriptionsRoutes: ApiRoute[] = [
       return apiError(status, code, message);
     }
     const { id, formId, url, createdAt } = result.subscription;
-    return apiJson({ id, form_id: formId, url, created_at: iso(createdAt) }, 201);
+    // Power Automate unsubscribes by DELETE on this URL when a flow is turned off or deleted.
+    const location = `${process.env.SITE_URL}/v1/subscriptions/${id}`;
+    return apiJson({ id, form_id: formId, url, created_at: iso(createdAt) }, 201, { Location: location });
   }),
   route("DELETE", "/v1/subscriptions/{id}", async (ctx, _request, { caller, params }) => {
     const result = await ctx.runMutation(internal.subscriptions.unsubscribe, {
