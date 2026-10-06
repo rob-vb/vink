@@ -241,6 +241,15 @@ test("an unknown /v1 path gets 404 in the same error shape", async () => {
   });
 });
 
+test("a known /v1 path with the wrong method gets 405", async () => {
+  const t = newBackend();
+  const response = await t.fetch("/v1/forms", { method: "DELETE" });
+  expect(response.status).toBe(405);
+  expect(await response.json()).toEqual({
+    error: { code: "method_not_allowed", message: "/v1/forms doesn't take DELETE." },
+  });
+});
+
 test("the OpenAPI document is served without a key and describes GET /forms", async () => {
   const t = newBackend();
   const { status, body } = await get(t, "/v1/openapi.json");

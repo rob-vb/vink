@@ -69,6 +69,7 @@ import type * as publicApi_openapi_forms from "../publicApi/openapi/forms.js";
 import type * as publicApi_openapi_index from "../publicApi/openapi/index.js";
 import type * as publicApi_openapi_types from "../publicApi/openapi/types.js";
 import type * as publicApi_respond from "../publicApi/respond.js";
+import type * as publicApi_router from "../publicApi/router.js";
 import type * as publicApi_routes from "../publicApi/routes.js";
 import type * as rejection from "../rejection.js";
 import type * as retention from "../retention.js";
@@ -142,6 +143,7 @@ declare const fullApi: ApiFromModules<{
   "publicApi/openapi/index": typeof publicApi_openapi_index;
   "publicApi/openapi/types": typeof publicApi_openapi_types;
   "publicApi/respond": typeof publicApi_respond;
+  "publicApi/router": typeof publicApi_router;
   "publicApi/routes": typeof publicApi_routes;
   rejection: typeof rejection;
   retention: typeof retention;

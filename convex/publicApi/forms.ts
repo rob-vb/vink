@@ -5,8 +5,8 @@ import { internal } from "../_generated/api";
 import { internalQuery } from "../_generated/server";
 import { getVersion } from "../forms";
 import type { field, flatField } from "../schema";
-import { withApiKey } from "./auth";
 import { apiJson } from "./respond";
+import { type ApiRoute, route } from "./router";
 
 // What a program sees of a Field: no extraction descriptions.
 function publicFlatField(f: Infer<typeof flatField>) {
@@ -38,6 +38,8 @@ export const list = internalQuery({
   },
 });
 
-export const listForms = withApiKey(async (ctx, _request, { organisationId }) =>
-  apiJson({ data: await ctx.runQuery(internal.publicApi.forms.list, { organisationId }) }),
-);
+export const formsRoutes: ApiRoute[] = [
+  route("GET", "/v1/forms", async (ctx, _request, { caller }) =>
+    apiJson({ data: await ctx.runQuery(internal.publicApi.forms.list, { organisationId: caller.organisationId }) }),
+  ),
+];
