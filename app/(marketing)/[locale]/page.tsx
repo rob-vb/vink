@@ -6,7 +6,7 @@ import type { ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ClosingCard, Faq, TeamBlock, StartFree, TrustRow } from "@/components/marketing/blocks";
+import { ClosingCard, Faq, StartFree, TrustRow } from "@/components/marketing/blocks";
 import { VinkMark } from "@/components/marketing/brand";
 import { CodeBlock, PostBar } from "@/components/marketing/code-block";
 import { demoVideo } from "@/components/marketing/demo-video";
@@ -80,7 +80,7 @@ export default async function Home({ params }: PageProps<"/[locale]">) {
       <Journey />
       <Connect />
       <PricingRow locale={locale} />
-      <FounderAndFaq />
+      <HomeFaq />
       <ClosingCard location="home" />
     </main>
   );
@@ -364,7 +364,7 @@ function Connect() {
 function PricingRow({ locale }: { locale: Locale }) {
   const t = useTranslations("home.pricing");
   return (
-    <section className="pb-16 sm:pb-24">
+    <section className="py-16 sm:py-24">
       <Container>
         <SectionHeading title={t("title")} subtitle={t("subtitle")} className="mb-10" />
         <div className="grid overflow-hidden rounded-2xl border sm:grid-cols-2 lg:grid-cols-4">
@@ -413,23 +413,20 @@ function PricingRow({ locale }: { locale: Locale }) {
   );
 }
 
-function FounderAndFaq() {
+function HomeFaq() {
   const t = useTranslations("home.faq");
   const keys = ["wrong", "messy", "developer", "templates"] as const;
   return (
     <section className="pb-8">
-      <Container className="grid grid-cols-[minmax(0,1fr)] gap-12 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:gap-16">
-        <TeamBlock className="lg:pt-2" />
-        <div>
-          <h2 className="mb-6 text-3xl font-semibold tracking-tight">{t("title")}</h2>
-          <Faq
-            items={keys.map((key) => ({
-              id: key,
-              question: t(`${key}.q`),
-              answer: t(`${key}.a`),
-            }))}
-          />
-        </div>
+      <Container className="max-w-3xl">
+        <h2 className="mb-6 text-3xl font-semibold tracking-tight">{t("title")}</h2>
+        <Faq
+          items={keys.map((key) => ({
+            id: key,
+            question: t(`${key}.q`),
+            answer: t(`${key}.a`),
+          }))}
+        />
       </Container>
     </section>
   );

@@ -1,10 +1,8 @@
-import { Check, Mail } from "lucide-react";
-import Image from "next/image";
+import { Check } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { buttonVariants } from "@/components/ui/button";
-import { CONTACT_EMAIL } from "@/lib/site";
 import { cn } from "@/lib/utils";
 import { LogInLink, StartFreeLink } from "./cta-links";
 import { Container } from "./section";
@@ -90,33 +88,6 @@ export function ClosingCard({ location, title }: { location: string; title?: str
         </div>
       </Container>
     </section>
-  );
-}
-
-/** Who's behind Vink: the team's voice with the direct email, on Home and Contact. */
-export function TeamBlock({ className }: { className?: string }) {
-  const t = useTranslations("common.team");
-  return (
-    <figure className={cn("flex flex-col gap-5", className)}>
-      <p className="font-mono text-xs font-medium tracking-[0.08em] text-muted-foreground uppercase">
-        {t("eyebrow")}
-      </p>
-      <blockquote className="text-lg leading-relaxed text-pretty">&ldquo;{t("quote")}&rdquo;</blockquote>
-      <figcaption className="flex items-center gap-3">
-        <Image src="/vink_icon.svg" alt="" width={56} height={56} className="size-14 rounded-full" />
-        <span>
-          <span className="block font-semibold">{t("name")}</span>
-          <span className="block text-sm text-muted-foreground">{t("role")}</span>
-          <a
-            href={`mailto:${CONTACT_EMAIL}`}
-            className="mt-0.5 inline-flex items-center gap-1.5 font-mono text-sm text-foreground underline-offset-3 hover:underline"
-          >
-            <Mail className="size-3.5" aria-hidden />
-            {CONTACT_EMAIL}
-          </a>
-        </span>
-      </figcaption>
-    </figure>
   );
 }
 

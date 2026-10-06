@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
-import { TeamBlock } from "@/components/marketing/blocks";
 import { LogInLink } from "@/components/marketing/cta-links";
 import { RequestForm } from "@/components/marketing/request-form";
 import { Container, SectionHeading } from "@/components/marketing/section";
@@ -42,7 +41,6 @@ export default async function ContactPage({ params }: PageProps<"/[locale]/conta
             </p>
           </div>
           <div className="flex flex-col gap-10">
-            <TeamBlock className="rounded-2xl border bg-panel p-6 sm:p-8" />
             <div>
               <h2 className="text-base font-semibold">{t("other.title")}</h2>
               <ul className="mt-3 flex flex-col gap-2 text-sm text-muted-foreground">

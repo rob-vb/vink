@@ -31,12 +31,6 @@
     "customer": "Already a customer?",
     "logIn": "Log in"
   },
-  "team": {
-    "eyebrow": "Who's behind Vink",
-    "quote": "We built Vink after watching teams retype the same kinds of PDFs every day. If you're unsure whether it fits your documents, write to us. We read every email.",
-    "name": "Vink",
-    "role": "The team behind Vink"
-  },
   "footer": {
     "tagline": "Automated data entry for operations teams. Any PDF in, clean data out.",
     "product": "Product",
