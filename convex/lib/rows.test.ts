@@ -119,3 +119,20 @@ test("an empty sheet gets the whole header", () => {
     "lines.description",
   ]);
 });
+
+test("a Field keyed like one of Vink's own columns gets a column of its own; Vink's columns are never overwritten", () => {
+  const [row] = rowsOf(
+    approved({ document: "Werkbon", delivery_id: "PO-77", approved_by: "Jan", approved_at: "2026-10-01" }),
+    "ann@acme.example",
+  );
+  expect(row).toEqual({
+    document: "werkbon-118.pdf",
+    approved_at: "2026-10-06T09:30:00.000Z",
+    approved_by: "ann@acme.example",
+    delivery_id: "dlv_1",
+    "document (Field)": "Werkbon",
+    "delivery_id (Field)": "PO-77",
+    "approved_by (Field)": "Jan",
+    "approved_at (Field)": "2026-10-01",
+  });
+});

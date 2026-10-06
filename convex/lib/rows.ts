@@ -3,7 +3,9 @@
 // Document's other values repeated on each row, any further List as JSON in
 // one cell. Columns are headed by Field keys, a first-List sub-Field by
 // `<list key>.<sub key>`, plus `document`, `approved_at`, `approved_by` and
-// `delivery_id`.
+// `delivery_id`. A Field keyed like one of those four is headed
+// `<key> (Field)`, so Vink's own columns (the duplicate check reads
+// `delivery_id`) are never overwritten.
 import type { Envelope } from "./integrationAdapters";
 import type { FilledValue } from "./pipeline";
 
@@ -14,6 +16,11 @@ export type Row = Record<string, Cell>;
 
 /** The columns every row has, whatever the Form; a new sheet starts with these. */
 export const DOCUMENT_COLUMNS = ["document", "approved_at", "approved_by", "delivery_id"];
+
+/** A Field's column: its key, unless that is one of Vink's own (a key has no space, so this can't be a key). */
+function columnOf(key: string) {
+  return DOCUMENT_COLUMNS.includes(key) ? `${key} (Field)` : key;
+}
 
 /**
  * The rows a Document's envelope writes. `approved_by` is the approver's
@@ -34,9 +41,9 @@ export function rowsOf(envelope: Envelope, approverEmail: string | null): Row[] 
       if (key === first) {
         for (const [sub, cell] of Object.entries(entry ?? {})) row[`${key}.${sub}`] = cell;
       } else if (Array.isArray(value)) {
-        row[key] = value.length === 0 ? null : JSON.stringify(value);
+        row[columnOf(key)] = value.length === 0 ? null : JSON.stringify(value);
       } else {
-        row[key] = value;
+        row[columnOf(key)] = value;
       }
     }
     return row;
