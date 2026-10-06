@@ -12,6 +12,7 @@ export const DRIVE_FILE_SCOPE = "https://www.googleapis.com/auth/drive.file";
 const TIMEOUT_MS = 15_000;
 
 const TOKEN_URL = "https://oauth2.googleapis.com/token";
+const REVOKE_URL = "https://oauth2.googleapis.com/revoke";
 const SHEETS_URL = "https://sheets.googleapis.com/v4/spreadsheets";
 
 /** The tab Vink makes and writes to. Found again by its id, so renaming it is fine. */
@@ -38,6 +39,10 @@ export type GoogleClient = {
   exchangeCode(code: string, redirectUri: string): Promise<{ refreshToken: string | null; scopes: string[] }>;
   /** A short-lived access token for a refresh token. */
   accessToken(refreshToken: string): Promise<string>;
+  /** Takes back Vink's access that this token gives (Google's whole grant for that account). */
+  revoke(token: string): Promise<void>;
+  /** Whether the account can open the spreadsheet: drive.file lets Vink open only the files it made. */
+  canOpen(accessToken: string, spreadsheetId: string): Promise<boolean>;
   /** Makes a spreadsheet with one tab, its header row filled in and frozen. */
   createSheet(accessToken: string, title: string, header: string[]): Promise<SheetRef & { url: string }>;
   /** Row 1, and every value below it in the column headed `column` (none if there is no such column). */
@@ -195,6 +200,20 @@ export const google: GoogleClient = {
       }),
     )) as { access_token: string };
     return answer.access_token;
+  },
+
+  async revoke(token) {
+    await call(REVOKE_URL, form({ token }));
+  },
+
+  async canOpen(token, spreadsheetId) {
+    try {
+      await call(`${SHEETS_URL}/${spreadsheetId}?fields=spreadsheetId`, { token });
+      return true;
+    } catch (error) {
+      if (error instanceof GoogleFailure && (error.status === 403 || error.status === 404)) return false;
+      throw error;
+    }
   },
 
   async createSheet(token, title, header) {

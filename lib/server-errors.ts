@@ -67,6 +67,7 @@ const dutch: Record<string, string> = {
   "This Integration isn't a Webhook": "Deze Koppeling is geen Webhook",
   "Google Sheets isn't set up on this deployment": "Google Sheets is hier nog niet ingesteld",
   "This Google sign-in has expired. Try again.": "Deze aanmelding bij Google is verlopen. Probeer het opnieuw.",
+  "This Integration has no account to reconnect": "Deze Koppeling heeft geen account om opnieuw te koppelen",
 
   // API Keys
   "An API Key needs a name": "Een API-sleutel heeft een naam nodig",
