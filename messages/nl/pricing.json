@@ -65,17 +65,6 @@
       "body": "Ondertekende JSON naar je systeem, met nieuwe pogingen en een test-send."
     }
   },
-  "pages": {
-    "title": "Wat telt als een pagina",
-    "body": "Eén pagina van een PDF is één pagina. Die telt één keer, wanneer Vink de PDF accepteert om te lezen.",
-    "invoice": "Een factuur",
-    "invoiceCount": "1 tot 2 pagina's",
-    "delivery": "Een pakbon",
-    "deliveryCount": "1 pagina",
-    "contract": "Een contract van 10 pagina's",
-    "contractCount": "10 pagina's",
-    "free": "Opnieuw proberen na een mislukte lezing, of een document naar een ander formulier verplaatsen, is gratis."
-  },
   "faq": {
     "title": "Vragen over prijzen",
     "users": {
@@ -84,7 +73,7 @@
     },
     "page": {
       "q": "Wat is een pagina?",
-      "a": "Eén pagina van een PDF. Een document telt zijn pagina's één keer, wanneer Vink het accepteert om te lezen. Opnieuw proberen na een mislukte lezing is gratis."
+      "a": "Eén pagina van een PDF. Een document telt zijn pagina's één keer, wanneer Vink het accepteert om te lezen. Opnieuw proberen na een mislukte lezing is gratis. Een document naar een ander formulier verplaatsen is ook gratis."
     },
     "runOut": {
       "q": "Wat gebeurt er als onze pagina's op zijn?",

@@ -65,17 +65,6 @@
       "body": "Signed JSON to your system, with retries and a test-send."
     }
   },
-  "pages": {
-    "title": "What counts as a page",
-    "body": "One page of a PDF is one page. It counts once, when Vink accepts the PDF for reading.",
-    "invoice": "An invoice",
-    "invoiceCount": "1 to 2 pages",
-    "delivery": "A delivery note",
-    "deliveryCount": "1 page",
-    "contract": "A 10-page contract",
-    "contractCount": "10 pages",
-    "free": "A retry after a failed read, or moving a Document to another Form, is free."
-  },
   "faq": {
     "title": "Questions about pricing",
     "users": {
@@ -84,7 +73,7 @@
     },
     "page": {
       "q": "What is a page?",
-      "a": "One page of a PDF. A Document counts its pages once, when Vink accepts it for reading. Retries after a failed read are free."
+      "a": "One page of a PDF. A Document counts its pages once, when Vink accepts it for reading. Retries after a failed read are free. Moving a Document to another Form is free too."
     },
     "runOut": {
       "q": "What happens when our pages run out?",
