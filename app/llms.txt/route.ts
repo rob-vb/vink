@@ -17,7 +17,7 @@ export function GET() {
     "- Input: PDF, up to 20 pages each. Upload several at once, or email PDF attachments to a Form's own Intake Address.",
     "- Output: signed JSON webhook (HMAC-SHA256, `X-Vink-Signature: t=<unix>,v1=<hex>`), keyed by the team's own Fields, with retries and test-send.",
     "- Review: every value shows what was read and on which page; values below the Review Threshold are flagged Needs Review. Auto-Send is off by default.",
-    "- Data: stored in the EU; deleted 30 days after sending by default (configurable 1 to 365 days). Subprocessors include two in the United States (TypeSafe, Resend); payments go through Polar (merchant of record) and Stripe, also in the United States.",
+    "- Data: stored in the EU; deleted 30 days after sending by default (configurable 1 to 365 days). Subprocessors include two in the United States (TypeSafe, Resend); payments go through Stripe, also in the United States.",
     "- No templates: describe your Fields, or let Vink propose them from one example.",
     "",
     "## Pricing (EUR, excl. VAT)",

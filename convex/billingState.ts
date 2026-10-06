@@ -1,9 +1,9 @@
-// The database side of billing (billing.ts talks to Polar). Polar owns the
+// The database side of billing (billing.ts talks to Stripe). Stripe owns the
 // Subscription; each webhook hands its current state to `applySubscription`,
 // which sets the Organisation's Plan. Pages periods stay monthly, also on an
 // annual Subscription, and the `pages periods` cron renews them.
-import { v, type Infer } from "convex/values";
-import { internalMutation, internalQuery, type MutationCtx } from "./_generated/server";
+import { v } from "convex/values";
+import { internalMutation, internalQuery, type QueryCtx } from "./_generated/server";
 import { billingInterval } from "./schema";
 import { allowanceOf, isLive } from "./lib/billing";
 import { nextPeriodEnd, pagesOf } from "./pages";
@@ -19,24 +19,30 @@ export const organisation = internalQuery({
       name: organisation.name,
       slug: organisation.slug,
       plan: pagesOf(organisation).plan,
-      hasCustomer: organisation.polarCustomerId !== undefined,
+      stripeCustomerId: organisation.stripeCustomerId ?? null,
       hasLiveSubscription:
         organisation.subscription !== undefined && isLive(organisation.subscription.status),
     };
   },
 });
 
-// Who paid: the Polar Customer, and its external ID, which Checkout set to
-// the Organisation's ID.
-const customer = v.object({ id: v.string(), externalId: v.union(v.string(), v.null()) });
+/** Stores the Organisation's Stripe Customer, unless it already has one; returns the one it keeps. */
+export const setStripeCustomer = internalMutation({
+  args: { organisationId: v.id("organisations"), customerId: v.string() },
+  handler: async (ctx, { organisationId, customerId }) => {
+    const organisation = (await ctx.db.get(organisationId))!;
+    if (organisation.stripeCustomerId) return organisation.stripeCustomerId;
+    await ctx.db.patch(organisationId, { stripeCustomerId: customerId });
+    return customerId;
+  },
+});
 
-/** The Customer's Organisation, remembering its Polar Customer; `null` for a stranger. */
-async function organisationOf(ctx: MutationCtx, { id, externalId }: Infer<typeof customer>) {
-  const organisationId = externalId && ctx.db.normalizeId("organisations", externalId);
-  const organisation = organisationId ? await ctx.db.get(organisationId) : null;
-  if (organisation === null) return null;
-  if (organisation.polarCustomerId !== id) await ctx.db.patch(organisation._id, { polarCustomerId: id });
-  return { ...organisation, polarCustomerId: id };
+/** The Customer's Organisation; `null` for a Customer Vink didn't make. */
+async function byCustomer(ctx: QueryCtx, customerId: string) {
+  return await ctx.db
+    .query("organisations")
+    .withIndex("by_stripeCustomerId", (q) => q.eq("stripeCustomerId", customerId))
+    .unique();
 }
 
 /**
@@ -48,7 +54,9 @@ async function organisationOf(ctx: MutationCtx, { id, externalId }: Infer<typeof
  */
 export const applySubscription = internalMutation({
   args: {
-    customer,
+    customerId: v.string(),
+    // When billing.ts read this from Stripe, ms: an older read never overwrites a newer one.
+    listedAt: v.number(),
     subscription: v.union(
       v.null(),
       v.object({
@@ -57,21 +65,26 @@ export const applySubscription = internalMutation({
         plan: paidPlan,
         interval: billingInterval,
         endsAt: v.union(v.number(), v.null()),
-        // When the Subscription started, ms: Pages periods end on its day of the month.
+        // The billing cycle anchor, ms: Pages periods end on its day of the month.
         anchor: v.number(),
       }),
     ),
   },
-  handler: async (ctx, { customer, subscription }) => {
-    const organisation = await organisationOf(ctx, customer);
+  handler: async (ctx, { customerId, listedAt, subscription }) => {
+    const organisation = await byCustomer(ctx, customerId);
     if (organisation === null) {
-      console.warn(`Polar Customer ${customer.id} belongs to no Organisation`);
+      console.warn(`Stripe Customer ${customerId} belongs to no Organisation`);
       return;
     }
+    if (listedAt < (organisation.billingSyncedAt ?? 0)) return;
     const pages = pagesOf(organisation);
     if (subscription === null || !isLive(subscription.status)) {
-      if (organisation.subscription === undefined) return;
+      if (organisation.subscription === undefined) {
+        await ctx.db.patch(organisation._id, { billingSyncedAt: listedAt });
+        return;
+      }
       await ctx.db.patch(organisation._id, {
+        billingSyncedAt: listedAt,
         subscription: undefined,
         pages: {
           ...pages,
@@ -92,6 +105,7 @@ export const applySubscription = internalMutation({
     const now = Date.now();
     const anchorDay = new Date(anchor).getUTCDate();
     await ctx.db.patch(organisation._id, {
+      billingSyncedAt: listedAt,
       subscription: state,
       pages: hadPaidPlan
         ? { ...pages, plan, allowance }
@@ -108,23 +122,27 @@ export const applySubscription = internalMutation({
   },
 });
 
-/** Credits a paid Top-up Order once, however often its webhook arrives. */
+/** Credits a paid Top-up Checkout once, however often its webhook arrives. */
 export const creditTopUp = internalMutation({
-  args: { customer, orderId: v.string(), pages: v.number() },
-  handler: async (ctx, { customer, orderId, pages: added }) => {
-    const organisation = await organisationOf(ctx, customer);
-    // Not bought through Vink (no external ID): nothing to credit. Throwing
-    // would make Polar retry, and 10 failures in a row disable the endpoint.
+  args: { customerId: v.string(), checkoutSessionId: v.string(), pages: v.number() },
+  handler: async (ctx, { customerId, checkoutSessionId, pages: added }) => {
+    const organisation = await byCustomer(ctx, customerId);
+    // Not bought through Vink: nothing to credit. Throwing would only make
+    // Stripe retry for days.
     if (organisation === null) {
-      console.warn(`Polar Customer ${customer.id} belongs to no Organisation`);
+      console.warn(`Stripe Customer ${customerId} belongs to no Organisation`);
       return;
     }
     const credited = await ctx.db
       .query("topUpPayments")
-      .withIndex("by_orderId", (q) => q.eq("orderId", orderId))
+      .withIndex("by_checkoutSessionId", (q) => q.eq("checkoutSessionId", checkoutSessionId))
       .unique();
     if (credited !== null) return;
-    await ctx.db.insert("topUpPayments", { organisationId: organisation._id, orderId, pages: added });
+    await ctx.db.insert("topUpPayments", {
+      organisationId: organisation._id,
+      checkoutSessionId,
+      pages: added,
+    });
     const pages = pagesOf(organisation);
     await ctx.db.patch(organisation._id, { pages: { ...pages, topUp: pages.topUp + added } });
   },

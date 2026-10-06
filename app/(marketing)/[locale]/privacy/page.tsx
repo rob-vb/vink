@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { LegalPage } from "@/components/marketing/legal-page";
 import { isLocale, routing, type Locale } from "@/i18n/routing";
 import { pageMetadata } from "@/lib/seo";
-import { POLAR_PRIVACY, STRIPE_PRIVACY } from "@/lib/site";
+import { STRIPE_PRIVACY } from "@/lib/site";
 
 function localeOf(value: string): Locale {
   return isLocale(value) ? value : routing.defaultLocale;
@@ -25,7 +25,6 @@ export default async function PrivacyPage({ params }: PageProps<"/[locale]/priva
         terms: "/terms",
         subprocessors: "/terms#subprocessors",
         contact: "/contact",
-        polar: POLAR_PRIVACY,
         stripe: STRIPE_PRIVACY,
       }}
     />
