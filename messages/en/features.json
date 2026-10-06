@@ -6,7 +6,7 @@
   "hero": {
     "eyebrow": "Features",
     "title": "Everything between the PDF and your system.",
-    "lede": "Four stops, from the PDF in your inbox to the data in your system. Watch one document go through, then open each stop.",
+    "lede": "This is how Vink takes over the retyping. Watch one document go through, then open each step.",
     "startFree": "Start free",
     "tryDemo": "Try the demo",
     "note": "20 free pages. No credit card."
@@ -38,7 +38,7 @@
     "check": {
       "label": "You check",
       "title": "You only check what's unsure.",
-      "lede": "Vink flags what it isn't sure about, and nothing goes out until someone approves it."
+      "lede": "Vink flags what it isn't sure about. Nothing is sent until someone approves it."
     },
     "lands": {
       "label": "It lands",
@@ -65,7 +65,7 @@
     "placeholder": "Upload dialog and Intake Address"
   },
   "anyPdf": {
-    "title": "Any PDF. Even handwriting.",
+    "title": "Even scanned or filled in by hand.",
     "text": "Typed, scanned, faxed or filled in by hand; one page or a bundle of papers. All pages of a document fill one set of values.",
     "bullets": [
       "Handwriting, stamps and crossed-out numbers",
@@ -106,7 +106,7 @@
     "alt": "A demo delivery note with two values in Needs Review, each with its reason and a button to confirm it."
   },
   "approve": {
-    "title": "Nothing goes out without approval.",
+    "title": "Nothing is sent without approval.",
     "text": "Someone on your team approves each Document before it's sent. For Forms you trust, switch on Auto-Send: a Document then goes out by itself, but only when nothing on it needs review.",
     "bullets": [
       "Approve, or reject a blank or wrong document with a reason",

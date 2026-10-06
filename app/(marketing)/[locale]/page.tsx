@@ -11,6 +11,7 @@ import { VinkMark } from "@/components/marketing/brand";
 import { CodeBlock, PostBar } from "@/components/marketing/code-block";
 import { demoVideo } from "@/components/marketing/demo-video";
 import { JsonLd } from "@/components/marketing/json-ld";
+import { RetypingCalculator } from "@/components/marketing/retyping-calculator";
 import { seedDocuments } from "@/components/demo/demo-data";
 import type { DemoDocumentId } from "@/components/demo/demo-papers";
 import { ReviewStill } from "@/components/demo/demo-stills";
@@ -75,6 +76,7 @@ export default async function Home({ params }: PageProps<"/[locale]">) {
         </Container>
       </section>
       <Video />
+      <Calculator />
       <Journey />
       <Connect />
       <PricingRow locale={locale} />
@@ -138,6 +140,18 @@ function Video() {
             aria-label={t("label")}
           />
         </ScreenshotFrame>
+      </Container>
+    </section>
+  );
+}
+
+function Calculator() {
+  const t = useTranslations("home.calculator");
+  return (
+    <section className="pb-16 sm:pb-24">
+      <Container>
+        <SectionHeading title={t("title")} subtitle={t("subtitle")} className="mb-10" />
+        <RetypingCalculator />
       </Container>
     </section>
   );

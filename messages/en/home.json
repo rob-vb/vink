@@ -1,49 +1,64 @@
 {
   "meta": {
     "title": "Vink: AI document data extraction for operations teams",
-    "description": "Vink reads any PDF, typed, scanned or handwritten, and turns it into clean data for your systems. You only check what it isn't sure about. 20 free pages."
+    "description": "Stop retyping PDFs. Vink reads invoices, delivery notes and work orders, even handwritten ones, and puts the data in your system. 20 free pages."
   },
   "og": {
     "title": "Document. Vink. Done.",
-    "alt": "Vink. Document. Vink. Done. Any PDF in, clean data out."
+    "alt": "Vink. Document. Vink. Done. No more retyping PDFs."
   },
   "hero": {
     "document": "Document.",
     "vink": "Vink.",
     "done": "Done.",
-    "subtitle": "Vink reads any PDF, typed, scanned or handwritten, and turns it into clean data for your systems. You only check what it isn't sure about.",
+    "subtitle": "Stop retyping PDFs. Vink reads invoices, delivery notes and work orders, even handwritten ones, and puts the data in your system. Your team only checks what Vink isn't sure about.",
     "watch": "Watch 30 seconds",
     "screenLabel": "The Vink review screen with one value that needs review"
   },
   "video": {
-    "title": "One PDF in, clean data out.",
-    "subtitle": "Thirty seconds, from paper work order to back office.",
+    "title": "A handwritten work order, without retyping.",
+    "subtitle": "From paper to back office.",
     "label": "A 30-second film of a handwritten work order going through Vink"
   },
+  "calculator": {
+    "title": "What retyping costs you now.",
+    "subtitle": "Fill in your own numbers. You see what retyping costs per month, and what Vink costs.",
+    "documentsLabel": "Documents per day",
+    "minutesLabel": "Minutes of retyping per document",
+    "minutesValue": "{count} min",
+    "hourlyLabel": "Labour cost per hour",
+    "hoursLabel": "Hours of retyping per month",
+    "hoursValue": "{count} hours",
+    "byHand": "By hand",
+    "withVink": "With Vink ({plan})",
+    "perMonth": "/mo",
+    "from": "from",
+    "note": "Based on {days} working days a month and 1 page per document. Your team still spends some time on the values Vink flags."
+  },
   "journey": {
-    "title": "What happens to one document.",
-    "subtitle": "Four stops, from the PDF on your desk to the data in your system. You only step in at the third.",
+    "title": "From PDF to your system.",
+    "subtitle": "Vink does the retyping. Your team only does the checking.",
     "arrives": {
       "kicker": "It arrives",
-      "title": "Any PDF. Even handwriting.",
-      "body": "Typed, scanned or handwritten, one page or a bundle of papers. No templates to build.",
-      "intake": "Upload it or email it in. Drop several PDFs at once, or give a Form its own email address. PDF attachments, up to 20 pages each."
+      "title": "Email the PDF, or drop it in.",
+      "body": "It works with any kind of document, even scanned or filled in by hand. You don't build templates.",
+      "intake": "Drop several PDFs at once, or give a Form its own email address. Suppliers and colleagues then email their PDFs straight to Vink. PDF attachments, up to 20 pages each."
     },
     "reads": {
       "kicker": "Vink reads it",
-      "title": "Every value, with its source.",
-      "body": "Each value shows what was read and on which page. Most documents are done in under a minute.",
+      "title": "Vink fills in your fields.",
+      "body": "For most documents, the invoice number, amounts and lines are ready within a minute. Each value shows the page Vink found it on.",
       "demo": "Try the demo"
     },
     "check": {
       "kicker": "You check",
-      "title": "You only check what's unsure.",
-      "body": "Every value shows what was read and on which page. Vink flags what it isn't sure about, and nothing goes out until you approve it."
+      "title": "Your team only checks the doubtful values.",
+      "body": "Vink flags every value it isn't sure about. You confirm it, or you type the right value. Nothing is sent without your approval."
     },
     "lands": {
       "kicker": "It lands",
-      "title": "Straight into your systems.",
-      "body": "Approved data goes to your system as clean JSON, and Auto-Send handles the documents Vink is sure about."
+      "title": "The data is in your system.",
+      "body": "After approval, the data goes to your accounting, ERP or database. Turn on Auto-Send, and Vink sends documents with nothing to check by itself."
     }
   },
   "tabs": {
