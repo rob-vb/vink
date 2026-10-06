@@ -2,15 +2,15 @@
 // secrets and the signing secret are stored encrypted (lib/secrets.ts).
 import { ConvexError, v } from "convex/values";
 import { internal } from "./_generated/api";
-import type { Doc, Id } from "./_generated/dataModel";
-import { internalQuery, type QueryCtx } from "./_generated/server";
+import type { Id } from "./_generated/dataModel";
+import { internalMutation, internalQuery, type QueryCtx } from "./_generated/server";
 import { failOpenDeliveries } from "./deliveries";
 import { documentPayload } from "./lib/documentPayload";
 import { orgAction, orgMutation, orgQuery } from "./lib/functions";
-import { http, HttpFailure } from "./lib/http";
+import { kindOf, sendTo } from "./lib/integrationAdapters";
 import { dummyPayload, envelopeOf } from "./lib/payload";
 import { decryptSecret, encryptSecret, masked } from "./lib/secrets";
-import { newSigningSecret, SIGNATURE_HEADER, signatureOf } from "./lib/signing";
+import { newSigningSecret, SIGNATURE_HEADER } from "./lib/signing";
 
 async function ownIntegration(
   ctx: QueryCtx,
@@ -76,6 +76,7 @@ export const list = orgQuery({
         return {
           id: integration._id,
           name: integration.name,
+          kind: kindOf(integration),
           url: integration.url,
           headers: await Promise.all(
             integration.headers.map(async (h) => ({
@@ -112,6 +113,7 @@ export const create = orgMutation({
     const integrationId = await ctx.db.insert("integrations", {
       organisationId: ctx.organisationId,
       name: name.trim(),
+      kind: "webhook",
       url,
       headers: await Promise.all(headers.map(sealed)),
       signingSecret: await encryptSecret(newSigningSecret()),
@@ -208,38 +210,6 @@ export async function hasIntegrations(ctx: QueryCtx, formId: Id<"forms">) {
   );
 }
 
-/** Where and how to send: the endpoint, its headers and signing secret in plain text. */
-export async function endpointOf(integration: Doc<"integrations">) {
-  return {
-    url: integration.url,
-    headers: Object.fromEntries(
-      await Promise.all(
-        integration.headers.map(async (h) => [h.name, h.secret ? await decryptSecret(h.value) : h.value]),
-      ),
-    ) as Record<string, string>,
-    signingSecret: await decryptSecret(integration.signingSecret),
-  };
-}
-
-/** Posts a signed envelope; the answer, or why there was none. */
-export async function sendSigned(
-  endpoint: Awaited<ReturnType<typeof endpointOf>>,
-  envelope: object,
-) {
-  const body = JSON.stringify(envelope);
-  const headers = {
-    ...endpoint.headers,
-    "Content-Type": "application/json",
-    [SIGNATURE_HEADER]: await signatureOf(endpoint.signingSecret, body),
-  };
-  try {
-    return { answer: await http.post(endpoint.url, headers, body), failure: null };
-  } catch (error) {
-    if (error instanceof HttpFailure) return { answer: null, failure: error };
-    throw error;
-  }
-}
-
 export const testSendInput = internalQuery({
   args: {
     organisationId: v.id("organisations"),
@@ -286,7 +256,7 @@ export const testSendInput = internalQuery({
         data: dummyPayload(formVersion.fields, mode),
       });
     }
-    return { endpoint: await endpointOf(integration), envelope };
+    return { integration, envelope };
   },
 });
 
@@ -300,18 +270,12 @@ export const testSend = orgAction({
     documentId: v.optional(v.id("documents")),
   },
   handler: async (ctx, args) => {
-    const { endpoint, envelope } = await ctx.runQuery(internal.integrations.testSendInput, {
+    const { integration, envelope } = await ctx.runQuery(internal.integrations.testSendInput, {
       organisationId: ctx.organisationId,
       ...args,
     });
-    const { answer, failure } = await sendSigned(endpoint, envelope);
-    if (answer === null) return { ok: false, status: null, body: null, error: failure!.message };
-    return {
-      ok: answer.status >= 200 && answer.status < 300,
-      status: answer.status,
-      body: answer.body,
-      error: null,
-    };
+    const { outcome, status, body, error } = await sendTo(integration, envelope);
+    return { ok: outcome.kind === "delivered", status, body, error };
   },
 });
 
@@ -332,5 +296,24 @@ export const testDocuments = orgQuery({
       .filter((d) => d.formId === formId && d.dataDeletedAt === undefined)
       .slice(0, 20)
       .map((d) => ({ id: d._id, filename: d.filename, state: d.state }));
+  },
+});
+
+/**
+ * One-off, after Integration kinds ship: stores "webhook" on every Integration
+ * made before. Run once per deployment:
+ *   npx convex run integrations:backfillKind          (dev)
+ *   npx convex run --prod integrations:backfillKind   (prod)
+ */
+export const backfillKind = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    let filled = 0;
+    for await (const integration of ctx.db.query("integrations")) {
+      if (integration.kind !== undefined) continue;
+      await ctx.db.patch(integration._id, { kind: "webhook" });
+      filled++;
+    }
+    return { filled };
   },
 });
