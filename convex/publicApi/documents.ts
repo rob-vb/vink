@@ -134,7 +134,7 @@ function safeDecode(text: string) {
 }
 
 /** The PDF and its filename from the request, or the error to answer with. */
-async function pdfOf(request: Request): Promise<{ bytes: Uint8Array; filename: string | null } | Response> {
+async function pdfOf(request: Request): Promise<{ bytes: Uint8Array; filenames: Array<string | null> } | Response> {
   const type = request.headers.get("Content-Type") ?? "";
   const multipart = /^multipart\/form-data\b/i.test(type);
   if (!multipart && !/^application\/(pdf|octet-stream)\b/i.test(type)) {
@@ -149,14 +149,14 @@ async function pdfOf(request: Request): Promise<{ bytes: Uint8Array; filename: s
   const body = new Uint8Array(await request.arrayBuffer());
   if (body.length > MAX_BYTES) return tooLarge();
   const missing = () => apiError(400, "missing_file", "The request has no PDF in it.");
-  if (!multipart) return body.length === 0 ? missing() : { bytes: body, filename: null };
+  if (!multipart) return body.length === 0 ? missing() : { bytes: body, filenames: [] };
 
   const boundary = type.match(/\bboundary=(?:"([^"]+)"|([^;\s]+))/i);
   const parts = boundary === null ? [] : multipartParts(body, boundary[1] ?? boundary[2]);
   const file = parts.find((p) => p.name === "file");
   if (file === undefined || file.body.length === 0) return missing();
   const named = parts.find((p) => p.name === "filename");
-  return { bytes: file.body, filename: named ? new TextDecoder().decode(named.body) : file.filename };
+  return { bytes: file.body, filenames: [named ? new TextDecoder().decode(named.body) : null, file.filename] };
 }
 
 function cleanFilename(...candidates: Array<string | null>) {
@@ -179,18 +179,26 @@ export const documentsRoutes: ApiRoute[] = [
 
     const pdf = await pdfOf(request);
     if (pdf instanceof Response) return pdf;
-    const filename = cleanFilename(new URL(request.url).searchParams.get("filename"), pdf.filename);
+    const filename = cleanFilename(new URL(request.url).searchParams.get("filename"), ...pdf.filenames);
 
     const key = `${caller.organisationId}/${crypto.randomUUID()}`;
     await pdfStore.store(ctx, key, pdf.bytes);
-    const { documentId, refusal } = await ctx.runAction(internal.publicApi.documents.accept, {
-      organisationId: caller.organisationId,
-      formId,
-      apiKeyId: caller.apiKeyId,
-      keyName,
-      key,
-      filename,
-    });
+    let accepted;
+    try {
+      accepted = await ctx.runAction(internal.publicApi.documents.accept, {
+        organisationId: caller.organisationId,
+        formId,
+        apiKeyId: caller.apiKeyId,
+        keyName,
+        key,
+        filename,
+      });
+    } catch (error) {
+      // Nothing is left behind when it fails halfway (a refusal removes it already).
+      await pdfStore.remove(ctx, key);
+      throw error;
+    }
+    const { documentId, refusal } = accepted;
     if (refusal !== null) return apiError(refusal.status, refusal.code, refusal.message);
     return apiJson({ id: documentId, state: "processing" }, 201);
   }),

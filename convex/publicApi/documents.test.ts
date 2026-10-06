@@ -21,6 +21,11 @@ vi.mock("../lib/verifier", async () => ({
 
 type Backend = ReturnType<typeof newBackend>;
 
+/** A PDF as fetch takes it as a body. */
+async function pdf(pages: number) {
+  return new Uint8Array(await pdfWithPages(pages));
+}
+
 const invoice: Recording = {
   reading: { invoice: { number: "F-2026-118", _pages: [1] } },
   matches: { invoice_number: { path: "invoice.number", probability: 0.97 } },
@@ -75,7 +80,7 @@ test("a PDF sent as the request body becomes a Document of the Form, with the AP
     t,
     `/v1/forms/${formId}/documents?filename=F-118.pdf`,
     key,
-    await pdfWithPages(2),
+    await pdf(2),
   );
 
   expect(status).toBe(201);
@@ -91,7 +96,7 @@ test("a PDF sent as multipart/form-data, as Zapier, Make and Power Automate send
   const t = newBackend();
   const { ann, organisationSlug, formId, key } = await kantoorNoord(t);
   const form = new FormData();
-  form.append("file", new Blob([await pdfWithPages(1)], { type: "application/octet-stream" }), "scans/F-119.pdf");
+  form.append("file", new Blob([await pdf(1)], { type: "application/octet-stream" }), "scans/F-119.pdf");
 
   const { status, body } = await send(t, `/v1/forms/${formId}/documents`, key, form, {});
 
@@ -104,7 +109,7 @@ test("a multipart `filename` part names the Document", async () => {
   const t = newBackend();
   const { ann, organisationSlug, formId, key } = await kantoorNoord(t);
   const form = new FormData();
-  form.append("file", new Blob([await pdfWithPages(1)]), "blob");
+  form.append("file", new Blob([await pdf(1)]), "blob");
   form.append("filename", "Werkbon 12.pdf");
 
   await send(t, `/v1/forms/${formId}/documents`, key, form, {});
@@ -117,7 +122,7 @@ test("the Document is processed like any other and its Pages are counted once", 
   const t = newBackend();
   const { ann, organisationSlug, formId, key } = await kantoorNoord(t, { plan: null });
 
-  const { body } = await send(t, `/v1/forms/${formId}/documents`, key, await pdfWithPages(3));
+  const { body } = await send(t, `/v1/forms/${formId}/documents`, key, await pdf(3));
   await t.finishAllScheduledFunctions(vi.runAllTimers);
 
   const { documents } = await ann.query(api.documents.list, { organisationSlug, state: "needs_review" });
@@ -162,7 +167,7 @@ test("a request without a PDF in it is refused with 400", async () => {
   const t = newBackend();
   const { formId, key } = await kantoorNoord(t);
   const form = new FormData();
-  form.append("document", new Blob([await pdfWithPages(1)]), "F-1.pdf");
+  form.append("document", new Blob([await pdf(1)]), "F-1.pdf");
 
   const multipart = await send(t, `/v1/forms/${formId}/documents`, key, form, {});
   const empty = await send(t, `/v1/forms/${formId}/documents`, key, new Uint8Array());
@@ -177,7 +182,7 @@ test("a PDF over 20 pages is refused with 422", async () => {
   const t = newBackend();
   const { formId, key } = await kantoorNoord(t);
 
-  const { status, body } = await send(t, `/v1/forms/${formId}/documents`, key, await pdfWithPages(21));
+  const { status, body } = await send(t, `/v1/forms/${formId}/documents`, key, await pdf(21));
 
   expect({ status, body }).toEqual({
     status: 422,
@@ -202,9 +207,9 @@ test("a body over 20 MB is refused with 413", async () => {
 test("a PDF that doesn't fit the Pages left is refused with 402 and charges nothing", async () => {
   const t = newBackend();
   const { ann, organisationSlug, formId, key } = await kantoorNoord(t, { plan: null });
-  await send(t, `/v1/forms/${formId}/documents`, key, await pdfWithPages(15));
+  await send(t, `/v1/forms/${formId}/documents`, key, await pdf(15));
 
-  const { status, body } = await send(t, `/v1/forms/${formId}/documents`, key, await pdfWithPages(8));
+  const { status, body } = await send(t, `/v1/forms/${formId}/documents`, key, await pdf(8));
 
   expect({ status, body }).toEqual({
     status: 402,
@@ -225,7 +230,7 @@ test("an unknown Form, or another Organisation's, is 404", async () => {
   });
 
   for (const id of [formId, "nope"]) {
-    const { status, body } = await send(t, `/v1/forms/${id}/documents`, bobsKey, await pdfWithPages(1));
+    const { status, body } = await send(t, `/v1/forms/${id}/documents`, bobsKey, await pdf(1));
     expect({ status, body }).toEqual({
       status: 404,
       body: { error: { code: "not_found", message: "There's no such Form." } },
@@ -240,7 +245,7 @@ test("a revoked key can't send a Document in", async () => {
   const [{ id: apiKeyId }] = await ann.query(api.apiKeys.list, { organisationSlug });
   await ann.mutation(api.apiKeys.revoke, { organisationSlug, apiKeyId });
 
-  const { status, body } = await send(t, `/v1/forms/${formId}/documents`, key, await pdfWithPages(1));
+  const { status, body } = await send(t, `/v1/forms/${formId}/documents`, key, await pdf(1));
 
   expect(status).toBe(401);
   expect(body.error.code).toBe("invalid_api_key");
@@ -250,7 +255,7 @@ test("a revoked key can't send a Document in", async () => {
 test("the source still reads the key's name after the key is revoked", async () => {
   const t = newBackend();
   const { ann, organisationSlug, formId, key } = await kantoorNoord(t);
-  await send(t, `/v1/forms/${formId}/documents`, key, await pdfWithPages(1));
+  await send(t, `/v1/forms/${formId}/documents`, key, await pdf(1));
   const [{ id: apiKeyId }] = await ann.query(api.apiKeys.list, { organisationSlug });
   await ann.mutation(api.apiKeys.revoke, { organisationSlug, apiKeyId });
 
