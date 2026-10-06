@@ -365,16 +365,27 @@ export default defineSchema({
     complete: v.optional(v.object({ by: v.string(), byEmail: v.string(), at: v.number() })),
   }).index("by_documentId", ["documentId"]),
 
-  // An external endpoint that receives Payloads by HTTP POST.
-  integrations: defineTable({
-    organisationId: v.id("organisations"),
-    name: v.string(),
-    url: v.string(),
-    // Static headers; a secret header's value is encrypted (lib/secrets.ts).
-    headers: v.array(v.object({ name: v.string(), value: v.string(), secret: v.boolean() })),
-    // The HMAC-SHA256 key requests are signed with, encrypted.
-    signingSecret: v.string(),
-  }).index("by_organisationId", ["organisationId"]),
+  // A destination outside Vink that receives Payloads after Approval. One
+  // member per kind: `organisationId` and `name`, then the kind's own
+  // configuration. A new kind is a new member, sent by its adapter
+  // (lib/integrationAdapters.ts); its secrets are encrypted like a secret header.
+  integrations: defineTable(
+    v.union(
+      // A Webhook: POSTs the Payload to an endpoint.
+      v.object({
+        organisationId: v.id("organisations"),
+        name: v.string(),
+        // Absent on Integrations made before kinds existed: reads as "webhook"
+        // (see integrations.backfillKind).
+        kind: v.optional(v.literal("webhook")),
+        url: v.string(),
+        // Static headers; a secret header's value is encrypted (lib/secrets.ts).
+        headers: v.array(v.object({ name: v.string(), value: v.string(), secret: v.boolean() })),
+        // The HMAC-SHA256 key requests are signed with, encrypted.
+        signingSecret: v.string(),
+      }),
+    ),
+  ).index("by_organisationId", ["organisationId"]),
 
   // Which Integrations a Form sends to. Keys are locked while any exists.
   formIntegrations: defineTable({

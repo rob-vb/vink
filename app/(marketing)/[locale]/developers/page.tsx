@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import type { ReactNode } from "react";
+import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { VinkMark } from "@/components/marketing/brand";
 import { CodeBlock, PostBar } from "@/components/marketing/code-block";
@@ -8,7 +9,9 @@ import { RequestForm } from "@/components/marketing/request-form";
 import { Screenshot } from "@/components/marketing/screenshot-frame";
 import { Container, InlineCode, SectionHeading } from "@/components/marketing/section";
 import { DocSection, TocLayout } from "@/components/marketing/toc";
+import { Link } from "@/i18n/navigation";
 import { isLocale, routing, type Locale } from "@/i18n/routing";
+import { platforms } from "@/lib/platforms";
 import { sampleEnvelopeJson } from "@/lib/sample-payload";
 import { pageMetadata } from "@/lib/seo";
 import { CONTACT_EMAIL } from "@/lib/site";
@@ -25,6 +28,7 @@ export async function generateMetadata({ params }: PageProps<"/[locale]/develope
 
 const sections = [
   { id: "overview", key: "overview" },
+  { id: "platforms", key: "platforms" },
   { id: "envelope", key: "envelope" },
   { id: "verify-signature", key: "signature" },
   { id: "delivery", key: "delivery" },
@@ -87,6 +91,16 @@ export default async function DevelopersPage({ params }: PageProps<"/[locale]/de
             />
           </div>
           <p>{t("overview.reading")}</p>
+          <p>
+            {t.rich("overview.apiReference", {
+              ...rich,
+              link: (chunks) => (
+                <Link href="/developers/api" className="font-medium text-foreground underline underline-offset-3">
+                  {chunks}
+                </Link>
+              ),
+            })}
+          </p>
           <h3 className="mt-2 text-lg font-semibold text-foreground">{t("overview.inboundTitle")}</h3>
           <p>
             {t.rich("overview.inbound", {
@@ -98,6 +112,60 @@ export default async function DevelopersPage({ params }: PageProps<"/[locale]/de
               ),
             })}
           </p>
+        </DocSection>
+
+        <DocSection id="platforms" title={t("platforms.title")}>
+          <p>{t("platforms.intro")}</p>
+          <ul aria-label={t("platforms.listLabel")} className="grid gap-3 sm:grid-cols-2">
+            {platforms.map((platform) => (
+              <li key={platform.id}>
+                <a
+                  href={`#${platform.id}`}
+                  className="flex h-full flex-col gap-1 rounded-xl border bg-card px-4 py-3 transition-colors hover:border-foreground/30"
+                >
+                  <span className="flex items-center justify-between gap-3">
+                    <span className="font-semibold text-foreground">{platform.name}</span>
+                    <Badge variant="secondary">{t("platforms.via")}</Badge>
+                  </span>
+                  <span className="text-sm">{t(`platforms.short.${platform.key}`)}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+          <h3 className="mt-2 text-lg font-semibold text-foreground">{t("platforms.howTitle")}</h3>
+          <p>{t("platforms.how")}</p>
+          <p>{t.rich("platforms.testFlag", rich)}</p>
+          <p className="rounded-lg border-l-2 border-amber-500 bg-amber-50 px-4 py-3 text-amber-900 dark:bg-amber-950/30 dark:text-amber-200 [&_b]:text-amber-950 dark:[&_b]:text-amber-100">
+            {t.rich("platforms.secret", rich)}
+          </p>
+          {platforms.map((platform) => {
+            const guide = `platforms.guides.${platform.key}`;
+            const steps = Object.keys(t.raw(`${guide}.steps`) as Record<string, string>);
+            return (
+              <div key={platform.id} id={platform.id} className="mt-4 flex scroll-mt-24 flex-col gap-3">
+                <h3 className="flex items-center gap-3 text-xl font-semibold text-foreground">
+                  <a href={`#${platform.id}`} className="hover:underline hover:underline-offset-4">
+                    {t(`${guide}.title`)}
+                  </a>
+                  <Badge variant="secondary">{t("platforms.via")}</Badge>
+                </h3>
+                <p>{t.rich(`${guide}.plan`, rich)}</p>
+                <ol
+                  aria-label={t("platforms.stepsLabel", { name: platform.name })}
+                  className="flex list-decimal flex-col gap-2 pl-5 marker:font-mono marker:text-foreground"
+                >
+                  {steps.map((step) => (
+                    <li key={step} className="pl-1">
+                      {t.rich(`${guide}.steps.${step}`, rich)}
+                    </li>
+                  ))}
+                </ol>
+                <p>{t.rich(`${guide}.lists`, rich)}</p>
+                <p>{t.rich(`${guide}.security`, rich)}</p>
+                <p>{t.rich(`${guide}.note`, rich)}</p>
+              </div>
+            );
+          })}
         </DocSection>
 
         <DocSection id="envelope" title={t("envelope.title")}>
