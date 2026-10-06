@@ -360,6 +360,17 @@ test("a Customer that is no Organisation changes nothing", async () => {
   expect(await usage(t, slug)).toMatchObject({ plan: null, hasBillingCustomer: false });
 });
 
+test("a Top-up from a Customer that is no Organisation is taken and ignored", async () => {
+  const t = newBackend();
+  const { slug } = await freshSignUp(t);
+  await subscribe(t, slug);
+
+  const stranger = await topUpOrder(t, { customer: { id: "cust_9", external_id: null } });
+  expect(await deliver(t, "order.paid", stranger)).toBe(true);
+
+  expect(await usage(t, slug)).toMatchObject({ topUpPages: 0 });
+});
+
 test("a webhook with a bad signature is refused", async () => {
   const t = newBackend();
   const { slug } = await freshSignUp(t);

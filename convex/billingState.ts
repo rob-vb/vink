@@ -113,8 +113,11 @@ export const creditTopUp = internalMutation({
   args: { customer, orderId: v.string(), pages: v.number() },
   handler: async (ctx, { customer, orderId, pages: added }) => {
     const organisation = await organisationOf(ctx, customer);
+    // Not bought through Vink (no external ID): nothing to credit. Throwing
+    // would make Polar retry, and 10 failures in a row disable the endpoint.
     if (organisation === null) {
-      throw new Error(`Polar Customer ${customer.id} belongs to no Organisation`);
+      console.warn(`Polar Customer ${customer.id} belongs to no Organisation`);
+      return;
     }
     const credited = await ctx.db
       .query("topUpPayments")
