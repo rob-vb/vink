@@ -475,7 +475,10 @@ export const testSend = orgAction({
     mode: v.union(v.literal("examples"), v.literal("empty")),
     documentId: v.optional(v.id("documents")),
   },
-  handler: async (ctx, args) => {
+  handler: async (
+    ctx,
+    args,
+  ): Promise<{ ok: boolean; status: number | null; body: string | null; error: string | null }> => {
     const { integration, envelope, approverEmail } = await ctx.runQuery(internal.integrations.testSendInput, {
       organisationId: ctx.organisationId,
       ...args,
