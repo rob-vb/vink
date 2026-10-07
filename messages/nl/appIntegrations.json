@@ -56,7 +56,7 @@
     "newTitle": "Nieuwe Koppeling",
     "description": "Vink POST de Payload van elk goedgekeurd Document hierheen als JSON, ondertekend met het eigen secret van deze Koppeling.",
     "name": "Naam",
-    "namePlaceholder": "Wagenparksysteem",
+    "namePlaceholder": "Boekhoudsysteem",
     "url": "Endpoint-URL",
     "urlHint": "Moet beginnen met https://.",
     "headers": "Headers",

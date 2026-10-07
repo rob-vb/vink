@@ -44,7 +44,7 @@
       "descriptionAccount": "Gebruik het adres waar je uitnodiging naartoe is gestuurd.",
       "descriptionOrganisation": "Je wordt er Admin van en kunt je team later uitnodigen.",
       "organisationName": "Naam van de Organisatie",
-      "organisationPlaceholder": "Bakker Transport",
+      "organisationPlaceholder": "Bakker Groothandel",
       "passwordHint": "Minstens 8 tekens.",
       "passwordTooShort": "Kies een wachtwoord van minstens 8 tekens, of mail jezelf een link.",
       "accountNotCreated": "We konden je account niet maken. Probeer het opnieuw.",
@@ -88,7 +88,9 @@
     }
   },
   "welcome": {
-    "defaultOrganisation": "Mijn Organisatie",
+    "askTitle": "Hoe heet je Organisatie?",
+    "askDescription": "Je collega's zien deze naam. Je kunt hem later wijzigen.",
+    "askSubmit": "Verder",
     "settingUp": "Je Organisatie wordt ingericht…"
   },
   "shell": {
