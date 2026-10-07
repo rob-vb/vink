@@ -138,7 +138,7 @@
     "orderForm": "Bestelformulier"
   },
   "connect": {
-    "title": "Twee manieren om te koppelen.",
+    "title": "Vink koppelt met elk systeem.",
     "subtitle": "Je developer koppelt één webhook, of wij bouwen de koppeling voor je.",
     "dev": {
       "eyebrow": "Je developer",
@@ -154,6 +154,14 @@
       "point2": "Getest met je eigen documenten",
       "point3": "Eén prijs, afgesproken voordat we beginnen",
       "cta": "Vraag naar een koppeling"
+    },
+    "standard": {
+      "eyebrow": "Standaard koppelingen",
+      "title": "Of begin met een standaard koppeling.",
+      "body": "Voor deze diensten is de koppeling al klaar. Ze zijn alleen een begin: via de webhook werkt Vink met elk systeem.",
+      "link": "Lees hoe je ze instelt",
+      "live": "Werkt nu",
+      "soon": "Binnenkort"
     }
   },
   "pricing": {
