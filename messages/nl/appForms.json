@@ -90,7 +90,7 @@
     "locked": "Vergrendeld zolang er een Koppeling is",
     "remove": "Verwijderen",
     "noneSelected": "Geen Veld geselecteerd",
-    "noneSelectedDescription": "Voeg een Veld toe voor elk gegeven dat je uit het document wilt halen: een kenteken, een datum, een bedrag.",
+    "noneSelectedDescription": "Voeg een Veld toe voor elk gegeven dat je uit het document wilt halen: een leverancier, een datum, een bedrag.",
     "general": "Algemeen",
     "generalVersioned": "Hoort bij de Formulierversie: Opslaan bovenaan maakt hiermee een nieuwe versie.",
     "generalNew": "Wordt opgeslagen met het Formulier als je het aanmaakt.",
@@ -106,7 +106,7 @@
   "field": {
     "subFieldOf": "Subveld van <parent>{label}</parent>. Elke regel van de Lijst heeft er een.",
     "label": "Label",
-    "labelPlaceholder": "Kenteken",
+    "labelPlaceholder": "Factuurnummer",
     "labelDescription": "Zichtbaar voor je team. In elke taal.",
     "key": "Sleutel",
     "keyDescription": "De naam in de Payload die je systeem ontvangt, in snake_case.",

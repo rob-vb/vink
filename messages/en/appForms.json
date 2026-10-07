@@ -90,7 +90,7 @@
     "locked": "Locked while an Integration is attached",
     "remove": "Remove",
     "noneSelected": "No Field selected",
-    "noneSelectedDescription": "Add a Field for each piece of data you want from the document: a license plate, a date, an amount.",
+    "noneSelectedDescription": "Add a Field for each piece of data you want from the document: a supplier, a date, an amount.",
     "general": "General",
     "generalVersioned": "Part of the Form Version: Save at the top makes a new version with these.",
     "generalNew": "Saved with the Form when you create it.",
@@ -106,7 +106,7 @@
   "field": {
     "subFieldOf": "Sub-Field of <parent>{label}</parent>. Every entry of the List has one.",
     "label": "Label",
-    "labelPlaceholder": "Licence plate",
+    "labelPlaceholder": "Invoice number",
     "labelDescription": "Shown to your team. Any language.",
     "key": "Key",
     "keyDescription": "The name in the Payload your system receives, in snake_case.",

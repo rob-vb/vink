@@ -325,7 +325,7 @@ export default defineSchema({
     review: v.optional(review),
     // The Reading's value the Field Value was filled from, as it was read.
     readText: v.union(v.string(), v.null()),
-    // Where that value sits in the Reading, e.g. `vehicle.licensePlate`.
+    // Where that value sits in the Reading, e.g. `supplier.vatNumber`.
     sourcePath: v.union(v.string(), v.null()),
     pages: v.array(v.number()),
     // The raw signals, kept for calibration and never sent: Jev's probability

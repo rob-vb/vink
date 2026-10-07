@@ -6,8 +6,8 @@ import type { FilledValue, FillRequest, Filler, FlatField } from "./pipeline";
 
 const PROMPT = `You get, for every Field, the text Match picked as its source on the Document. Write each Field's value from its source, in the form the Field's type and description ask for.
 
-- A source can be several values of one object, as \`key: value\` lines: take from them what the Field asks for and leave the rest (e.g. brand and model together, without size, load index or markings). When the source holds only part of what the Field asks for (a model without its brand), write that part.
-- Write only what the source says. Normalising is allowed: an ISO code from "658.08 EUR", a brand written out in full from a common abbreviation ("Bridge" → "Bridgestone"), a size formatted as the description shows, a plate without spaces. Never invent a value that isn't in the source; write null then.
+- A source can be several values of one object, as \`key: value\` lines: take from them what the Field asks for and leave the rest (e.g. brand and model together, without size or article number). When the source holds only part of what the Field asks for (a model without its brand), write that part.
+- Write only what the source says. Normalising is allowed: an ISO code from "658.08 EUR", a brand written out in full from a common abbreviation ("B&D" → "Black & Decker"), a size formatted as the description shows, an IBAN without spaces. Never invent a value that isn't in the source; write null then.
 - number: a plain JSON number. date: ISO yyyy-mm-dd. boolean: true or false. choice: the value of the option the source means, or null if none fits.
 
 Answer with one JSON object with one property per Field, named by its id.`;

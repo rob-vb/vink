@@ -5,7 +5,7 @@ export type Leaf = { path: string; text: string; pages: number[] };
 
 /**
  * Every value in a Reading, depth first, with a path like
- * `tyreChanges[0].removed.serial`. Keys starting with `_` are the Reader's
+ * `deliveries[0].product.serial`. Keys starting with `_` are the Reader's
  * notes, not values. A value's pages are those of the nearest object that
  * lists `_pages`.
  */
@@ -73,7 +73,7 @@ export function readingObjects(reading: Reading): ReadingObject[] {
 
 type Segment = string | number;
 
-/** `tyreChanges[0].removed.serial` → `["tyreChanges", 0, "removed", "serial"]`. */
+/** `deliveries[0].product.serial` → `["deliveries", 0, "product", "serial"]`. */
 function segmentsOf(path: string): Segment[] {
   return [...path.matchAll(/([^.[\]]+)|\[(\d+)\]/g)].map((m) =>
     m[2] === undefined ? m[1] : Number(m[2]),
@@ -109,14 +109,14 @@ export function isUnsure(reading: Reading, path: string) {
   });
 }
 
-/** `licensePlate` → `license plate`. */
+/** `invoiceNumber` → `invoice number`. */
 function wordsOf(key: string) {
   return key.replace(/([a-z0-9])([A-Z])/g, "$1 $2").toLowerCase();
 }
 
 /**
  * Whether the Reader kept conflicting readings of this value: an `…Alt`
- * sibling on the way to it (`position` and `positionAlt`), or a `conflicts`
+ * sibling on the way to it (`quantity` and `quantityAlt`), or a `conflicts`
  * note around it that names it.
  */
 export function isConflicting(reading: Reading, path: string) {
@@ -142,7 +142,7 @@ const isObject = (node: unknown): node is Record<string, unknown> =>
 
 /**
  * Every non-empty array of objects in a Reading, depth first, with the paths
- * of the values inside its elements (e.g. `removed.serial`), in first-seen
+ * of the values inside its elements (e.g. `product.serial`), in first-seen
  * order across elements.
  */
 export function readingArrays(reading: Reading): ReadingArray[] {

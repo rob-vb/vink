@@ -10,8 +10,8 @@ const fieldType = (types: string[]): Schema => ({
 });
 
 const fieldProperties = (types: string[]): Record<string, Schema> => ({
-  key: { type: "string", description: "The Field's name in the Payload, snake_case.", example: "license_plate" },
-  label: { type: "string", description: "What users see in Vink.", example: "Kenteken" },
+  key: { type: "string", description: "The Field's name in the Payload, snake_case.", example: "invoice_number" },
+  label: { type: "string", description: "What users see in Vink.", example: "Factuurnummer" },
   type: fieldType(types),
   required: { type: "boolean" },
   options: {
@@ -23,12 +23,15 @@ const fieldProperties = (types: string[]): Record<string, Schema> => ({
 
 const exampleForm = {
   id: "k17c9z1fx3q8d2v0n6e5w4t8hs7bm2ra",
-  name: "Work order",
-  description: "Garage work orders",
+  name: "Invoice",
+  description: "Incoming supplier invoices",
   version: 3,
   fields: [
-    { key: "license_plate", label: "Kenteken", type: "text", required: true },
-    { key: "kind", label: "Soort", type: "choice", required: false, options: ["repair", "service"] },
+    { key: "supplier", label: "Leverancier", type: "text", required: true },
+    { key: "invoice_number", label: "Factuurnummer", type: "text", required: true },
+    { key: "invoice_date", label: "Factuurdatum", type: "date", required: true },
+    { key: "total_amount", label: "Totaalbedrag", type: "number", required: true },
+    { key: "currency", label: "Valuta", type: "choice", required: false, options: ["EUR", "USD"] },
     {
       key: "lines",
       label: "Regels",
@@ -37,6 +40,7 @@ const exampleForm = {
       fields: [
         { key: "description", label: "Omschrijving", type: "text", required: true },
         { key: "quantity", label: "Aantal", type: "number", required: false },
+        { key: "amount", label: "Bedrag", type: "number", required: true },
       ],
     },
   ],

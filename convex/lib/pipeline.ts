@@ -58,7 +58,7 @@ export type Matcher = {
 
 /**
  * One value to fill. Its id is the Field key, or for a sub-Field of a List
- * entry `list[entry].key`, e.g. `tyreChanges[0].position`.
+ * entry `list[entry].key`, e.g. `lines[0].quantity`.
  */
 export type FillRequest = { id: string; field: FlatField; source: { path: string; text: string } };
 

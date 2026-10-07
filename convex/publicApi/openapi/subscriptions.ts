@@ -17,9 +17,12 @@ const exampleEnvelope = {
   form: { id: "k17c9z1fx3q8d2v0n6e5w4t8hs7bm2ra", version: 3 },
   approval: { mode: "manual", by: null, at: "2026-10-06T09:00:00.000Z" },
   data: {
-    license_plate: "Example Kenteken",
-    kind: "repair",
-    lines: [{ description: "Example Omschrijving", quantity: 123.45 }],
+    supplier: "Example Leverancier",
+    invoice_number: "Example Factuurnummer",
+    invoice_date: "2026-01-31",
+    total_amount: 123.45,
+    currency: "EUR",
+    lines: [{ description: "Example Omschrijving", quantity: 123.45, amount: 123.45 }],
   },
 };
 
@@ -161,7 +164,7 @@ export const subscriptions: OpenApiPart = {
                   type: "object",
                   "x-ms-summary": "Data",
                   properties: {
-                    license_plate: { type: "string", title: "Kenteken", "x-ms-summary": "Kenteken", "x-nullable": true },
+                    supplier: { type: "string", title: "Leverancier", "x-ms-summary": "Leverancier", "x-nullable": true },
                   },
                 },
               },

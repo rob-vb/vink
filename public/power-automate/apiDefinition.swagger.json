@@ -457,12 +457,12 @@
         "key": {
           "type": "string",
           "description": "The Field's name in the Payload, snake_case.",
-          "example": "license_plate"
+          "example": "invoice_number"
         },
         "label": {
           "type": "string",
           "description": "What users see in Vink.",
-          "example": "Kenteken"
+          "example": "Factuurnummer"
         },
         "type": {
           "type": "string",
@@ -560,12 +560,12 @@
         "key": {
           "type": "string",
           "description": "The Field's name in the Payload, snake_case.",
-          "example": "license_plate"
+          "example": "invoice_number"
         },
         "label": {
           "type": "string",
           "description": "What users see in Vink.",
-          "example": "Kenteken"
+          "example": "Factuurnummer"
         },
         "type": {
           "type": "string",
