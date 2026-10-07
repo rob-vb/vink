@@ -32,3 +32,19 @@ first run, `webhook.formId` available in the interface/sample RPCs, multipart up
 Admin deleted the Webhook); submission for review.
 
 **2026-10-06 (review fixes, `int/13-review-fixes`):** The detach gap is fixed in the API, not the app: `DELETE /v1/subscriptions/{id}` answers 200 `{id, deleted: true}` also when the Subscription is gone already, so Make removes its webhook without an error. README step 7 and "Known gap" are updated. What stays: after the API Key is revoked, detach gets 401 and Make shows Vink's message (the Subscription ended with the key). Real-account check: README step 7.
+
+**2026-10-07 — deployed headless to Make (EU1, app `vink-fsvhks` v1).** New `integrations/make/deploy.mts`
+(`npx tsx`, no new deps) deploys `src/` through Make's SDK Apps REST API (`/api/v2/sdk/apps`), the same calls the
+Make Apps Editor extension makes; no VS Code CLI exists for this. It creates missing components, records Make's names
+in `origins[0].idMapping` (same structure as the extension), patches differing metadata, and uploads codes whose
+content differs (MD5 from `/checksum`, then a text/JSON compare). `--dry-run` only reads.
+In Make now: connection `vink-fsvhks` (local `vink`), webhook `vink-fsvhks` (local `approvedDocuments`), modules
+`watchApprovedDocuments` (instant trigger, webhook `vink-fsvhks`) and `sendDocument` (action, crud create), RPCs
+`listForms`, `formFields`, `formSample`, and app base, readme and groups. 25 codes uploaded.
+Proof: dry run → deploy (7 created, 25 uploaded) → second run: 0 created, 0 patched, 0 uploaded, 25 unchanged. A GET of
+every component and section matches the local files (32/33 OK). `npx vitest run integrations/make`: 8 passed.
+Open: the custom IML function `formFieldsSpec` is refused: `POST /sdk/apps/vink-fsvhks/1/functions → HTTP 403
+{"detail":"Insufficient rights, admin permission \"apps edit\" is needed.","code":"IM002"}`. Ask Make support to
+enable custom IML functions for `vink-fsvhks`, then run the script again; until then the RPC `formFields` has no
+function, so the trigger shows no Field outputs before the first run. App icon: upload in Make's UI. The scenario
+test (README "Test a scenario") is not run yet.

@@ -104,9 +104,49 @@
         {
             "label": "Vink",
             "baseUrl": "https://eu1.make.com/api",
-            "appId": "vink",
+            "appId": "vink-fsvhks",
             "appVersion": 1,
-            "apikeyFile": "../.secrets/apikey"
+            "apikeyFile": "../.secrets/apikey",
+            "idMapping": {
+                "connection": [
+                    {
+                        "local": "vink",
+                        "remote": "vink-fsvhks"
+                    }
+                ],
+                "webhook": [
+                    {
+                        "local": "approvedDocuments",
+                        "remote": "vink-fsvhks"
+                    }
+                ],
+                "module": [
+                    {
+                        "local": "watchApprovedDocuments",
+                        "remote": "watchApprovedDocuments"
+                    },
+                    {
+                        "local": "sendDocument",
+                        "remote": "sendDocument"
+                    }
+                ],
+                "rpc": [
+                    {
+                        "local": "listForms",
+                        "remote": "listForms"
+                    },
+                    {
+                        "local": "formFields",
+                        "remote": "formFields"
+                    },
+                    {
+                        "local": "formSample",
+                        "remote": "formSample"
+                    }
+                ],
+                "function": [],
+                "endpoint": []
+            }
         }
     ]
 }
