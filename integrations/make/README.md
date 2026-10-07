@@ -36,24 +36,53 @@ repo's vitest does not pick it up as a vitest file.
 
 ## Deploy from these files
 
-1. Make an account at [make.com](https://www.make.com) in the EU1 zone, and an API token
-   under Profile → API access with the `sdk-apps:read` and `sdk-apps:write` scopes.
-2. In Make, open Custom Apps and create an empty app. Label "Vink", app ID `vink`
-   (or the next free ID), theme `#0f1e36`. Upload the Vink icon: `public/vink_icon.svg` as a
-   512×512 PNG.
-3. Install the "Make Apps Editor" extension in VS Code. Open `integrations/make` as the
-   workspace folder.
-4. Put the API token in `integrations/make/.secrets/apikey` (the `.gitignore` here keeps it
-   out of git). If the app ID or zone differ, change `origins[0]` in `src/makecomapp.json`.
-5. Ask Make support to enable custom IML functions for the app ("Custom IML functions are
-   not available by default"). Without them `formFieldsSpec` can't deploy and the trigger
-   has no Field outputs.
-6. Right-click `src/makecomapp.json` → **Deploy to Make (beta)** → pick the origin. Confirm
-   each new component when asked; the extension then writes `idMapping` into the origin.
-   Commit that change.
+The app lives in Make (zone EU1) as `vink-fsvhks`, version 1. `origins[0]` in
+`src/makecomapp.json` points at it, and its `idMapping` pairs each local component with its
+name in Make (Make named the connection and the webhook `vink-fsvhks`).
 
-To change the app later, edit these files and deploy again. Changes made in Make's web
-editor come back with **Pull All Components from Make (beta)** on the same file.
+### Headless, from the shell
+
+1. Put a Make API token in `integrations/make/.secrets/apikey` (one line; the `.gitignore` here
+   keeps it out of git). Make it under Profile → API access, zone EU1, with the scopes
+   `sdk-apps:read` and `sdk-apps:write`.
+2. See the plan. This only reads from Make:
+
+   ```sh
+   npx tsx integrations/make/deploy.mts --dry-run
+   ```
+
+3. Deploy:
+
+   ```sh
+   npx tsx integrations/make/deploy.mts
+   ```
+
+   The script uses Make's SDK Apps API (`/api/v2/sdk/apps/...`). It creates each component
+   that is not in Make yet and writes its name into `idMapping` (commit that change). Then it
+   sets labels and references, and uploads each code whose content differs from Make's.
+   A second run sends nothing. The last line counts what it did; the exit code is 1 when a
+   step failed.
+
+`--origin <label>` picks another origin from `makecomapp.json` (for example a second app for
+tests). A new app: create it in Make (Custom Apps → Create app; label "Vink", theme
+`#0f1e36`), add an origin with its app ID and no `idMapping`, and run the script.
+
+The custom IML function `formFieldsSpec` is not in Make yet. Make refuses it with
+`HTTP 403 ... admin permission "apps edit" is needed (IM002)`, because custom IML functions
+are off by default. Ask Make support to enable them for `vink-fsvhks`, then run the script
+again. Until then, the RPC `formFields` fails, so the trigger shows no Field outputs before
+the first run.
+
+The app icon is not part of these files. Upload `public/vink_icon.svg` as a 512×512 PNG in
+Make (Custom Apps → Vink → the icon).
+
+### Alternative: VS Code
+
+The files are the local format of the "Make Apps Editor" VS Code extension, and the script
+writes the same `idMapping`. So the extension can deploy them too: open `integrations/make`
+as the workspace folder, right-click `src/makecomapp.json` → **Deploy to Make (beta)**, pick
+the origin. Changes made in Make's web editor come back with **Pull All Components from Make
+(beta)** on the same file; the script does not pull.
 
 ## Test a scenario
 
