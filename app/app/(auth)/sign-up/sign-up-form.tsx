@@ -24,6 +24,7 @@ import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { routing } from "@/i18n/routing";
 import { authClient } from "@/lib/auth-client";
+import { welcomePath } from "@/lib/welcome-path";
 
 type Pending = "password" | "link" | null;
 
@@ -58,8 +59,7 @@ export function SignUpForm({ next }: { next: string | null }) {
   // The honeypot: a field people never see, so only bots fill it in.
   const [website, setWebsite] = useState("");
 
-  const afterSignUp =
-    next ?? `/app/welcome?${new URLSearchParams({ organisation: organisation.trim() })}`;
+  const afterSignUp = next ?? welcomePath(organisation);
 
   async function sendLink() {
     setPending("link");

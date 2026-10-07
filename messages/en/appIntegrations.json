@@ -56,7 +56,7 @@
     "newTitle": "New Integration",
     "description": "Vink POSTs each approved Document's Payload here as JSON, signed with this Integration's own secret.",
     "name": "Name",
-    "namePlaceholder": "Fleet system",
+    "namePlaceholder": "Accounting system",
     "url": "Endpoint URL",
     "urlHint": "Must start with https://.",
     "headers": "Headers",

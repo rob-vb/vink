@@ -44,7 +44,7 @@
       "descriptionAccount": "Use the address your invitation was sent to.",
       "descriptionOrganisation": "You'll be its Admin and can invite your team later.",
       "organisationName": "Organisation name",
-      "organisationPlaceholder": "Acme Fleet",
+      "organisationPlaceholder": "Acme Wholesale",
       "passwordHint": "At least 8 characters.",
       "passwordTooShort": "Choose a password of at least 8 characters, or email yourself a link.",
       "accountNotCreated": "We couldn't create your account. Try again.",
@@ -88,7 +88,9 @@
     }
   },
   "welcome": {
-    "defaultOrganisation": "My Organisation",
+    "askTitle": "What is your Organisation called?",
+    "askDescription": "Your colleagues see this name. You can change it later.",
+    "askSubmit": "Continue",
     "settingUp": "Setting up your Organisation…"
   },
   "shell": {
