@@ -5,7 +5,7 @@ import { betterAuth } from "better-auth/minimal";
 import { magicLink } from "better-auth/plugins";
 import { components } from "./_generated/api";
 import type { DataModel } from "./_generated/dataModel";
-import { internalMutation } from "./_generated/server";
+import { internalMutation, type MutationCtx } from "./_generated/server";
 import authConfig from "./auth.config";
 import { sendEmail } from "./email";
 import { CLIENT_IP_HEADER } from "./lib/clientIp";
@@ -141,6 +141,42 @@ export const verifyExistingUsers = internalMutation({
     }
   },
 });
+
+/**
+ * Forgets sign-in rate-limit counters (per IP, and per email for magic links)
+ * whose last request is more than a day old: every window is at most an hour,
+ * so they count nothing any more (Privacy: "as long as security needs them").
+ */
+export const forgetOldRateLimits = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    await deleteAuthRows(ctx, "rateLimit", [
+      { field: "lastRequest", operator: "lt", value: Date.now() - RATE_LIMIT_KEPT_MS },
+    ]);
+  },
+});
+
+type AuthWhere = { field: string; operator?: "lt" | "eq"; value: string | number };
+
+/** Deletes every row of a Better Auth table that matches `where`. */
+export async function deleteAuthRows(
+  ctx: MutationCtx,
+  model: "rateLimit" | "session" | "account" | "verification" | "user",
+  where: AuthWhere[],
+) {
+  let cursor: string | null = null;
+  for (;;) {
+    const page: { isDone: boolean; continueCursor: string } = await ctx.runMutation(
+      components.betterAuth.adapter.deleteMany,
+      // Each model takes its own field names; the callers pass valid ones.
+      { input: { model, where } as never, paginationOpts: { cursor, numItems: 500 } },
+    );
+    if (page.isDone) return;
+    cursor = page.continueCursor;
+  }
+}
+
+const RATE_LIMIT_KEPT_MS = 24 * 60 * 60 * 1000;
 
 type Adapter =Parameters<Parameters<typeof createAuthMiddleware>[0]>[0]["context"]["adapter"];
 

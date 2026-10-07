@@ -9,4 +9,7 @@ crons.daily("retention", { hourUTC: 2, minuteUTC: 30 }, internal.retention.run, 
 // Plans: periods that ended start the next one; unused Pages and Top-ups expire.
 crons.hourly("pages periods", { minuteUTC: 5 }, internal.pages.advancePeriods, {});
 
+// Sign-in rate-limit counters (IP addresses, emails) older than a day.
+crons.daily("auth rate limits", { hourUTC: 2, minuteUTC: 45 }, internal.auth.forgetOldRateLimits, {});
+
 export default crons;

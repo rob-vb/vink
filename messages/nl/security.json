@@ -26,7 +26,7 @@
     "what": "Verwijderen haalt de PDF weg, wat Vink gelezen heeft, alle waarden en de Payload.",
     "kept": "We houden een kort overzicht (bestandsnaam, wie het uploadde en goedkeurde, datums, bezorgstatus), nooit het document of de waarden.",
     "now": "Een Admin kan elk document direct verwijderen, ook goedgekeurde. Openstaande nieuwe pogingen worden dan geannuleerd.",
-    "account": "Wil je je account of organisatie opheffen? Mail ons. We verwijderen alles binnen 30 dagen."
+    "account": "Je account verwijder je zelf via het accountmenu. Een Admin verwijdert de organisatie bij Instellingen, onder Danger Zone. Alles is dan direct weg."
   },
   "subprocessors": {
     "title": "Subverwerkers",
@@ -39,6 +39,11 @@
       "hetzner": {
         "purpose": "Hosting van de app",
         "region": "Finland (EU)",
+        "data": "Al het verkeer gaat erdoorheen"
+      },
+      "cloudflare": {
+        "purpose": "Proxy en beveiliging voor de site en de app",
+        "region": "Wereldwijd, dichtstbijzijnd datacenter",
         "data": "Al het verkeer gaat erdoorheen"
       },
       "convex": {
@@ -62,7 +67,7 @@
         "data": "De gelezen tekst. Mag logs bewaren onder <link>eigen voorwaarden</link>."
       },
       "resend": {
-        "purpose": "Inlog- en uitnodigingsmails",
+        "purpose": "Mails van Vink: inloggen, uitnodigingen, abonnement en meldingen",
         "region": "Verenigde Staten",
         "data": "E-mailadres en die mails"
       },
@@ -107,7 +112,7 @@
     "title": "Wat we nog niet hebben",
     "certs": "Nog geen SOC 2- of ISO 27001-certificering.",
     "twoFactor": "Nog geen tweestapsverificatie of SSO.",
-    "dpa": "Een verwerkersovereenkomst is op verzoek beschikbaar."
+    "dpa": "Nog geen apart te tekenen verwerkersovereenkomst. De verwerkersafspraken staan in deze voorwaarden, bij Verwerking van persoonsgegevens."
   },
   "report": {
     "title": "Een probleem melden en contact",

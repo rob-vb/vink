@@ -39,6 +39,8 @@ export const userQuery = customQuery(query, customCtx(requireUser));
 
 export const userMutation = customMutation(mutation, customCtx(requireUser));
 
+export const userAction = customAction(action, customCtx(requireUser));
+
 type Role = Doc<"memberships">["role"];
 
 /** Pass `role: "admin"` in a function definition to make it Admin-only. */

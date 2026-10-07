@@ -58,6 +58,7 @@ export function GET() {
     `- [Guides: Google Sheets, n8n, Make and Zapier](${localeUrl("en", "/developers")}#platforms)`,
     `- [API reference](${localeUrl("en", "/developers/api")})`,
     `- [Terms, data and subprocessors](${localeUrl("en", "/terms")})`,
+    `- [Privacy policy](${localeUrl("en", "/privacy")})`,
     `- [Contact](${localeUrl("en", "/contact")})`,
     `- [Dutch site](${localeUrl("nl", "/")})`,
     "",

@@ -77,11 +77,11 @@
     },
     "runOut": {
       "q": "Wat gebeurt er als onze pagina's op zijn?",
-      "a": "Een nieuwe PDF die niet in je resterende pagina's past, wordt bij het uploaden geweigerd, met een duidelijke melding. Alles wat al geüpload is blijft werken. Je kunt upgraden, of een aanvulling nemen van €10 per 100 pagina's die geldt tot het einde van de factuurperiode."
+      "a": "Een nieuwe PDF die niet in je resterende pagina's past, wordt bij het uploaden geweigerd, met een duidelijke melding. Alles wat al geüpload is blijft werken. Je kunt upgraden, of een aanvulling nemen van €10 per 100 pagina's die geldt tot het einde van de lopende maand."
     },
     "rollover": {
       "q": "Schuiven ongebruikte pagina's door?",
-      "a": "Nee. Je pagina's worden aan het begin van elke factuurperiode vernieuwd, en ongebruikte pagina's vervallen."
+      "a": "Nee. Je pagina's worden elke maand vernieuwd, ook bij een jaarabonnement, en ongebruikte pagina's vervallen."
     },
     "vat": {
       "q": "Zijn de prijzen inclusief of exclusief btw?",

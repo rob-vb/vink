@@ -146,7 +146,9 @@ export default defineSchema({
     organisationId: v.id("organisations"),
     checkoutSessionId: v.string(),
     pages: v.number(),
-  }).index("by_checkoutSessionId", ["checkoutSessionId"]),
+  })
+    .index("by_checkoutSessionId", ["checkoutSessionId"])
+    .index("by_organisationId", ["organisationId"]),
 
   memberships: defineTable({
     organisationId: v.id("organisations"),
@@ -521,7 +523,8 @@ export default defineSchema({
     issuedAt: v.number(),
   })
     .index("by_key", ["key"])
-    .index("by_issuedAt", ["issuedAt"]),
+    .index("by_issuedAt", ["issuedAt"])
+    .index("by_organisationId", ["organisationId"]),
 
   // Contact-form requests per visitor, for the rate limit only: a keyed hash
   // of the IP and the request times of the last hour. The requests themselves

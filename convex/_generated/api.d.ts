@@ -15,6 +15,7 @@ import type * as billingState from "../billingState.js";
 import type * as changeForm from "../changeForm.js";
 import type * as contact from "../contact.js";
 import type * as crons from "../crons.js";
+import type * as deletion from "../deletion.js";
 import type * as deliveries from "../deliveries.js";
 import type * as documents from "../documents.js";
 import type * as email from "../email.js";
@@ -108,6 +109,7 @@ declare const fullApi: ApiFromModules<{
   changeForm: typeof changeForm;
   contact: typeof contact;
   crons: typeof crons;
+  deletion: typeof deletion;
   deliveries: typeof deliveries;
   documents: typeof documents;
   email: typeof email;

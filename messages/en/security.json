@@ -26,7 +26,7 @@
     "what": "Deletion removes the PDF, what Vink read, all values and the Payload.",
     "kept": "We keep a short record (file name, who uploaded and approved it, dates, delivery status), never the document or its values.",
     "now": "An Admin can delete any Document right away, approved ones included. Pending retries for it are cancelled.",
-    "account": "To close your account or Organisation, email us. We delete everything within 30 days."
+    "account": "You delete your account yourself from the account menu. An Admin deletes the Organisation under Settings, in the Danger Zone. Everything is then gone at once."
   },
   "subprocessors": {
     "title": "Subprocessors",
@@ -40,6 +40,11 @@
         "purpose": "Hosting the app",
         "region": "Finland (EU)",
         "data": "Passes through all traffic"
+      },
+      "cloudflare": {
+        "purpose": "Proxy and protection for the site and the app",
+        "region": "Worldwide, nearest data centre",
+        "data": "All traffic passes through it"
       },
       "convex": {
         "purpose": "Database and backend",
@@ -62,7 +67,7 @@
         "data": "The read text. May keep logs under <link>its own terms</link>."
       },
       "resend": {
-        "purpose": "Sign-in and invitation emails",
+        "purpose": "Emails from Vink: sign-in, invitations, plan and notices",
         "region": "United States",
         "data": "Email address and those emails"
       },
@@ -107,7 +112,7 @@
     "title": "What we don't have yet",
     "certs": "No SOC 2 or ISO 27001 certification yet.",
     "twoFactor": "No two-factor sign-in or SSO yet.",
-    "dpa": "A data processing agreement is available on request."
+    "dpa": "No separate data processing agreement to sign yet. The processing terms are part of these terms, under Processing personal data."
   },
   "report": {
     "title": "Reporting a problem and contact",

@@ -2,31 +2,332 @@
   "privacy": {
     "meta": {
       "title": "Privacybeleid",
-      "description": "Hoe Vink omgaat met persoonsgegevens op deze website en in de app. Het volledige privacybeleid wordt geschreven en vervangt deze pagina."
+      "description": "Welke persoonsgegevens Vink gebruikt op deze website en in de app, waarom, hoe lang, en welke rechten je hebt."
     },
     "title": "Privacybeleid",
-    "pending": "Het volledige privacybeleid wordt geschreven en vervangt deze pagina voor de lancering. Tot die tijd staat hier kort wat nu al geldt.",
-    "points": {
-      "security": "Waar documenten worden opgeslagen, hoe lang ze bewaard worden en wie ze verwerkt, staat in de <terms>Voorwaarden</terms>, inclusief de <subprocessors>lijst van subverwerkers</subprocessors>.",
-      "payments": "Een abonnement of Top-up betaal je via Stripe. Vink is de verkoper; Stripe verwerkt de betaling en berekent de btw. Vink geeft Stripe alleen de naam en het ID van je organisatie en het e-mailadres van wie betaalt. Je factuuradres, btw-nummer en betaalgegevens vul je bij Stripe in. Vink kan het factuuradres en btw-nummer in Stripe zien, en bewaart de facturen zo lang als de wet vraagt. Je volledige kaartnummer of IBAN ziet Vink nooit. Stripe gebruikt je gegevens onder zijn eigen privacyverklaring: <stripe>Stripe</stripe>.",
-      "contact": "Contactaanvragen via deze site worden naar ons gemaild en niet op de site bewaard.",
-      "analytics": "Google Analytics draait alleen op de publieke website, en alleen nadat je statistiekcookies accepteert. De app onder /app laadt het nooit. Je kunt je keuze aanpassen via Cookie-instellingen.",
-      "cookies": "Twee functionele cookies hebben geen toestemming nodig: één onthoudt je taal, één onthoudt je cookiekeuze.",
-      "questions": "Vragen over je gegevens? <contact>Neem contact op</contact>."
+    "updated": "Laatst bijgewerkt: 7 oktober 2026",
+    "intro": "Dit privacybeleid legt uit welke persoonsgegevens Vink gebruikt, waarom en hoe lang. Het geldt voor deze website en voor de app.",
+    "toc": "Op deze pagina",
+    "sections": {
+      "who": {
+        "title": "Wie we zijn",
+        "body": [
+          "Vink is een eenmanszaak van {owner}, {address}, Nederland. KvK-nummer: {kvk}.",
+          "Vragen over je gegevens? Mail <mail></mail>."
+        ]
+      },
+      "roles": {
+        "title": "Onze twee rollen",
+        "body": [
+          "Voor je account, je betalingen en deze website bepaalt Vink zelf wat er met je gegevens gebeurt. Vink is dan <b>verwerkingsverantwoordelijke</b>. Over die gegevens gaat dit privacybeleid.",
+          "De documenten die een organisatie in Vink zet, zijn van die organisatie. Daarin kunnen persoonsgegevens staan, bijvoorbeeld een naam op een factuur. Voor die gegevens is de organisatie verwerkingsverantwoordelijke en is Vink <b>verwerker</b>. Vink gebruikt ze alleen om de dienst te leveren. De afspraken daarover staan in de <terms>Voorwaarden</terms>.",
+          "Staan jouw gegevens in een document dat een klant van Vink heeft geüpload? Neem dan eerst contact op met die organisatie. Wij helpen haar om je verzoek af te handelen."
+        ]
+      },
+      "data": {
+        "title": "Welke gegevens we gebruiken",
+        "body": [
+          "Per onderwerp staat hieronder wat we gebruiken, waarom, op welke grondslag uit de AVG, en hoe lang we het bewaren.",
+          {
+            "h": "Je account"
+          },
+          [
+            "<b>Wat:</b> je e-mailadres, een weergavenaam, je wachtwoord (alleen als onleesbare hash), de naam van je organisatie en je rol daarin.",
+            "<b>Waarom:</b> om je account te maken, je te laten inloggen en je toegang te geven tot je organisatie. Bij een nieuwe aanmelding krijgen we een mail met je e-mailadres en de naam van je organisatie.",
+            "<b>Grondslag:</b> uitvoering van de overeenkomst.",
+            "<b>Hoe lang:</b> zolang je account bestaat. Verwijder je je account in de app, dan zijn deze gegevens direct weg."
+          ],
+          {
+            "h": "Uitnodigingen"
+          },
+          [
+            "<b>Wat:</b> het e-mailadres van iemand die een Admin uitnodigt.",
+            "<b>Waarom:</b> om de uitnodiging te sturen.",
+            "<b>Grondslag:</b> gerechtvaardigd belang van de organisatie die uitnodigt.",
+            "<b>Hoe lang:</b> zolang de organisatie bestaat. Een Admin kan een openstaande uitnodiging intrekken; dan verwijderen we die direct."
+          ],
+          {
+            "h": "Inloggen en beveiliging"
+          },
+          [
+            "<b>Wat:</b> je IP-adres en je browser bij elke inlogsessie, en tellers van het aantal pogingen per IP-adres of e-mailadres.",
+            "<b>Waarom:</b> om je account te beschermen en misbruik te stoppen.",
+            "<b>Grondslag:</b> gerechtvaardigd belang: een veilige dienst.",
+            "<b>Hoe lang:</b> een sessie verloopt 7 dagen na je laatste gebruik. Tellers bewaren we zolang ze nodig zijn voor de beveiliging. We gebruiken deze gegevens alleen voor beveiliging."
+          ],
+          {
+            "h": "Serverlogs"
+          },
+          [
+            "<b>Wat:</b> je IP-adres, de pagina die je opvraagt, je browser en het tijdstip. Elk bezoek aan de site en de app gaat via Cloudflare en onze server bij Hetzner.",
+            "<b>Waarom:</b> om de site veilig en bereikbaar te houden en fouten op te sporen.",
+            "<b>Grondslag:</b> gerechtvaardigd belang.",
+            "<b>Hoe lang:</b> onze server bewaart deze logs 14 dagen. Logs bij onze providers verlopen volgens hun eigen termijnen."
+          ],
+          {
+            "h": "Betalingen"
+          },
+          [
+            "<b>Wat:</b> de naam en het ID van je organisatie, het e-mailadres van wie betaalt, het factuuradres, het btw-nummer en de facturen. Je factuuradres, btw-nummer en betaalgegevens vul je bij Stripe in. Je volledige kaartnummer of IBAN ziet Vink nooit.",
+            "<b>Waarom:</b> om abonnementen en Top-ups te verkopen, facturen te maken en btw af te dragen.",
+            "<b>Grondslag:</b> uitvoering van de overeenkomst, en een wettelijke plicht voor de administratie.",
+            "<b>Hoe lang:</b> facturen en de administratie bewaren we 7 jaar, zoals de belastingwet vraagt.",
+            "Stripe gebruikt een deel van deze gegevens ook voor zichzelf, bijvoorbeeld om fraude te voorkomen. Dat valt onder de <stripe>privacyverklaring van Stripe</stripe>."
+          ],
+          {
+            "h": "E-mails van Vink"
+          },
+          [
+            "<b>Wat:</b> je e-mailadres en de inhoud van de mail.",
+            "<b>Waarom:</b> om inloglinks, uitnodigingen en berichten over je account en abonnement te sturen. We sturen geen nieuwsbrief of reclame, tenzij je daar zelf voor kiest.",
+            "<b>Grondslag:</b> uitvoering van de overeenkomst.",
+            "<b>Hoe lang:</b> Resend verstuurt de mails voor ons. Vink bewaart de verstuurde mails zelf niet."
+          ],
+          {
+            "h": "Contactformulier"
+          },
+          [
+            "<b>Wat:</b> je naam, je e-mailadres en wat je verder invult, zoals je bedrijf en je bericht. Om misbruik te stoppen, gebruiken we ook je IP-adres.",
+            "<b>Waarom:</b> om je vraag te beantwoorden.",
+            "<b>Grondslag:</b> gerechtvaardigd belang: je vraag beantwoorden.",
+            "<b>Hoe lang:</b> je aanvraag wordt naar ons gemaild en niet op de site bewaard. Van je IP-adres bewaren we alleen een onleesbare hash met een geheime sleutel, een uur lang, voor de limiet per uur. De mail bewaren we tot 2 jaar na het laatste contact."
+          ],
+          {
+            "h": "Koppelingen met Google Sheets en Microsoft Excel"
+          },
+          [
+            "<b>Wat:</b> een Admin geeft Vink toestemming bij Google of Microsoft. Vink bewaart daarvan een toegangssleutel (refresh token), versleuteld.",
+            "<b>Waarom:</b> Vink maakt één nieuw bestand in je Google Drive of OneDrive en zet daar de waarden van je documenten in. Bij Google kan Vink alleen de bestanden zien die het zelf heeft gemaakt. Microsoft geeft toegang tot je bestanden, maar Vink opent alleen het bestand dat het zelf heeft gemaakt.",
+            "<b>Grondslag:</b> uitvoering van de overeenkomst.",
+            "<b>Hoe lang:</b> tot een Admin de koppeling verwijdert, of tot de organisatie wordt opgeheven. Je kunt de toegang ook zelf intrekken in je Google- of Microsoft-account.",
+            "Vink gebruikt gegevens die het van Google API's ontvangt, en geeft ze alleen door aan andere apps, volgens de <google>Google API Services User Data Policy</google>, inclusief de eisen voor Limited Use. We gebruiken die gegevens niet voor reclame, verkopen ze niet en trainen er geen AI-modellen mee."
+          ],
+          {
+            "h": "Documenten in de app"
+          },
+          "Voor documenten is Vink verwerker, zie Onze twee rollen. Wat we opslaan, waar en hoe lang, staat in de Voorwaarden bij <retention>Hoe lang we het bewaren</retention> en <subprocessors>Subverwerkers</subprocessors>. Vink traint geen AI-modellen met je documenten."
+        ]
+      },
+      "sharing": {
+        "title": "Met wie we gegevens delen",
+        "body": [
+          "We verkopen je gegevens nooit.",
+          "We delen gegevens alleen met partijen die ons helpen de dienst te leveren. Zij verwerken ze in onze opdracht. De volledige lijst, met wat elke partij ontvangt en waar, staat bij de <subprocessors>Subverwerkers</subprocessors>.",
+          "Kiest je organisatie een koppeling, zoals een webhook, Google Sheets, Zapier of Make? Dan stuurt Vink de waarden naar die plek. Je organisatie kiest die partij zelf.",
+          "Soms moeten we gegevens geven aan een overheid, zoals de Belastingdienst. Dat doen we alleen als de wet het eist."
+        ]
+      },
+      "transfers": {
+        "title": "Gegevens buiten de EU",
+        "body": [
+          "De meeste gegevens blijven in de EU. Sommige partijen verwerken gegevens in de Verenigde Staten, zie <subprocessors>Subverwerkers</subprocessors>. Voor die doorgifte gebruiken we het EU-VS Data Privacy Framework of de standaardcontractbepalingen van de Europese Commissie."
+        ]
+      },
+      "security": {
+        "title": "Beveiliging",
+        "body": [
+          "We beveiligen je gegevens met passende maatregelen. Alle verbindingen gebruiken HTTPS, en elke organisatie ziet alleen haar eigen gegevens. De details staan in de Voorwaarden bij <access>Toegang en accounts</access> en <transit>Onderweg en opgeslagen</transit>.",
+          "Gaat er toch iets mis met persoonsgegevens? Dan melden we dat binnen 72 uur bij de Autoriteit Persoonsgegevens als de wet dat vraagt. Betrokken organisaties en personen informeren we zonder onnodige vertraging."
+        ]
+      },
+      "cookies": {
+        "title": "Cookies",
+        "body": [
+          "Op de website en in de app gebruiken we deze cookies:",
+          [
+            "<b>NEXT_LOCALE</b> onthoudt je taal. Functioneel, 1 jaar.",
+            "<b>Inlogcookies</b> houden je ingelogd in de app. Functioneel, zolang je sessie loopt."
+          ],
+          "We gebruiken alleen functionele cookies. Die hebben geen toestemming nodig. We gebruiken geen cookies voor statistieken of reclame."
+        ]
+      },
+      "rights": {
+        "title": "Je rechten",
+        "body": [
+          "Je hebt deze rechten op je persoonsgegevens:",
+          [
+            "<b>Inzage:</b> je mag weten welke gegevens we van je hebben.",
+            "<b>Correctie:</b> je mag onjuiste gegevens laten aanpassen.",
+            "<b>Verwijdering:</b> je mag vragen je gegevens te verwijderen.",
+            "<b>Beperking:</b> je mag vragen het gebruik tijdelijk te stoppen.",
+            "<b>Overdraagbaarheid:</b> je mag je gegevens in een gangbaar bestand krijgen.",
+            "<b>Bezwaar:</b> je mag bezwaar maken tegen gebruik op grond van gerechtvaardigd belang.",
+            "<b>Toestemming intrekken:</b> je mag je toestemming altijd intrekken."
+          ],
+          "Mail je verzoek naar <mail></mail>. We kunnen vragen wie je bent, zodat we gegevens alleen aan de juiste persoon geven. We antwoorden binnen een maand.",
+          "Ben je niet tevreden over hoe we met je gegevens omgaan? Dan mag je een klacht indienen bij de <ap>Autoriteit Persoonsgegevens</ap>. We horen het graag eerst zelf."
+        ]
+      },
+      "automated": {
+        "title": "Geautomatiseerde besluiten",
+        "body": [
+          "Vink leest documenten automatisch, en kan ze met Auto-Send automatisch versturen. Vink neemt geen besluiten over personen die rechtsgevolgen hebben of hen op een andere manier sterk raken. Wat er met de uitkomst gebeurt, bepaalt de organisatie die Vink gebruikt."
+        ]
+      },
+      "changes": {
+        "title": "Wijzigingen",
+        "body": [
+          "We kunnen dit privacybeleid aanpassen, bijvoorbeeld als Vink of de wet verandert. De datum bovenaan laat zien wanneer het voor het laatst is gewijzigd. Bij belangrijke wijzigingen mailen we klanten vooraf."
+        ]
+      }
     }
   },
   "terms": {
     "meta": {
       "title": "Voorwaarden",
-      "description": "De voorwaarden voor het gebruik van Vink. De volledige voorwaarden worden geschreven en vervangen deze pagina voor de lancering."
+      "description": "De voorwaarden voor het gebruik van Vink: abonnementen, betalen, opzeggen, je data, verwerking, aansprakelijkheid, beveiliging en subverwerkers."
     },
     "title": "Voorwaarden",
-    "pending": "De volledige voorwaarden worden geschreven en vervangen deze pagina voor de lancering.",
-    "points": {
-      "plans": "Abonnementen, prijzen en wat als pagina telt, staan op de pagina <pricing>Prijzen</pricing>. Prijzen zijn in euro, excl. btw.",
-      "custom": "Eigen voorwaarden, een verwerkersovereenkomst en betalen op factuur zijn mogelijk met het Custom-abonnement.",
-      "questions": "Vragen voordat je je aanmeldt? <contact>Neem contact op</contact>."
-    },
-    "plansTitle": "Abonnementen"
+    "updated": "Laatst bijgewerkt: 7 oktober 2026",
+    "intro": "Deze voorwaarden gelden voor elk gebruik van Vink. Met een account ga je er namens je organisatie mee akkoord. Na de voorwaarden staat hoe we met je data omgaan.",
+    "sections": {
+      "parties": {
+        "title": "Wie we zijn en wat Vink doet",
+        "body": [
+          "Vink wordt geleverd door Vink, een eenmanszaak van {owner}, {address}, Nederland. KvK-nummer: {kvk}. In deze voorwaarden heet dat \"Vink\" of \"we\".",
+          "Vink leest PDF's, getypt, gescand of handgeschreven, en zet de waarden in de velden van je formulieren. Mensen controleren wat onzeker is. Daarna stuurt Vink de waarden naar de systemen die je koppelt.",
+          "\"Je\" en \"de klant\" is de organisatie die een account bij Vink heeft. Wie zich aanmeldt, verklaart de organisatie te mogen vertegenwoordigen."
+        ]
+      },
+      "business": {
+        "title": "Alleen voor bedrijven",
+        "body": [
+          "Vink is er alleen voor bedrijven, organisaties en zelfstandigen die handelen voor hun beroep of bedrijf. Vink is niet bedoeld voor consumenten. De regels voor consumenten, zoals het herroepingsrecht, gelden daarom niet.",
+          "Andere algemene voorwaarden, ook die van de klant, gelden niet. Andere afspraken gelden alleen als we ze schriftelijk maken, bijvoorbeeld bij een Custom-abonnement."
+        ]
+      },
+      "account": {
+        "title": "Je account",
+        "body": [
+          "Je houdt je inloggegevens geheim. Wat er via je account gebeurt, valt onder je eigen verantwoordelijkheid. Merk je misbruik? Meld het direct, zie <report>Een probleem melden</report>.",
+          "Een Admin beheert de organisatie: leden, formulieren, koppelingen en de bewaartermijn. De klant bepaalt wie Admin is."
+        ]
+      },
+      "plans": {
+        "title": "Gratis pagina's, abonnementen en Top-ups",
+        "body": [
+          "De eerste organisatie die je maakt, krijgt 20 gratis pagina's. Daarvoor is geen betaling nodig, en ze verlopen niet.",
+          "Een abonnement geeft een aantal pagina's per maand. Ook bij een jaarabonnement krijg je de pagina's per maand. Ongebruikte pagina's vervallen aan het einde van elke maand. De abonnementen, prijzen en wat als pagina telt, staan op de pagina <pricing>Prijzen</pricing>.",
+          "Een Top-up geeft 100 extra pagina's en kan alleen bij een abonnement. Een Top-up geldt tot je pagina's worden vernieuwd, aan het einde van de lopende maand, en vervalt daarna.",
+          "Past een nieuwe PDF niet in je resterende pagina's? Dan weigert Vink die bij het uploaden.",
+          "Met een Custom-abonnement maken we eigen afspraken over volume, prijs, betalen op factuur en een serviceniveau. Die afspraken leggen we schriftelijk vast. Wat daarin niet staat, regelen deze voorwaarden."
+        ]
+      },
+      "payment": {
+        "title": "Prijzen en betalen",
+        "body": [
+          "Alle prijzen zijn in euro en exclusief btw. Btw komt erbij waar die geldt.",
+          "Je betaalt vooraf, per maand of per jaar, via Stripe. Een abonnement verlengt automatisch met dezelfde periode, tot je opzegt.",
+          "Lukt een betaling niet? Dan probeert Stripe het nog een paar keer. Lukt het daarna nog niet, dan stopt je abonnement. Je organisatie houdt dan alleen de gratis pagina's die nog over zijn.",
+          "We kunnen de prijzen aanpassen. We mailen je minstens 30 dagen voordat een nieuwe prijs voor je geldt. Een nieuwe prijs geldt vanaf je volgende periode. Wil je die prijs niet, dan kun je vóór die datum opzeggen.",
+          "Betaalde bedragen krijg je niet terug, ook niet als je eerder stopt of pagina's niet gebruikt. Dit geldt niet als deze voorwaarden of de wet iets anders zeggen."
+        ]
+      },
+      "cancel": {
+        "title": "Opzeggen en stoppen",
+        "body": [
+          "Een Admin kan het abonnement op elk moment opzeggen in de app, bij Instellingen. Het abonnement loopt dan door tot het einde van de lopende maand of het lopende jaar. Daarna betaal je niets meer, en kun je verder met de gratis pagina's die nog over zijn.",
+          "Je kunt je account zelf verwijderen in de app, via het accountmenu. Een Admin kan de hele organisatie verwijderen bij Instellingen, onder Danger Zone. Alles is dan direct weg, behalve wat we volgens de wet moeten bewaren, zoals facturen. Lukt het niet? Mail <mail></mail>, dan verwijderen we het binnen 30 dagen.",
+          "We mogen je toegang blokkeren of de overeenkomst beëindigen als je niet betaalt, of als je deze voorwaarden ernstig of herhaald overtreedt. Waar dat kan, waarschuwen we je eerst.",
+          "Stoppen we met Vink, dan melden we dat minstens 3 maanden vooraf. Wat je vooruit betaalde voor de tijd na de stopdatum, betalen we terug."
+        ]
+      },
+      "use": {
+        "title": "Wat je wel en niet mag",
+        "body": [
+          "Je zet alleen documenten in Vink die je mag verwerken. Daarvoor heb je zelf een grondslag, zoals de AVG vraagt. Je mag niet:",
+          [
+            "documenten uploaden die onwettig zijn, of die je niet mag delen;",
+            "Vink gebruiken om de rechten van anderen te schenden;",
+            "proberen de beveiliging te omzeilen, of gegevens van een andere organisatie te bekijken;",
+            "Vink overbelasten, bijvoorbeeld met verzoeken boven de limieten van de API;",
+            "Vink namaken, of de software ontleden voor zover de wet dat niet toestaat;",
+            "Vink doorverkopen of als je eigen dienst aanbieden, zonder onze schriftelijke toestemming."
+          ],
+          "Vind je een beveiligingsprobleem? Meld het ons, zie <report>Een probleem melden</report>."
+        ]
+      },
+      "data": {
+        "title": "Je data",
+        "body": [
+          "Je documenten, de gelezen waarden en je formulieren blijven van jou. Je geeft Vink alleen het recht om ze te gebruiken om de dienst te leveren.",
+          "Vink traint geen AI-modellen met je documenten. De partijen die we inzetten, staan bij <subprocessors>Subverwerkers</subprocessors>, met wat ze ontvangen. TypeSafe mag daarbij logs bewaren onder zijn eigen voorwaarden.",
+          "Hoe lang we je data bewaren en hoe je die verwijdert, staat bij <retention>Hoe lang we het bewaren</retention>. Bewaar zelf een kopie van wat je wilt houden, bijvoorbeeld via een koppeling.",
+          "We mogen gebruikscijfers zonder inhoud gebruiken om Vink te verbeteren, zoals het aantal pagina's. Daarin staan geen inhoud van documenten en geen persoonsgegevens."
+        ]
+      },
+      "processing": {
+        "title": "Verwerking van persoonsgegevens",
+        "body": [
+          "In je documenten kunnen persoonsgegevens staan, bijvoorbeeld namen, adressen en contactgegevens van je klanten en leveranciers. Daarvoor is de klant verwerkingsverantwoordelijke en Vink verwerker. Dit artikel is de verwerkersovereenkomst tussen ons, zoals artikel 28 van de AVG vraagt. Het geldt zolang de overeenkomst loopt.",
+          [
+            "Vink verwerkt de gegevens alleen op jouw instructie: deze voorwaarden en wat je in de app instelt, zoals formulieren, bewaartermijn en koppelingen. Moet Vink volgens de wet iets anders doen, dan melden we dat vooraf, als de wet dat toestaat.",
+            "Iedereen bij Vink die de gegevens kan zien, heeft een geheimhoudingsplicht.",
+            "Vink neemt passende beveiligingsmaatregelen. Die staan bij <access>Toegang en accounts</access> en <transit>Onderweg en opgeslagen</transit>.",
+            "Je geeft Vink algemene toestemming om subverwerkers in te zetten. De actuele lijst staat bij <subprocessors>Subverwerkers</subprocessors>. Komt er een nieuwe subverwerker bij, dan mailen we de Admins minstens 30 dagen vooraf. Heb je een gegronde reden tegen die partij, dan kun je opzeggen voordat de wijziging ingaat. Vink legt subverwerkers dezelfde plichten op en blijft voor hen verantwoordelijk.",
+            "Doorgifte buiten de EU gebeurt alleen met een geldige grondslag, zoals het EU-VS Data Privacy Framework of standaardcontractbepalingen.",
+            "Vink helpt je, voor zover redelijk, bij verzoeken van betrokkenen, bij een datalek en bij een gegevensbeschermingseffectbeoordeling (DPIA).",
+            "Ontdekt Vink een datalek met jouw gegevens, dan melden we dat zonder onnodige vertraging, en binnen 48 uur, aan de Admins van je organisatie. De melding aan de toezichthouder doe je zelf.",
+            "Na het einde van de overeenkomst verwijdert Vink de gegevens binnen 30 dagen, tenzij de wet bewaren verplicht.",
+            "Vink geeft je de informatie die je nodig hebt om te laten zien dat aan artikel 28 is voldaan. Een audit mag één keer per jaar, op je eigen kosten en na een redelijke aankondiging."
+          ],
+          "Zet geen bijzondere persoonsgegevens in Vink, zoals gegevens over gezondheid, tenzij we dat schriftelijk afspreken."
+        ]
+      },
+      "ai": {
+        "title": "Controle van de uitkomst",
+        "body": [
+          "Vink leest documenten met AI, en AI maakt soms fouten. Vink markeert de waarden waar het twijfelt, maar kan niet garanderen dat elke waarde klopt.",
+          "Je controleert de uitkomst voordat je erop vertrouwt. Zet je Auto-Send aan, dan verstuurt Vink documenten zonder menselijke controle. Dat is je eigen keuze en je eigen risico."
+        ]
+      },
+      "availability": {
+        "title": "Beschikbaarheid en veranderingen",
+        "body": [
+          "We doen ons best om Vink altijd beschikbaar te houden. We garanderen geen bepaalde beschikbaarheid, tenzij we schriftelijk een serviceniveau (SLA) afspreken.",
+          "Voor onderhoud kan Vink soms kort niet bereikbaar zijn. Groot onderhoud melden we vooraf waar dat kan.",
+          "We mogen Vink verbeteren en veranderen. Halen we een belangrijke functie weg, dan melden we dat vooraf.",
+          "Vink werkt met diensten van anderen, zoals Google, Microsoft en Stripe. Veranderen of stoppen die diensten, dan kan een koppeling ophouden met werken."
+        ]
+      },
+      "liability": {
+        "title": "Aansprakelijkheid",
+        "body": [
+          "Vink is alleen aansprakelijk voor directe schade. De aansprakelijkheid is maximaal het bedrag dat de klant in de 12 maanden vóór de schade aan Vink heeft betaald.",
+          "Vink is niet aansprakelijk voor indirecte schade, zoals gevolgschade, gederfde winst, gemiste besparingen, verloren gegevens en schade door bedrijfsstilstand. Ook niet voor schade door waarden die je niet hebt gecontroleerd, of door documenten die Auto-Send verstuurde.",
+          "Deze beperkingen gelden niet bij opzet of bewuste roekeloosheid van Vink.",
+          "Meld schade schriftelijk, zo snel mogelijk en uiterlijk 12 maanden nadat je die ontdekte. Daarna vervalt je recht op vergoeding.",
+          "De klant vrijwaart Vink voor claims van anderen die komen doordat de klant deze voorwaarden of de wet overtreedt, bijvoorbeeld met documenten die de klant niet mocht verwerken."
+        ]
+      },
+      "force": {
+        "title": "Overmacht",
+        "body": [
+          "Kunnen we door overmacht niet leveren, dan zijn we niet aansprakelijk. Overmacht is onder meer een storing bij een provider, een internet- of stroomstoring, een cyberaanval of een besluit van de overheid. Duurt de overmacht langer dan 30 dagen, dan mogen we allebei de overeenkomst opzeggen."
+        ]
+      },
+      "ip": {
+        "title": "Intellectueel eigendom",
+        "body": [
+          "De software, de website en de naam Vink zijn van ons. Je mag Vink gebruiken zolang de overeenkomst loopt. Dat recht is niet exclusief en niet overdraagbaar.",
+          "Feedback en ideeën die je deelt, mogen we gebruiken om Vink te verbeteren."
+        ]
+      },
+      "changes": {
+        "title": "Wijzigingen in deze voorwaarden",
+        "body": [
+          "We kunnen deze voorwaarden aanpassen. Bij een wijziging die nadelig voor je is, mailen we de Admins minstens 30 dagen voordat die ingaat. Ben je het er niet mee eens, dan kun je opzeggen voordat de wijziging ingaat. Gebruik je Vink daarna, dan geldt de nieuwe versie.",
+          "Is een bepaling ongeldig, dan blijven de andere gelden. We vervangen die bepaling door een geldige met zoveel mogelijk hetzelfde doel.",
+          "Verschillen de Nederlandse en de Engelse tekst, dan geldt de Nederlandse."
+        ]
+      },
+      "law": {
+        "title": "Recht en geschillen",
+        "body": [
+          "Op deze voorwaarden en de overeenkomst is Nederlands recht van toepassing. Het Weens Koopverdrag geldt niet.",
+          "Een geschil leggen we alleen voor aan de Rechtbank Overijssel. Zoek eerst met ons naar een oplossing: mail <mail></mail>."
+        ]
+      }
+    }
   }
 }
