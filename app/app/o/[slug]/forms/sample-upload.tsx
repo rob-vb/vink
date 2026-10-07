@@ -8,6 +8,7 @@ import { type DragEvent, useState } from "react";
 import { Spinner } from "@/components/ui/spinner";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
+import { MAX_PDF_BYTES } from "@/convex/lib/pdfLimits";
 import { cn } from "@/lib/utils";
 import { useErrorText } from "../../../error-text";
 
@@ -36,6 +37,10 @@ export function SampleUpload({
     if (!file) return;
     if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
       setError(t("notPdf"));
+      return;
+    }
+    if (file.size > MAX_PDF_BYTES) {
+      setError(t("tooLarge"));
       return;
     }
     setUploading(file.name);

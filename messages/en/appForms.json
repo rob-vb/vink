@@ -54,10 +54,11 @@
   },
   "sample": {
     "notPdf": "Choose a PDF file.",
+    "tooLarge": "This PDF is larger than 10 MB. Choose a smaller one.",
     "failed": "The upload didn't work. Try again.",
     "uploading": "Uploading {filename}…",
     "drop": "Drop a sample PDF here, or <browse>browse</browse>",
-    "limit": "One filled-in example, up to 20 pages"
+    "limit": "One filled-in example, up to 10 MB and 20 pages"
   },
   "editor": {
     "metaTitle": "Form · Vink",
@@ -146,7 +147,7 @@
   "intake": {
     "copy": "Copy address",
     "legend": "Email in",
-    "description": "Each PDF attached to an email sent to this address becomes a Document of this Form. Up to 20 pages per PDF. Vink never replies to the sender. Anyone who knows the address can send to it, so share it only with the people and systems that send you these documents.",
+    "description": "Each PDF attached to an email sent to this address becomes a Document of this Form. Up to 10 MB and 20 pages per PDF. Vink never replies to the sender. Anyone who knows the address can send to it, so share it only with the people and systems that send you these documents.",
     "switchOn": "Switch on email in",
     "adminCanSwitchOn": "An Admin can switch on an email address for this Form.",
     "pending": "Switched on. The address appears once email in is set up for Vink.",

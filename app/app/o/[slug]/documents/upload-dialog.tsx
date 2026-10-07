@@ -30,6 +30,7 @@ import {
 import { Spinner } from "@/components/ui/spinner";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
+import { MAX_PDF_BYTES } from "@/convex/lib/pdfLimits";
 import { isOutOfPages } from "@/lib/convex-error";
 import { cn } from "@/lib/utils";
 import { useErrorText } from "../../../error-text";
@@ -105,16 +106,22 @@ export function UploadDialog({
 
   function choose(chosen: FileList | null) {
     if (!chosen) return;
-    const added = Array.from(chosen).map(
-      (file): Item => ({
+    const added = Array.from(chosen).map((file): Item => {
+      // Refused here, before any upload; Vink checks the size again (checkPdf).
+      const error = !isPdf(file)
+        ? t("upload.notPdf")
+        : file.size > MAX_PDF_BYTES
+          ? t("upload.tooLarge")
+          : null;
+      return {
         id: crypto.randomUUID(),
         file,
-        status: isPdf(file) ? "ready" : "failed",
+        status: error === null ? "ready" : "failed",
         progress: 0,
-        error: isPdf(file) ? null : t("upload.notPdf"),
+        error,
         outOfPages: false,
-      }),
-    );
+      };
+    });
     setItems((current) => [...current, ...added]);
   }
 

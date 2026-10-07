@@ -111,7 +111,7 @@
       "kicker": "It arrives",
       "title": "Email the PDF, or drop it in.",
       "body": "It works with any kind of document, even scanned or filled in by hand. You don't build templates.",
-      "intake": "Drop several PDFs at once, or give a Form its own email address. Suppliers and colleagues then email their PDFs straight to Vink. PDF attachments, up to 20 pages each."
+      "intake": "Drop several PDFs at once, or give a Form its own email address. Suppliers and colleagues then email their PDFs straight to Vink. PDF attachments, up to 10 MB and 20 pages each."
     },
     "reads": {
       "kicker": "Vink reads it",
@@ -185,7 +185,7 @@
     },
     "templates": {
       "q": "Do I need to set up templates?",
-      "a": "No. Describe your fields, or let Vink propose them from one example. After that, Vink matches every new document to your fields by itself, whatever the layout. It reads PDFs of up to 20 pages."
+      "a": "No. Describe your fields, or let Vink propose them from one example. After that, Vink matches every new document to your fields by itself, whatever the layout. It reads PDFs of up to 10 MB and 20 pages."
     }
   }
 }

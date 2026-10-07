@@ -49,7 +49,7 @@ const nextConfig: NextConfig = {
     globalNotFound: true,
     // Next buffers a request body up to this size and silently cuts the rest,
     // also when it proxies /v1 to Convex. A PDF sent to the API may be up to
-    // 20 MB (Convex's HTTP limit); nginx allows 32 MB.
+    // 10 MB (convex/lib/pdfLimits.ts); nginx refuses a larger /v1 body itself.
     proxyClientMaxBodySize: "25mb",
   },
   async headers() {
