@@ -1,7 +1,6 @@
 import { custom, formatEuro, formatNumber, FREE_PAGES, plans } from "@/lib/plans";
 import { platforms, type Platform } from "@/lib/platforms";
 import { localeUrl } from "@/lib/seo";
-import { absoluteUrl } from "@/lib/site";
 
 // A small English fact sheet for AI assistants (ticket 14). Built once at
 // build time from the same plan data as the Pricing page.
@@ -12,7 +11,7 @@ const platformPlan: Record<Platform["id"], string> = {
   make: "works on Make's free plan (Webhooks app, Custom webhook trigger)",
   n8n: "free when self-hosted, n8n Cloud is paid (Webhook node)",
   zapier: "needs a paid Zapier plan (Webhooks by Zapier, Catch Hook trigger)",
-  "power-automate": `needs a Premium licence (When an HTTP request is received trigger); or import Vink's custom connector (${absoluteUrl("/power-automate/apiDefinition.swagger.json")}) for the trigger When a Document is approved and the action Send in a Document, with an API Key`,
+  "power-automate": "needs a Premium licence (When an HTTP request is received trigger)",
 };
 
 export function GET() {

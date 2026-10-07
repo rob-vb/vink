@@ -152,7 +152,7 @@ export default async function DevelopersPage({ params }: PageProps<"/[locale]/de
                   <Badge variant="secondary">{t("platforms.via")}</Badge>
                 </h3>
                 <p>{t.rich(`${guide}.plan`, rich)}</p>
-                {"connectorFiles" in platform && (
+                {platform.connectorFiles && (
                   <>
                     <h4 className="mt-2 text-lg font-semibold text-foreground">{t(`${guide}.connector.title`)}</h4>
                     <p>{t.rich(`${guide}.connector.intro`, rich)}</p>

@@ -33,10 +33,6 @@ test("the list labels every platform as working via the webhook, nothing else", 
   ]);
 });
 
-test("Power Automate offers the custom connector's files for download, and they are on the site", async () => {
-  const powerAutomate = platforms.find((p) => p.id === "power-automate");
-  const files = powerAutomate && "connectorFiles" in powerAutomate ? powerAutomate.connectorFiles : [];
-  expect(files).toEqual(["/power-automate/apiDefinition.swagger.json", "/power-automate/apiProperties.json"]);
-  for (const file of files) expect((await import(`@/public${file}`)).default, file).toBeTypeOf("object");
-  expect(platforms.filter((p) => "connectorFiles" in p).map((p) => p.name)).toEqual(["Power Automate"]);
+test("no platform offers a connector download until it has worked in a real account", () => {
+  expect(platforms.filter((p) => p.connectorFiles)).toEqual([]);
 });
