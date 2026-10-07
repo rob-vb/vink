@@ -139,7 +139,7 @@ export default async function PricingPage({ params }: PageProps<"/[locale]/prici
         </Container>
       </section>
 
-      <section className="pb-8">
+      <section className="pt-16 pb-8 sm:pt-24">
         <Container>
           <h2 className="mb-8 text-3xl font-semibold tracking-tight">{t("faq.title")}</h2>
           <div className="grid gap-x-12 md:grid-cols-2">
