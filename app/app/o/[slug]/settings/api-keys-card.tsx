@@ -115,7 +115,9 @@ function NewKeyDialog({
           <div className="flex flex-col gap-6">
             <DialogHeader>
               <DialogTitle>{t("madeTitle", { name: made.name })}</DialogTitle>
-              <DialogDescription>{t("madeDescription")}</DialogDescription>
+              <DialogDescription>
+                {t.rich("madeDescription", { code: (chunks) => <code className="font-mono text-xs">{chunks}</code> })}
+              </DialogDescription>
             </DialogHeader>
             <div className="flex items-center gap-2">
               <code
