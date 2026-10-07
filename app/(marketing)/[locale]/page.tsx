@@ -12,6 +12,7 @@ import { CodeBlock, PostBar } from "@/components/marketing/code-block";
 import { demoVideo } from "@/components/marketing/demo-video";
 import { FormMatch } from "@/components/marketing/form-match";
 import { JsonLd } from "@/components/marketing/json-ld";
+import { PlatformLogo } from "@/components/marketing/platform-logo";
 import { RetypingCalculator } from "@/components/marketing/retyping-calculator";
 import { seedDocuments } from "@/components/demo/demo-data";
 import type { DemoDocumentId } from "@/components/demo/demo-papers";
@@ -28,6 +29,7 @@ import { Container, Eyebrow, SectionHeading } from "@/components/marketing/secti
 import { Link } from "@/i18n/navigation";
 import { isLocale, routing, type Locale } from "@/i18n/routing";
 import { custom, formatEuro, formatNumber, perPage, plans } from "@/lib/plans";
+import { platforms } from "@/lib/platforms";
 import { sampleEnvelopeJson } from "@/lib/sample-payload";
 import { localeUrl, pageMetadata } from "@/lib/seo";
 import { absoluteUrl, CONTACT_EMAIL } from "@/lib/site";
@@ -385,6 +387,36 @@ function Connect() {
               {t("service.cta")}
             </Link>
           </div>
+        </div>
+        <div className="mt-5 flex flex-col gap-6 rounded-2xl border bg-card p-6 sm:p-8 lg:flex-row lg:items-center lg:justify-between lg:gap-10">
+          <div className="flex max-w-md flex-col gap-2">
+            <Eyebrow>{t("standard.eyebrow")}</Eyebrow>
+            <h3 className="text-xl font-semibold tracking-tight">{t("standard.title")}</h3>
+            <p className="text-muted-foreground">{t("standard.body")}</p>
+            <Link href="/developers#platforms" className={cn(moreLink, "mt-1")}>
+              {t("standard.link")}
+              <ArrowRight />
+            </Link>
+          </div>
+          <ul aria-label={t("standard.eyebrow")} className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:shrink-0">
+            {platforms.map((platform) => (
+              <li
+                key={platform.id}
+                className="flex flex-col items-center gap-2 rounded-xl border bg-background px-3 py-4 text-center lg:w-32"
+              >
+                <PlatformLogo platform={platform} className="size-11 p-2" />
+                <span className="text-sm font-semibold">{platform.name}</span>
+                <span
+                  className={cn(
+                    "text-xs",
+                    platform.app === "soon" ? "text-muted-foreground" : "font-medium text-emerald-700 dark:text-emerald-400",
+                  )}
+                >
+                  {t(platform.app === "soon" ? "standard.soon" : "standard.live")}
+                </span>
+              </li>
+            ))}
+          </ul>
         </div>
       </Container>
     </section>

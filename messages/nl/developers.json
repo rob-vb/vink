@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "Developers: webhook, Payload en handtekening",
-    "description": "Hoe Vink goedgekeurde documentdata naar je systeem stuurt: de JSON-envelope, HMAC-SHA256-controle, nieuwe pogingen, test-send en handleidingen voor Make, n8n, Zapier en Power Automate."
+    "description": "Hoe Vink goedgekeurde documentdata naar je systeem stuurt: de JSON-envelope, HMAC-SHA256-controle, nieuwe pogingen, test-send en standaard koppelingen met Google Sheets, n8n, Make en Zapier."
   },
   "og": {
     "title": "Eén ondertekende webhook. Schone JSON, met je eigen velden als sleutels.",
@@ -10,7 +10,7 @@
   "toc": {
     "label": "Op deze pagina",
     "overview": "Overzicht",
-    "platforms": "Make, n8n, Zapier, Power Automate",
+    "platforms": "Standaard koppelingen",
     "envelope": "Envelope",
     "signature": "Handtekening controleren",
     "delivery": "Bezorging en nieuwe pogingen",
@@ -38,35 +38,39 @@
     "inbound": "Documenten komen vandaag via de app binnen: upload meerdere PDF's tegelijk, of mail ze in. Geen code? Laat een systeem mailen naar het Intake Address van het formulier, en elke PDF-bijlage wordt een document. Een programma kan PDF's ook via de API insturen: <link>POST /v1/forms/'{form_id}'/documents</link>."
   },
   "platforms": {
-    "title": "Make, n8n, Zapier en Power Automate",
-    "intro": "Geen developer? Deze vier automatiseringsplatforms kunnen de webhook vandaag al ontvangen. Vink stuurt de goedgekeurde data, en daar bouw je de rest van de flow: een regel in een spreadsheet, een bericht aan je team, een boeking in je boekhoudpakket.",
-    "listLabel": "Automatiseringsplatforms die vandaag met Vink werken",
+    "title": "Standaard koppelingen",
+    "intro": "Geen developer? Voor deze vier diensten is er een standaard koppeling. Google Sheets zit in Vink zelf: Vink zet elk goedgekeurd document als rijen in een sheet. n8n, Make en Zapier ontvangen de webhook, en daar bouw je de rest van de flow: een bericht aan je team, een boeking in je boekhoudpakket.",
+    "other": "Staat je systeem er niet tussen? Dat is geen probleem. De webhook werkt met elk systeem dat een HTTPS-verzoek kan ontvangen. Geen developer? Dan <link>bouwen wij de koppeling</link>.",
+    "listLabel": "Standaard koppelingen die vandaag met Vink werken",
+    "native": "ingebouwd",
     "via": "via webhook",
+    "soonBadge": "eigen app binnenkort",
     "short": {
-      "make": "Gratis abonnement",
+      "googleSheets": "Gratis Google-account",
       "n8n": "Gratis als je het zelf host",
-      "zapier": "Betaald abonnement",
-      "powerAutomate": "Premium-licentie"
+      "make": "Gratis abonnement",
+      "zapier": "Betaald abonnement"
     },
-    "howTitle": "Zo werkt het, op elk platform",
+    "howTitle": "Zo werkt de webhook in n8n, Make en Zapier",
     "how": "Je maakt een ontvangst-URL in het platform. In Vink plak je die in een nieuwe Koppeling, en die Koppeling koppel je aan een formulier. Een test-send laat het platform je velden zien, zodat je ze in de volgende stap kunt gebruiken. Daarna gaat elk goedgekeurd document van dat formulier daarheen.",
     "testFlag": "Een test-send heeft <code>\"test\": true</code>. Zet vóór een stap die echte data wegschrijft een filter dat alleen <code>test</code> = <code>false</code> doorlaat. Dan komen tests nooit in je administratie.",
     "secret": "<b>De URL is de sleutel.</b> Deze platforms kunnen de header <code>X-Vink-Signature</code> niet makkelijk controleren, dus iedereen die de URL heeft, kan er data naartoe sturen. Zet de URL niet in mails, tickets of screenshots. Uitgelekt? Maak een nieuwe URL in het platform en plak die in de Koppeling in Vink.",
     "stepsLabel": "Stappen voor {name}",
+    "soon": "<b>Eigen app:</b> een Vink-app voor {name} komt binnenkort. Tot die tijd werkt de webhook, met de stappen hieronder.",
     "guides": {
-      "make": {
-        "title": "Make",
-        "plan": "<b>Abonnement:</b> werkt op het gratis abonnement van Make (1.000 credits per maand, 2 actieve scenario's). De Webhooks-app zit in elk abonnement, en een webhook start het scenario meteen.",
+      "googleSheets": {
+        "title": "Google Sheets",
+        "plan": "<b>Abonnement:</b> een gratis Google-account is genoeg. Je hebt geen ander platform nodig, want de koppeling zit in Vink.",
         "steps": {
-          "hook": "Maak in Make een scenario. Voeg de app <b>Webhooks</b> toe met de trigger <b>Custom webhook</b>. Kies <b>Add</b>, geef de webhook een naam en sla op. Kopieer het adres dat Make toont.",
-          "vink": "Open in Vink <b>Koppelingen</b> en kies <b>Nieuwe Koppeling</b>. Plak het adres als <b>Endpoint-URL</b> en kies <b>Koppeling maken</b>. Kies daarna <b>Aan een Formulier koppelen</b>.",
-          "test": "Make wacht nu op data. Kies in Vink <b>Test versturen</b>, kies het formulier en <b>Voorbeeldwaarden</b>. Make leert je velden uit deze test.",
-          "map": "Voeg de volgende module toe, bijvoorbeeld Google Sheets, en wijs de waarden toe. Ze staan onder <code>data</code>, met je eigen veldsleutels. Zet het scenario aan.",
-          "change": "Later de velden van het formulier aangepast? Open de webhook-module, kies <b>Detect new values</b> en stuur nog een test."
+          "kind": "Open in Vink <b>Koppelingen</b> en kies <b>Nieuwe Koppeling</b>. Kies bij <b>Soort</b> de optie <b>Google Sheets</b>. Geef de Koppeling een naam. De sheet krijgt dezelfde naam.",
+          "connect": "Kies <b>Google-account koppelen</b> en log in bij Google. Vink maakt een nieuwe sheet in je Google Drive. Daarna kom je terug in Vink.",
+          "attach": "Kies <b>Aan een Formulier koppelen</b> en kies het formulier.",
+          "test": "Kies <b>Test versturen</b> om te zien hoe de rijen eruitzien. Testrijen hebben <code>[test]</code> voor de bestandsnaam. Verwijder ze daarna uit de sheet.",
+          "live": "Klaar. Elk goedgekeurd document van dat formulier komt nu als nieuwe rijen in de sheet."
         },
-        "lists": "<b>Lijstvelden:</b> een lijstveld komt binnen als array, met één object per regel. Wil je elke regel apart verwerken, bijvoorbeeld één spreadsheetregel per factuurregel? Zet dan een <b>Iterator</b> op die array vóór de volgende module.",
-        "security": "<b>Extra slot:</b> Make kan een API-sleutel controleren. Voeg er een toe aan de webhook in Make. Voeg in Vink de header <code>x-make-apikey</code> met die sleutel toe aan de Koppeling, en markeer hem als <b>Geheim</b>. Dan is de URL alleen niet meer genoeg.",
-        "note": "Make antwoordt meteen met <code>200</code> en zet de data in een wachtrij. Is de wachtrij van de webhook vol, dan antwoordt Make <code>400</code>. Vink markeert de Delivery dan als mislukt, en een Admin kan hem opnieuw versturen vanuit het document."
+        "lists": "<b>Lijstvelden:</b> Vink maakt één rij per regel van het eerste lijstveld. De andere waarden van het document staan op elke rij. Een document zonder regels geeft één rij. Een tweede lijstveld komt als JSON in één cel.",
+        "security": "<b>Toegang:</b> Vink kan alleen de sheet openen die Vink zelf maakt. Je andere bestanden in Google Drive blijven dicht.",
+        "note": "<b>Kolommen:</b> eerst <code>document</code>, dan je velden met hun sleutel als kop, en rechts <code>approved_at</code>, <code>approved_by</code> en <code>delivery_id</code>. Een nieuw veld krijgt een nieuwe kolom vóór <code>approved_at</code>. Verander de koppen niet, want Vink zet elke waarde onder de kolom met dezelfde kop. Kan Vink niet meer in de sheet schrijven? Kies dan <b>Google-account opnieuw koppelen</b> en verstuur de mislukte Delivery opnieuw vanuit het document."
       },
       "n8n": {
         "title": "n8n",
@@ -82,6 +86,20 @@
         "security": "<b>Extra slot:</b> n8n kan een header controleren. Zet <b>Authentication</b> van de Webhook-node op <b>Header Auth</b>, met een naam en een lange willekeurige waarde. Voeg in Vink dezelfde header toe aan de Koppeling en markeer hem als <b>Geheim</b>.",
         "note": "n8n Cloud en een zelf gehoste n8n werken hier hetzelfde. Een zelf gehoste n8n moet via HTTPS bereikbaar zijn vanaf internet."
       },
+      "make": {
+        "title": "Make",
+        "plan": "<b>Abonnement:</b> werkt op het gratis abonnement van Make (1.000 credits per maand, 2 actieve scenario's). De Webhooks-app zit in elk abonnement, en een webhook start het scenario meteen.",
+        "steps": {
+          "hook": "Maak in Make een scenario. Voeg de app <b>Webhooks</b> toe met de trigger <b>Custom webhook</b>. Kies <b>Add</b>, geef de webhook een naam en sla op. Kopieer het adres dat Make toont.",
+          "vink": "Open in Vink <b>Koppelingen</b> en kies <b>Nieuwe Koppeling</b>. Plak het adres als <b>Endpoint-URL</b> en kies <b>Koppeling maken</b>. Kies daarna <b>Aan een Formulier koppelen</b>.",
+          "test": "Make wacht nu op data. Kies in Vink <b>Test versturen</b>, kies het formulier en <b>Voorbeeldwaarden</b>. Make leert je velden uit deze test.",
+          "map": "Voeg de volgende module toe, bijvoorbeeld Google Sheets, en wijs de waarden toe. Ze staan onder <code>data</code>, met je eigen veldsleutels. Zet het scenario aan.",
+          "change": "Later de velden van het formulier aangepast? Open de webhook-module, kies <b>Detect new values</b> en stuur nog een test."
+        },
+        "lists": "<b>Lijstvelden:</b> een lijstveld komt binnen als array, met één object per regel. Wil je elke regel apart verwerken, bijvoorbeeld één spreadsheetregel per factuurregel? Zet dan een <b>Iterator</b> op die array vóór de volgende module.",
+        "security": "<b>Extra slot:</b> Make kan een API-sleutel controleren. Voeg er een toe aan de webhook in Make. Voeg in Vink de header <code>x-make-apikey</code> met die sleutel toe aan de Koppeling, en markeer hem als <b>Geheim</b>. Dan is de URL alleen niet meer genoeg.",
+        "note": "Make antwoordt meteen met <code>200</code> en zet de data in een wachtrij. Is de wachtrij van de webhook vol, dan antwoordt Make <code>400</code>. Vink markeert de Delivery dan als mislukt, en een Admin kan hem opnieuw versturen vanuit het document."
+      },
       "zapier": {
         "title": "Zapier",
         "plan": "<b>Abonnement:</b> je hebt een betaald Zapier-abonnement nodig. <b>Webhooks by Zapier</b> zit niet in het gratis abonnement.",
@@ -94,38 +112,6 @@
         "lists": "<b>Lijstvelden:</b> een lijstveld komt binnen als array van objecten. Zapier toont de regels als line items: een actie die line items ondersteunt, neemt ze allemaal tegelijk. Wil je één actie per regel? Gebruik dan <b>Looping by Zapier</b>.",
         "security": "<b>Slot:</b> een Catch Hook controleert geen headers, dus de geheime URL is het enige slot. Behandel hem als een wachtwoord.",
         "note": "Een Zap die uit staat of verwijderd is, antwoordt na een tijdje <code>404</code>. Vink markeert de Delivery dan als mislukt. Zet de Zap aan, en een Admin verstuurt de mislukte Delivery opnieuw vanuit het document."
-      },
-      "powerAutomate": {
-        "title": "Power Automate",
-        "plan": "<b>Licentie:</b> je hebt een Premium-licentie nodig. De trigger <b>When an HTTP request is received</b> is een Premium-trigger.",
-        "connector": {
-          "title": "Met de Vink-connector",
-          "intro": "Importeer de custom connector van Vink één keer. Daarna kan een flow starten met de trigger <b>When a Document is approved</b>. Je kiest het formulier uit een lijst. De velden verschijnen als dynamische inhoud, zonder test-send. De actie <b>Send in a Document</b> stuurt een pdf naar een formulier.",
-          "needs": "<b>Je hebt nodig:</b> een Premium-licentie, want custom connectors zijn Premium. Je hebt ook een API-sleutel nodig. Een Admin maakt die in Vink onder <b>Instellingen van de Organisatie → API-sleutels</b>.",
-          "downloads": "Connectorbestanden",
-          "steps": {
-            "download": "Download <b>apiDefinition.swagger.json</b>.",
-            "import": "Open in Power Automate <b>Custom connectors</b> (in het menu links, onder <b>More</b>). Kies <b>New custom connector</b> → <b>Import an OpenAPI file</b>. Noem hem <b>Vink</b>, kies het bestand en kies <b>Continue</b>.",
-            "security": "Laat op het tabblad <b>Security</b> staan wat het bestand instelt: <b>API Key</b>, parameternaam <code>Authorization</code>, locatie <b>Header</b>. Kies <b>Create connector</b>.",
-            "connect": "Voeg in een cloudflow de trigger <b>When a Document is approved</b> van de Vink-connector toe. Maak een verbinding. Typ in het veld <b>API Key</b> eerst <code>Bearer</code>, dan een spatie en dan je sleutel: <code>Bearer vink_live_…</code>.",
-            "form": "Kies het <b>formulier</b> en sla de flow op. Vink maakt nu een Subscription voor de flow. Admins zien die onder <b>Koppelingen</b>. Zolang hij bestaat, liggen de veldsleutels van het formulier vast. Zet je de flow uit of verwijder je hem, dan stopt de Subscription.",
-            "action": "Wil je pdf's insturen? Voeg de actie <b>Send in a Document</b> toe. Kies het formulier en zet de bestandsinhoud, bijvoorbeeld van een bijlage in een mail, in <b>File content</b>."
-          },
-          "cli": "Liever de opdrachtregel? <code>pac connector create</code> neemt beide bestanden: <code>--api-definition-file apiDefinition.swagger.json --api-properties-file apiProperties.json</code>.",
-          "webhookTitle": "Via de webhook",
-          "webhookIntro": "Geen custom connector? De Premium-HTTP-trigger ontvangt de webhook ook."
-        },
-        "steps": {
-          "hook": "Maak in Power Automate een cloudflow die start met de trigger <b>When an HTTP request is received</b>. Toont de trigger <b>Who can trigger the flow?</b>, zet die dan op <b>Anyone</b>. De andere opties laten alleen ingelogde gebruikers uit je eigen tenant toe, en weigeren Vink dus.",
-          "url": "Sla de flow op. De trigger toont nu de <b>HTTP URL</b>. Kopieer die.",
-          "vink": "Open in Vink <b>Koppelingen</b> en kies <b>Nieuwe Koppeling</b>. Plak de URL als <b>Endpoint-URL</b> en kies <b>Koppeling maken</b>. Kies daarna <b>Aan een Formulier koppelen</b>.",
-          "test": "Kies in Vink <b>Test versturen</b>, kies het formulier en <b>Voorbeeldwaarden</b>. Open in de rungeschiedenis van de flow die run en kopieer de body uit de output van de trigger.",
-          "schema": "Kies in de trigger <b>Use sample payload to generate schema</b> en plak die body. Je velden verschijnen nu als dynamische inhoud.",
-          "map": "Voeg de volgende acties toe, wijs de waarden toe uit <code>data</code> en sla op."
-        },
-        "lists": "<b>Lijstvelden:</b> een lijstveld komt binnen als array. <b>Apply to each</b> op die array voert de volgende acties één keer per regel uit.",
-        "security": "<b>Slot:</b> de URL bevat een handtekening (<code>sig=</code>) die werkt als een wachtwoord. Iedereen met de volledige URL kan de flow starten. Uitgelekt? Maak een nieuwe URL in Power Automate en plak die in de Koppeling.",
-        "note": "Power Automate antwoordt meteen met <code>202</code>, en dat telt in Vink als bezorgd."
       }
     }
   },

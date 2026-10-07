@@ -4,15 +4,15 @@ import { GET } from "./route";
 
 const llms = async () => await GET().text();
 
-test("names the four automation platforms as working via the webhook, with a link to each guide", async () => {
+test("names the four standard integrations, how each connects, with a link to each guide", async () => {
   const text = await llms();
-  for (const [name, anchor] of [
-    ["Make", "make"],
-    ["n8n", "n8n"],
-    ["Zapier", "zapier"],
-    ["Power Automate", "power-automate"],
+  for (const [label, anchor] of [
+    ["Google Sheets, built in", "google-sheets"],
+    ["n8n, via webhook", "n8n"],
+    ["Make, via webhook", "make"],
+    ["Zapier, via webhook", "zapier"],
   ]) {
-    expect(text).toContain(`[${name}, via webhook](${localeUrl("en", "/developers")}#${anchor})`);
+    expect(text).toContain(`[${label}](${localeUrl("en", "/developers")}#${anchor})`);
   }
 });
 
@@ -20,6 +20,9 @@ test("links the API reference", async () => {
   expect(await llms()).toContain(`(${localeUrl("en", "/developers/api")})`);
 });
 
-test("doesn't name the untested Power Automate connector", async () => {
-  expect(await llms()).not.toContain("custom connector");
+test("doesn't name Power Automate, Excel or Microsoft Entra before they have worked in a real account", async () => {
+  const text = await llms();
+  for (const name of ["Power Automate", "custom connector", "Excel", "Entra", "Microsoft"]) {
+    expect(text).not.toContain(name);
+  }
 });

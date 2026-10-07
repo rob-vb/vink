@@ -6,12 +6,12 @@ import { localeUrl } from "@/lib/seo";
 // build time from the same plan data as the Pricing page.
 export const dynamic = "force-static";
 
-// What each platform needs on its own side to receive the Webhook.
-const platformPlan: Record<Platform["id"], string> = {
-  make: "works on Make's free plan (Webhooks app, Custom webhook trigger)",
+// What each platform needs on its own side.
+const platformPlan: Record<Platform["key"], string> = {
+  googleSheets: "built into Vink, needs a free Google account; Vink adds each approved Document as rows to a sheet it makes in your Google Drive",
   n8n: "free when self-hosted, n8n Cloud is paid (Webhook node)",
-  zapier: "needs a paid Zapier plan (Webhooks by Zapier, Catch Hook trigger)",
-  "power-automate": "needs a Premium licence (When an HTTP request is received trigger)",
+  make: "works on Make's free plan (Webhooks app, Custom webhook trigger); a Vink app for Make is coming soon",
+  zapier: "needs a paid Zapier plan (Webhooks by Zapier, Catch Hook trigger); a Vink app for Zapier is coming soon",
 };
 
 export function GET() {
@@ -31,10 +31,11 @@ export function GET() {
     "",
     "## Integrations",
     "",
-    "Approved Documents go out as a signed JSON POST (the Webhook) to any HTTPS endpoint attached to their Form. These automation platforms receive it today, each with a step-by-step guide on the Developers page:",
+    "Approved Documents go out as a signed JSON POST (the Webhook) to any HTTPS endpoint attached to their Form, so Vink connects to any system that can receive HTTPS. These standard integrations work today, each with a step-by-step guide on the Developers page:",
     "",
     ...platforms.map(
-      (p) => `- [${p.name}, via webhook](${localeUrl("en", "/developers")}#${p.id}): ${platformPlan[p.id]}.`,
+      (p) =>
+        `- [${p.name}, ${p.via === "native" ? "built in" : "via webhook"}](${localeUrl("en", "/developers")}#${p.id}): ${platformPlan[p.key]}.`,
     ),
     "",
     "## Pricing (EUR, excl. VAT)",
@@ -54,7 +55,7 @@ export function GET() {
     `- [Features](${localeUrl("en", "/features")})`,
     `- [Pricing](${localeUrl("en", "/pricing")})`,
     `- [Developers: Payload, signature, retries](${localeUrl("en", "/developers")})`,
-    `- [Guides: Make, n8n, Zapier and Power Automate via webhook](${localeUrl("en", "/developers")}#platforms)`,
+    `- [Guides: Google Sheets, n8n, Make and Zapier](${localeUrl("en", "/developers")}#platforms)`,
     `- [API reference](${localeUrl("en", "/developers/api")})`,
     `- [Terms, data and subprocessors](${localeUrl("en", "/terms")})`,
     `- [Contact](${localeUrl("en", "/contact")})`,

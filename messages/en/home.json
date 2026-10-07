@@ -138,7 +138,7 @@
     "orderForm": "Order form"
   },
   "connect": {
-    "title": "Two ways to connect it.",
+    "title": "Vink connects to any system.",
     "subtitle": "Your developer connects one webhook, or we build the connection for you.",
     "dev": {
       "eyebrow": "Your developer",
@@ -154,6 +154,14 @@
       "point2": "Tested with your own documents",
       "point3": "One price, agreed before we start",
       "cta": "Ask about a connection"
+    },
+    "standard": {
+      "eyebrow": "Standard integrations",
+      "title": "Or start with a standard integration.",
+      "body": "For these services, the integration is ready to use. They are only a start: through the Webhook, Vink works with any system.",
+      "link": "See how to set them up",
+      "live": "Works today",
+      "soon": "Coming soon"
     }
   },
   "pricing": {

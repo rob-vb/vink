@@ -1,3 +1,5 @@
+import { existsSync } from "node:fs";
+import { join } from "node:path";
 import { expect, test } from "vitest";
 import en from "@/messages/en/developers.json";
 import nl from "@/messages/nl/developers.json";
@@ -24,15 +26,24 @@ test("every listed platform has a guide in both languages: plan, steps, List Fie
   }
 });
 
-test("the list labels every platform as working via the webhook, nothing else", () => {
-  expect(platforms.map((p) => [p.name, p.via])).toEqual([
-    ["Make", "webhook"],
-    ["n8n", "webhook"],
-    ["Zapier", "webhook"],
-    ["Power Automate", "webhook"],
+test("the list names Google Sheets as built in, the others via the webhook, and only Make and Zapier as having an app soon", () => {
+  expect(platforms.map((p) => [p.name, p.via, p.app ?? null])).toEqual([
+    ["Google Sheets", "native", null],
+    ["n8n", "webhook", null],
+    ["Make", "webhook", "soon"],
+    ["Zapier", "webhook", "soon"],
   ]);
 });
 
-test("no platform offers a connector download until it has worked in a real account", () => {
-  expect(platforms.filter((p) => p.connectorFiles)).toEqual([]);
+test("every platform's logo is a file in public/", () => {
+  for (const platform of platforms) {
+    expect(existsSync(join(process.cwd(), "public", platform.logo)), platform.logo).toBe(true);
+  }
+});
+
+test("the Developers page doesn't name Power Automate, Excel or Microsoft Entra before they have worked in a real account", () => {
+  const text = JSON.stringify([en, nl]);
+  for (const name of ["Power Automate", "Excel", "Entra", "Microsoft"]) {
+    expect(text).not.toContain(name);
+  }
 });
