@@ -6,12 +6,10 @@ import { ConvexError, v } from "convex/values";
 import { internal } from "../_generated/api";
 import { internalAction, internalQuery } from "../_generated/server";
 import { acceptPdf, NOT_A_PDF, tooManyPages } from "../documents";
+import { MAX_PDF_BYTES, PDF_TOO_LARGE } from "../lib/pdfLimits";
 import { pdfStore } from "../lib/pdfStore";
 import { apiError, apiJson } from "./respond";
 import { type ApiRoute, route } from "./router";
-
-// Convex takes request bodies up to 20 MiB; a bigger one never reaches us.
-export const MAX_BYTES = 20 * 1024 * 1024;
 
 const DEFAULT_FILENAME = "document.pdf";
 
@@ -144,10 +142,11 @@ async function pdfOf(request: Request): Promise<{ bytes: Uint8Array; filenames: 
       "Send the PDF as multipart/form-data with a `file` part, or as the body with Content-Type: application/pdf.",
     );
   }
-  const tooLarge = () => apiError(413, "file_too_large", "The PDF is larger than 20 MB.");
-  if (Number(request.headers.get("Content-Length") ?? 0) > MAX_BYTES) return tooLarge();
+  // The whole body, so a multipart PDF's own bytes are within the limit too.
+  const tooLarge = () => apiError(413, "file_too_large", PDF_TOO_LARGE);
+  if (Number(request.headers.get("Content-Length") ?? 0) > MAX_PDF_BYTES) return tooLarge();
   const body = new Uint8Array(await request.arrayBuffer());
-  if (body.length > MAX_BYTES) return tooLarge();
+  if (body.length > MAX_PDF_BYTES) return tooLarge();
   const missing = () => apiError(400, "missing_file", "The request has no PDF in it.");
   if (!multipart) return body.length === 0 ? missing() : { bytes: body, filenames: [] };
 

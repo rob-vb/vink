@@ -201,7 +201,7 @@ test("each attachment has its own outcome in Recent emails; refused PDFs are del
       },
       { filename: "broken.pdf", outcome: "refused", reason: "This file isn't a PDF Vink can read." },
       { filename: "photo.jpg", outcome: "refused", reason: "Not a PDF." },
-      { filename: "huge.pdf", outcome: "refused", reason: "The attachment is larger than 25 MB." },
+      { filename: "huge.pdf", outcome: "refused", reason: "The PDF is larger than 10 MB." },
     ],
   });
   expect(await documents(t)).toHaveLength(1);

@@ -193,14 +193,16 @@ test("a PDF over 20 pages is refused with 422", async () => {
   await nothingCreated(t);
 });
 
-test("a body over 20 MB is refused with 413", async () => {
+test("a body over 10 MB is refused with 413", async () => {
   const t = newBackend();
   const { formId, key } = await kantoorNoord(t);
 
-  const { status, body } = await send(t, `/v1/forms/${formId}/documents`, key, new Uint8Array(20 * 1024 * 1024 + 1));
+  const { status, body } = await send(t, `/v1/forms/${formId}/documents`, key, new Uint8Array(10 * 1024 * 1024 + 1));
 
-  expect(status).toBe(413);
-  expect(body.error.code).toBe("file_too_large");
+  expect({ status, body }).toEqual({
+    status: 413,
+    body: { error: { code: "file_too_large", message: "The PDF is larger than 10 MB." } },
+  });
   await nothingCreated(t);
 });
 

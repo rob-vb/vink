@@ -13,6 +13,7 @@ import { startExtraction } from "./extraction";
 import { countIn } from "./lib/documentStates";
 import { orgAction, orgMutation, orgQuery } from "./lib/functions";
 import { chargePages } from "./pages";
+import { MAX_PDF_BYTES, PDF_TOO_LARGE } from "./lib/pdfLimits";
 import { pdfStore } from "./lib/pdfStore";
 import type { FlatField } from "./lib/pipeline";
 import {
@@ -54,8 +55,8 @@ export async function claimUpload(ctx: MutationCtx, key: string) {
 }
 
 /**
- * Checks an uploaded PDF: issued to this Organisation, arrived, readable and
- * at most 20 pages. Returns its page count; a refused upload is removed.
+ * Checks an uploaded PDF: issued to this Organisation, arrived, at most 10 MB,
+ * readable and at most 20 pages. Returns its page count; a refused upload is removed.
  */
 export async function checkUpload(
   ctx: ActionCtx,
@@ -75,8 +76,8 @@ function checkIssued(organisationId: Id<"organisations">, key: string) {
 
 /**
  * What every way in (upload, Intake Address) checks before a PDF is accepted:
- * it arrived, is readable and has at most 20 pages. Returns its page count; a
- * refused PDF is removed from storage.
+ * it arrived, is at most 10 MB, is readable and has at most 20 pages. Returns
+ * its page count; a refused PDF is removed from storage.
  */
 export async function checkPdf(ctx: ActionCtx, key: string) {
   const bytes = await pdfStore.read(key);
@@ -84,6 +85,9 @@ export async function checkPdf(ctx: ActionCtx, key: string) {
     throw new ConvexError("The upload didn't arrive. Try again.");
   }
   try {
+    if (bytes.length > MAX_PDF_BYTES) {
+      throw new ConvexError(PDF_TOO_LARGE);
+    }
     const pdf = await PDFDocument.load(bytes, { ignoreEncryption: true }).catch(() => {
       throw new ConvexError(NOT_A_PDF);
     });

@@ -17,7 +17,8 @@ const dutch: Record<string, string> = {
   InvitationExpired: "Deze uitnodiging is verlopen.",
   InvitationForAnotherEmail: "Deze uitnodiging is voor een ander e-mailadres.",
 
-  // Why an emailed attachment was skipped (convex/intake.ts)
+  // Why an emailed attachment was skipped (convex/intake.ts); the 25 MB one is
+  // still in emails recorded before the limit became 10 MB.
   "Not a PDF.": "Geen pdf.",
   "The attachment is larger than 25 MB.": "De bijlage is groter dan 25 MB.",
 
@@ -36,6 +37,7 @@ const dutch: Record<string, string> = {
   // Documents
   "The upload didn't arrive. Try again.": "De upload is niet aangekomen. Probeer het opnieuw.",
   "This file isn't a PDF Vink can read.": "Dit bestand is geen pdf die Vink kan lezen.",
+  "The PDF is larger than 10 MB.": "De pdf is groter dan 10 MB.",
   "The PDF was deleted": "De pdf is verwijderd",
   "This Document is approved": "Dit Document is goedgekeurd",
   "This Document's Form can't be changed now": "Het Formulier van dit Document kan nu niet worden gewijzigd",

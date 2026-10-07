@@ -6,6 +6,10 @@ test("translates a fixed message and a code", () => {
   expect(serverErrorText("LastAdmin", "nl")).toBe("Een Organisatie heeft minstens één Admin nodig.");
 });
 
+test("translates the size refusal every way in gives", () => {
+  expect(serverErrorText("The PDF is larger than 10 MB.", "nl")).toBe("De pdf is groter dan 10 MB.");
+});
+
 test("translates a message with values in it", () => {
   expect(serverErrorText("3 values still need review", "nl")).toBe(
     "3 waarden moeten nog gecontroleerd worden",

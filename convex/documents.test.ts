@@ -165,6 +165,36 @@ test("a Document can't be filed under another Organisation's Form", async () => 
   expect(fakePdfStore.objects.size).toBe(0);
 });
 
+/** A readable PDF of exactly `size` bytes: one page, then spaces after %%EOF. */
+async function pdfOfSize(size: number) {
+  const pdf = await pdfWithPages(1);
+  const padded = new Uint8Array(size).fill(0x20);
+  padded.set(pdf);
+  return padded;
+}
+
+test("a PDF over 10 MB is refused with a clear message, and nothing is stored", async () => {
+  const t = newBackend();
+  const { cas, slug, formId } = await acmeWithForm(t);
+
+  await expect(
+    upload(cas, slug, formId, "scan.pdf", await pdfOfSize(10 * 1024 * 1024 + 1)),
+  ).rejects.toThrow("The PDF is larger than 10 MB.");
+  expect(fakePdfStore.objects.size).toBe(0);
+});
+
+test("a PDF of exactly 10 MB is accepted", async () => {
+  const t = newBackend();
+  const { cas, slug, formId } = await acmeWithForm(t);
+
+  await upload(cas, slug, formId, "scan.pdf", await pdfOfSize(10 * 1024 * 1024));
+
+  expect(
+    (await cas.query(api.documents.list, { organisationSlug: slug, state: "extracting" }))
+      .documents,
+  ).toEqual([expect.objectContaining({ filename: "scan.pdf", pageCount: 1 })]);
+});
+
 test("a file that isn't a readable PDF is refused with a clear message, and nothing is stored", async () => {
   const t = newBackend();
   const { cas, slug, formId } = await acmeWithForm(t);

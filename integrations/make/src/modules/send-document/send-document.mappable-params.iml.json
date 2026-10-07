@@ -21,6 +21,6 @@
         "label": "Data",
         "required": true,
         "semantic": "file:data",
-        "help": "A readable PDF of at most 20 pages and 20 MB."
+        "help": "A readable PDF of at most 20 pages and 10 MB."
     }
 ]

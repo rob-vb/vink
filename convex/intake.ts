@@ -15,6 +15,7 @@ import {
 import { acceptPdf } from "./documents";
 import { escapeHtml, sendEmail } from "./email";
 import { orgMutation, orgQuery } from "./lib/functions";
+import { PDF_TOO_LARGE } from "./lib/pdfLimits";
 import { pdfStore } from "./lib/pdfStore";
 import { sameSecret } from "./lib/secrets";
 
@@ -24,7 +25,7 @@ const ALERT_EVERY = 24 * 60 * 60 * 1000;
 // Why the Worker skipped an attachment without storing it.
 const skipReasons = {
   not_pdf: "Not a PDF.",
-  too_large: "The attachment is larger than 25 MB.",
+  too_large: PDF_TOO_LARGE,
 } as const;
 
 /** An unguessable, lower-case local part: 24 characters from 0-9a-z. */
