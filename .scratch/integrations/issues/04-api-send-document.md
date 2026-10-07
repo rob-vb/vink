@@ -4,7 +4,7 @@
 
 **Blocked by:** 03
 
-**Status:** built on `int/04-api-send-document`; the e2e curl against dev is left for the orchestrator (commands below)
+**Status:** done (on integrations; e2e refusals passed on dev, success path needs R2 → prod check)
 
 - [x] Upload and Intake Address share one path for accepting a PDF into a Form; the API uses it too
 - [x] Refusals: 415 not a PDF, 413/422 over 20 pages, 402 out of Pages, 404 unknown or foreign Form; each with a JSON error body
@@ -72,3 +72,5 @@ Open checks:
 - What Convex answers to a body above 20 MB (our 413 JSON, or its own error before our code runs). Also check that a real 15–20 MB, 20-page PDF fits the Convex runtime's 64 MiB memory (`checkPdf` with pdf-lib).
 - That `request.arrayBuffer()` and the hand-written multipart parser work on the real Convex runtime. The tests run in edge-runtime.
 - Real-account checks (the platforms' file fields): Zapier, Make and Power Automate send `file` as multipart. Covered in tickets 07, 10 and 12.
+
+**2026-10-07 (orchestrator), e2e against dev.** 400 `missing_file`, 415 `unsupported_media_type` and 404 for another Organisation's Form, as documented. A real PDF and a non-PDF both get 500 on dev: the logs show the R2 store fails (dev has no R2 settings), before `checkPdf`. The success path, 415 `not_a_pdf`, 422 and 402 remain open for prod.

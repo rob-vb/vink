@@ -45,3 +45,5 @@ curl -i "$BASE/documents/<approved id>"                                         
 Open checks:
 - The e2e curl above on dev, and a look at the "Documents" section of `/developers/api` in a browser (one section with both operations).
 - No real-account checks for this ticket. The Zapier, Make and Power Automate apps (07, 10, 12) read this shape; Power Automate's Swagger 2.0 import may need `payload`'s `oneOf` flattened to a plain `Envelope` ref.
+
+**2026-10-07 (orchestrator), e2e against dev.** An approved Document returns its envelope; a failed one returns its state and `payload: null`; another Organisation's key and a malformed id get 404.

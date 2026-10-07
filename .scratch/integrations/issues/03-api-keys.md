@@ -4,7 +4,7 @@
 
 **Blocked by:** None (can start immediately).
 
-**Status:** built on `int/03-api-keys`; the e2e curl against dev is left for the orchestrator (commands below)
+**Status:** done (on integrations, e2e against dev passed 2026-10-07)
 
 - [x] Admin-only UI to make, name, list (name, created, last used) and revoke API Keys; a Member can't see or make them
 - [x] A key is stored only as a hash; it is shown once, at creation
@@ -63,3 +63,5 @@ Open checks:
 - A visual check of the settings card and `/developers/api` in a browser.
 - No real-account checks are needed for this ticket.
 
+
+**2026-10-07 (orchestrator), e2e against dev.** Pushed `integrations` to dev. Straight to the Convex site and through the Next `/v1` rewrite (`next dev`, port 3013): 401 `missing_api_key` and `invalid_api_key`; `GET /v1/forms` lists only the key's own Organisation's Forms (a second Organisation's key gets `[]`); 405, 404 and `openapi.json` as documented; after revoking the key in the app, 401. In headless Chrome: an Admin makes a key (button disabled on an empty name, a double click makes one key), sees it once, revokes it. Fixed on the way: the shown-once text showed its message id (`<sleutel>` read as a tag); `lib/messages.test.ts` now guards the tags.
