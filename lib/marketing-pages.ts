@@ -3,4 +3,4 @@
  * in both languages. Privacy and Terms join once their real text replaces the
  * placeholders (they are noindex until then). /app is never listed.
  */
-export const indexedPages = ["/", "/features", "/pricing", "/developers", "/contact"] as const;
+export const indexedPages = ["/", "/features", "/pricing", "/developers", "/developers/api", "/contact"] as const;

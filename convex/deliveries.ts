@@ -1,6 +1,7 @@
 // Delivery (spec, Payload and Delivery): after Approval, one Delivery per
-// attached Integration POSTs the envelope, signed with the Integration's
-// current configuration at every attempt.
+// attached Integration sends the envelope through the adapter of its kind
+// (lib/integrationAdapters.ts), with the Integration's current configuration
+// at every attempt.
 import { ConvexError, v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
@@ -11,14 +12,19 @@ import {
   type MutationCtx,
   type QueryCtx,
 } from "./_generated/server";
-import { endpointOf, sendSigned } from "./integrations";
+import { removeIntegration } from "./integrations";
 import { MAX_ATTEMPTS, nextAttemptAt } from "./lib/backoff";
+import { refreshTokenKeeper, sendAlone } from "./lib/accounts";
 import { documentPayload } from "./lib/documentPayload";
 import { orgMutation, orgQuery } from "./lib/functions";
+import { kindOf, sendTo } from "./lib/integrationAdapters";
 import { envelopeOf } from "./lib/payload";
 
 // What the attempt log keeps of a response body.
 const BODY_LOGGED = 500;
+
+// How long an attempt waits (plus up to as long again) while another send writes to the same sheet.
+const BUSY_WAIT_MS = 5_000;
 
 /**
  * Creates a Delivery for every Integration attached to the Document's Form
@@ -70,24 +76,21 @@ export const attemptInput = internalQuery({
     if (delivery.state !== "pending" && delivery.state !== "retrying") return null;
     const integration = await ctx.db.get(delivery.integrationId);
     if (integration === null) return null;
-    return { envelope: delivery.envelope, endpoint: await endpointOf(integration) };
+    const document = await ctx.db.get(delivery.documentId);
+    return { envelope: delivery.envelope, integration, approverEmail: document?.approval?.byEmail ?? null };
   },
 });
 
-export type Outcome =
-  | { kind: "delivered" }
-  | { kind: "failed"; reason: string }
-  | { kind: "retry"; reason: string; retryAfter: string | null };
-
-/** How an answer (or the lack of one) settles an attempt. */
-function outcomeOf(status: number | null, retryAfter: string | null, error: string | null): Outcome {
-  if (status === null) return { kind: "retry", reason: error!, retryAfter: null };
-  if (status >= 200 && status < 300) return { kind: "delivered" };
-  if (status === 408 || status === 429 || status >= 500) {
-    return { kind: "retry", reason: `The receiver answered ${status}`, retryAfter };
-  }
-  return { kind: "failed", reason: `The receiver refused it (${status})` };
-}
+// An adapter's Outcome (lib/integrationAdapters.ts).
+const outcome = v.union(
+  v.object({ kind: v.literal("delivered") }),
+  v.object({ kind: v.literal("retry"), reason: v.string(), retryAfter: v.union(v.string(), v.null()) }),
+  v.object({
+    kind: v.literal("failed"),
+    reason: v.string(),
+    cause: v.optional(v.union(v.literal("access_expired"), v.literal("gone"))),
+  }),
+);
 
 export const attempt = internalAction({
   args: { id: v.id("deliveries") },
@@ -95,16 +98,26 @@ export const attempt = internalAction({
     const input = await ctx.runQuery(internal.deliveries.attemptInput, { id });
     if (input === null) return;
     const at = Date.now();
-    const { answer, failure } = await sendSigned(input.endpoint, JSON.parse(input.envelope));
+    const sent = await sendAlone(ctx, input.integration, () =>
+      sendTo(input.integration, JSON.parse(input.envelope), {
+        approverEmail: input.approverEmail,
+        keepRefreshToken: refreshTokenKeeper(ctx, input.integration),
+      }),
+    );
+    if (sent === "busy") {
+      // Another send is writing to the same sheet: this one goes after it, not counted as an attempt.
+      await ctx.scheduler.runAfter(BUSY_WAIT_MS + Math.random() * BUSY_WAIT_MS, internal.deliveries.attempt, { id });
+      return;
+    }
     await ctx.runMutation(internal.deliveries.recordAttempt, {
       id,
       attempt: {
         at,
-        status: answer?.status ?? null,
-        body: answer ? answer.body.slice(0, BODY_LOGGED) : null,
-        error: failure?.message ?? null,
+        status: sent.status,
+        body: sent.body === null ? null : sent.body.slice(0, BODY_LOGGED),
+        error: sent.error,
       },
-      retryAfter: answer?.retryAfter ?? null,
+      outcome: sent.outcome,
     });
   },
 });
@@ -118,9 +131,9 @@ export const recordAttempt = internalMutation({
       body: v.union(v.string(), v.null()),
       error: v.union(v.string(), v.null()),
     }),
-    retryAfter: v.union(v.string(), v.null()),
+    outcome,
   },
-  handler: async (ctx, { id, attempt, retryAfter }) => {
+  handler: async (ctx, { id, attempt, outcome }) => {
     const delivery = (await ctx.db.get(id))!;
     // Settled meanwhile (e.g. its Integration was removed, or its Document
     // deleted): keep the log only, and no response body once the data is gone.
@@ -130,7 +143,6 @@ export const recordAttempt = internalMutation({
       await ctx.db.patch(id, { attempts });
       return;
     }
-    const outcome = outcomeOf(attempt.status, retryAfter, attempt.error);
     if (outcome.kind === "delivered") {
       await ctx.db.patch(id, { attempts, state: "delivered", nextAttemptAt: undefined });
       // The retention clock runs from the last successful Delivery.
@@ -155,15 +167,52 @@ export const recordAttempt = internalMutation({
       await ctx.scheduler.runAt(next, internal.deliveries.attempt, { id });
       return;
     }
+    if (outcome.kind === "failed" && outcome.cause === "gone" && (await endSubscription(ctx, delivery, attempts))) {
+      return;
+    }
     const reason =
       outcome.kind === "retry"
         ? `Gave up after ${MAX_ATTEMPTS} attempts: ${outcome.reason.replace(/^The/, "the")}`
         : outcome.reason;
     await ctx.db.patch(id, { attempts, state: "failed", failureReason: reason, nextAttemptAt: undefined });
+    if (outcome.kind === "failed" && outcome.cause === "access_expired") {
+      await markNeedsReconnect(ctx, delivery.integrationId);
+    }
     await notifyFailed(ctx, delivery);
     await startClockIfAllFailed(ctx, delivery.documentId);
   },
 });
+
+/**
+ * A Subscription's receiver answered 410 Gone: the platform has ended it, so
+ * Vink ends the Subscription and removes its Webhook, as an unsubscribe does.
+ * The Delivery fails without a notice: nothing is wrong for an Admin to fix.
+ * False for an Admin's own Webhook, which fails as any refusal.
+ */
+async function endSubscription(ctx: MutationCtx, delivery: Doc<"deliveries">, attempts: Doc<"deliveries">["attempts"]) {
+  const subscription = await ctx.db
+    .query("subscriptions")
+    .withIndex("by_integrationId", (q) => q.eq("integrationId", delivery.integrationId))
+    .unique();
+  if (subscription === null) return false;
+  await ctx.db.patch(delivery._id, {
+    attempts,
+    state: "failed",
+    failureReason: "The receiver answered 410 Gone: the Subscription ended",
+    integrationRemoved: true,
+    nextAttemptAt: undefined,
+  });
+  await removeIntegration(ctx, delivery.integrationId);
+  await startClockIfAllFailed(ctx, delivery.documentId);
+  return true;
+}
+
+/** The Integration's connected account no longer lets Vink in: it shows as needing reconnecting. */
+async function markNeedsReconnect(ctx: MutationCtx, integrationId: Id<"integrations">) {
+  const integration = await ctx.db.get(integrationId);
+  if (integration === null || kindOf(integration) === "webhook") return;
+  await ctx.db.patch(integrationId, { needsReconnect: true });
+}
 
 /**
  * When every Delivery of a Document has ended failed, its retention clock

@@ -1,10 +1,11 @@
 "use client";
 
 import { useMutation, useQuery } from "convex/react";
-import { Copy, Eye, Pencil, Plug, Plus, Trash2, X } from "lucide-react";
+import { Copy, ExternalLink, Eye, Pencil, Plug, Plus, Trash2, TriangleAlert, X } from "lucide-react";
 import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -18,6 +19,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { DeliveryRow, ResendButton } from "@/components/deliveries/delivery-log";
+import { Alert, AlertAction, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -40,7 +42,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { useErrorText } from "../../../error-text";
+import { AdminConsentLink } from "./admin-consent";
 import { IntegrationDialog } from "./integration-dialog";
+import { ReconnectButton } from "./reconnect-button";
 import { TestSendButton } from "./test-send";
 
 function SigningSecret({
@@ -116,9 +120,56 @@ function RecentDeliveries({
   );
 }
 
+// How connecting an account went: `?google=…` (app/api/integrations/google/callback)
+// or `?excel=…` (app/api/integrations/microsoft/callback).
+const connectOutcomes = {
+  google: {
+    connected: "googleConnected",
+    reconnected: "googleReconnected",
+    no_access: "googleNoAccess",
+    no_sheet_access: "googleNoSheetAccess",
+    denied: "googleDenied",
+    failed: "googleFailed",
+  },
+  excel: {
+    connected: "excelConnected",
+    reconnected: "excelReconnected",
+    no_access: "excelNoAccess",
+    no_sheet_access: "excelNoSheetAccess",
+    denied: "excelDenied",
+    failed: "excelFailed",
+  },
+} as const;
+
+/**
+ * Says once how connecting an account went, then clears it from the URL.
+ * Returns whether Microsoft said the company's IT admin must approve Vink
+ * first (`?excel=admin_consent`): that stays in the URL, and on the page,
+ * until it is closed.
+ */
+function useConnectOutcome() {
+  const t = useTranslations("appIntegrations");
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+  const provider = searchParams.has("excel") ? "excel" : "google";
+  const outcome = searchParams.get(provider);
+  const adminConsent = provider === "excel" && outcome === "admin_consent";
+  useEffect(() => {
+    if (outcome === null || adminConsent) return;
+    type Message = (typeof connectOutcomes)[typeof provider][keyof typeof connectOutcomes.excel];
+    const messages: Record<string, Message> = connectOutcomes[provider];
+    if (outcome === "connected" || outcome === "reconnected") toast.success(t(messages[outcome]));
+    else if (Object.hasOwn(messages, outcome)) toast.error(t(messages[outcome]));
+    router.replace(pathname, { scroll: false });
+  }, [provider, outcome, adminConsent, pathname, router, t]);
+  return [adminConsent, () => router.replace(pathname, { scroll: false })] as const;
+}
+
 /** The Organisation's Integrations, the Forms each is attached to, and a test-send. */
 export function IntegrationsList({ organisationSlug }: { organisationSlug: string }) {
   const t = useTranslations("appIntegrations");
+  const [adminConsent, closeAdminConsent] = useConnectOutcome();
   const errorText = useErrorText();
   const failed = (error: unknown) => toast.error(errorText(error, t("tryAgain")));
   const integrations = useQuery(api.integrations.list, { organisationSlug });
@@ -144,6 +195,22 @@ export function IntegrationsList({ organisationSlug }: { organisationSlug: strin
         <IntegrationDialog organisationSlug={organisationSlug} trigger={newButton} />
       </div>
 
+      {adminConsent && (
+        <Alert className="mb-6">
+          <TriangleAlert />
+          <AlertTitle>{t("adminConsentTitle")}</AlertTitle>
+          <AlertDescription>
+            <p>{t("adminConsentText")}</p>
+            <AdminConsentLink organisationSlug={organisationSlug} />
+          </AlertDescription>
+          <AlertAction>
+            <Button variant="ghost" size="icon-sm" aria-label={t("dismiss")} onClick={closeAdminConsent}>
+              <X />
+            </Button>
+          </AlertAction>
+        </Alert>
+      )}
+
       {integrations === undefined || forms === undefined ? (
         <Skeleton className="h-40" />
       ) : integrations.length === 0 ? (
@@ -168,10 +235,31 @@ export function IntegrationsList({ organisationSlug }: { organisationSlug: strin
             return (
               <Card key={integration.id}>
                 <CardHeader>
-                  <CardTitle>{integration.name}</CardTitle>
-                  <CardDescription className="truncate font-mono text-xs">
-                    {integration.url}
-                  </CardDescription>
+                  <CardTitle className="flex flex-wrap items-center gap-2">
+                    {integration.name}
+                    {integration.subscription && (
+                      <Badge variant="outline">{t("viaApi", { key: integration.subscription.apiKeyName })}</Badge>
+                    )}
+                  </CardTitle>
+                  {integration.kind !== "webhook" ? (
+                    <CardDescription className="flex flex-wrap items-center gap-2">
+                      <Badge variant="outline">{t(integration.kind === "excel" ? "excel" : "googleSheets")}</Badge>
+                      {integration.needsReconnect && <Badge variant="destructive">{t("needsReconnect")}</Badge>}
+                      <a
+                        href={integration.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1 underline-offset-4 hover:text-foreground hover:underline"
+                      >
+                        {t(integration.kind === "excel" ? "openWorkbook" : "openSheet")}
+                        <ExternalLink className="size-3.5" />
+                      </a>
+                    </CardDescription>
+                  ) : (
+                    <CardDescription className="truncate font-mono text-xs">
+                      {integration.url}
+                    </CardDescription>
+                  )}
                   <CardAction className="flex gap-1">
                     <IntegrationDialog
                       organisationSlug={organisationSlug}
@@ -193,7 +281,11 @@ export function IntegrationsList({ organisationSlug }: { organisationSlug: strin
                       <AlertDialogContent>
                         <AlertDialogHeader>
                           <AlertDialogTitle>{t("deleteTitle", { name: integration.name })}</AlertDialogTitle>
-                          <AlertDialogDescription>{t("deleteDescription")}</AlertDialogDescription>
+                          <AlertDialogDescription>
+                            {integration.subscription
+                              ? t("deleteSubscriptionDescription", { key: integration.subscription.apiKeyName })
+                              : t("deleteDescription")}
+                          </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                           <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
@@ -211,6 +303,22 @@ export function IntegrationsList({ organisationSlug }: { organisationSlug: strin
                   </CardAction>
                 </CardHeader>
                 <CardContent className="flex flex-col gap-4 text-sm">
+                  {integration.needsReconnect && (
+                    <Alert variant="destructive">
+                      <TriangleAlert />
+                      <AlertTitle>{t("needsReconnect")}</AlertTitle>
+                      <AlertDescription>
+                        {t(integration.kind === "excel" ? "needsReconnectTextExcel" : "needsReconnectText")}
+                      </AlertDescription>
+                      <AlertAction>
+                        <ReconnectButton
+                          organisationSlug={organisationSlug}
+                          integrationId={integration.id}
+                          label={t("reconnect")}
+                        />
+                      </AlertAction>
+                    </Alert>
+                  )}
                   {integration.headers.length > 0 && (
                     <dl className="grid gap-1">
                       {integration.headers.map((h) => (
@@ -221,17 +329,19 @@ export function IntegrationsList({ organisationSlug }: { organisationSlug: strin
                       ))}
                     </dl>
                   )}
-                  <div className="flex flex-col gap-1">
-                    <p className="font-medium">{t("signingSecret")}</p>
-                    <p className="text-muted-foreground">
-                      {t.rich("signingSecretText", {
-                        format: `t=<${t("unixTime")}>,v1=<hex>`,
-                        signed: "{t}.{body}",
-                        code: (chunks) => <code className="font-mono">{chunks}</code>,
-                      })}
-                    </p>
-                    <SigningSecret organisationSlug={organisationSlug} integrationId={integration.id} />
-                  </div>
+                  {integration.kind === "webhook" && (
+                    <div className="flex flex-col gap-1">
+                      <p className="font-medium">{t("signingSecret")}</p>
+                      <p className="text-muted-foreground">
+                        {t.rich("signingSecretText", {
+                          format: `t=<${t("unixTime")}>,v1=<hex>`,
+                          signed: "{t}.{body}",
+                          code: (chunks) => <code className="font-mono">{chunks}</code>,
+                        })}
+                      </p>
+                      <SigningSecret organisationSlug={organisationSlug} integrationId={integration.id} />
+                    </div>
+                  )}
                   <div className="flex flex-col gap-2">
                     <p className="font-medium">{t("forms")}</p>
                     <div className="flex flex-wrap items-center gap-2">
@@ -239,23 +349,26 @@ export function IntegrationsList({ organisationSlug }: { organisationSlug: strin
                         <span className="text-muted-foreground">{t("notAttached")}</span>
                       )}
                       {integration.forms.map((form) => (
-                        <Badge key={form.id} variant="secondary" className="gap-1 pr-1">
+                        <Badge key={form.id} variant="secondary" className={integration.subscription ? undefined : "gap-1 pr-1"}>
                           {form.name}
-                          <button
-                            type="button"
-                            className="rounded-full p-0.5 hover:bg-foreground/10"
-                            aria-label={t("detach", { form: form.name })}
-                            onClick={() =>
-                              detach({ organisationSlug, integrationId: integration.id, formId: form.id }).catch(
-                                failed,
-                              )
-                            }
-                          >
-                            <X className="size-3" />
-                          </button>
+                          {/* A Subscription's Webhook stays on its own Form: deleting it is the way out. */}
+                          {!integration.subscription && (
+                            <button
+                              type="button"
+                              className="rounded-full p-0.5 hover:bg-foreground/10"
+                              aria-label={t("detach", { form: form.name })}
+                              onClick={() =>
+                                detach({ organisationSlug, integrationId: integration.id, formId: form.id }).catch(
+                                  failed,
+                                )
+                              }
+                            >
+                              <X className="size-3" />
+                            </button>
+                          )}
                         </Badge>
                       ))}
-                      {unattached.length > 0 && (
+                      {unattached.length > 0 && !integration.subscription && (
                         <Select
                           items={unattached}
                           value={null}
@@ -294,6 +407,7 @@ export function IntegrationsList({ organisationSlug }: { organisationSlug: strin
                     <TestSendButton
                       organisationSlug={organisationSlug}
                       integrationId={integration.id}
+                      kind={integration.kind}
                       forms={forms.map((f) => ({ id: f.id, name: f.name }))}
                     />
                   </div>

@@ -306,3 +306,43 @@ test("an Admin marks notifications read", async () => {
   expect(await user.query(api.notifications.unreadCount, { organisationSlug })).toBe(0);
   expect((await user.query(api.notifications.list, { organisationSlug }))[0].read).toBe(true);
 });
+
+test("a send that breaks inside Vink is retried with its reason, then fails with the usual notice", async () => {
+  const t = newBackend();
+  const acmeOrg = await acme(t);
+  await acmeOrg.user.mutation(api.integrations.attach, {
+    organisationSlug: acmeOrg.organisationSlug,
+    integrationId: acmeOrg.integrationId,
+    formId: acmeOrg.formId,
+  });
+  // The Integration's secrets can't be read any more.
+  vi.stubEnv("INTEGRATION_SECRETS_KEY", "");
+  const { delivery } = await approve(t, acmeOrg);
+
+  expect(await delivery()).toMatchObject({
+    state: "retrying",
+    failureReason: "Vink couldn't send it: INTEGRATION_SECRETS_KEY is not set on this deployment",
+    attempts: [{ status: null, body: null, error: "Vink couldn't send it: INTEGRATION_SECRETS_KEY is not set on this deployment" }],
+  });
+  for (let i = 0; i < 5; i++) await after(t, (await delivery()).nextAttemptAt! - Date.now());
+
+  expect(fakeHttp.requests).toHaveLength(0);
+  expect(await delivery()).toMatchObject({
+    state: "failed",
+    failureReason: "Gave up after 6 attempts: Vink couldn't send it: INTEGRATION_SECRETS_KEY is not set on this deployment",
+  });
+  const notifications = await acmeOrg.user.query(api.notifications.list, { organisationSlug: acmeOrg.organisationSlug });
+  expect(notifications).toEqual([expect.objectContaining({ text: "werkorder.pdf couldn't be delivered to Fleet system" })]);
+});
+
+test("a test-send that breaks inside Vink answers with the reason", async () => {
+  const t = newBackend();
+  const { user, organisationSlug, integrationId, formId } = await acme(t);
+  vi.stubEnv("INTEGRATION_SECRETS_KEY", "");
+  expect(await user.action(api.integrations.testSend, { organisationSlug, integrationId, formId, mode: "examples" })).toEqual({
+    ok: false,
+    status: null,
+    body: null,
+    error: "Vink couldn't send it: INTEGRATION_SECRETS_KEY is not set on this deployment",
+  });
+});

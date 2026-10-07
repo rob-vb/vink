@@ -263,3 +263,21 @@ test("an Integration lists its Deliveries with the Document they carried", async
     }),
   ]);
 });
+
+test("an Integration made before kinds existed is still sent to as a Webhook", async () => {
+  const t = newBackend();
+  const { user, organisationSlug, integrationIds, read } = await approvedWith(t, 1, [{ status: 400 }]);
+  // Made before kinds existed: no kind stored.
+  await t.run((ctx) => ctx.db.patch(integrationIds[0], { kind: undefined }));
+  const { secret } = await user.query(api.integrations.signingSecret, {
+    organisationSlug,
+    integrationId: integrationIds[0],
+  });
+
+  await user.mutation(api.deliveries.resend, { organisationSlug, id: (await read()).deliveries[0].id });
+  await t.finishAllScheduledFunctions(vi.runAllTimers);
+
+  expect((await read()).deliveries[0].state).toBe("delivered");
+  expect(fakeHttp.requests[1].url).toBe("https://system1.example.com/in");
+  expectSignedBy(secret, fakeHttp.requests[1]);
+});

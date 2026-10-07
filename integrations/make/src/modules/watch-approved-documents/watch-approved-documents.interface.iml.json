@@ -1,0 +1,47 @@
+[
+    {
+        "name": "event",
+        "type": "text",
+        "label": "Event"
+    },
+    {
+        "name": "delivery_id",
+        "type": "text",
+        "label": "Delivery ID"
+    },
+    {
+        "name": "test",
+        "type": "boolean",
+        "label": "Test"
+    },
+    {
+        "name": "document",
+        "type": "collection",
+        "label": "Document",
+        "spec": [
+            { "name": "id", "type": "text", "label": "Document ID" },
+            { "name": "filename", "type": "text", "label": "File name" },
+            { "name": "uploaded_at", "type": "date", "label": "Uploaded at" }
+        ]
+    },
+    {
+        "name": "form",
+        "type": "collection",
+        "label": "Form",
+        "spec": [
+            { "name": "id", "type": "text", "label": "Form ID" },
+            { "name": "version", "type": "uinteger", "label": "Form Version" }
+        ]
+    },
+    {
+        "name": "approval",
+        "type": "collection",
+        "label": "Approval",
+        "spec": [
+            { "name": "mode", "type": "text", "label": "Mode" },
+            { "name": "by", "type": "text", "label": "Approved by" },
+            { "name": "at", "type": "date", "label": "Approved at" }
+        ]
+    },
+    "rpc://formFields"
+]

@@ -1,0 +1,26 @@
+[
+    {
+        "name": "form_id",
+        "type": "select",
+        "label": "Form",
+        "required": true,
+        "options": "rpc://listForms",
+        "help": "Vink reads the PDF into this Form's Fields."
+    },
+    {
+        "name": "file_name",
+        "type": "filename",
+        "label": "File name",
+        "required": true,
+        "semantic": "file:name",
+        "help": "The name the Document shows in Vink."
+    },
+    {
+        "name": "file_data",
+        "type": "buffer",
+        "label": "Data",
+        "required": true,
+        "semantic": "file:data",
+        "help": "A readable PDF of at most 20 pages and 20 MB."
+    }
+]

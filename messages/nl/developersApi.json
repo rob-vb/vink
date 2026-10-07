@@ -1,0 +1,57 @@
+{
+  "meta": {
+    "title": "API-referentie",
+    "description": "De REST-API van Vink: inloggen met een API-sleutel, formulieren en hun velden ophalen, en fouten afhandelen. Gemaakt uit het OpenAPI 3.1-document."
+  },
+  "header": {
+    "eyebrow": "API-referentie",
+    "title": "De Vink-API",
+    "subtitle": "Laat je eigen programma of automatiseringsplatform met Vink praten. Alles op deze pagina komt uit hetzelfde OpenAPI-document dat de API zelf levert."
+  },
+  "toc": {
+    "label": "Op deze pagina",
+    "overview": "Overzicht",
+    "auth": "Authenticatie",
+    "errors": "Fouten",
+    "objects": "Objecten"
+  },
+  "overview": {
+    "title": "Overzicht",
+    "base": "Elk endpoint staat onder één basis-URL. De versie staat in het pad: <code>/v1</code>.",
+    "json": "Verzoeken en antwoorden zijn JSON, en elke sleutel is snake_case, net als in de webhook-Payload. Id's zijn strings.",
+    "versioning": "Binnen <code>/v1</code> voegen we alleen toe: nieuwe endpoints, nieuwe optionele parameters en nieuwe sleutels in antwoorden. Negeer sleutels die je niet kent. Wat je code zou breken, krijgt een nieuwe versie.",
+    "openapi": "Download het <link>OpenAPI 3.1-document</link> om een client te maken of het in een tool te importeren.",
+    "english": "De beschrijvingen van endpoints en velden hieronder zijn in het Engels, net als de API zelf."
+  },
+  "auth": {
+    "title": "Authenticatie",
+    "keys": "Stuur bij elk verzoek een API-sleutel mee. Een Admin maakt die in de app onder <b>Instellingen van de Organisatie → API-sleutels</b>, geeft hem een naam en ziet hem één keer. Een sleutel hoort bij één organisatie en komt alleen bij de gegevens van die organisatie.",
+    "secret": "Behandel een sleutel als een wachtwoord: bewaar hem op je server, nooit in een browser of app. Een ontbrekende, onbekende of ingetrokken sleutel krijgt <code>401</code>. Trek je één sleutel in, dan blijven je andere sleutels werken."
+  },
+  "errors": {
+    "title": "Fouten",
+    "intro": "Een mislukt verzoek krijgt een 4xx- of 5xx-status en altijd dezelfde JSON-body. Kijk naar <code>code</code>; <code>message</code> is voor mensen en kan veranderen.",
+    "code": "Code",
+    "meaning": "Betekenis"
+  },
+  "endpoint": {
+    "parameters": "Parameters",
+    "requestBody": "Body van het verzoek",
+    "responses": "Antwoorden",
+    "request": "Verzoek",
+    "example": "Voorbeeldantwoord",
+    "name": "Naam",
+    "type": "Type",
+    "required": "verplicht",
+    "description": "Beschrijving",
+    "status": "Status"
+  },
+  "objects": {
+    "title": "Objecten",
+    "intro": "De objecten die de endpoints teruggeven."
+  },
+  "code": {
+    "copy": "Kopiëren",
+    "copied": "Gekopieerd"
+  }
+}

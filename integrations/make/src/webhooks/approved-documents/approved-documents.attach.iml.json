@@ -1,0 +1,24 @@
+{
+    "url": "https://vink.page/v1/subscriptions",
+    "method": "POST",
+    "headers": {
+        "authorization": "Bearer {{connection.apiKey}}"
+    },
+    "type": "json",
+    "body": {
+        "form_id": "{{parameters.form_id}}",
+        "url": "{{webhook.url}}"
+    },
+    "response": {
+        "data": {
+            "subscriptionId": "{{body.id}}",
+            "formId": "{{body.form_id}}"
+        },
+        "error": {
+            "message": "{{ifempty(body.error.message, 'Vink answered with HTTP ' + statusCode + '.')}}"
+        }
+    },
+    "log": {
+        "sanitize": ["request.headers.authorization"]
+    }
+}

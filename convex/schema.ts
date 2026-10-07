@@ -365,16 +365,65 @@ export default defineSchema({
     complete: v.optional(v.object({ by: v.string(), byEmail: v.string(), at: v.number() })),
   }).index("by_documentId", ["documentId"]),
 
-  // An external endpoint that receives Payloads by HTTP POST.
-  integrations: defineTable({
-    organisationId: v.id("organisations"),
-    name: v.string(),
-    url: v.string(),
-    // Static headers; a secret header's value is encrypted (lib/secrets.ts).
-    headers: v.array(v.object({ name: v.string(), value: v.string(), secret: v.boolean() })),
-    // The HMAC-SHA256 key requests are signed with, encrypted.
-    signingSecret: v.string(),
-  }).index("by_organisationId", ["organisationId"]),
+  // A destination outside Vink that receives Payloads after Approval. One
+  // member per kind: `organisationId` and `name`, then the kind's own
+  // configuration. A new kind is a new member, sent by its adapter
+  // (lib/integrationAdapters.ts); its secrets are encrypted like a secret header.
+  integrations: defineTable(
+    v.union(
+      // A Webhook: POSTs the Payload to an endpoint.
+      v.object({
+        organisationId: v.id("organisations"),
+        name: v.string(),
+        // Absent on Integrations made before kinds existed: reads as "webhook"
+        // (see integrations.backfillKind).
+        kind: v.optional(v.literal("webhook")),
+        url: v.string(),
+        // Static headers; a secret header's value is encrypted (lib/secrets.ts).
+        headers: v.array(v.object({ name: v.string(), value: v.string(), secret: v.boolean() })),
+        // The HMAC-SHA256 key requests are signed with, encrypted.
+        signingSecret: v.string(),
+      }),
+      // Google Sheets: adds rows (ADR 0009) to a sheet Vink made in the Drive
+      // of the Google account an Admin connected (googleSheets.ts).
+      v.object({
+        organisationId: v.id("organisations"),
+        name: v.string(),
+        kind: v.literal("google_sheets"),
+        // The OAuth refresh token, encrypted (lib/secrets.ts).
+        refreshToken: v.string(),
+        spreadsheetId: v.string(),
+        // The tab Vink writes to; its id survives a rename.
+        sheetId: v.number(),
+        spreadsheetUrl: v.string(),
+        // The connected account no longer lets Vink in (a Delivery failed with
+        // access expired): an Admin must reconnect. Cleared by a Reconnect.
+        needsReconnect: v.optional(v.boolean()),
+        // Held by the send writing to the sheet now (lib/accounts.ts
+        // `sendAlone`); it ends by `until` even if that send never does.
+        writing: v.optional(v.object({ by: v.string(), until: v.number() })),
+      }),
+      // Excel: adds rows (ADR 0009) to a table in a workbook Vink made in the
+      // OneDrive of the Microsoft 365 account an Admin connected (excel.ts).
+      v.object({
+        organisationId: v.id("organisations"),
+        name: v.string(),
+        kind: v.literal("excel"),
+        // The OAuth refresh token, encrypted (lib/secrets.ts). Microsoft hands
+        // out a new one with every access token; the newest is stored.
+        refreshToken: v.string(),
+        // The workbook by drive and item id, so a move or rename is fine, and its table.
+        driveId: v.string(),
+        itemId: v.string(),
+        tableId: v.string(),
+        workbookUrl: v.string(),
+        // As for Google Sheets: set by access expired, cleared by a Reconnect.
+        needsReconnect: v.optional(v.boolean()),
+        // As for Google Sheets.
+        writing: v.optional(v.object({ by: v.string(), until: v.number() })),
+      }),
+    ),
+  ).index("by_organisationId", ["organisationId"]),
 
   // Which Integrations a Form sends to. Keys are locked while any exists.
   formIntegrations: defineTable({
@@ -484,6 +533,34 @@ export default defineSchema({
   })
     .index("by_ipHash", ["ipHash"])
     .index("by_lastAt", ["lastAt"]),
+
+  // A named secret for the public API (/v1). Only its SHA-256 hash is kept;
+  // revoking deletes the row, so the key stops at once (see apiKeys.ts).
+  apiKeys: defineTable({
+    organisationId: v.id("organisations"),
+    name: v.string(),
+    keyHash: v.string(),
+    // The key's last 4 characters, to tell keys apart in the list.
+    last4: v.string(),
+    createdBy: v.string(),
+    // Coarse: written at most once an hour (see publicApi/auth.ts).
+    lastUsedAt: v.optional(v.number()),
+  })
+    .index("by_keyHash", ["keyHash"])
+    .index("by_organisationId", ["organisationId"]),
+
+  // An automation platform's request, made with an API Key, to hear about one
+  // Form's Approvals (ADR 0008): it is the Webhook `integrationId`, attached to
+  // `formId`. Removing that Webhook, or revoking the key, ends it.
+  subscriptions: defineTable({
+    organisationId: v.id("organisations"),
+    apiKeyId: v.id("apiKeys"),
+    integrationId: v.id("integrations"),
+    formId: v.id("forms"),
+  })
+    .index("by_organisationId", ["organisationId"])
+    .index("by_apiKeyId", ["apiKeyId"])
+    .index("by_integrationId", ["integrationId"]),
 
   // How many Documents an Organisation has in each state, for the list's tabs.
   // Kept in step by every state change, so the tabs never scan Documents.

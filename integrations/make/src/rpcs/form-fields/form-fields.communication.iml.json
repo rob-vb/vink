@@ -1,0 +1,7 @@
+{
+    "url": "/forms",
+    "method": "GET",
+    "response": {
+        "output": "{{formFieldsSpec(body.data, webhook.formId)}}"
+    }
+}

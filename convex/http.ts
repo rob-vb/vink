@@ -5,6 +5,8 @@ import { createAuth } from "./auth";
 import { submit } from "./contact";
 import { email } from "./intake";
 import { withTrustedClientIp } from "./lib/clientIp";
+import { registerRoutes } from "./publicApi/router";
+import { routes } from "./publicApi/routes";
 
 const http = httpRouter();
 
@@ -53,5 +55,8 @@ http.route({
     return handled ? new Response(null, { status: 200 }) : new Response("Bad signature", { status: 400 });
   }),
 });
+
+// The public API, /v1, for programs with an API Key: publicApi/routes.ts.
+registerRoutes(http, routes);
 
 export default http;

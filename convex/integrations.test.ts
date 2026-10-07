@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
-import { api } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import {
   addMembership,
@@ -99,6 +99,29 @@ test("an Admin creates an Integration; header secrets are stored encrypted and s
   const stored = await t.run(async (ctx) => JSON.stringify(await ctx.db.get(integrationId)));
   expect(stored).not.toContain("sk_live_abcdef123456");
   expect(stored).not.toContain("whsec_");
+});
+
+test("a new Integration is a Webhook", async () => {
+  const t = newBackend();
+  const { user, organisationSlug, create } = await acme(t);
+
+  await create();
+
+  const [integration] = await user.query(api.integrations.list, { organisationSlug });
+  expect(integration.kind).toBe("webhook");
+});
+
+test("an Integration made before kinds existed reads as a Webhook, and the backfill stores that", async () => {
+  const t = newBackend();
+  const { user, organisationSlug, create } = await acme(t);
+  const { integrationId } = await create();
+  // Made before kinds existed: no kind stored.
+  await t.run((ctx) => ctx.db.patch(integrationId, { kind: undefined }));
+
+  expect((await user.query(api.integrations.list, { organisationSlug }))[0].kind).toBe("webhook");
+  expect(await t.mutation(internal.integrations.backfillKind, {})).toEqual({ filled: 1 });
+  expect(await t.mutation(internal.integrations.backfillKind, {})).toEqual({ filled: 0 });
+  expect((await t.run((ctx) => ctx.db.get(integrationId)))!.kind).toBe("webhook");
 });
 
 test("an Admin can see the Integration's own signing secret, to set up the receiver", async () => {
@@ -374,4 +397,20 @@ test("deleting an Integration detaches it from its Forms", async () => {
 
   expect(await user.query(api.integrations.list, { organisationSlug })).toEqual([]);
   expect((await user.query(api.forms.get, { organisationSlug, formId })).keysLocked).toBe(false);
+});
+
+test("the dialog offers a spreadsheet kind only when its OAuth client is set up", async () => {
+  const t = newBackend();
+  const ann = await acme(t);
+  const kinds = () => ann.user.query(api.integrations.availableKinds, { organisationSlug: ann.organisationSlug });
+
+  expect(await kinds()).toEqual(["webhook"]);
+
+  vi.stubEnv("GOOGLE_OAUTH_CLIENT_ID", "client-123.apps.googleusercontent.com");
+  vi.stubEnv("GOOGLE_OAUTH_CLIENT_SECRET", "client-secret");
+  vi.stubEnv("MICROSOFT_OAUTH_CLIENT_ID", "app-123");
+  expect(await kinds()).toEqual(["webhook", "google_sheets"]);
+
+  vi.stubEnv("MICROSOFT_OAUTH_CLIENT_SECRET", "client-secret");
+  expect(await kinds()).toEqual(["webhook", "google_sheets", "excel"]);
 });

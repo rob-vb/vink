@@ -64,6 +64,20 @@ const dutch: Record<string, string> = {
   "Only a failed Delivery can be sent again": "Alleen een mislukte Levering kan opnieuw worden verstuurd",
   "Integration removed: this Delivery can't be sent again":
     "Koppeling verwijderd: deze Levering kan niet opnieuw worden verstuurd",
+  "This Integration isn't a Webhook": "Deze Koppeling is geen Webhook",
+  "An automation platform made this Webhook, so it stays attached to its own Form only. Delete the Webhook to stop it.":
+    "Een automatiseringsplatform heeft deze Webhook gemaakt, dus hij blijft alleen aan zijn eigen Formulier gekoppeld. Verwijder de Webhook om dat te stoppen.",
+  "Google Sheets isn't set up on this deployment": "Google Sheets is hier nog niet ingesteld",
+  "This Google sign-in has expired. Try again.": "Deze aanmelding bij Google is verlopen. Probeer het opnieuw.",
+  "This Integration has no account to reconnect": "Deze Koppeling heeft geen account om opnieuw te koppelen",
+  "Excel isn't set up on this deployment": "Excel is hier nog niet ingesteld",
+  "This Microsoft sign-in has expired. Try again.": "Deze aanmelding bij Microsoft is verlopen. Probeer het opnieuw.",
+  "Vink is writing to this Integration right now. Try again in a moment.":
+    "Vink schrijft nu naar deze Koppeling. Probeer het zo opnieuw.",
+
+  // API Keys
+  "An API Key needs a name": "Een API-sleutel heeft een naam nodig",
+  "API Key not found": "API-sleutel niet gevonden",
 };
 
 // What a corrected value must be (convex/review.ts `expectedType`).

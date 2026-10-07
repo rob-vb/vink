@@ -62,6 +62,72 @@ export function dummyPayload(fields: Field[], mode: "examples" | "empty"): Paylo
   );
 }
 
+// The envelope as a JSON Schema, for platforms that build their fields from a
+// schema (Power Automate's dynamic schema). Swagger 2.0 style, as Power
+// Automate reads it: one `type` each, `x-nullable` for "can be null", and the
+// label as `title` and `x-ms-summary` (what Power Automate shows).
+type JsonSchema = Record<string, unknown>;
+
+const titled = (summary: string, schema: JsonSchema, nullable = false): JsonSchema => ({
+  ...schema,
+  "x-ms-summary": summary,
+  ...(nullable ? { "x-nullable": true } : {}),
+});
+
+function valueSchema(f: FlatField): JsonSchema {
+  const type: JsonSchema =
+    f.type === "date"
+      ? { type: "string", format: "date" }
+      : f.type === "choice"
+        ? { type: "string", enum: f.options.map((o) => o.value) }
+        : { type: f.type === "text" ? "string" : f.type };
+  return { ...type, title: f.label, "x-ms-summary": f.label, "x-nullable": true };
+}
+
+function fieldSchema(f: Field): JsonSchema {
+  if (f.type !== "list") return valueSchema(f);
+  return {
+    type: "array",
+    title: f.label,
+    "x-ms-summary": f.label,
+    items: { type: "object", properties: Object.fromEntries(f.fields.map((s) => [s.key, valueSchema(s)])) },
+  };
+}
+
+/** The JSON Schema of the envelope a Form's Approvals send, with one property per Field under `data`. */
+export function envelopeSchema(fields: Field[]): JsonSchema {
+  const object = (properties: Record<string, JsonSchema>) => ({ type: "object", properties });
+  return object({
+    event: titled("Event", { type: "string" }),
+    delivery_id: titled("Delivery ID", { type: "string" }),
+    test: titled("Test", { type: "boolean" }),
+    document: titled(
+      "Document",
+      object({
+        id: titled("Document ID", { type: "string" }),
+        filename: titled("Filename", { type: "string" }),
+        uploaded_at: titled("Uploaded at", { type: "string", format: "date-time" }),
+      }),
+    ),
+    form: titled(
+      "Form",
+      object({
+        id: titled("Form ID", { type: "string" }),
+        version: titled("Form version", { type: "integer" }),
+      }),
+    ),
+    approval: titled(
+      "Approval",
+      object({
+        mode: titled("Approval mode", { type: "string", enum: ["manual", "auto"] }),
+        by: titled("Approved by", { type: "string" }, true),
+        at: titled("Approved at", { type: "string", format: "date-time" }),
+      }),
+    ),
+    data: titled("Data", object(Object.fromEntries(fields.map((f) => [f.key, fieldSchema(f)])))),
+  });
+}
+
 const iso = (ms: number) => new Date(ms).toISOString();
 
 export function envelopeOf(delivery: {

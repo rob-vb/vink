@@ -1,0 +1,3 @@
+# A Subscription from Zapier or Make is an ordinary Webhook Integration
+
+When an automation platform (Zapier, Make) subscribes to a Form's Approvals through the public API, Vink makes a normal Integration of kind Webhook and attaches it to that Form. Ending the Subscription removes that Webhook. We chose this over a separate subscription mechanism so that every place a Payload goes shows up in one list in Vink, and every send gets the same Deliveries, retries, re-send by hand, signature and log. The price: a platform's subscribe and unsubscribe calls change the Organisation's Integrations, and a Form's Field keys stay locked while a Subscription is active, as they do for any attached Integration.

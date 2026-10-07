@@ -22,6 +22,8 @@ const eslintConfig = defineConfig([
     ".next-smoke/**",
     ".claude/**",
     "workers/**",
+    // Its own package (plain CommonJS for Zapier), with its own tests.
+    "integrations/zapier/**",
     "out/**",
     "build/**",
     "next-env.d.ts",

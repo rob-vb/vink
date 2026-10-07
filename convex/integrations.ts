@@ -3,14 +3,22 @@
 import { ConvexError, v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
-import { internalQuery, type QueryCtx } from "./_generated/server";
+import {
+  type ActionCtx,
+  internalMutation,
+  internalQuery,
+  type MutationCtx,
+  type QueryCtx,
+} from "./_generated/server";
 import { failOpenDeliveries } from "./deliveries";
+import { accountProviderOf, refreshTokenKeeper, sendAlone } from "./lib/accounts";
 import { documentPayload } from "./lib/documentPayload";
 import { orgAction, orgMutation, orgQuery } from "./lib/functions";
-import { http, HttpFailure } from "./lib/http";
+import { isWebhook, sendTo } from "./lib/integrationAdapters";
+import { signState } from "./lib/oauthState";
 import { dummyPayload, envelopeOf } from "./lib/payload";
 import { decryptSecret, encryptSecret, masked } from "./lib/secrets";
-import { newSigningSecret, SIGNATURE_HEADER, signatureOf } from "./lib/signing";
+import { newSigningSecret, SIGNATURE_HEADER } from "./lib/signing";
 
 async function ownIntegration(
   ctx: QueryCtx,
@@ -21,6 +29,16 @@ async function ownIntegration(
   if (integration === null || integration.organisationId !== organisationId) {
     throw new ConvexError("Integration not found");
   }
+  return integration;
+}
+
+async function ownWebhook(
+  ctx: QueryCtx,
+  organisationId: Id<"organisations">,
+  integrationId: Id<"integrations">,
+) {
+  const integration = await ownIntegration(ctx, organisationId, integrationId);
+  if (!isWebhook(integration)) throw new ConvexError("This Integration isn't a Webhook");
   return integration;
 }
 
@@ -58,6 +76,31 @@ async function sealed(header: { name: string; value: string; secret: boolean }) 
   return { ...header, value: header.secret ? await encryptSecret(header.value) : header.value };
 }
 
+/** The API Key whose Subscription made this Webhook, or null for one an Admin made. */
+async function subscriptionOf(ctx: QueryCtx, integrationId: Id<"integrations">) {
+  const subscription = await ctx.db
+    .query("subscriptions")
+    .withIndex("by_integrationId", (q) => q.eq("integrationId", integrationId))
+    .unique();
+  if (subscription === null) return null;
+  const apiKey = await ctx.db.get(subscription.apiKeyId);
+  return { apiKeyName: apiKey?.name ?? "" };
+}
+
+/** The kinds the Integration dialog offers: a spreadsheet kind only once its OAuth client is set up. */
+export const availableKinds = orgQuery({
+  role: "admin",
+  args: {},
+  handler: async () => {
+    const env = process.env;
+    return [
+      "webhook" as const,
+      ...(env.GOOGLE_OAUTH_CLIENT_ID && env.GOOGLE_OAUTH_CLIENT_SECRET ? ["google_sheets" as const] : []),
+      ...(env.MICROSOFT_OAUTH_CLIENT_ID && env.MICROSOFT_OAUTH_CLIENT_SECRET ? ["excel" as const] : []),
+    ];
+  },
+});
+
 export const list = orgQuery({
   role: "admin",
   args: {},
@@ -73,19 +116,33 @@ export const list = orgQuery({
           .withIndex("by_integrationId", (q) => q.eq("integrationId", integration._id))
           .take(200);
         const forms = await Promise.all(links.map((l) => ctx.db.get(l.formId)));
-        return {
+        const common = {
           id: integration._id,
           name: integration.name,
-          url: integration.url,
-          headers: await Promise.all(
-            integration.headers.map(async (h) => ({
-              name: h.name,
-              secret: h.secret,
-              value: h.secret ? masked(await decryptSecret(h.value)) : h.value,
-            })),
-          ),
           forms: forms.flatMap((f) => (f ? [{ id: f._id, name: f.name }] : [])),
+          subscription: await subscriptionOf(ctx, integration._id),
+          // Its connected account no longer lets Vink in; only a spreadsheet kind can.
+          needsReconnect: "needsReconnect" in integration && integration.needsReconnect === true,
         };
+        // Where it sends to: a Webhook's endpoint, or the link to a sheet or workbook.
+        if (isWebhook(integration)) {
+          return {
+            ...common,
+            kind: "webhook" as const,
+            url: integration.url,
+            headers: await Promise.all(
+              integration.headers.map(async (h) => ({
+                name: h.name,
+                secret: h.secret,
+                value: h.secret ? masked(await decryptSecret(h.value)) : h.value,
+              })),
+            ),
+          };
+        }
+        if (integration.kind === "google_sheets") {
+          return { ...common, kind: integration.kind, url: integration.spreadsheetUrl, headers: [] };
+        }
+        return { ...common, kind: integration.kind, url: integration.workbookUrl, headers: [] };
       }),
     );
   },
@@ -96,27 +153,36 @@ export const signingSecret = orgQuery({
   role: "admin",
   args: { integrationId: v.id("integrations") },
   handler: async (ctx, { integrationId }) => {
-    const integration = await ownIntegration(ctx, ctx.organisationId, integrationId);
+    const integration = await ownWebhook(ctx, ctx.organisationId, integrationId);
     return { secret: await decryptSecret(integration.signingSecret) };
   },
 });
 
 const headerInput = v.object({ name: v.string(), value: v.string(), secret: v.boolean() });
 
+/** Made by an Admin, or by a Subscription (subscriptions.ts). */
+export async function createWebhook(
+  ctx: MutationCtx,
+  organisationId: Id<"organisations">,
+  { name, url, headers }: { name: string; url: string; headers: Array<{ name: string; value: string; secret: boolean }> },
+) {
+  checkEndpoint(name, url);
+  checkHeaders(headers);
+  return await ctx.db.insert("integrations", {
+    organisationId,
+    name: name.trim(),
+    kind: "webhook",
+    url,
+    headers: await Promise.all(headers.map(sealed)),
+    signingSecret: await encryptSecret(newSigningSecret()),
+  });
+}
+
 export const create = orgMutation({
   role: "admin",
   args: { name: v.string(), url: v.string(), headers: v.array(headerInput) },
   handler: async (ctx, { name, url, headers }) => {
-    checkEndpoint(name, url);
-    checkHeaders(headers);
-    const integrationId = await ctx.db.insert("integrations", {
-      organisationId: ctx.organisationId,
-      name: name.trim(),
-      url,
-      headers: await Promise.all(headers.map(sealed)),
-      signingSecret: await encryptSecret(newSigningSecret()),
-    });
-    return { integrationId };
+    return { integrationId: await createWebhook(ctx, ctx.organisationId, { name, url, headers }) };
   },
 });
 
@@ -132,7 +198,7 @@ export const update = orgMutation({
     ),
   },
   handler: async (ctx, { integrationId, name, url, headers }) => {
-    const integration = await ownIntegration(ctx, ctx.organisationId, integrationId);
+    const integration = await ownWebhook(ctx, ctx.organisationId, integrationId);
     checkEndpoint(name, url);
     checkHeaders(headers);
     const stored = await Promise.all(
@@ -147,20 +213,160 @@ export const update = orgMutation({
   },
 });
 
+/**
+ * Also ends the Subscription that made it, if any. A connected account's
+ * token is deleted with it, but its grant at the provider is left alone:
+ * Google's revoke ends the account's whole grant to Vink, which the same
+ * account's Integrations in other Organisations still use.
+ */
+export async function removeIntegration(ctx: MutationCtx, integrationId: Id<"integrations">) {
+  const links = await ctx.db
+    .query("formIntegrations")
+    .withIndex("by_integrationId", (q) => q.eq("integrationId", integrationId))
+    .take(200);
+  for (const link of links) await ctx.db.delete(link._id);
+  const subscription = await ctx.db
+    .query("subscriptions")
+    .withIndex("by_integrationId", (q) => q.eq("integrationId", integrationId))
+    .unique();
+  if (subscription !== null) await ctx.db.delete(subscription._id);
+  await failOpenDeliveries(ctx, integrationId);
+  await ctx.db.delete(integrationId);
+}
+
+/** Renames an Integration of any kind; the rest of a Webhook is changed with `update`. */
+export const rename = orgMutation({
+  role: "admin",
+  args: { integrationId: v.id("integrations"), name: v.string() },
+  handler: async (ctx, { integrationId, name }) => {
+    await ownIntegration(ctx, ctx.organisationId, integrationId);
+    if (name.trim() === "") throw new ConvexError("An Integration needs a name");
+    await ctx.db.patch(integrationId, { name: name.trim() });
+  },
+});
+
 export const remove = orgMutation({
   role: "admin",
   args: { integrationId: v.id("integrations") },
   handler: async (ctx, { integrationId }) => {
     await ownIntegration(ctx, ctx.organisationId, integrationId);
-    const links = await ctx.db
-      .query("formIntegrations")
-      .withIndex("by_integrationId", (q) => q.eq("integrationId", integrationId))
-      .take(200);
-    for (const link of links) await ctx.db.delete(link._id);
-    await failOpenDeliveries(ctx, integrationId);
-    await ctx.db.delete(integrationId);
+    await removeIntegration(ctx, integrationId);
   },
 });
+
+/** The provider's consent page, to connect a spreadsheet Integration's account again. */
+export const reconnectUrl = orgAction({
+  role: "admin",
+  args: { integrationId: v.id("integrations") },
+  handler: async (ctx, { integrationId }): Promise<{ url: string }> => {
+    const { slug, integration } = await ctx.runQuery(internal.integrations.reconnectTarget, {
+      organisationId: ctx.organisationId,
+      integrationId,
+    });
+    const state = await signState(slug, {
+      organisationId: ctx.organisationId,
+      userId: ctx.userId,
+      name: integration.name,
+      integrationId,
+    });
+    return { url: accountProviderOf(integration)!.consentUrl(state) };
+  },
+});
+
+export const reconnectTarget = internalQuery({
+  args: { organisationId: v.id("organisations"), integrationId: v.id("integrations") },
+  handler: async (ctx, { organisationId, integrationId }) => {
+    const integration = await ownIntegration(ctx, organisationId, integrationId);
+    if (accountProviderOf(integration) === null) {
+      throw new ConvexError("This Integration has no account to reconnect");
+    }
+    return { slug: (await ctx.db.get(organisationId))!.slug, integration };
+  },
+});
+
+/**
+ * Finishes a Reconnect, from the provider's `connect` once it has checked the
+ * state. The new account must reach the same spreadsheet, which is kept.
+ * `no_sheet_access`: it can't (another account than the one that made it).
+ */
+export async function reconnect(
+  ctx: ActionCtx,
+  organisationId: Id<"organisations">,
+  integrationId: Id<"integrations">,
+  code: string,
+): Promise<{ result: "reconnected" | "no_access" | "no_sheet_access" }> {
+  const { integration } = await ctx.runQuery(internal.integrations.reconnectTarget, {
+    organisationId,
+    integrationId,
+  });
+  const provider = accountProviderOf(integration)!;
+  const refreshToken = await provider.exchangeCode(code);
+  if (refreshToken === null) return { result: "no_access" };
+  // Not revoked when it can't: that account may be the one of another Integration.
+  if (!(await provider.canReach(refreshToken, integration))) return { result: "no_sheet_access" };
+  await ctx.runMutation(internal.integrations.reconnected, {
+    integrationId,
+    refreshToken: await encryptSecret(refreshToken),
+  });
+  return { result: "reconnected" };
+}
+
+export const reconnected = internalMutation({
+  args: { integrationId: v.id("integrations"), refreshToken: v.string() },
+  handler: async (ctx, { integrationId, refreshToken }) => {
+    await ctx.db.patch(integrationId, { refreshToken, needsReconnect: undefined });
+  },
+});
+
+/**
+ * Stores the refresh token a provider handed out with an access token (lib/
+ * accounts.ts `refreshTokenKeeper`), encrypted. Only while the stored one is
+ * still `previous`: a Reconnect meanwhile wins, and so does a newer token.
+ */
+export const keepRefreshToken = internalMutation({
+  args: { integrationId: v.id("integrations"), previous: v.string(), refreshToken: v.string() },
+  handler: async (ctx, { integrationId, previous, refreshToken }) => {
+    const integration = await ctx.db.get(integrationId);
+    if (integration === null || !("refreshToken" in integration) || integration.refreshToken !== previous) return;
+    await ctx.db.patch(integrationId, { refreshToken });
+  },
+});
+
+// How long a send may hold a spreadsheet Integration: several calls of up to 15 s each.
+const WRITING_MS = 2 * 60_000;
+
+/**
+ * Lets one send at a time write to a spreadsheet Integration (lib/accounts.ts
+ * `sendAlone`): true when `by` may write now. Gone Integrations and Webhooks
+ * need no turn.
+ */
+export const claimWriting = internalMutation({
+  args: { integrationId: v.id("integrations"), by: v.string() },
+  handler: async (ctx, { integrationId, by }) => {
+    const integration = await ctx.db.get(integrationId);
+    if (integration === null || !("refreshToken" in integration)) return true;
+    const now = Date.now();
+    if (integration.writing && integration.writing.by !== by && integration.writing.until > now) return false;
+    await ctx.db.patch(integrationId, { writing: { by, until: now + WRITING_MS } });
+    return true;
+  },
+});
+
+export const releaseWriting = internalMutation({
+  args: { integrationId: v.id("integrations"), by: v.string() },
+  handler: async (ctx, { integrationId, by }) => {
+    const integration = await ctx.db.get(integrationId);
+    if (integration === null || !("writing" in integration) || integration.writing?.by !== by) return;
+    await ctx.db.patch(integrationId, { writing: undefined });
+  },
+});
+
+/** A Subscription's Webhook sends its own Form only: an Admin can delete it, not move it. */
+async function checkNotSubscription(ctx: QueryCtx, integrationId: Id<"integrations">) {
+  if ((await subscriptionOf(ctx, integrationId)) !== null) {
+    throw new ConvexError("An automation platform made this Webhook, so it stays attached to its own Form only. Delete the Webhook to stop it.");
+  }
+}
 
 async function linkOf(ctx: QueryCtx, integrationId: Id<"integrations">, formId: Id<"forms">) {
   const links = await ctx.db
@@ -177,6 +383,7 @@ export const attach = orgMutation({
   handler: async (ctx, { integrationId, formId }) => {
     await ownIntegration(ctx, ctx.organisationId, integrationId);
     await ownForm(ctx, ctx.organisationId, formId);
+    await checkNotSubscription(ctx, integrationId);
     if ((await linkOf(ctx, integrationId, formId)) !== null) return;
     await ctx.db.insert("formIntegrations", {
       organisationId: ctx.organisationId,
@@ -191,6 +398,7 @@ export const detach = orgMutation({
   args: { integrationId: v.id("integrations"), formId: v.id("forms") },
   handler: async (ctx, { integrationId, formId }) => {
     await ownIntegration(ctx, ctx.organisationId, integrationId);
+    await checkNotSubscription(ctx, integrationId);
     const link = await linkOf(ctx, integrationId, formId);
     if (link === null) return;
     await ctx.db.delete(link._id);
@@ -208,36 +416,24 @@ export async function hasIntegrations(ctx: QueryCtx, formId: Id<"forms">) {
   );
 }
 
-/** Where and how to send: the endpoint, its headers and signing secret in plain text. */
-export async function endpointOf(integration: Doc<"integrations">) {
-  return {
-    url: integration.url,
-    headers: Object.fromEntries(
-      await Promise.all(
-        integration.headers.map(async (h) => [h.name, h.secret ? await decryptSecret(h.value) : h.value]),
-      ),
-    ) as Record<string, string>,
-    signingSecret: await decryptSecret(integration.signingSecret),
-  };
-}
-
-/** Posts a signed envelope; the answer, or why there was none. */
-export async function sendSigned(
-  endpoint: Awaited<ReturnType<typeof endpointOf>>,
-  envelope: object,
-) {
-  const body = JSON.stringify(envelope);
-  const headers = {
-    ...endpoint.headers,
-    "Content-Type": "application/json",
-    [SIGNATURE_HEADER]: await signatureOf(endpoint.signingSecret, body),
-  };
-  try {
-    return { answer: await http.post(endpoint.url, headers, body), failure: null };
-  } catch (error) {
-    if (error instanceof HttpFailure) return { answer: null, failure: error };
-    throw error;
-  }
+/**
+ * A test envelope with dummy data for the Form's current Form Version: what a
+ * test-send without a Document sends, and the public API's sample.
+ */
+export async function dummyEnvelope(ctx: QueryCtx, form: Doc<"forms">, mode: "examples" | "empty") {
+  const now = Date.now();
+  const formVersion = (await ctx.db
+    .query("formVersions")
+    .withIndex("by_formId_and_number", (q) => q.eq("formId", form._id).eq("number", form.version))
+    .unique())!;
+  return envelopeOf({
+    deliveryId: `test_${crypto.randomUUID()}`,
+    test: true,
+    document: { id: "test", filename: "example.pdf", uploadedAt: now },
+    form: { id: form._id, version: form.version },
+    approval: { mode: "manual", by: null, at: now },
+    data: dummyPayload(formVersion.fields, mode),
+  });
 }
 
 export const testSendInput = internalQuery({
@@ -253,6 +449,7 @@ export const testSendInput = internalQuery({
     const form = await ownForm(ctx, organisationId, formId);
     const now = Date.now();
     let envelope;
+    let approverEmail = null;
     if (documentId) {
       const document = await ctx.db.get(documentId);
       if (document === null || document.formId !== formId || document.dataDeletedAt !== undefined) {
@@ -272,21 +469,12 @@ export const testSendInput = internalQuery({
           : { mode: "manual", by: null, at: now },
         data: await documentPayload(ctx, document),
       });
+      approverEmail = document.approval?.byEmail ?? null;
     } else {
-      const formVersion = (await ctx.db
-        .query("formVersions")
-        .withIndex("by_formId_and_number", (q) => q.eq("formId", formId).eq("number", form.version))
-        .unique())!;
-      envelope = envelopeOf({
-        deliveryId: `test_${crypto.randomUUID()}`,
-        test: true,
-        document: { id: "test", filename: "example.pdf", uploadedAt: now },
-        form: { id: formId, version: form.version },
-        approval: { mode: "manual", by: null, at: now },
-        data: dummyPayload(formVersion.fields, mode),
-      });
+      envelope = await dummyEnvelope(ctx, form, mode);
     }
-    return { endpoint: await endpointOf(integration), envelope };
+    // As JSON, like a Delivery's frozen envelope: the data's keys stay in the Form's order.
+    return { integration, envelope: JSON.stringify(envelope), approverEmail };
   },
 });
 
@@ -299,19 +487,23 @@ export const testSend = orgAction({
     mode: v.union(v.literal("examples"), v.literal("empty")),
     documentId: v.optional(v.id("documents")),
   },
-  handler: async (ctx, args) => {
-    const { endpoint, envelope } = await ctx.runQuery(internal.integrations.testSendInput, {
+  handler: async (
+    ctx,
+    args,
+  ): Promise<{ ok: boolean; status: number | null; body: string | null; error: string | null }> => {
+    const { integration, envelope, approverEmail } = await ctx.runQuery(internal.integrations.testSendInput, {
       organisationId: ctx.organisationId,
       ...args,
     });
-    const { answer, failure } = await sendSigned(endpoint, envelope);
-    if (answer === null) return { ok: false, status: null, body: null, error: failure!.message };
-    return {
-      ok: answer.status >= 200 && answer.status < 300,
-      status: answer.status,
-      body: answer.body,
-      error: null,
-    };
+    const sent = await sendAlone(ctx, integration, () =>
+      sendTo(integration, JSON.parse(envelope), {
+        approverEmail,
+        keepRefreshToken: refreshTokenKeeper(ctx, integration),
+      }),
+    );
+    if (sent === "busy") throw new ConvexError("Vink is writing to this Integration right now. Try again in a moment.");
+    const { outcome, status, body, error } = sent;
+    return { ok: outcome.kind === "delivered", status, body, error };
   },
 });
 
@@ -332,5 +524,24 @@ export const testDocuments = orgQuery({
       .filter((d) => d.formId === formId && d.dataDeletedAt === undefined)
       .slice(0, 20)
       .map((d) => ({ id: d._id, filename: d.filename, state: d.state }));
+  },
+});
+
+/**
+ * One-off, after Integration kinds ship: stores "webhook" on every Integration
+ * made before. Run once per deployment:
+ *   npx convex run integrations:backfillKind          (dev)
+ *   npx convex run --prod integrations:backfillKind   (prod)
+ */
+export const backfillKind = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    let filled = 0;
+    for await (const integration of ctx.db.query("integrations")) {
+      if (integration.kind !== undefined) continue;
+      await ctx.db.patch(integration._id, { kind: "webhook" });
+      filled++;
+    }
+    return { filled };
   },
 });

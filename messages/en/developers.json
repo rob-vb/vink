@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "Developers: webhook, Payload and signature",
-    "description": "How Vink sends approved document data to your system: the JSON envelope, HMAC-SHA256 signature verification in Node, Python and PHP, retries and test-send."
+    "description": "How Vink sends approved document data to your system: the JSON envelope, HMAC-SHA256 signature checks, retries, test-send, and guides for Make, n8n, Zapier and Power Automate."
   },
   "og": {
     "title": "One signed webhook. Clean JSON, keyed by your own Fields.",
@@ -10,6 +10,7 @@
   "toc": {
     "label": "On this page",
     "overview": "Overview",
+    "platforms": "Make, n8n, Zapier, Power Automate",
     "envelope": "Envelope",
     "signature": "Verify the signature",
     "delivery": "Delivery and retries",
@@ -32,8 +33,101 @@
       "atLeastOnce": "At-least-once: deduplicate on <code>delivery_id</code>"
     },
     "reading": "Vink reads PDFs with Gemini on Vertex AI, EU region.",
+    "apiReference": "Calling Vink from your own code? The <link>API reference</link> describes the public API and its API Keys.",
     "inboundTitle": "Getting documents in",
     "inbound": "Documents come in through the app today: upload several PDFs at once, or email them in. No code? Point any system's email at the Form's Intake Address, and each PDF attachment becomes a Document. There is no upload API yet. Need one? <link>Tell us</link>."
+  },
+  "platforms": {
+    "title": "Make, n8n, Zapier and Power Automate",
+    "intro": "No developer? These four automation platforms can receive the Webhook today. Vink sends the approved data, and you build the rest of the flow there: a row in a spreadsheet, a message to your team, a record in your accounting package.",
+    "listLabel": "Automation platforms that work with Vink today",
+    "via": "via webhook",
+    "short": {
+      "make": "Free plan",
+      "n8n": "Free when self-hosted",
+      "zapier": "Paid plan",
+      "powerAutomate": "Premium licence"
+    },
+    "howTitle": "How it works, on every platform",
+    "how": "You make a receiving URL in the platform. In Vink, you paste it into a new Integration and attach that Integration to a Form. A test-send shows the platform your Fields, so you can map them to the next step. From then on, every approved Document of that Form goes there.",
+    "testFlag": "A test-send carries <code>\"test\": true</code>. Before a step that writes real data, add a filter that only lets <code>test</code> = <code>false</code> through. Then tests never end up in your books.",
+    "secret": "<b>The URL is the key.</b> These platforms can't easily check the <code>X-Vink-Signature</code> header, so anyone who has the URL can send data to it. Keep the URL out of emails, tickets and screenshots. If it leaks, make a new URL in the platform and paste it into the Integration in Vink.",
+    "stepsLabel": "Steps for {name}",
+    "guides": {
+      "make": {
+        "title": "Make",
+        "plan": "<b>Plan:</b> works on Make's free plan (1,000 credits a month, 2 active scenarios). The Webhooks app is part of every plan, and a webhook starts the scenario right away.",
+        "steps": {
+          "hook": "In Make, create a scenario. Add the <b>Webhooks</b> app with the trigger <b>Custom webhook</b>. Choose <b>Add</b>, give the webhook a name and save. Copy the address Make shows.",
+          "vink": "In Vink, open <b>Integrations</b> and choose <b>New Integration</b>. Paste the address as the <b>Endpoint URL</b> and choose <b>Create Integration</b>. Then choose <b>Attach to a Form</b>.",
+          "test": "Make now waits for data. In Vink, choose <b>Send test</b>, pick the Form and <b>Example values</b>. Make learns your Fields from this test.",
+          "map": "Add the next module, for example Google Sheets, and map the values. They are under <code>data</code>, keyed by your own Field keys. Turn the scenario on.",
+          "change": "Changed the Form's Fields later? Open the webhook module, choose <b>Detect new values</b> and send another test."
+        },
+        "lists": "<b>List Fields:</b> a List Field arrives as an array, one object per entry. To handle each entry, for example one spreadsheet row per invoice line, put an <b>Iterator</b> on that array before the next module.",
+        "security": "<b>Extra lock:</b> Make can check an API key. Add one to the webhook in Make. In Vink, add the header <code>x-make-apikey</code> with that key to the Integration, and mark it <b>Secret</b>. Now the URL alone is not enough.",
+        "note": "Make answers <code>200</code> at once and queues the data. If the webhook's queue is full, Make answers <code>400</code>: Vink then marks the Delivery failed, and an Admin can send it again from the Document."
+      },
+      "n8n": {
+        "title": "n8n",
+        "plan": "<b>Plan:</b> free when you host n8n yourself (Community Edition). n8n Cloud is paid, with a free trial.",
+        "steps": {
+          "hook": "In n8n, make a workflow with the <b>Webhook</b> node as its trigger. Set <b>HTTP Method</b> to <code>POST</code> and leave <b>Respond</b> on <b>Immediately</b>. Copy the <b>Test URL</b>.",
+          "vink": "In Vink, open <b>Integrations</b> and choose <b>New Integration</b>. Paste the Test URL as the <b>Endpoint URL</b> and choose <b>Create Integration</b>. Then choose <b>Attach to a Form</b>.",
+          "test": "In n8n, choose <b>Listen for test event</b>. In Vink, choose <b>Send test</b>, pick the Form and <b>Example values</b>. The test shows up in n8n, with your values under <code>body.data</code>.",
+          "map": "Add the next nodes and map the values.",
+          "live": "Publish the workflow and copy the <b>Production URL</b>. Edit the Integration in Vink and replace the Test URL with it. The Test URL only works while n8n is listening for a test."
+        },
+        "lists": "<b>List Fields:</b> a List Field arrives as an array, one object per entry. A <b>Split Out</b> node on that array, for example <code>body.data.lines</code>, makes one item per entry.",
+        "security": "<b>Extra lock:</b> n8n can check a header. Set the Webhook node's <b>Authentication</b> to <b>Header Auth</b> with a name and a long random value. In Vink, add the same header to the Integration and mark it <b>Secret</b>.",
+        "note": "n8n Cloud and a self-hosted n8n behave the same here. A self-hosted n8n must be reachable over HTTPS from the internet."
+      },
+      "zapier": {
+        "title": "Zapier",
+        "plan": "<b>Plan:</b> needs a paid Zapier plan. <b>Webhooks by Zapier</b> is not part of the free plan.",
+        "steps": {
+          "hook": "In Zapier, make a Zap. As the trigger, choose <b>Webhooks by Zapier</b> with the event <b>Catch Hook</b>. Copy the webhook URL Zapier shows.",
+          "vink": "In Vink, open <b>Integrations</b> and choose <b>New Integration</b>. Paste the URL as the <b>Endpoint URL</b> and choose <b>Create Integration</b>. Then choose <b>Attach to a Form</b>.",
+          "test": "In Vink, choose <b>Send test</b>, pick the Form and <b>Example values</b>. In Zapier, choose <b>Test trigger</b> and pick the request that came in.",
+          "map": "Add the action, for example Google Sheets, and map the values from <code>data</code>. Publish the Zap."
+        },
+        "lists": "<b>List Fields:</b> a List Field arrives as an array of objects. Zapier shows its entries as line items: an action that supports line items takes them all at once. For one action per entry, use <b>Looping by Zapier</b>.",
+        "security": "<b>Lock:</b> a Catch Hook doesn't check headers, so the secret URL is the only lock. Treat it like a password.",
+        "note": "A Zap that is off or deleted answers <code>404</code> after a while. Vink then marks the Delivery failed. Turn the Zap on, and an Admin sends the failed Delivery again from the Document."
+      },
+      "powerAutomate": {
+        "title": "Power Automate",
+        "plan": "<b>Plan:</b> needs a Premium licence. The trigger <b>When an HTTP request is received</b> is a Premium trigger.",
+        "connector": {
+          "title": "With the Vink connector",
+          "intro": "Import Vink's custom connector once. Then a flow can start with the trigger <b>When a Document is approved</b>: you pick the Form from a list, and its Fields show up as dynamic content without a test-send. The action <b>Send in a Document</b> sends a PDF to a Form.",
+          "needs": "<b>You need:</b> a Premium licence, because custom connectors are Premium. You also need an API Key. An Admin makes one in Vink under <b>Organisation settings → API Keys</b>.",
+          "downloads": "Connector files",
+          "steps": {
+            "download": "Download <b>apiDefinition.swagger.json</b>.",
+            "import": "In Power Automate, open <b>Custom connectors</b> (in the left menu, under <b>More</b>). Choose <b>New custom connector</b> → <b>Import an OpenAPI file</b>. Name it <b>Vink</b>, pick the file and choose <b>Continue</b>.",
+            "security": "On the <b>Security</b> tab, keep what the file set: <b>API Key</b>, parameter name <code>Authorization</code>, location <b>Header</b>. Choose <b>Create connector</b>.",
+            "connect": "In a cloud flow, add the trigger <b>When a Document is approved</b> from the Vink connector. Make a connection. In the <b>API Key</b> field, type <code>Bearer</code>, a space and your key: <code>Bearer vink_live_…</code>.",
+            "form": "Pick the <b>Form</b> and save the flow. Vink now makes a Subscription for the flow. Admins see it under <b>Integrations</b>, and the Form's Field keys are locked while it exists. When you turn the flow off or delete it, the Subscription ends.",
+            "action": "To send PDFs in, add the action <b>Send in a Document</b>. Pick the Form and put the file content, for example from an email attachment, in <b>File content</b>."
+          },
+          "cli": "Prefer the command line? <code>pac connector create</code> takes both files: <code>--api-definition-file apiDefinition.swagger.json --api-properties-file apiProperties.json</code>.",
+          "webhookTitle": "Via the webhook",
+          "webhookIntro": "No custom connector? The Premium HTTP trigger receives the Webhook too."
+        },
+        "steps": {
+          "hook": "In Power Automate, make a cloud flow that starts with the trigger <b>When an HTTP request is received</b>. If the trigger shows <b>Who can trigger the flow?</b>, set it to <b>Anyone</b>. The other options only let in signed-in users from your own tenant, so they refuse Vink.",
+          "url": "Save the flow. The trigger now shows the <b>HTTP URL</b>. Copy it.",
+          "vink": "In Vink, open <b>Integrations</b> and choose <b>New Integration</b>. Paste the URL as the <b>Endpoint URL</b> and choose <b>Create Integration</b>. Then choose <b>Attach to a Form</b>.",
+          "test": "In Vink, choose <b>Send test</b>, pick the Form and <b>Example values</b>. In the flow's run history, open that run and copy the body of the trigger's output.",
+          "schema": "In the trigger, choose <b>Use sample payload to generate schema</b> and paste that body. Your Fields now show up as dynamic content.",
+          "map": "Add the next actions, map the values from <code>data</code> and save."
+        },
+        "lists": "<b>List Fields:</b> a List Field arrives as an array. <b>Apply to each</b> on that array runs the next actions once per entry.",
+        "security": "<b>Lock:</b> the URL contains a signature (<code>sig=</code>) that works like a password. Anyone who has the full URL can start the flow. If it leaks, make a new URL in Power Automate and paste it into the Integration.",
+        "note": "Power Automate answers <code>202</code> at once, which counts as delivered in Vink."
+      }
+    }
   },
   "envelope": {
     "title": "Envelope",

@@ -233,7 +233,7 @@ async function getForm(
   return form;
 }
 
-async function getVersion(ctx: QueryCtx, formId: Id<"forms">, number: number) {
+export async function getVersion(ctx: QueryCtx, formId: Id<"forms">, number: number) {
   const version = await ctx.db
     .query("formVersions")
     .withIndex("by_formId_and_number", (q) =>
