@@ -2,9 +2,9 @@
     {
         "name": "apiKey",
         "type": "password",
-        "label": "API Key",
+        "label": "API key",
         "required": true,
         "editable": true,
-        "help": "An Admin makes one in Vink under Settings → API Keys."
+        "help": "An Admin makes one in Vink under Organisation settings → API Keys."
     }
 ]

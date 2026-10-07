@@ -106,10 +106,25 @@ describe("requests", () => {
     expect(request.url).toBe("{{parameters.url}}");
   });
 
-  test("a refusal shows Vink's error message", () => {
+  test("a refusal shows the status code and Vink's error message and code", () => {
     const own = requests().filter(({ inheritsBase }) => !inheritsBase);
     for (const { name, request } of [{ name: "base", request: base }, ...own]) {
-      expect(request.response?.error?.message, name).toContain("body.error.message");
+      const message = request.response?.error?.message;
+      expect(message, name).toMatch(/^\[\{\{statusCode\}\}\] /);
+      expect(message, name).toContain("body.error.message");
+      expect(message, name).toContain("body.error.code");
+    }
+  });
+
+  test("an RPC that iterates has a limit of 300-500, as Make's review asks", () => {
+    const iterating = requests().filter(
+      ({ name, request }) => name.startsWith("rpc ") && (request.response as { iterate?: string })?.iterate,
+    );
+    expect(iterating.length).toBeGreaterThan(0);
+    for (const { name, request } of iterating) {
+      const { limit } = request.response as { limit?: number };
+      expect(limit, name).toBeGreaterThanOrEqual(300);
+      expect(limit, name).toBeLessThanOrEqual(500);
     }
   });
 });

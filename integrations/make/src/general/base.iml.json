@@ -5,7 +5,7 @@
     },
     "response": {
         "error": {
-            "message": "{{ifempty(body.error.message, 'Vink answered with HTTP ' + statusCode + '.')}}",
+            "message": "[{{statusCode}}] {{ifempty(body.error.message, 'Vink answered without an error message.')}}{{if(body.error.code, ' (error code: ' + body.error.code + ')', '')}}",
             "401": {
                 "type": "InvalidAccessTokenError"
             },

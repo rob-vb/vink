@@ -11,11 +11,11 @@
     },
     "response": {
         "data": {
-            "subscriptionId": "{{body.id}}",
+            "externalHookId": "{{body.id}}",
             "formId": "{{body.form_id}}"
         },
         "error": {
-            "message": "{{ifempty(body.error.message, 'Vink answered with HTTP ' + statusCode + '.')}}"
+            "message": "[{{statusCode}}] {{ifempty(body.error.message, 'Vink answered without an error message.')}}{{if(body.error.code, ' (error code: ' + body.error.code + ')', '')}}"
         }
     },
     "log": {
