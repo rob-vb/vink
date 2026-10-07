@@ -2,8 +2,8 @@
 // (ADR 0009): one row per entry of the Form's first List Field, the
 // Document's other values repeated on each row, any further List as JSON in
 // one cell. Columns are headed by Field keys, a first-List sub-Field by
-// `<list key>.<sub key>`, plus `document`, `approved_at`, `approved_by` and
-// `delivery_id`. A Field keyed like one of those four is headed
+// `<list key>.<sub key>`, plus `document` (first), `approved_at`,
+// `approved_by` and `delivery_id` (last, in that order). A Field keyed like one of those four is headed
 // `<key> (Field)`, so Vink's own columns (the duplicate check reads
 // `delivery_id`) are never overwritten.
 import type { Envelope } from "./integrationAdapters";
@@ -27,8 +27,9 @@ function columnOf(key: string) {
  * email, or "Auto-Send"; a test-send's rows say "[test]" before the filename.
  */
 export function rowsOf(envelope: Envelope, approverEmail: string | null): Row[] {
-  const document: Row = {
-    document: `${envelope.test ? "[test] " : ""}${envelope.document.filename}`,
+  const document = `${envelope.test ? "[test] " : ""}${envelope.document.filename}`;
+  // Vink's trailing columns come after the Fields, as on a new sheet.
+  const approval: Row = {
     approved_at: envelope.approval.at,
     approved_by: envelope.approval.mode === "auto" ? "Auto-Send" : approverEmail,
     delivery_id: envelope.delivery_id,
@@ -36,7 +37,7 @@ export function rowsOf(envelope: Envelope, approverEmail: string | null): Row[] 
   // The data's keys are in the Form's order (lib/payload.ts), so the first array is the first List.
   const first = Object.keys(envelope.data).find((key) => Array.isArray(envelope.data[key]));
   const rowWith = (entry: Record<string, Cell> | null) => {
-    const row = { ...document };
+    const row: Row = { document };
     for (const [key, value] of Object.entries(envelope.data)) {
       if (key === first) {
         for (const [sub, cell] of Object.entries(entry ?? {})) row[`${key}.${sub}`] = cell;
@@ -46,26 +47,39 @@ export function rowsOf(envelope: Envelope, approverEmail: string | null): Row[] 
         row[columnOf(key)] = value;
       }
     }
-    return row;
+    return { ...row, ...approval };
   };
   const entries = first === undefined ? [] : (envelope.data[first] as Array<Record<string, Cell>>);
   return entries.length === 0 ? [rowWith(null)] : entries.map(rowWith);
 }
 
+/** Vink's columns at the far right of a sheet; a new Field's column goes just before them. */
+const TRAILING_COLUMNS = ["approved_at", "approved_by", "delivery_id"];
+
+/** A column added to a sheet: `name` in row 1 at the 0-based `index`, the columns from there on shifting right. */
+export type ColumnInsert = { index: number; name: string };
+
 /**
  * Lines rows up under a sheet's header (row 1, as it is now, in whatever
- * order the sheet's owner left it). A column the header lacks is `added` on
- * the right; existing columns never move.
+ * order the sheet's owner left it): values go by column name, never by
+ * position. A column the header lacks is inserted, in order: a Field's (and
+ * `document`'s) just before `approved_at` (or the first of Vink's trailing
+ * columns there is, else on the right), one of Vink's trailing columns on
+ * the right. Existing columns are never rewritten or reordered.
  */
 export function sheetLayout(header: string[], rows: Row[]) {
-  const added: string[] = [];
+  const columns = [...header];
+  const inserts: ColumnInsert[] = [];
   for (const row of rows) {
-    for (const column of Object.keys(row)) {
-      if (!header.includes(column) && !added.includes(column)) added.push(column);
+    for (const name of Object.keys(row)) {
+      if (columns.includes(name)) continue;
+      const trailing = columns.findIndex((c) => TRAILING_COLUMNS.includes(c));
+      const index = TRAILING_COLUMNS.includes(name) || trailing === -1 ? columns.length : trailing;
+      columns.splice(index, 0, name);
+      inserts.push({ index, name });
     }
   }
-  const columns = [...header, ...added];
-  return { added, values: rows.map((row) => columns.map((c) => row[c] ?? null)) };
+  return { inserts, values: rows.map((row) => columns.map((c) => row[c] ?? null)) };
 }
 
 /** `A`, …, `Z`, `AA`, … for a 0-based column index. */

@@ -229,37 +229,84 @@ test("an Approval adds a row per tyre change, the second List as an empty cell",
   const sheet = fakeGoogle.onlySheet();
   expect(sheet.header).toEqual([
     "document",
-    "approved_at",
-    "approved_by",
-    "delivery_id",
     "license_plate",
     "tyre_changes.position",
     "tyre_changes.tread_depth_mm",
     "rims",
+    "approved_at",
+    "approved_by",
+    "delivery_id",
   ]);
   const document = { approved_at: expect.stringMatching(/^2026-10-06T\d\d:\d\d:\d\d\.\d{3}Z$/), approved_by: "ann@example.com" };
   expect(sheet.rows).toEqual([
-    [expect.stringMatching(/\.pdf$/), document.approved_at, document.approved_by, delivery.deliveryId, "OR18DH", "2L1", 3, null],
-    [expect.stringMatching(/\.pdf$/), document.approved_at, document.approved_by, delivery.deliveryId, "OR18DH", "2R1", 4, null],
+    [expect.stringMatching(/\.pdf$/), "OR18DH", "2L1", 3, null, document.approved_at, document.approved_by, delivery.deliveryId],
+    [expect.stringMatching(/\.pdf$/), "OR18DH", "2R1", 4, null, document.approved_at, document.approved_by, delivery.deliveryId],
   ]);
 });
 
-test("a Field added in a new Form Version gets a column on the right", async () => {
+test("a Field added in a new Form Version gets a column just before approved_at", async () => {
   const t = newBackend();
   const ann = await connected(t);
-  await approve(t, ann);
+  const first = await approve(t, ann);
   await ann.user.mutation(api.forms.save, {
     organisationSlug: ann.organisationSlug,
     formId: ann.formId,
     name: "Tyre service",
     fields: [...fields, { type: "text", label: "Werkplaats", key: "workshop", required: false }],
   });
-  await approve(t, ann);
+  const second = await approve(t, ann);
 
   const sheet = fakeGoogle.onlySheet();
-  expect(sheet.header.slice(-2)).toEqual(["rims", "workshop"]);
-  expect(sheet.rows.map((r) => r.length)).toEqual([8, 8, 9, 9]);
-  expect(sheet.rows[3][8]).toBeNull();
+  expect(sheet.header.slice(4)).toEqual(["rims", "workshop", "approved_at", "approved_by", "delivery_id"]);
+  expect(sheet.rows.map((r) => r.length)).toEqual([9, 9, 9, 9]);
+  // The rows already there get an empty cell in the new column; delivery_id stays last.
+  expect(sheet.rows.map((r) => r[5])).toEqual([null, null, null, null]);
+  expect(sheet.rows.map((r) => r[8])).toEqual([
+    (await deliveryOf(t, ann, first)).deliveryId,
+    (await deliveryOf(t, ann, first)).deliveryId,
+    (await deliveryOf(t, ann, second)).deliveryId,
+    (await deliveryOf(t, ann, second)).deliveryId,
+  ]);
+});
+
+test("a sheet in the old column order keeps it: values go by name, a new Field before approved_at", async () => {
+  const t = newBackend();
+  const ann = await connected(t);
+  // The sheet as Vink made it before: Vink's columns first, then the Fields.
+  const [stored] = fakeGoogle.sheets.values();
+  stored.rows = [
+    ["document", "approved_at", "approved_by", "delivery_id", "license_plate", "tyre_changes.position", "tyre_changes.tread_depth_mm"],
+    ["old.pdf", "2026-10-01T08:00:00.000Z", "ann@example.com", "dlv_old", "OLD1", "1L", 5],
+  ];
+  // The first write lands, but its answer never arrives: the retry must find delivery_id by name.
+  const append = fakeGoogle.append;
+  fakeGoogle.append = async (...args) => {
+    fakeGoogle.append = append;
+    await append(...args);
+    const { GoogleFailure } = await import("./lib/google");
+    throw new GoogleFailure(null, "Google didn't answer within 15 s");
+  };
+  const documentId = await approve(t, ann);
+  const { deliveryId, attempts } = await deliveryOf(t, ann, documentId);
+  expect(attempts.at(-1)?.body).toBe("Already in the sheet: no rows added");
+
+  const sheet = fakeGoogle.onlySheet();
+  expect(sheet.header).toEqual([
+    "document",
+    "rims",
+    "approved_at",
+    "approved_by",
+    "delivery_id",
+    "license_plate",
+    "tyre_changes.position",
+    "tyre_changes.tread_depth_mm",
+  ]);
+  const approvedAt = expect.stringMatching(/^2026-10-06T/);
+  expect(sheet.rows).toEqual([
+    ["old.pdf", null, "2026-10-01T08:00:00.000Z", "ann@example.com", "dlv_old", "OLD1", "1L", 5],
+    [expect.stringMatching(/\.pdf$/), null, approvedAt, "ann@example.com", deliveryId, "OR18DH", "2L1", 3],
+    [expect.stringMatching(/\.pdf$/), null, approvedAt, "ann@example.com", deliveryId, "OR18DH", "2R1", 4],
+  ]);
 });
 
 test("Google's rate limits and 5xx are retried", async () => {
@@ -356,9 +403,9 @@ test("a test-send adds dummy rows marked as test", async () => {
   });
   expect(answer).toEqual({ ok: true, status: 200, body: "1 row added to the sheet", error: null });
   const [row] = fakeGoogle.onlySheet().rows;
-  expect(row.slice(0, 3)).toEqual(["[test] example.pdf", "2026-10-06T09:00:00.000Z", null]);
-  expect(row[3]).toMatch(/^test_/);
-  expect(row.slice(4)).toEqual(["Example Kenteken", "Example Positie", 123.45, '[{"size":"Example Maat"}]']);
+  expect(row.slice(0, 5)).toEqual(["[test] example.pdf", "Example Kenteken", "Example Positie", 123.45, '[{"size":"Example Maat"}]']);
+  expect(row.slice(5, 7)).toEqual(["2026-10-06T09:00:00.000Z", null]);
+  expect(row[7]).toMatch(/^test_/);
 });
 
 test("a test-send while a Delivery writes to the sheet asks to try again, and writes nothing", async () => {

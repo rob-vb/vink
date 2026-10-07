@@ -110,12 +110,25 @@ test("reading takes the table's header and the column under its name, blanks as 
   expect(sent).toHaveLength(1);
 });
 
-test("appending adds new columns on the right, then the rows as text, never formulas", async () => {
-  answers = [Response.json({}), Response.json({ index: 7 }, { status: 201 })];
-  await microsoft.append("t", workbook, ["workshop"], [["=HYPERLINK(\"x\")", 3, null, "00123", true]]);
-  expect(sent.map((s) => `${s.method} ${s.url}`)).toEqual([`POST ${table}/columns/add`, `POST ${table}/rows/add`]);
-  expect(JSON.parse(sent[0].body as string)).toEqual({ index: null, name: "workshop" });
-  expect(JSON.parse(sent[1].body as string)).toEqual({
+test("appending inserts new columns at their index, in order, then adds the rows as text, never formulas", async () => {
+  answers = [Response.json({}), Response.json({}), Response.json({ index: 7 }, { status: 201 })];
+  await microsoft.append(
+    "t",
+    workbook,
+    [
+      { index: 2, name: "supplier" },
+      { index: 3, name: "total" },
+    ],
+    [["=HYPERLINK(\"x\")", 3, null, "00123", true]],
+  );
+  expect(sent.map((s) => `${s.method} ${s.url}`)).toEqual([
+    `POST ${table}/columns/add`,
+    `POST ${table}/columns/add`,
+    `POST ${table}/rows/add`,
+  ]);
+  expect(JSON.parse(sent[0].body as string)).toEqual({ index: 2, name: "supplier" });
+  expect(JSON.parse(sent[1].body as string)).toEqual({ index: 3, name: "total" });
+  expect(JSON.parse(sent[2].body as string)).toEqual({
     index: null,
     values: [["'=HYPERLINK(\"x\")", 3, "", "'00123", true]],
   });

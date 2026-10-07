@@ -1,7 +1,7 @@
 // The Google Sheets adapter: adds a Document's rows (lib/rows.ts, ADR 0009)
-// to the Integration's sheet, a new Field's column on the right. A Delivery
-// whose `delivery_id` is already in the sheet adds nothing, so a retry after
-// a lost answer, or a re-send, doesn't write its rows twice.
+// to the Integration's sheet, a new Field's column just before `approved_at`.
+// A Delivery whose `delivery_id` is already in the sheet adds nothing, so a
+// retry after a lost answer, or a re-send, doesn't write its rows twice.
 import { google, GoogleFailure } from "./google";
 import type { IntegrationAdapter, SendResult } from "./integrationAdapters";
 import { rowsOf, sheetLayout } from "./rows";
@@ -39,8 +39,8 @@ export const googleSheetsAdapter: IntegrationAdapter<"google_sheets"> = {
       if (column.includes(envelope.delivery_id)) {
         return { outcome: { kind: "delivered" }, status: 200, body: "Already in the sheet: no rows added", error: null };
       }
-      const { added, values } = sheetLayout(header, rowsOf(envelope, approverEmail));
-      await google.append(token, sheet, { from: header.length, cells: added, columnCount }, values);
+      const { inserts, values } = sheetLayout(header, rowsOf(envelope, approverEmail));
+      await google.append(token, sheet, { inserts, columnCount }, values);
       const body = values.length === 1 ? "1 row added to the sheet" : `${values.length} rows added to the sheet`;
       return { outcome: { kind: "delivered" }, status: 200, body, error: null };
     } catch (error) {

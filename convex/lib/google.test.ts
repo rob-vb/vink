@@ -63,20 +63,43 @@ test("reading finds the tab by its id, its width and the column under its header
   expect(decodeURIComponent(sent[2].url)).toContain("/values/'Tyre''s log'!D2:D");
 });
 
-test("appending widens the grid for new columns and writes values, never formulas, in one request", async () => {
+test("appending inserts new columns at their index, widens the grid past its edge, and writes values, never formulas, in one request", async () => {
   answers = [Response.json({})];
-  await google.append("t", sheet, { from: 4, cells: ["license_plate", "vin"], columnCount: 5 }, [
-    ["=HYPERLINK(1)", 3, true, null],
-  ]);
+  // A full grid of 5: document, invoice_number, approved_at, approved_by, delivery_id.
+  await google.append(
+    "t",
+    sheet,
+    {
+      inserts: [
+        { index: 2, name: "supplier" },
+        { index: 6, name: "notes" },
+      ],
+      columnCount: 5,
+    },
+    [["=HYPERLINK(1)", 3, true, null]],
+  );
   expect(sent).toHaveLength(1);
   const { requests } = JSON.parse(sent[0].body!);
   expect(sent[0].url).toBe("https://sheets.googleapis.com/v4/spreadsheets/abc:batchUpdate");
   expect(requests).toEqual([
+    {
+      insertDimension: {
+        range: { sheetId: 7, dimension: "COLUMNS", startIndex: 2, endIndex: 3 },
+        inheritFromBefore: true,
+      },
+    },
+    {
+      updateCells: {
+        start: { sheetId: 7, rowIndex: 0, columnIndex: 2 },
+        rows: [{ values: [{ userEnteredValue: { stringValue: "supplier" } }] }],
+        fields: "userEnteredValue",
+      },
+    },
     { appendDimension: { sheetId: 7, dimension: "COLUMNS", length: 1 } },
     {
       updateCells: {
-        start: { sheetId: 7, rowIndex: 0, columnIndex: 4 },
-        rows: [{ values: [{ userEnteredValue: { stringValue: "license_plate" } }, { userEnteredValue: { stringValue: "vin" } }] }],
+        start: { sheetId: 7, rowIndex: 0, columnIndex: 6 },
+        rows: [{ values: [{ userEnteredValue: { stringValue: "notes" } }] }],
         fields: "userEnteredValue",
       },
     },
