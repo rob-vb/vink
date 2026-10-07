@@ -2,5 +2,9 @@
     {
         "label": "Documents",
         "modules": ["watchApprovedDocuments", "sendDocument"]
+    },
+    {
+        "label": "Other",
+        "modules": ["makeApiCall"]
     }
 ]

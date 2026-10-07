@@ -1,0 +1,49 @@
+[
+    {
+        "name": "url",
+        "type": "text",
+        "label": "URL",
+        "help": "A path relative to `https://vink.page/v1`, for example `/forms`. See the API reference at https://vink.page/developers/api.",
+        "required": true
+    },
+    {
+        "name": "method",
+        "type": "select",
+        "label": "Method",
+        "required": true,
+        "default": "GET",
+        "options": [
+            { "label": "GET", "value": "GET" },
+            { "label": "POST", "value": "POST" },
+            { "label": "PUT", "value": "PUT" },
+            { "label": "PATCH", "value": "PATCH" },
+            { "label": "DELETE", "value": "DELETE" }
+        ]
+    },
+    {
+        "name": "headers",
+        "type": "array",
+        "label": "Headers",
+        "help": "You don't need to add the Authorization header; it is already added for you.",
+        "default": [{ "key": "Content-Type", "value": "application/json" }],
+        "spec": [
+            { "name": "key", "type": "text", "label": "Key" },
+            { "name": "value", "type": "text", "label": "Value" }
+        ]
+    },
+    {
+        "name": "qs",
+        "type": "array",
+        "label": "Query String",
+        "spec": [
+            { "name": "key", "type": "text", "label": "Key" },
+            { "name": "value", "type": "text", "label": "Value" }
+        ]
+    },
+    {
+        "name": "body",
+        "type": "any",
+        "label": "Body",
+        "help": "The request body, for example JSON."
+    }
+]
