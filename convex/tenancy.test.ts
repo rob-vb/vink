@@ -35,7 +35,7 @@ test("a Member can read their Organisation but not use Admin-only functions", as
 
   expect(
     await cas.query(api.organisations.home, { organisationSlug: ann.slug }),
-  ).toEqual({ name: "Acme Fleet", slug: "acme-fleet", role: "member" });
+  ).toEqual({ name: "Acme Fleet", slug: ann.slug, role: "member" });
   await expect(
     cas.mutation(api.organisations.rename, {
       organisationSlug: ann.slug,

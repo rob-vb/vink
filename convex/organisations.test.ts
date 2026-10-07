@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { api } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import { asUser, newBackend, signUp } from "./test.setup";
 
 test("the person who signs up is Admin of their new Organisation", async () => {
@@ -7,28 +7,40 @@ test("the person who signs up is Admin of their new Organisation", async () => {
 
   const { user, slug } = await signUp(t, "ann", "Acme Fleet");
 
-  expect(slug).toBe("acme-fleet");
+  expect(slug).toMatch(/^[a-z0-9]{8}$/);
   expect(
     await user.query(api.organisations.home, { organisationSlug: slug }),
-  ).toEqual({ name: "Acme Fleet", slug: "acme-fleet", role: "admin" });
+  ).toEqual({ name: "Acme Fleet", slug, role: "admin" });
 });
 
-test("Organisations with the same name get different slugs", async () => {
+test("the slug is a random id, not the name, so Organisations with the same name differ", async () => {
   const t = newBackend();
 
-  const first = await signUp(t, "ann", "Acme Fleet");
-  const second = await signUp(t, "bob", "Acme Fleet");
+  const first = await signUp(t, "ann", "Acme");
+  const second = await signUp(t, "bob", "Acme");
 
-  expect(first.slug).toBe("acme-fleet");
-  expect(second.slug).toBe("acme-fleet-2");
+  expect(first.slug).not.toContain("acme");
+  expect(second.slug).toMatch(/^[a-z0-9]{8}$/);
+  expect(second.slug).not.toBe(first.slug);
 });
 
-test("a name without letters or digits still gets a usable slug", async () => {
+test("the migration gives every Organisation a new slug that still works", async () => {
   const t = newBackend();
+  const { user, slug } = await signUp(t, "ann", "Acme");
+  await t.run(async (ctx) => {
+    const organisation = (await ctx.db.query("organisations").first())!;
+    await ctx.db.patch(organisation._id, { slug: "acme" });
+  });
 
-  const { slug } = await signUp(t, "ann", "Ø ☃");
+  expect(await t.mutation(internal.organisations.randomiseSlugs, {})).toEqual({ changed: 1 });
 
-  expect(slug).toBe("organisation");
+  const [mine] = await user.query(api.organisations.mine, {});
+  expect(mine.slug).toMatch(/^[a-z0-9]{8}$/);
+  expect(mine.slug).not.toBe("acme");
+  expect(mine.slug).not.toBe(slug);
+  expect(
+    await user.query(api.organisations.home, { organisationSlug: mine.slug }),
+  ).toMatchObject({ name: "Acme" });
 });
 
 test("an Admin can rename their Organisation and keeps its slug", async () => {
@@ -42,16 +54,16 @@ test("an Admin can rename their Organisation and keeps its slug", async () => {
 
   expect(
     await user.query(api.organisations.home, { organisationSlug: slug }),
-  ).toEqual({ name: "Acme Fleet Services", slug: "acme-fleet", role: "admin" });
+  ).toEqual({ name: "Acme Fleet Services", slug, role: "admin" });
 });
 
 test("a signed-in user sees the Organisations they belong to", async () => {
   const t = newBackend();
-  await signUp(t, "ann", "Acme Fleet");
+  const { slug } = await signUp(t, "ann", "Acme Fleet");
   await signUp(t, "bob", "Bob's Tyres");
 
   expect(await asUser(t, "ann").query(api.organisations.mine, {})).toEqual([
-    { name: "Acme Fleet", slug: "acme-fleet", role: "admin" },
+    { name: "Acme Fleet", slug, role: "admin" },
   ]);
   expect(await asUser(t, "dan").query(api.organisations.mine, {})).toEqual([]);
 });

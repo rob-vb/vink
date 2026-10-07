@@ -51,9 +51,9 @@ test("an invited colleague accepts the mailed link and joins with the given role
   const cas = asUser(t, "cas");
   const { slug } = await cas.mutation(api.invitations.accept, { token });
 
-  expect(slug).toBe("acme-fleet");
+  expect(slug).toBe(ann.slug);
   expect(await cas.query(api.organisations.mine, {})).toEqual([
-    { name: "Acme Fleet", slug: "acme-fleet", role: "member" },
+    { name: "Acme Fleet", slug: ann.slug, role: "member" },
   ]);
 });
 
@@ -155,7 +155,7 @@ test("inviting the same address again replaces the earlier link", async () => {
   );
   await cas.mutation(api.invitations.accept, { token: second });
   expect(await cas.query(api.organisations.mine, {})).toEqual([
-    { name: "Acme Fleet", slug: "acme-fleet", role: "admin" },
+    { name: "Acme Fleet", slug: ann.slug, role: "admin" },
   ]);
 });
 
@@ -200,7 +200,7 @@ test("the accept page can show who invited whom to what, and whether the link st
   expect(await cas.query(api.invitations.preview, { token })).toEqual({
     status: "open",
     organisationName: "Acme Fleet",
-    organisationSlug: "acme-fleet",
+    organisationSlug: ann.slug,
     role: "admin",
     email: "cas@example.com",
     invitedBy: "ann@example.com",
