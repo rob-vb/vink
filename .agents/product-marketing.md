@@ -20,7 +20,7 @@ Source of the decisions: [Positioning and messaging](../.scratch/vink-marketing/
 - Get the data from incoming PDFs into our system without retyping it.
 - Only spend attention on the values that might be wrong.
 - Handle new document layouts without building templates.
-**Use cases:** any document type. Never lead with one niche or one industry. Examples are varied: invoices, delivery notes, order forms, handwritten forms.
+**Use cases:** any document type. Never lead with one niche or one industry, and never use tyre or car-service examples (tyres, licence plates, mileage). Examples are varied: invoices, delivery notes, order forms, handwritten forms.
 
 ## Personas
 | Persona | Cares about | Challenge | Value we promise |
