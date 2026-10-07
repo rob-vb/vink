@@ -43,6 +43,7 @@ next-env.d.ts
 # local
 .claude/worktrees/
 .next-live/
+.next-e2e/
 *.swp
 /.next-smoke/
 
