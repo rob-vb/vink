@@ -87,6 +87,20 @@ async function subscriptionOf(ctx: QueryCtx, integrationId: Id<"integrations">) 
   return { apiKeyName: apiKey?.name ?? "" };
 }
 
+/** The kinds the Integration dialog offers: a spreadsheet kind only once its OAuth client is set up. */
+export const availableKinds = orgQuery({
+  role: "admin",
+  args: {},
+  handler: async () => {
+    const env = process.env;
+    return [
+      "webhook" as const,
+      ...(env.GOOGLE_OAUTH_CLIENT_ID && env.GOOGLE_OAUTH_CLIENT_SECRET ? ["google_sheets" as const] : []),
+      ...(env.MICROSOFT_OAUTH_CLIENT_ID && env.MICROSOFT_OAUTH_CLIENT_SECRET ? ["excel" as const] : []),
+    ];
+  },
+});
+
 export const list = orgQuery({
   role: "admin",
   args: {},

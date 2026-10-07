@@ -1,6 +1,6 @@
 "use client";
 
-import { useAction, useMutation } from "convex/react";
+import { useAction, useMutation, useQuery } from "convex/react";
 import { ExternalLink, FileSpreadsheet, Plus, Sheet, Webhook, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { type ReactElement, useState } from "react";
@@ -67,6 +67,7 @@ export function IntegrationDialog({
   const rename = useMutation(api.integrations.rename);
   const googleConnectUrl = useAction(api.googleSheets.connectUrl);
   const microsoftConnectUrl = useAction(api.excel.connectUrl);
+  const kinds = useQuery(api.integrations.availableKinds, { organisationSlug });
   const [open, setOpen] = useState(false);
   const [kind, setKind] = useState<Kind>("webhook");
   const [name, setName] = useState("");
@@ -151,7 +152,7 @@ export function IntegrationDialog({
             </DialogDescription>
           </DialogHeader>
           <FieldGroup>
-            {!integration && (
+            {!integration && kinds && kinds.length > 1 && (
               <Field>
                 <FieldLabel>{t("kind")}</FieldLabel>
                 <ToggleGroup
@@ -164,14 +165,18 @@ export function IntegrationDialog({
                     <Webhook />
                     {t("webhook")}
                   </ToggleGroupItem>
-                  <ToggleGroupItem value="google_sheets">
-                    <Sheet />
-                    {t("googleSheets")}
-                  </ToggleGroupItem>
-                  <ToggleGroupItem value="excel">
-                    <FileSpreadsheet />
-                    {t("excel")}
-                  </ToggleGroupItem>
+                  {kinds.includes("google_sheets") && (
+                    <ToggleGroupItem value="google_sheets">
+                      <Sheet />
+                      {t("googleSheets")}
+                    </ToggleGroupItem>
+                  )}
+                  {kinds.includes("excel") && (
+                    <ToggleGroupItem value="excel">
+                      <FileSpreadsheet />
+                      {t("excel")}
+                    </ToggleGroupItem>
+                  )}
                 </ToggleGroup>
               </Field>
             )}

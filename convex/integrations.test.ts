@@ -398,3 +398,19 @@ test("deleting an Integration detaches it from its Forms", async () => {
   expect(await user.query(api.integrations.list, { organisationSlug })).toEqual([]);
   expect((await user.query(api.forms.get, { organisationSlug, formId })).keysLocked).toBe(false);
 });
+
+test("the dialog offers a spreadsheet kind only when its OAuth client is set up", async () => {
+  const t = newBackend();
+  const ann = await acme(t);
+  const kinds = () => ann.user.query(api.integrations.availableKinds, { organisationSlug: ann.organisationSlug });
+
+  expect(await kinds()).toEqual(["webhook"]);
+
+  vi.stubEnv("GOOGLE_OAUTH_CLIENT_ID", "client-123.apps.googleusercontent.com");
+  vi.stubEnv("GOOGLE_OAUTH_CLIENT_SECRET", "client-secret");
+  vi.stubEnv("MICROSOFT_OAUTH_CLIENT_ID", "app-123");
+  expect(await kinds()).toEqual(["webhook", "google_sheets"]);
+
+  vi.stubEnv("MICROSOFT_OAUTH_CLIENT_SECRET", "client-secret");
+  expect(await kinds()).toEqual(["webhook", "google_sheets", "excel"]);
+});
