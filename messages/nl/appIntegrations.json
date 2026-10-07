@@ -79,7 +79,7 @@
     "sheetNameHint": "Dit is ook de naam van de sheet die Vink maakt.",
     "connectSignIn": "Je logt in bij Google op een eigen pagina. Daarna kom je hier terug.",
     "connectAccess": "Vink kan alleen de sheet openen die Vink maakt. Je andere bestanden niet.",
-    "connectRows": "De kolommen zijn de sleutels van de Velden. Een nieuw Veld krijgt een nieuwe kolom rechts.",
+    "connectRows": "De kolommen zijn de sleutels van de Velden. Een nieuw Veld krijgt een nieuwe kolom vóór de drie kolommen van Vink rechts.",
     "openSheet": "Sheet openen",
     "connect": "Google-account koppelen",
     "reconnectHint": "Je logt opnieuw in bij Google. De sheet blijft dezelfde, dus gebruik het Google-account dat de sheet heeft gemaakt.",
