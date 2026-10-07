@@ -40,23 +40,28 @@ const base = JSON.parse(read(manifest.generalCodeFiles.base));
 
 type Request = { url?: string; method?: string; response?: { error?: { message?: string } } };
 
-/** Every HTTP request the app makes: communications, attach and detach. */
+/** The universal module: its URL is whatever path the user types. */
+const UNIVERSAL = "makeApiCall";
+
+/** Every HTTP request the app makes to a fixed endpoint: communications, attach and detach. */
 const requests = (): Array<{ name: string; request: Request; inheritsBase: boolean }> =>
   Object.entries(manifest.components as Record<string, Record<string, { codeFiles: Record<string, string | null> }>>)
     .flatMap(([type, components]) =>
-      Object.entries(components).flatMap(([id, component]) =>
-        Object.entries(component.codeFiles)
-          .filter(([code, path]) => path && ["communication", "attach", "detach"].includes(code))
-          .flatMap(([code, path]) => {
-            const parsed: Request | Request[] = JSON.parse(read(path!));
-            return (Array.isArray(parsed) ? parsed : [parsed]).map((request) => ({
-              name: `${type} ${id} ${code}`,
-              request,
-              // Base applies to modules and RPCs; the others carry their own URL and header.
-              inheritsBase: type === "module" || type === "rpc",
-            }));
-          }),
-      ),
+      Object.entries(components)
+        .filter(([id]) => !(type === "module" && id === UNIVERSAL))
+        .flatMap(([id, component]) =>
+          Object.entries(component.codeFiles)
+            .filter(([code, path]) => path && ["communication", "attach", "detach"].includes(code))
+            .flatMap(([code, path]) => {
+              const parsed: Request | Request[] = JSON.parse(read(path!));
+              return (Array.isArray(parsed) ? parsed : [parsed]).map((request) => ({
+                name: `${type} ${id} ${code}`,
+                request,
+                // Base applies to modules and RPCs; the others carry their own URL and header.
+                inheritsBase: type === "module" || type === "rpc",
+              }));
+            }),
+        ),
     )
     .filter(({ request }) => request.url !== undefined);
 
@@ -91,6 +96,14 @@ describe("requests", () => {
     expect(new Set(called)).toEqual(
       new Set(["listForms", "sendDocument", "createSubscription", "deleteSubscription", "getFormSample"]),
     );
+  });
+
+  test("the universal module calls a path on Base, so it sends the API Key and shows Vink's errors", () => {
+    const { moduleType, connection, codeFiles } = manifest.components.module[UNIVERSAL];
+    expect(moduleType).toBe("universal");
+    expect(connection).toBe("vink");
+    const request: Request = JSON.parse(read(codeFiles.communication));
+    expect(request.url).toBe("{{parameters.url}}");
   });
 
   test("a refusal shows Vink's error message", () => {
@@ -145,27 +158,29 @@ describe("formFieldsSpec (custom IML function)", () => {
   test("turns the API reference's example Form into the trigger's data collection", () => {
     const listForms = openApiDocument.paths["/forms"].get!.responses["200"] as Response;
     const { data } = listForms.content!["application/json"].example as { data: Array<{ id: string }> };
-    expect(imlFunction("formFieldsSpec")(data, data[0].id)).toEqual({
-      name: "data",
-      label: "Fields",
-      type: "collection",
-      spec: [
-        { name: "supplier", label: "Leverancier", type: "text" },
-        { name: "invoice_number", label: "Factuurnummer", type: "text" },
-        { name: "invoice_date", label: "Factuurdatum", type: "date" },
-        { name: "total_amount", label: "Totaalbedrag", type: "number" },
-        { name: "currency", label: "Valuta", type: "text" },
-        {
-          name: "lines",
-          label: "Regels",
-          type: "array",
-          spec: [
-            { name: "description", label: "Omschrijving", type: "text" },
-            { name: "quantity", label: "Aantal", type: "number" },
-            { name: "amount", label: "Bedrag", type: "number" },
-          ],
-        },
-      ],
-    });
+    expect(imlFunction("formFieldsSpec")(data, data[0].id)).toEqual([
+      {
+        name: "data",
+        label: "Fields",
+        type: "collection",
+        spec: [
+          { name: "supplier", label: "Leverancier", type: "text" },
+          { name: "invoice_number", label: "Factuurnummer", type: "text" },
+          { name: "invoice_date", label: "Factuurdatum", type: "date" },
+          { name: "total_amount", label: "Totaalbedrag", type: "number" },
+          { name: "currency", label: "Valuta", type: "text" },
+          {
+            name: "lines",
+            label: "Regels",
+            type: "array",
+            spec: [
+              { name: "description", label: "Omschrijving", type: "text" },
+              { name: "quantity", label: "Aantal", type: "number" },
+              { name: "amount", label: "Bedrag", type: "number" },
+            ],
+          },
+        ],
+      },
+    ]);
   });
 });

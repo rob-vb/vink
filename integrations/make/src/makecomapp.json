@@ -62,6 +62,20 @@
                     "samples": "modules/send-document/send-document.samples.iml.json",
                     "scope": null
                 }
+            },
+            "makeApiCall": {
+                "label": "Make an API call",
+                "description": "Performs an arbitrary authorized API call.",
+                "moduleType": "universal",
+                "connection": "vink",
+                "codeFiles": {
+                    "communication": "modules/make-api-call/make-api-call.communication.iml.json",
+                    "staticParams": "modules/make-api-call/make-api-call.static-params.iml.json",
+                    "mappableParams": "modules/make-api-call/make-api-call.mappable-params.iml.json",
+                    "interface": "modules/make-api-call/make-api-call.interface.iml.json",
+                    "samples": "modules/make-api-call/make-api-call.samples.iml.json",
+                    "scope": null
+                }
             }
         },
         "rpc": {
@@ -128,6 +142,10 @@
                     {
                         "local": "sendDocument",
                         "remote": "sendDocument"
+                    },
+                    {
+                        "local": "makeApiCall",
+                        "remote": "makeApiCall"
                     }
                 ],
                 "rpc": [
@@ -144,7 +162,12 @@
                         "remote": "formSample"
                     }
                 ],
-                "function": [],
+                "function": [
+                    {
+                        "local": "formFieldsSpec",
+                        "remote": "formFieldsSpec"
+                    }
+                ],
                 "endpoint": []
             }
         }

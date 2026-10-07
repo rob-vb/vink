@@ -11,6 +11,7 @@ component and the file of each code; the other files in `src/` are those codes.
 | Webhook (dedicated, attached) | `approvedDocuments` | Form dropdown; attach = `POST /v1/subscriptions`, detach = `DELETE /v1/subscriptions/{id}` |
 | Instant trigger | `watchApprovedDocuments` | "Watch approved Documents": outputs the envelope; `data` is built from the Form's Fields |
 | Action | `sendDocument` | "Send in a Document": Form dropdown, a file (name + data) sent as the multipart `file` part |
+| Universal module | `makeApiCall` | "Make an API call": any path on Base, with the connection's API Key |
 | RPC | `listForms` | The Form dropdown (`GET /v1/forms`) |
 | RPC | `formFields` | The trigger's `data` collection: `formFieldsSpec(body.data, webhook.formId)` |
 | RPC | `formSample` | The trigger's sample (`GET /v1/forms/{form_id}/sample`) |
@@ -67,11 +68,9 @@ name in Make (Make named the connection and the webhook `vink-fsvhks`).
 tests). A new app: create it in Make (Custom Apps → Create app; label "Vink", theme
 `#0f1e36`), add an origin with its app ID and no `idMapping`, and run the script.
 
-The custom IML function `formFieldsSpec` is not in Make yet. Make refuses it with
-`HTTP 403 ... admin permission "apps edit" is needed (IM002)`, because custom IML functions
-are off by default. Ask Make support to enable them for `vink-fsvhks`, then run the script
-again. Until then, the RPC `formFields` fails, so the trigger shows no Field outputs before
-the first run.
+Custom IML functions are on for `vink-fsvhks` (Make support, 2026-10-07). Make refuses a
+function code that does not start with `function` (`HTTP 400 Invalid function code. (IM005)`),
+so the eslint comment in `form-fields-spec.code.js` sits on the function line itself.
 
 The app icon is not part of these files. Upload `public/vink_icon.svg` as a 512×512 PNG in
 Make (Custom Apps → Vink → the icon).
@@ -114,9 +113,11 @@ Subscription ended with the key, so delete the webhook in Make anyway.
 
 Before the request (see Make's "App review" prerequisites):
 
-- Test scenarios for both modules, shared with Make's QA, with a test API Key that has Pages.
-- Make's docs say every app with an API should have a universal module ("Make an API
-  call", relative URL on the base). It is not built yet; add it if the review asks.
+- Test scenarios for both modules, plus one scenario that ends in an API error, shared with
+  Make's QA, with a test API Key that has Pages. The review form asks for their links.
+- The universal module `makeApiCall` ("Make an API call", a path relative to Base) is there,
+  as Make requires.
+- Every module is set to visible in Make.
 - Module labels and descriptions follow Make's naming rules; check them in the review.
 
 Then, in Make: Custom Apps → Vink → Request review. Once Make approves the app, it is public

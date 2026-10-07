@@ -17,7 +17,7 @@ const form = {
 };
 
 it("makes the chosen Form's Fields the data collection, with a List Field as an array of rows", () => {
-    assert.deepStrictEqual(formFieldsSpec([{ id: "other", fields: [] }, form], "form_1"), {
+    assert.deepStrictEqual(formFieldsSpec([{ id: "other", fields: [] }, form], "form_1"), [{
         name: "data",
         label: "Fields",
         type: "collection",
@@ -34,9 +34,9 @@ it("makes the chosen Form's Fields the data collection, with a List Field as an 
                 ],
             },
         ],
-    });
+    }]);
 });
 
 it("gives an empty data collection when the Form is gone", () => {
-    assert.deepStrictEqual(formFieldsSpec([form], "deleted").spec, []);
+    assert.deepStrictEqual(formFieldsSpec([form], "deleted")[0].spec, []);
 });
