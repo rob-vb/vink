@@ -45,7 +45,7 @@
     "privacy": "Privacybeleid",
     "terms": "Voorwaarden",
     "cookieSettings": "Cookie-instellingen",
-    "rights": "© {year} Vink. Prijzen excl. btw.",
+    "rights": "© {year} Vink. KvK {kvk}. Prijzen excl. btw.",
     "language": "Taal"
   },
   "form": {

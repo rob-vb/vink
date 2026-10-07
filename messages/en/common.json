@@ -45,7 +45,7 @@
     "privacy": "Privacy policy",
     "terms": "Terms",
     "cookieSettings": "Cookie settings",
-    "rights": "© {year} Vink. Prices excl. VAT.",
+    "rights": "© {year} Vink. KvK (Dutch Chamber of Commerce) {kvk}. Prices excl. VAT.",
     "language": "Language"
   },
   "form": {
