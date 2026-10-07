@@ -52,6 +52,7 @@ import type * as lib_microsoft from "../lib/microsoft.js";
 import type * as lib_models from "../lib/models.js";
 import type * as lib_oauthState from "../lib/oauthState.js";
 import type * as lib_payload from "../lib/payload.js";
+import type * as lib_pdfLimits from "../lib/pdfLimits.js";
 import type * as lib_pdfStore from "../lib/pdfStore.js";
 import type * as lib_pipeline from "../lib/pipeline.js";
 import type * as lib_proposer from "../lib/proposer.js";
@@ -144,6 +145,7 @@ declare const fullApi: ApiFromModules<{
   "lib/models": typeof lib_models;
   "lib/oauthState": typeof lib_oauthState;
   "lib/payload": typeof lib_payload;
+  "lib/pdfLimits": typeof lib_pdfLimits;
   "lib/pdfStore": typeof lib_pdfStore;
   "lib/pipeline": typeof lib_pipeline;
   "lib/proposer": typeof lib_proposer;

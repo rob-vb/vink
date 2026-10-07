@@ -58,7 +58,7 @@
       "Several PDFs in one go, each with its own progress and errors",
       "One email address per Form, switched on by an Admin",
       "Recent emails shows what came in, and what was refused and why",
-      "PDFs up to 20 pages each"
+      "PDFs up to 10 MB and 20 pages each"
     ],
     "otherSources": "Other sources? Tell us.",
     "alt": "The upload dialog with three PDFs, one of them refused for having more than 20 pages, next to a Form's email address and its recent emails.",

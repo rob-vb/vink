@@ -111,7 +111,7 @@
       "kicker": "Het komt binnen",
       "title": "Mail de PDF door, of sleep hem erin.",
       "body": "Het werkt met elk soort document, ook gescand of met de hand ingevuld. Je hoeft geen sjablonen te bouwen.",
-      "intake": "Sleep meerdere PDF's tegelijk naar binnen, of geef een formulier een eigen e-mailadres. Leveranciers en collega's mailen hun PDF's dan direct naar Vink. Pdf-bijlagen tot 20 pagina's per stuk."
+      "intake": "Sleep meerdere PDF's tegelijk naar binnen, of geef een formulier een eigen e-mailadres. Leveranciers en collega's mailen hun PDF's dan direct naar Vink. Pdf-bijlagen tot 10 MB en 20 pagina's per stuk."
     },
     "reads": {
       "kicker": "Vink leest het",
@@ -185,7 +185,7 @@
     },
     "templates": {
       "q": "Moet ik templates instellen?",
-      "a": "Nee. Beschrijf je velden, of laat Vink ze voorstellen op basis van één voorbeeld. Daarna koppelt Vink elk nieuw document zelf aan je velden, welke opmaak het ook heeft. Vink leest PDF's tot 20 pagina's."
+      "a": "Nee. Beschrijf je velden, of laat Vink ze voorstellen op basis van één voorbeeld. Daarna koppelt Vink elk nieuw document zelf aan je velden, welke opmaak het ook heeft. Vink leest PDF's tot 10 MB en 20 pagina's."
     }
   }
 }

@@ -35,7 +35,7 @@
     "reading": "Vink reads PDFs with Gemini on Vertex AI, EU region.",
     "apiReference": "Calling Vink from your own code? The <link>API reference</link> describes the public API and its API Keys.",
     "inboundTitle": "Getting documents in",
-    "inbound": "Documents come in through the app today: upload several PDFs at once, or email them in. No code? Point any system's email at the Form's Intake Address, and each PDF attachment becomes a Document. There is no upload API yet. Need one? <link>Tell us</link>."
+    "inbound": "Documents come in through the app today: upload several PDFs at once, or email them in. No code? Point any system's email at the Form's Intake Address, and each PDF attachment becomes a Document. A program can also send PDFs in through the API: <link>POST /v1/forms/'{form_id}'/documents</link>."
   },
   "platforms": {
     "title": "Make, n8n, Zapier and Power Automate",

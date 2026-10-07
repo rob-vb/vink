@@ -3,7 +3,7 @@
 // Worker holds no business logic: it stores PDF attachments in R2 and tells
 // Vink, which decides per attachment (see convex/intake.ts). It never replies.
 import PostalMime from "postal-mime";
-import { failsDmarc, MAX_BYTES, planEmail } from "./map";
+import { failsDmarc, MAX_MESSAGE_BYTES, planEmail } from "./map";
 
 type Env = {
   PDFS: R2Bucket;
@@ -13,7 +13,7 @@ type Env = {
 
 export default {
   async email(message: ForwardableEmailMessage, env: Env): Promise<void> {
-    if (message.rawSize > MAX_BYTES) {
+    if (message.rawSize > MAX_MESSAGE_BYTES) {
       message.setReject("Message too large");
       return;
     }

@@ -1,8 +1,20 @@
 // The Worker's only logic: which attachments to store and what to tell Vink.
 // Kept free of Cloudflare and MIME-parser imports so it can be tested alone.
 
-/** Cloudflare Email Routing's own limit; larger mail never reaches the Worker. */
-export const MAX_BYTES = 25 * 1024 * 1024;
+/**
+ * The largest PDF attachment Vink takes: 10 MB, as on every way in. A copy of
+ * MAX_PDF_BYTES in convex/lib/pdfLimits.ts (this package can't import it);
+ * change both together.
+ */
+export const MAX_BYTES = 10 * 1024 * 1024;
+
+/**
+ * The largest email the Worker reads: Cloudflare Email Routing's own limit.
+ * Base64 makes a 10 MB PDF about 14 MB of mail, and one email may carry
+ * several PDFs, so each PDF is checked against MAX_BYTES instead and an
+ * oversized one shows as refused in the Form's recent emails.
+ */
+export const MAX_MESSAGE_BYTES = 25 * 1024 * 1024;
 
 export type ParsedAttachment = {
   filename: string | null;

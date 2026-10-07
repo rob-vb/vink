@@ -54,10 +54,11 @@
   },
   "sample": {
     "notPdf": "Kies een pdf-bestand.",
+    "tooLarge": "Deze pdf is groter dan 10 MB. Kies een kleinere.",
     "failed": "Het uploaden is niet gelukt. Probeer het opnieuw.",
     "uploading": "{filename} wordt geüpload…",
     "drop": "Sleep een voorbeeld-pdf hierheen, of <browse>kies een bestand</browse>",
-    "limit": "Eén ingevuld voorbeeld, maximaal 20 pagina's"
+    "limit": "Eén ingevuld voorbeeld, maximaal 10 MB en 20 pagina's"
   },
   "editor": {
     "metaTitle": "Formulier · Vink",
@@ -146,7 +147,7 @@
   "intake": {
     "copy": "Adres kopiëren",
     "legend": "Per e-mail",
-    "description": "Elke pdf die als bijlage meekomt met een e-mail aan dit adres, wordt een Document van dit Formulier. Maximaal 20 pagina's per pdf. Vink antwoordt nooit aan de afzender. Iedereen die het adres kent, kan ernaar mailen, dus deel het alleen met de mensen en systemen die je deze documenten sturen.",
+    "description": "Elke pdf die als bijlage meekomt met een e-mail aan dit adres, wordt een Document van dit Formulier. Maximaal 10 MB en 20 pagina's per pdf. Vink antwoordt nooit aan de afzender. Iedereen die het adres kent, kan ernaar mailen, dus deel het alleen met de mensen en systemen die je deze documenten sturen.",
     "switchOn": "E-mail-in aanzetten",
     "adminCanSwitchOn": "Een Admin kan een e-mailadres aanzetten voor dit Formulier.",
     "pending": "Aangezet. Het adres verschijnt zodra e-mail-in voor Vink is ingesteld.",

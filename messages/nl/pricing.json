@@ -93,7 +93,7 @@
     },
     "intake": {
       "q": "Hoe komen documenten binnen?",
-      "a": "Upload meerdere PDF's tegelijk in de app, of mail ze naar het eigen adres van een formulier. Elke PDF-bijlage wordt een document. Pdf's tot 20 pagina's. Andere bronnen? <link>Laat het ons weten</link>."
+      "a": "Upload meerdere PDF's tegelijk in de app, of mail ze naar het eigen adres van een formulier. Elke PDF-bijlage wordt een document. Pdf's tot 10 MB en 20 pagina's. Andere bronnen? <link>Laat het ons weten</link>."
     }
   },
   "jsonld": {

@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { failsDmarc, MAX_BYTES, planEmail, tokenOf } from "./map";
+import { failsDmarc, planEmail, tokenOf } from "./map";
 
 const pdf = new TextEncoder().encode("%PDF-1.7 …");
 
@@ -14,7 +14,7 @@ test("each PDF is stored under its own key; everything else is listed as skipped
         { filename: "photo.jpg", mimeType: "image/jpeg", content: new Uint8Array([1, 2]) },
         { filename: "scan.PDF", mimeType: "application/octet-stream", content: pdf.buffer as ArrayBuffer },
         { filename: null, mimeType: "application/pdf", content: pdf },
-        { filename: "huge.pdf", mimeType: "application/pdf", content: new Uint8Array(MAX_BYTES + 1) },
+        { filename: "huge.pdf", mimeType: "application/pdf", content: new Uint8Array(10 * 1024 * 1024 + 1) },
       ],
     },
     () => `intake/${++n}`,
@@ -29,6 +29,25 @@ test("each PDF is stored under its own key; everything else is listed as skipped
     { key: "intake/2", filename: "scan.PDF" },
     { key: "intake/3", filename: "attachment-4" },
     { filename: "huge.pdf", skipped: "too_large" },
+  ]);
+});
+
+test("a PDF of exactly 10 MB is stored; one byte more and it is skipped as too large", () => {
+  let n = 0;
+  const plan = planEmail(
+    {
+      to: "t@x.test",
+      from: "a@b.test",
+      attachments: [
+        { filename: "edge.pdf", mimeType: "application/pdf", content: new Uint8Array(10 * 1024 * 1024) },
+        { filename: "over.pdf", mimeType: "application/pdf", content: new Uint8Array(10 * 1024 * 1024 + 1) },
+      ],
+    },
+    () => `intake/${++n}`,
+  );
+  expect(plan.entries).toEqual([
+    { key: "intake/1", filename: "edge.pdf" },
+    { filename: "over.pdf", skipped: "too_large" },
   ]);
 });
 

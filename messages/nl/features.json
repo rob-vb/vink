@@ -58,7 +58,7 @@
       "Meerdere PDF's in één keer, elk met eigen voortgang en foutmeldingen",
       "Eén e-mailadres per Formulier, aangezet door een Admin",
       "Recente e-mails laat zien wat er binnenkwam, en wat is geweigerd en waarom",
-      "Pdf's tot 20 pagina's per stuk"
+      "Pdf's tot 10 MB en 20 pagina's per stuk"
     ],
     "otherSources": "Andere bronnen? Laat het ons weten.",
     "alt": "Het uploadvenster met drie PDF's, waarvan één geweigerd omdat hij meer dan 20 pagina's heeft, naast het e-mailadres van een Formulier en de recente e-mails.",

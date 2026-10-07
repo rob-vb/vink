@@ -93,7 +93,7 @@
     },
     "intake": {
       "q": "How do documents get in?",
-      "a": "Upload several PDFs at once in the app, or email them to a Form's own address. Each PDF attachment becomes a Document. PDFs of up to 20 pages. Other sources? <link>Tell us</link>."
+      "a": "Upload several PDFs at once in the app, or email them to a Form's own address. Each PDF attachment becomes a Document. PDFs of up to 10 MB and 20 pages. Other sources? <link>Tell us</link>."
     }
   },
   "jsonld": {

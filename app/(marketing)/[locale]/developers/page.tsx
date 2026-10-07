@@ -108,9 +108,9 @@ export default async function DevelopersPage({ params }: PageProps<"/[locale]/de
             {t.rich("overview.inbound", {
               ...rich,
               link: (chunks) => (
-                <a href="#integration-service" className="font-medium text-foreground underline underline-offset-3">
+                <Link href="/developers/api" className="font-mono text-[13px] font-medium text-foreground underline underline-offset-3">
                   {chunks}
-                </a>
+                </Link>
               ),
             })}
           </p>
