@@ -7,7 +7,7 @@ export function FeatureVideo({ label, caption }: { label: string; caption: strin
   const video = demoVideo(useLocale());
   return (
     <figure className="m-0">
-      <BrowserFrame path="/app/o/kantoor-noord">
+      <BrowserFrame path="/app/o/k7x2p9qm">
         <video
           className="block aspect-video w-full bg-background"
           controls

@@ -185,12 +185,14 @@ test("a state from another Admin, another Organisation, or too long ago connects
   const { url } = await ann.user.action(api.googleSheets.connectUrl, { organisationSlug: ann.slug, name: "Log" });
   const state = new URL(url).searchParams.get("state")!;
   const expired = "This Google sign-in has expired. Try again.";
+  // A middle character of the MAC: the last one also holds padding bits.
+  const tampered = state.slice(0, -5) + (state.at(-5) === "A" ? "B" : "A") + state.slice(-4);
 
   const cas = t.withIdentity({ subject: "cas", email: "cas@example.com" });
   await expect(cas.action(api.googleSheets.connect, { organisationSlug: ann.slug, state, code: "code-x" })).rejects.toThrow(expired);
   await expect(bob.user.action(api.googleSheets.connect, { organisationSlug: bob.slug, state, code: "code-x" })).rejects.toThrow(expired);
   await expect(
-    ann.user.action(api.googleSheets.connect, { organisationSlug: ann.slug, state: state.replace(/.$/, "A"), code: "code-x" }),
+    ann.user.action(api.googleSheets.connect, { organisationSlug: ann.slug, state: tampered, code: "code-x" }),
   ).rejects.toThrow(expired);
   vi.advanceTimersByTime(16 * 60 * 1000);
   await expect(ann.user.action(api.googleSheets.connect, { organisationSlug: ann.slug, state, code: "code-x" })).rejects.toThrow(expired);

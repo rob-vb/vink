@@ -2,6 +2,7 @@ import { ConvexError, v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
 import { internalMutation, internalQuery } from "./_generated/server";
 import { orgMutation, orgQuery, userQuery } from "./lib/functions";
+import { uniqueSlug } from "./onboarding";
 
 /** The Organisation's slug, for an action that signs an OAuth state with it. */
 export const slugOf = internalQuery({
@@ -73,6 +74,23 @@ export const clampRetention = internalMutation({
       }
     }
     return { clamped };
+  },
+});
+
+/**
+ * One-off migration for random Organisation ids: gives every Organisation a new
+ * slug, so no URL shows a name. Old links stop working. Run with
+ * `npx convex run organisations:randomiseSlugs`.
+ */
+export const randomiseSlugs = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    let changed = 0;
+    for (const organisation of await ctx.db.query("organisations").take(10000)) {
+      await ctx.db.patch(organisation._id, { slug: await uniqueSlug(ctx) });
+      changed++;
+    }
+    return { changed };
   },
 });
 

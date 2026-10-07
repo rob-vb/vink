@@ -21,7 +21,7 @@ export const createOrganisation = userMutation({
       return { slug: organisation.slug };
     }
 
-    const slug = await uniqueSlug(ctx, name);
+    const slug = await uniqueSlug(ctx);
     const organisationId = await ctx.db.insert("organisations", {
       name,
       slug,
@@ -61,14 +61,13 @@ export const notifyNewOrganisation = internalAction({
 });
 
 
-async function uniqueSlug(ctx: MutationCtx, name: string) {
-  const base =
-    name
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "") || "organisation";
-  for (let n = 1; ; n++) {
-    const slug = n === 1 ? base : `${base}-${n}`;
+const SLUG_ALPHABET = "abcdefghijklmnopqrstuvwxyz0123456789";
+
+/** A random 8-character id for the Organisation URL; it never shows the name. */
+export async function uniqueSlug(ctx: MutationCtx) {
+  for (;;) {
+    const bytes = crypto.getRandomValues(new Uint8Array(8));
+    const slug = Array.from(bytes, (b) => SLUG_ALPHABET[b % SLUG_ALPHABET.length]).join("");
     const taken = await ctx.db
       .query("organisations")
       .withIndex("by_slug", (q) => q.eq("slug", slug))
