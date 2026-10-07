@@ -150,8 +150,11 @@ describe("formFieldsSpec (custom IML function)", () => {
       label: "Fields",
       type: "collection",
       spec: [
-        { name: "license_plate", label: "Kenteken", type: "text" },
-        { name: "kind", label: "Soort", type: "text" },
+        { name: "supplier", label: "Leverancier", type: "text" },
+        { name: "invoice_number", label: "Factuurnummer", type: "text" },
+        { name: "invoice_date", label: "Factuurdatum", type: "date" },
+        { name: "total_amount", label: "Totaalbedrag", type: "number" },
+        { name: "currency", label: "Valuta", type: "text" },
         {
           name: "lines",
           label: "Regels",
@@ -159,6 +162,7 @@ describe("formFieldsSpec (custom IML function)", () => {
           spec: [
             { name: "description", label: "Omschrijving", type: "text" },
             { name: "quantity", label: "Aantal", type: "number" },
+            { name: "amount", label: "Bedrag", type: "number" },
           ],
         },
       ],

@@ -3,15 +3,15 @@ const API = 'https://vink.page';
 const API_KEY = 'vink_live_' + 'a'.repeat(36) + 'x9Kq';
 const authData = { api_key: API_KEY };
 
-const workOrder = {
+const invoiceForm = {
   id: 'k17c9z1fx3q8d2v0n6e5w4t8hs7bm2ra',
-  name: 'Work order',
-  description: 'Garage work orders',
+  name: 'Invoice',
+  description: 'Incoming supplier invoices',
   version: 3,
   fields: [
-    { key: 'license_plate', label: 'Kenteken', type: 'text', required: true },
-    { key: 'kind', label: 'Soort', type: 'choice', required: false, options: ['repair', 'service'] },
-    { key: 'done_on', label: 'Datum', type: 'date', required: false },
+    { key: 'supplier', label: 'Leverancier', type: 'text', required: true },
+    { key: 'currency', label: 'Valuta', type: 'choice', required: false, options: ['EUR', 'USD'] },
+    { key: 'invoice_date', label: 'Factuurdatum', type: 'date', required: false },
     { key: 'paid', label: 'Betaald', type: 'boolean', required: false },
     {
       key: 'lines',
@@ -21,9 +21,10 @@ const workOrder = {
       fields: [
         { key: 'description', label: 'Omschrijving', type: 'text', required: true },
         { key: 'quantity', label: 'Aantal', type: 'number', required: false },
+        { key: 'amount', label: 'Bedrag', type: 'number', required: false },
       ],
     },
   ],
 };
 
-module.exports = { API, API_KEY, authData, workOrder };
+module.exports = { API, API_KEY, authData, invoiceForm };

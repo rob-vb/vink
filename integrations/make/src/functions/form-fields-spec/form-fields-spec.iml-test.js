@@ -1,8 +1,8 @@
 const form = {
     id: "form_1",
     fields: [
-        { key: "license_plate", label: "Kenteken", type: "text", required: true },
-        { key: "kind", label: "Soort", type: "choice", required: false, options: ["repair", "service"] },
+        { key: "supplier", label: "Leverancier", type: "text", required: true },
+        { key: "currency", label: "Valuta", type: "choice", required: false, options: ["EUR", "USD"] },
         {
             key: "lines",
             label: "Regels",
@@ -22,8 +22,8 @@ it("makes the chosen Form's Fields the data collection, with a List Field as an 
         label: "Fields",
         type: "collection",
         spec: [
-            { name: "license_plate", label: "Kenteken", type: "text" },
-            { name: "kind", label: "Soort", type: "text" },
+            { name: "supplier", label: "Leverancier", type: "text" },
+            { name: "currency", label: "Valuta", type: "text" },
             {
                 name: "lines",
                 label: "Regels",

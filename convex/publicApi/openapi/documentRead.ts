@@ -6,7 +6,7 @@ const exampleDocument = {
   id: "j57b2x0sd4kq9r1m8n3c6v7w5h7bm2rb",
   form_id: "k17c9z1fx3q8d2v0n6e5w4t8hs7bm2ra",
   state: "approved",
-  filename: "werkbon-1042.pdf",
+  filename: "factuur-1042.pdf",
   uploaded_at: "2026-10-06T09:00:00.000Z",
   data_deleted_at: null,
   payload: {
@@ -15,15 +15,18 @@ const exampleDocument = {
     test: false,
     document: {
       id: "j57b2x0sd4kq9r1m8n3c6v7w5h7bm2rb",
-      filename: "werkbon-1042.pdf",
+      filename: "factuur-1042.pdf",
       uploaded_at: "2026-10-06T09:00:00.000Z",
     },
     form: { id: "k17c9z1fx3q8d2v0n6e5w4t8hs7bm2ra", version: 3 },
     approval: { mode: "manual", by: "user_2x9KqL", at: "2026-10-06T09:12:00.000Z" },
     data: {
-      license_plate: "OR-18-DH",
-      kind: "repair",
-      lines: [{ description: "Remblokken voor", quantity: 2 }],
+      supplier: "Hoekstra Installatie",
+      invoice_number: "F2026-0412",
+      invoice_date: "2026-10-02",
+      total_amount: 151.25,
+      currency: "EUR",
+      lines: [{ description: "Kopieerpapier A4", quantity: 5, amount: 125 }],
     },
   },
 };

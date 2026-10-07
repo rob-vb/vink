@@ -3,7 +3,7 @@
 Supersedes [ADR 0002](0002-vision-extraction-with-jev-verification.md) on how Field Values are produced. Vertex EU as the provider route, Jev as verifier and TypeSafe as a US subprocessor all still hold.
 
 An Extraction runs in four steps:
-1. **Read:** a vision model gets every page image plus the pdf-inspector text layer and writes a **Reading**, a clean JSON description of the Document that doesn't depend on any Form. It has one object per real-world thing (supplier, vehicle, each tyre change, each invoice line) and its own key names. Duplicates across bundled papers are merged, conflicting readings are kept side by side, and every object carries `_pages` and `_unsure`.
+1. **Read:** a vision model gets every page image plus the pdf-inspector text layer and writes a **Reading**, a clean JSON description of the Document that doesn't depend on any Form. It has one object per real-world thing (supplier, customer, each delivery, each invoice line) and its own key names. Duplicates across bundled papers are merged, conflicting readings are kept side by side, and every object carries `_pages` and `_unsure`.
 2. **Match:** Jev matches the Reading to the Form Version. Each top-level Field gets a Choice over the Reading's leaf paths, each List Field a Choice over its arrays of objects, and each sub-Field a Choice over the keys inside the chosen array. Every Choice includes `none`.
 3. **Fill:** a small text model writes each Field Value from the source Jev picked, in the form the Field asks for (an ISO code, a brand written out in full, a formatted size). It may only use that source.
 4. **Verify:** Jev checks each filled value, as in ADR 0002: whether it fits and is plausible, and whether the page text supports it on pages that have a text layer.
