@@ -1,6 +1,6 @@
 import betterAuthTest from "@convex-dev/better-auth/test";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
-import { internal } from "./_generated/api";
+import { components, internal } from "./_generated/api";
 import { newBackend } from "./test.setup";
 
 // Sign-up and sign-in go through Better Auth's HTTP routes, as the Next app's
@@ -202,6 +202,31 @@ test("magic links: 5 per 10 minutes per IP, and 3 per hour per address", async (
 
   vi.setSystemTime(Date.now() + 61 * MINUTE);
   expect((await magicLink(t, "ann@gmail.com", {}, { ip: "198.51.100.4" })).status).toBe(200);
+});
+
+test("the daily cleanup forgets rate-limit counters (IP addresses, emails) a day after their last request", async () => {
+  const t = backend();
+  const counters = () =>
+    t.run(async (ctx) => {
+      const page = await ctx.runQuery(components.betterAuth.adapter.findMany, {
+        model: "rateLimit",
+        paginationOpts: { cursor: null, numItems: 100 },
+      });
+      return (page.page as { key: string }[]).map((row) => row.key).sort();
+    });
+  await magicLink(t, "ann@gmail.com", {}, { ip: "198.51.100.1" });
+  vi.setSystemTime(Date.now() + 2 * 60 * MINUTE);
+  await magicLink(t, "bob@gmail.com", {}, { ip: "198.51.100.2" });
+  const all = await counters();
+  expect(all.some((key) => key.includes("198.51.100.1"))).toBe(true);
+  expect(all).toContain("magic-link-email|ann@gmail.com");
+
+  vi.setSystemTime(Date.now() + 23 * 60 * MINUTE);
+  await t.mutation(internal.auth.forgetOldRateLimits, {});
+  const left = await counters();
+  expect(left.some((key) => key.includes("198.51.100.1") || key.includes("ann@"))).toBe(false);
+  expect(left).toContain("magic-link-email|bob@gmail.com");
+  expect(left.some((key) => key.includes("198.51.100.2"))).toBe(true);
 });
 
 test("accounts from before verification was required are marked verified by the migration, so they can still sign in", async () => {

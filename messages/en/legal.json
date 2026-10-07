@@ -2,31 +2,332 @@
   "privacy": {
     "meta": {
       "title": "Privacy policy",
-      "description": "How Vink handles personal data on this website and in the app. The full privacy policy is being written and will replace this page."
+      "description": "Which personal data Vink uses on this website and in the app, why, for how long, and what your rights are."
     },
     "title": "Privacy policy",
-    "pending": "The full privacy policy is being written and will replace this page before launch. Until then, this is a short summary of what already holds.",
-    "points": {
-      "security": "Where documents are stored, how long they are kept and who processes them is described in the <terms>Terms</terms>, including the <subprocessors>list of subprocessors</subprocessors>.",
-      "payments": "You pay for a plan or a Top-up through Stripe. Vink is the seller; Stripe processes the payment and works out the VAT. Vink gives Stripe only your organisation's name and ID and the payer's email address. You enter your billing address, VAT number and payment details at Stripe. Vink can see the billing address and VAT number in Stripe, and keeps the invoices as long as the law requires. Vink never sees your full card number or IBAN. Stripe uses your data under its own privacy policy: <stripe>Stripe</stripe>.",
-      "contact": "Contact requests sent through this site are emailed to us and not stored on the site.",
-      "analytics": "Google Analytics only runs on the public website, and only after you accept statistics cookies. The app under /app never loads it. You can change your choice under Cookie settings.",
-      "cookies": "Two functional cookies need no consent: one remembers your language, one remembers your cookie choice.",
-      "questions": "Questions about your data? <contact>Contact us</contact>."
+    "updated": "Last updated: 7 October 2026",
+    "intro": "This privacy policy explains which personal data Vink uses, why and for how long. It applies to this website and to the app.",
+    "toc": "On this page",
+    "sections": {
+      "who": {
+        "title": "Who we are",
+        "body": [
+          "Vink is a sole proprietorship (eenmanszaak) of {owner}, {address}, the Netherlands. Chamber of Commerce (KvK) number: {kvk}.",
+          "Questions about your data? Email <mail></mail>."
+        ]
+      },
+      "roles": {
+        "title": "Our two roles",
+        "body": [
+          "For your account, your payments and this website, Vink decides what happens to your data. Vink is then the <b>controller</b>. This privacy policy is about that data.",
+          "The documents an organisation puts into Vink belong to that organisation. They can contain personal data, for example a name on an invoice. For that data the organisation is the controller and Vink is the <b>processor</b>. Vink uses it only to provide the service. The agreements about this are in the <terms>Terms</terms>.",
+          "Is your data in a document that a Vink customer uploaded? Then contact that organisation first. We help it handle your request."
+        ]
+      },
+      "data": {
+        "title": "Which data we use",
+        "body": [
+          "For each topic below: what we use, why, on which legal basis under the GDPR, and how long we keep it.",
+          {
+            "h": "Your account"
+          },
+          [
+            "<b>What:</b> your email address, a display name, your password (only as an unreadable hash), the name of your organisation and your role in it.",
+            "<b>Why:</b> to create your account, let you sign in and give you access to your organisation. When someone signs up, we get an email with their address and the name of their organisation.",
+            "<b>Legal basis:</b> performance of the contract.",
+            "<b>How long:</b> as long as your account exists. If you delete your account in the app, this data is gone at once."
+          ],
+          {
+            "h": "Invitations"
+          },
+          [
+            "<b>What:</b> the email address of someone an Admin invites.",
+            "<b>Why:</b> to send the invitation.",
+            "<b>Legal basis:</b> legitimate interest of the organisation that invites.",
+            "<b>How long:</b> as long as the organisation exists. An Admin can withdraw an open invitation; we then delete it at once."
+          ],
+          {
+            "h": "Signing in and security"
+          },
+          [
+            "<b>What:</b> your IP address and browser for each sign-in session, and counters of attempts per IP address or email address.",
+            "<b>Why:</b> to protect your account and stop abuse.",
+            "<b>Legal basis:</b> legitimate interest: a secure service.",
+            "<b>How long:</b> a session expires 7 days after you last used it. We keep counters for as long as security needs them. We use this data only for security."
+          ],
+          {
+            "h": "Server logs"
+          },
+          [
+            "<b>What:</b> your IP address, the page you request, your browser and the time. Every visit to the site and the app goes through Cloudflare and our server at Hetzner.",
+            "<b>Why:</b> to keep the site secure and available, and to find errors.",
+            "<b>Legal basis:</b> legitimate interest.",
+            "<b>How long:</b> our server keeps these logs for 14 days. Logs at our providers expire on their own schedules."
+          ],
+          {
+            "h": "Payments"
+          },
+          [
+            "<b>What:</b> the name and ID of your organisation, the email address of whoever pays, the billing address, the VAT number and the invoices. You enter your billing address, VAT number and payment details at Stripe. Vink never sees your full card number or IBAN.",
+            "<b>Why:</b> to sell plans and Top-ups, make invoices and pay VAT.",
+            "<b>Legal basis:</b> performance of the contract, and a legal obligation for the accounts.",
+            "<b>How long:</b> we keep invoices and the accounts for 7 years, as Dutch tax law requires.",
+            "Stripe also uses some of this data for its own purposes, for example to prevent fraud. That falls under <stripe>Stripe's privacy policy</stripe>."
+          ],
+          {
+            "h": "Emails from Vink"
+          },
+          [
+            "<b>What:</b> your email address and the content of the email.",
+            "<b>Why:</b> to send sign-in links, invitations and messages about your account and plan. We send no newsletters or advertising unless you choose to receive them.",
+            "<b>Legal basis:</b> performance of the contract.",
+            "<b>How long:</b> Resend sends the emails for us. Vink doesn't keep the emails it sent."
+          ],
+          {
+            "h": "Contact form"
+          },
+          [
+            "<b>What:</b> your name, your email address and anything else you fill in, such as your company and your message. To stop abuse, we also use your IP address.",
+            "<b>Why:</b> to answer your question.",
+            "<b>Legal basis:</b> legitimate interest: answering your question.",
+            "<b>How long:</b> your request is emailed to us and not stored on the site. Of your IP address we keep only an unreadable keyed hash, for one hour, for the hourly limit. We keep the email for up to 2 years after our last contact."
+          ],
+          {
+            "h": "Google Sheets and Microsoft Excel integrations"
+          },
+          [
+            "<b>What:</b> an Admin gives Vink permission at Google or Microsoft. Vink keeps an access key from that (a refresh token), encrypted.",
+            "<b>Why:</b> Vink makes one new file in your Google Drive or OneDrive and writes the values of your documents into it. At Google, Vink can see only the files it made itself. Microsoft grants access to your files, but Vink opens only the file it made itself.",
+            "<b>Legal basis:</b> performance of the contract.",
+            "<b>How long:</b> until an Admin removes the Integration, or until the organisation is closed. You can also revoke access yourself in your Google or Microsoft account.",
+            "Vink's use and transfer to any other app of information received from Google APIs will adhere to the <google>Google API Services User Data Policy</google>, including the Limited Use requirements. We don't use that data for advertising, don't sell it and don't train AI models with it."
+          ],
+          {
+            "h": "Documents in the app"
+          },
+          "For documents, Vink is the processor, see Our two roles. What we store, where and for how long is in the Terms under <retention>How long we keep it</retention> and <subprocessors>Subprocessors</subprocessors>. Vink doesn't train AI models with your documents."
+        ]
+      },
+      "sharing": {
+        "title": "Who we share data with",
+        "body": [
+          "We never sell your data.",
+          "We share data only with parties that help us provide the service. They process it on our behalf. The full list, with what each party receives and where, is under <subprocessors>Subprocessors</subprocessors>.",
+          "Does your organisation choose an Integration, such as a webhook, Google Sheets, Zapier or Make? Then Vink sends the values there. Your organisation chooses that party itself.",
+          "Sometimes we must give data to a government body, such as the Dutch tax authority. We do that only when the law requires it."
+        ]
+      },
+      "transfers": {
+        "title": "Data outside the EU",
+        "body": [
+          "Most data stays in the EU. Some parties process data in the United States, see <subprocessors>Subprocessors</subprocessors>. For those transfers we rely on the EU-US Data Privacy Framework or the European Commission's standard contractual clauses."
+        ]
+      },
+      "security": {
+        "title": "Security",
+        "body": [
+          "We protect your data with appropriate measures. All connections use HTTPS, and each organisation sees only its own data. The details are in the Terms under <access>Access and accounts</access> and <transit>In transit and at rest</transit>.",
+          "If something does go wrong with personal data, we report it to the Dutch Data Protection Authority within 72 hours where the law requires it. We inform the organisations and people involved without undue delay."
+        ]
+      },
+      "cookies": {
+        "title": "Cookies",
+        "body": [
+          "On the website and in the app we use these cookies:",
+          [
+            "<b>NEXT_LOCALE</b> remembers your language. Functional, 1 year.",
+            "<b>Sign-in cookies</b> keep you signed in to the app. Functional, for as long as your session lasts."
+          ],
+          "We use only functional cookies. They need no consent. We use no cookies for statistics or advertising."
+        ]
+      },
+      "rights": {
+        "title": "Your rights",
+        "body": [
+          "You have these rights over your personal data:",
+          [
+            "<b>Access:</b> you may know which data we hold about you.",
+            "<b>Rectification:</b> you may have incorrect data corrected.",
+            "<b>Erasure:</b> you may ask us to delete your data.",
+            "<b>Restriction:</b> you may ask us to stop using it for a while.",
+            "<b>Portability:</b> you may get your data in a common file format.",
+            "<b>Objection:</b> you may object to use based on legitimate interest.",
+            "<b>Withdrawing consent:</b> you may withdraw your consent at any time."
+          ],
+          "Email your request to <mail></mail>. We may ask who you are, so we give data only to the right person. We answer within one month.",
+          "Not happy with how we handle your data? You may complain to the <ap>Dutch Data Protection Authority (Autoriteit Persoonsgegevens)</ap>. We'd like to hear it first ourselves."
+        ]
+      },
+      "automated": {
+        "title": "Automated decisions",
+        "body": [
+          "Vink reads documents automatically, and can send them automatically with Auto-Send. Vink makes no decisions about people that have legal effects or affect them in a similarly significant way. The organisation that uses Vink decides what happens with the result."
+        ]
+      },
+      "changes": {
+        "title": "Changes",
+        "body": [
+          "We may change this privacy policy, for example when Vink or the law changes. The date at the top shows when it last changed. For important changes we email customers in advance."
+        ]
+      }
     }
   },
   "terms": {
     "meta": {
       "title": "Terms",
-      "description": "The terms for using Vink. The full terms are being written and will replace this page before launch."
+      "description": "The terms for using Vink: plans, payment, cancelling, your data, processing, liability, security and subprocessors."
     },
     "title": "Terms",
-    "pending": "The full terms are being written and will replace this page before launch.",
-    "points": {
-      "plans": "Plans, prices and what counts as a page are described on the <pricing>Pricing</pricing> page. Prices are in EUR, excl. VAT.",
-      "custom": "Custom terms, a DPA and payment by invoice are available on the Custom plan.",
-      "questions": "Questions before you sign up? <contact>Contact us</contact>."
-    },
-    "plansTitle": "Plans"
+    "updated": "Last updated: 7 October 2026",
+    "intro": "These terms apply to all use of Vink. With an account you accept them on behalf of your organisation. After the terms, you'll find how we handle your data.",
+    "sections": {
+      "parties": {
+        "title": "Who we are and what Vink does",
+        "body": [
+          "Vink is provided by Vink, a sole proprietorship (eenmanszaak) of {owner}, {address}, the Netherlands. Chamber of Commerce (KvK) number: {kvk}. In these terms that's \"Vink\" or \"we\".",
+          "Vink reads PDFs, typed, scanned or handwritten, and puts the values into the fields of your forms. People check what's uncertain. Then Vink sends the values to the systems you connect.",
+          "\"You\" and \"the customer\" is the organisation that has an account with Vink. Whoever signs up confirms they may represent that organisation."
+        ]
+      },
+      "business": {
+        "title": "For businesses only",
+        "body": [
+          "Vink is only for businesses, organisations and self-employed people acting for their trade or business. Vink is not meant for consumers. Consumer rules, such as the right of withdrawal, therefore don't apply.",
+          "Other general terms, including the customer's, don't apply. Other agreements apply only when we put them in writing, for example with a Custom plan."
+        ]
+      },
+      "account": {
+        "title": "Your account",
+        "body": [
+          "Keep your sign-in details secret. What happens through your account is your responsibility. Notice misuse? Report it at once, see <report>Reporting a problem</report>.",
+          "An Admin manages the organisation: members, forms, Integrations and the retention period. The customer decides who is an Admin."
+        ]
+      },
+      "plans": {
+        "title": "Free pages, plans and Top-ups",
+        "body": [
+          "The first organisation you create gets 20 free pages. They need no payment, and they don't expire.",
+          "A plan gives a number of pages per month. With annual billing you also get the pages per month. Unused pages lapse at the end of each month. The plans, prices and what counts as a page are on the <pricing>Pricing</pricing> page.",
+          "A Top-up gives 100 extra pages and needs a plan. A Top-up lasts until your pages renew, at the end of the current month, and then lapses.",
+          "Doesn't a new PDF fit in your remaining pages? Then Vink refuses it at upload.",
+          "With a Custom plan we make our own agreements on volume, price, paying by invoice and a service level. We put those in writing. What they don't cover, these terms do."
+        ]
+      },
+      "payment": {
+        "title": "Prices and payment",
+        "body": [
+          "All prices are in euros and exclude VAT. VAT is added where it applies.",
+          "You pay in advance, monthly or annually, through Stripe. A plan renews automatically for the same period until you cancel.",
+          "If a payment fails, Stripe tries again a few times. If it still fails, your plan stops. Your organisation then keeps only the free pages it has left.",
+          "We may change our prices. We email you at least 30 days before a new price applies to you. A new price applies from your next period. If you don't want it, you can cancel before that date.",
+          "Amounts paid are not refunded, also not when you stop early or don't use your pages. This doesn't apply where these terms or the law say otherwise."
+        ]
+      },
+      "cancel": {
+        "title": "Cancelling and ending",
+        "body": [
+          "An Admin can cancel the plan at any time in the app, under Settings. The plan then runs to the end of the current month or year. After that you pay nothing more, and you can carry on with the free pages you have left.",
+          "You can delete your account yourself in the app, from the account menu. An Admin can delete the whole organisation under Settings, in the Danger Zone. Everything is then gone at once, except what the law requires us to keep, such as invoices. Doesn't that work? Email <mail></mail> and we delete it within 30 days.",
+          "We may block your access or end the agreement if you don't pay, or if you breach these terms seriously or repeatedly. Where possible, we warn you first.",
+          "If we stop offering Vink, we tell you at least 3 months in advance. We refund what you paid in advance for the time after the end date."
+        ]
+      },
+      "use": {
+        "title": "What you may and may not do",
+        "body": [
+          "Put only documents into Vink that you may process. You need your own legal basis for that, as the GDPR requires. You may not:",
+          [
+            "upload documents that are unlawful, or that you may not share;",
+            "use Vink to infringe the rights of others;",
+            "try to get around the security, or view another organisation's data;",
+            "overload Vink, for example with requests above the API's limits;",
+            "copy Vink, or reverse engineer the software beyond what the law allows;",
+            "resell Vink or offer it as your own service without our written permission."
+          ],
+          "Found a security problem? Tell us, see <report>Reporting a problem</report>."
+        ]
+      },
+      "data": {
+        "title": "Your data",
+        "body": [
+          "Your documents, the values read and your forms remain yours. You give Vink only the right to use them to provide the service.",
+          "Vink doesn't train AI models with your documents. The parties we use are listed under <subprocessors>Subprocessors</subprocessors>, with what they receive. TypeSafe may keep logs under its own terms.",
+          "How long we keep your data and how you delete it is under <retention>How long we keep it</retention>. Keep your own copy of what you want to keep, for example through an Integration.",
+          "We may use usage figures to improve Vink, such as the number of pages. They contain no document content and no personal data."
+        ]
+      },
+      "processing": {
+        "title": "Processing personal data",
+        "body": [
+          "Your documents can contain personal data, for example names, addresses and contact details of your customers and suppliers. For that data the customer is the controller and Vink the processor. This section is the data processing agreement between us, as Article 28 of the GDPR requires. It applies for as long as the agreement runs.",
+          [
+            "Vink processes the data only on your instructions: these terms and what you set in the app, such as forms, the retention period and Integrations. If the law requires Vink to do otherwise, we tell you in advance where the law allows it.",
+            "Everyone at Vink who can see the data is bound by confidentiality.",
+            "Vink takes appropriate security measures. They are listed under <access>Access and accounts</access> and <transit>In transit and at rest</transit>.",
+            "You give Vink general authorisation to use subprocessors. The current list is under <subprocessors>Subprocessors</subprocessors>. When a new subprocessor is added, we email the Admins at least 30 days in advance. If you have a reasonable objection to that party, you can cancel before the change takes effect. Vink imposes the same obligations on subprocessors and remains responsible for them.",
+            "Transfers outside the EU happen only on a valid basis, such as the EU-US Data Privacy Framework or standard contractual clauses.",
+            "Vink helps you, as far as reasonable, with requests from data subjects, with a data breach and with a data protection impact assessment (DPIA).",
+            "If Vink discovers a data breach involving your data, we tell your organisation's Admins without undue delay, and within 48 hours. You report it to the supervisory authority yourself.",
+            "After the agreement ends, Vink deletes the data within 30 days, unless the law requires it to be kept.",
+            "Vink gives you the information you need to show that Article 28 is met. An audit is possible once a year, at your own cost and with reasonable notice."
+          ],
+          "Don't put special categories of personal data into Vink, such as health data, unless we agree to it in writing."
+        ]
+      },
+      "ai": {
+        "title": "Checking the result",
+        "body": [
+          "Vink reads documents with AI, and AI sometimes makes mistakes. Vink flags the values it is unsure about, but can't guarantee that every value is right.",
+          "Check the result before you rely on it. If you turn on Auto-Send, Vink sends documents without a human check. That is your own choice and your own risk."
+        ]
+      },
+      "availability": {
+        "title": "Availability and changes",
+        "body": [
+          "We do our best to keep Vink available at all times. We don't guarantee a particular availability, unless we agree on a service level (SLA) in writing.",
+          "For maintenance, Vink can sometimes be unavailable for a short time. We announce major maintenance in advance where possible.",
+          "We may improve and change Vink. If we remove an important feature, we tell you in advance.",
+          "Vink works with other parties' services, such as Google, Microsoft and Stripe. If those change or stop, an Integration may stop working."
+        ]
+      },
+      "liability": {
+        "title": "Liability",
+        "body": [
+          "Vink is liable only for direct damage. Liability is limited to the amount the customer paid Vink in the 12 months before the damage.",
+          "Vink is not liable for indirect damage, such as consequential loss, lost profit, missed savings, lost data and business interruption. Nor for damage from values you didn't check, or from documents Auto-Send sent.",
+          "These limits don't apply in case of intent or deliberate recklessness on Vink's part.",
+          "Report damage in writing, as soon as possible and at most 12 months after you discovered it. After that, your right to compensation lapses.",
+          "The customer indemnifies Vink against claims from others that arise because the customer breaches these terms or the law, for example with documents the customer wasn't allowed to process."
+        ]
+      },
+      "force": {
+        "title": "Force majeure",
+        "body": [
+          "If force majeure keeps us from delivering, we are not liable. Force majeure includes an outage at a provider, an internet or power outage, a cyberattack or a government decision. If it lasts longer than 30 days, either of us may end the agreement."
+        ]
+      },
+      "ip": {
+        "title": "Intellectual property",
+        "body": [
+          "The software, the website and the name Vink are ours. You may use Vink while the agreement runs. That right is non-exclusive and non-transferable.",
+          "We may use feedback and ideas you share to improve Vink."
+        ]
+      },
+      "changes": {
+        "title": "Changes to these terms",
+        "body": [
+          "We may change these terms. For a change to your disadvantage, we email the Admins at least 30 days before it takes effect. If you don't agree, you can cancel before the change takes effect. If you keep using Vink after that, the new version applies.",
+          "If a provision is invalid, the others still apply. We replace that provision with a valid one that comes as close as possible to its purpose.",
+          "If the Dutch and English texts differ, the Dutch text prevails."
+        ]
+      },
+      "law": {
+        "title": "Law and disputes",
+        "body": [
+          "Dutch law applies to these terms and the agreement. The UN Convention on Contracts for the International Sale of Goods (CISG) does not apply.",
+          "Disputes go only to the District Court of Overijssel (Rechtbank Overijssel). Let's first look for a solution together: email <mail></mail>."
+        ]
+      }
+    }
   }
 }

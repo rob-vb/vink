@@ -104,7 +104,8 @@
     "organisations": "Organisaties",
     "account": "Account",
     "organisationSettings": "Instellingen van de Organisatie",
-    "signOut": "Uitloggen"
+    "signOut": "Uitloggen",
+    "deleteAccount": "Account verwijderen"
   },
   "notifications": {
     "title": "Meldingen",

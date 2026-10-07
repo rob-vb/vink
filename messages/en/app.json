@@ -104,7 +104,8 @@
     "organisations": "Organisations",
     "account": "Account",
     "organisationSettings": "Organisation settings",
-    "signOut": "Sign out"
+    "signOut": "Sign out",
+    "deleteAccount": "Delete account"
   },
   "notifications": {
     "title": "Notifications",

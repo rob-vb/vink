@@ -21,5 +21,12 @@ export const SIGN_UP_PATH = "/app/sign-up";
 /** Vink's Chamber of Commerce number, shown in the footer (iDEAL requires it on the site). */
 export const KVK_NUMBER = "57288135";
 
+/** Who is behind Vink in law (an eenmanszaak), named only in Privacy and Terms. */
+export const LEGAL_OWNER = "Rob van Baaren";
+export const LEGAL_ADDRESS = "Zilverschoon, 7577 CB Oldenzaal";
+
+/** Where privacy questions and data requests go (Privacy, Terms). */
+export const PRIVACY_EMAIL = process.env.PRIVACY_EMAIL ?? `hi@${SITE_HOST}`;
+
 // The payment party's own privacy policy (Privacy, Terms → Subprocessors).
 export const STRIPE_PRIVACY = "https://stripe.com/privacy";

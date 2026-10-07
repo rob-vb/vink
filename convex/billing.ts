@@ -336,3 +336,19 @@ export const webhook = internalAction({
     return true;
   },
 });
+
+/**
+ * Stops every Subscription of a Customer that still runs, at once and without
+ * a refund (Terms), when its Organisation is deleted. The Customer and its
+ * invoices stay in Stripe: the books keep them for 7 years.
+ */
+export const cancelPlans = internalAction({
+  args: { customerId: v.string() },
+  handler: async (_ctx, { customerId }) => {
+    const { data } = await stripe().subscriptions.list({ customer: customerId, status: "all", limit: 100 });
+    for (const subscription of data) {
+      if (subscription.status === "canceled" || subscription.status === "incomplete_expired") continue;
+      await stripe().subscriptions.cancel(subscription.id);
+    }
+  },
+});

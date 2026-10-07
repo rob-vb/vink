@@ -77,11 +77,11 @@
     },
     "runOut": {
       "q": "What happens when our pages run out?",
-      "a": "A new PDF that doesn't fit your remaining pages is refused at upload, with a clear message. Everything already uploaded keeps working. You can upgrade, or add a top-up of €10 per 100 pages that lasts until the end of the billing period."
+      "a": "A new PDF that doesn't fit your remaining pages is refused at upload, with a clear message. Everything already uploaded keeps working. You can upgrade, or add a top-up of €10 per 100 pages that lasts until the end of the current month."
     },
     "rollover": {
       "q": "Do unused pages roll over?",
-      "a": "No. Your pages renew at the start of each billing period, and unused pages expire."
+      "a": "No. Your pages renew every month, also on annual billing, and unused pages expire."
     },
     "vat": {
       "q": "Are prices with or without VAT?",
