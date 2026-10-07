@@ -18,5 +18,8 @@ export const SECURITY_EMAIL = process.env.SECURITY_EMAIL ?? `security@${SITE_HOS
 export const APP_PATH = "/app";
 export const SIGN_UP_PATH = "/app/sign-up";
 
+/** Vink's Chamber of Commerce number, shown in the footer (iDEAL requires it on the site). */
+export const KVK_NUMBER = "57288135";
+
 // The payment party's own privacy policy (Privacy, Terms → Subprocessors).
 export const STRIPE_PRIVACY = "https://stripe.com/privacy";

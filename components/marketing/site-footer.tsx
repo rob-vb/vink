@@ -1,5 +1,6 @@
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
+import { KVK_NUMBER } from "@/lib/site";
 import { VinkLogo } from "./brand";
 import { CookieSettingsButton } from "./consent-banner";
 import { LogInLink } from "./cta-links";
@@ -71,7 +72,7 @@ export function SiteFooter() {
         ))}
       </div>
       <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 border-t px-4 py-5 text-sm text-muted-foreground sm:px-6 lg:px-8">
-        <p>{t("footer.rights", { year })}</p>
+        <p>{t("footer.rights", { year, kvk: KVK_NUMBER })}</p>
         <LanguageSwitcher
           labels={{ en: t("languages.en"), nl: t("languages.nl") }}
           label={t("footer.language")}
