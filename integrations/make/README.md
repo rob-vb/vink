@@ -6,20 +6,21 @@ component and the file of each code; the other files in `src/` are those codes.
 
 | Component | Local id | What it does |
 | --- | --- | --- |
-| Base | `general/base.iml.json` | `https://vink.page/v1`, `Authorization: Bearer <API Key>`, errors show Vink's `error.message` |
-| Connection | `vink` | Asks for an API Key, checks it with `GET /v1/forms` |
+| Base | `general/base.iml.json` | `https://vink.page/v1`, `Authorization: Bearer <API Key>`, errors show `[status] message (error code: code)` from Vink's error body |
+| Connection | `vink` | Asks for an API key, checks it with `GET /v1/forms` |
 | Webhook (dedicated, attached) | `approvedDocuments` | Form dropdown; attach = `POST /v1/subscriptions`, detach = `DELETE /v1/subscriptions/{id}` |
 | Instant trigger | `watchApprovedDocuments` | "Watch approved Documents": outputs the envelope; `data` is built from the Form's Fields |
 | Action | `sendDocument` | "Send in a Document": Form dropdown, a file (name + data) sent as the multipart `file` part |
 | Universal module | `makeApiCall` | "Make an API call": any path on Base, with the connection's API Key |
-| RPC | `listForms` | The Form dropdown (`GET /v1/forms`) |
+| RPC | `listForms` | The Form dropdown (`GET /v1/forms`), at most 500 Forms |
 | RPC | `formFields` | The trigger's `data` collection: `formFieldsSpec(body.data, webhook.formId)` |
 | RPC | `formSample` | The trigger's sample (`GET /v1/forms/{form_id}/sample`) |
 | Custom IML function | `formFieldsSpec` | Turns a Form's Fields into Make output fields; a List Field becomes an array of collections |
 
-The Form is a parameter of the webhook, because attach needs it. Attach keeps
-`subscriptionId` and `formId` in the webhook's data; detach and the two trigger RPCs read
-them as `webhook.subscriptionId` and `webhook.formId`.
+The Form is a parameter of the webhook, because attach needs it. Attach keeps the
+Subscription's id as `externalHookId` (Make's usual name for the remote hook) and `formId` in
+the webhook's data; detach reads `webhook.externalHookId`, the two trigger RPCs read
+`webhook.formId`.
 
 ## Test without Make
 
@@ -85,10 +86,11 @@ the origin. Changes made in Make's web editor come back with **Pull All Componen
 
 ## Test a scenario
 
-Use a Vink Organisation with a Form and an API Key (Settings → API Keys).
+Use a Vink Organisation with a Form and an API Key (Organisation settings → API Keys).
 
 1. New scenario → Vink → **Watch approved Documents**. Add a connection with the API Key;
-   a wrong key must show Vink's message ("This API Key doesn't exist or was revoked.").
+   a wrong key must show Vink's message with status and code ("[401] This API Key doesn't
+   exist or was revoked. (error code: invalid_api_key)").
 2. Add a webhook, pick the Form. In Vink, Settings → Integrations shows a new Webhook named
    after the API Key, attached to that Form.
 3. Before any run, the mapping panel shows the Form's Fields under `data` (a List Field as an
@@ -106,7 +108,8 @@ Use a Vink Organisation with a Form and an API Key (Settings → API Keys).
 Detach of a Subscription that is gone already (an Admin deleted its Webhook, or its URL
 answered 410) still answers 200: `DELETE /v1/subscriptions/{id}` is idempotent, because Make
 treats every 4xx as an error. Known gap: after the API Key is revoked, detach gets 401 (the
-key no longer works) and Make shows "This API Key doesn't exist or was revoked." The
+key no longer works) and Make shows "[401] This API Key doesn't exist or was revoked.
+(error code: invalid_api_key)". The
 Subscription ended with the key, so delete the webhook in Make anyway.
 
 ## Submit for review
@@ -117,7 +120,9 @@ Before the request (see Make's "App review" prerequisites):
   Make's QA, with a test API Key that has Pages. The review form asks for their links.
 - The universal module `makeApiCall` ("Make an API call", a path relative to Base) is there,
   as Make requires.
-- Every module is set to visible in Make.
+- Every module is set to visible in Make. From the shell (Make's SDK Apps API; a read right
+  after can still show the old value):
+  `curl -X POST -H "Authorization: Token $(cat integrations/make/.secrets/apikey)" https://eu1.make.com/api/v2/sdk/apps/vink-fsvhks/1/modules/<module>/public`
 - Module labels and descriptions follow Make's naming rules; check them in the review.
 
 Then, in Make: Custom Apps → Vink → Request review. Once Make approves the app, it is public

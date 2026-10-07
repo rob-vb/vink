@@ -1,12 +1,12 @@
 {
-    "url": "https://vink.page/v1/subscriptions/{{webhook.subscriptionId}}",
+    "url": "https://vink.page/v1/subscriptions/{{webhook.externalHookId}}",
     "method": "DELETE",
     "headers": {
         "authorization": "Bearer {{connection.apiKey}}"
     },
     "response": {
         "error": {
-            "message": "{{ifempty(body.error.message, 'Vink answered with HTTP ' + statusCode + '.')}}"
+            "message": "[{{statusCode}}] {{ifempty(body.error.message, 'Vink answered without an error message.')}}{{if(body.error.code, ' (error code: ' + body.error.code + ')', '')}}"
         }
     },
     "log": {
