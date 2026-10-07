@@ -254,18 +254,18 @@ test("an Approval adds a row per tyre change to the table, the second List as an
   const workbook = fakeMicrosoft.onlyWorkbook();
   expect(workbook.header).toEqual([
     "document",
-    "approved_at",
-    "approved_by",
-    "delivery_id",
     "license_plate",
     "tyre_changes.position",
     "tyre_changes.tread_depth_mm",
     "rims",
+    "approved_at",
+    "approved_by",
+    "delivery_id",
   ]);
-  const at = expect.stringMatching(/^2026-10-06T09:/);
+  const at = expect.stringMatching(/^2026-10-06T\d\d:\d\d:\d\d\.\d{3}Z$/);
   expect(workbook.rows).toEqual([
-    [expect.stringMatching(/\.pdf$/), at, "ann@example.com", delivery.deliveryId, "OR18DH", "2L1", 3, null],
-    [expect.stringMatching(/\.pdf$/), at, "ann@example.com", delivery.deliveryId, "OR18DH", "2R1", 4, null],
+    [expect.stringMatching(/\.pdf$/), "OR18DH", "2L1", 3, null, at, "ann@example.com", delivery.deliveryId],
+    [expect.stringMatching(/\.pdf$/), "OR18DH", "2R1", 4, null, at, "ann@example.com", delivery.deliveryId],
   ]);
 });
 
@@ -284,22 +284,65 @@ test("every send stores the refresh token Microsoft handed out with it", async (
   expect(fakeMicrosoft.newest("ann")).toBe("refresh-ann-4");
 });
 
-test("a Field added in a new Form Version gets a column on the right", async () => {
+test("a Field added in a new Form Version gets a column just before approved_at", async () => {
   const t = newBackend();
   const ann = await connected(t);
-  await approve(t, ann);
+  const first = await approve(t, ann);
   await ann.user.mutation(api.forms.save, {
     organisationSlug: ann.organisationSlug,
     formId: ann.formId,
     name: "Tyre service",
     fields: [...fields, { type: "text", label: "Werkplaats", key: "workshop", required: false }],
   });
-  await approve(t, ann);
+  const second = await approve(t, ann);
 
   const workbook = fakeMicrosoft.onlyWorkbook();
-  expect(workbook.header.slice(-2)).toEqual(["rims", "workshop"]);
-  expect(workbook.rows.map((r) => r.length)).toEqual([8, 8, 9, 9]);
-  expect(workbook.rows[3][8]).toBeNull();
+  expect(workbook.header.slice(4)).toEqual(["rims", "workshop", "approved_at", "approved_by", "delivery_id"]);
+  expect(workbook.rows.map((r) => r.length)).toEqual([9, 9, 9, 9]);
+  // The rows already there get an empty cell in the new column; delivery_id stays last.
+  expect(workbook.rows.map((r) => r[5])).toEqual([null, null, null, null]);
+  const [a, b] = [(await deliveryOf(t, ann, first)).deliveryId, (await deliveryOf(t, ann, second)).deliveryId];
+  expect(workbook.rows.map((r) => r[8])).toEqual([a, a, b, b]);
+});
+
+test("a workbook in the old column order keeps it: values go by name, a new Field before approved_at", async () => {
+  const t = newBackend();
+  const ann = await connected(t);
+  // The table as Vink made it before: Vink's columns first, then the Fields.
+  const [stored] = fakeMicrosoft.workbooks.values();
+  stored.rows = [
+    ["document", "approved_at", "approved_by", "delivery_id", "license_plate", "tyre_changes.position", "tyre_changes.tread_depth_mm"],
+    ["old.pdf", "2026-10-01T08:00:00.000Z", "ann@example.com", "dlv_old", "OLD1", "1L", 5],
+  ];
+  // The first write lands, but its answer never arrives: the retry must find delivery_id by name.
+  const append = fakeMicrosoft.append;
+  fakeMicrosoft.append = async (...args) => {
+    fakeMicrosoft.append = append;
+    await append(...args);
+    const { MicrosoftFailure } = await import("./lib/microsoft");
+    throw new MicrosoftFailure(null, "Microsoft didn't answer within 15 s");
+  };
+  const documentId = await approve(t, ann);
+  const { deliveryId, attempts } = await deliveryOf(t, ann, documentId);
+  expect(attempts.at(-1)?.body).toBe("Already in the workbook: no rows added");
+
+  const workbook = fakeMicrosoft.onlyWorkbook();
+  expect(workbook.header).toEqual([
+    "document",
+    "rims",
+    "approved_at",
+    "approved_by",
+    "delivery_id",
+    "license_plate",
+    "tyre_changes.position",
+    "tyre_changes.tread_depth_mm",
+  ]);
+  const at = expect.stringMatching(/^2026-10-06T/);
+  expect(workbook.rows).toEqual([
+    ["old.pdf", null, "2026-10-01T08:00:00.000Z", "ann@example.com", "dlv_old", "OLD1", "1L", 5],
+    [expect.stringMatching(/\.pdf$/), null, at, "ann@example.com", deliveryId, "OR18DH", "2L1", 3],
+    [expect.stringMatching(/\.pdf$/), null, at, "ann@example.com", deliveryId, "OR18DH", "2R1", 4],
+  ]);
 });
 
 test("two Deliveries at once write one after the other: a new Field's column is added once", async () => {
@@ -328,7 +371,8 @@ test("two Deliveries at once write one after the other: a new Field's column is 
   expect((await deliveryOf(t, ann, second)).state).toBe("delivered");
   const workbook = fakeMicrosoft.onlyWorkbook();
   expect(workbook.header.filter((c) => c === "workshop")).toHaveLength(1);
-  expect(workbook.rows.map((r) => r.length)).toEqual([8, 8, 9, 9, 9, 9]);
+  expect(workbook.rows.map((r) => r.length)).toEqual([9, 9, 9, 9, 9, 9]);
+  expect(workbook.header.slice(-4)).toEqual(["workshop", "approved_at", "approved_by", "delivery_id"]);
 });
 
 test("Microsoft's rate limits and 5xx are retried", async () => {
@@ -411,8 +455,9 @@ test("a test-send adds dummy rows marked as test", async () => {
   });
   expect(answer).toEqual({ ok: true, status: 200, body: "1 row added to the workbook", error: null });
   const [row] = fakeMicrosoft.onlyWorkbook().rows;
-  expect(row.slice(0, 3)).toEqual(["[test] example.pdf", "2026-10-06T09:00:00.000Z", null]);
-  expect(row[3]).toMatch(/^test_/);
+  expect(row[0]).toBe("[test] example.pdf");
+  expect(row.slice(-3, -1)).toEqual(["2026-10-06T09:00:00.000Z", null]);
+  expect(row.at(-1)).toMatch(/^test_/);
 });
 
 test("an Excel Integration can be renamed, but has no endpoint or signing secret", async () => {

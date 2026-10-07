@@ -84,39 +84,81 @@ test("Auto-Send approves as Auto-Send; a test-send's rows are marked as test", (
   expect(row.approved_by).toBeNull();
 });
 
-test("values go under their column; a new Field gets a column on the right, null an empty cell", () => {
+test("values go under their column, by name; a new Field gets a column just before approved_at, null an empty cell", () => {
   const rows = rowsOf(
     approved({ license_plate: "AB-123-C", mileage_km: null, vin: "WVWZZZ1KZ", lines: [] }),
     "ann@acme.example",
   );
   // The Admin moved license_plate to the front and added a column of their own.
-  const header = ["license_plate", "document", "approved_at", "approved_by", "delivery_id", "mileage_km", "remarks"];
+  const header = ["license_plate", "document", "mileage_km", "approved_at", "approved_by", "delivery_id", "remarks"];
   expect(sheetLayout(header, rows)).toEqual({
-    added: ["vin"],
+    inserts: [{ index: 3, name: "vin" }],
     values: [
       [
         "AB-123-C",
         "werkbon-118.pdf",
+        null,
+        "WVWZZZ1KZ",
         "2026-10-06T09:30:00.000Z",
         "ann@acme.example",
         "dlv_1",
         null,
-        null,
-        "WVWZZZ1KZ",
       ],
     ],
   });
 });
 
-test("an empty sheet gets the whole header", () => {
+test("an empty sheet gets the whole header: document, the Fields, then Vink's three columns", () => {
   const rows = rowsOf(approved({ license_plate: "AB-123-C", lines: [{ description: "Tyre" }] }), null);
-  expect(sheetLayout([], rows).added).toEqual([
+  const { inserts } = sheetLayout([], rows);
+  expect(inserts.map((i) => i.name)).toEqual([
     "document",
+    "license_plate",
+    "lines.description",
     "approved_at",
     "approved_by",
     "delivery_id",
-    "license_plate",
-    "lines.description",
+  ]);
+  expect(inserts.map((i) => i.index)).toEqual([0, 1, 2, 3, 4, 5]);
+});
+
+test("new Fields on a sheet in the new order go before approved_at, in the Form's order", () => {
+  const rows = rowsOf(approved({ invoice_number: "F-2026-0042", supplier: "Bakker BV", total: 1210.5 }), "ann@acme.example");
+  const header = ["document", "invoice_number", "approved_at", "approved_by", "delivery_id"];
+  expect(sheetLayout(header, rows)).toEqual({
+    inserts: [
+      { index: 2, name: "supplier" },
+      { index: 3, name: "total" },
+    ],
+    values: [
+      ["werkbon-118.pdf", "F-2026-0042", "Bakker BV", 1210.5, "2026-10-06T09:30:00.000Z", "ann@acme.example", "dlv_1"],
+    ],
+  });
+});
+
+test("a sheet in the old order keeps its columns; a new Field goes just before approved_at", () => {
+  const rows = rowsOf(approved({ invoice_number: "F-2026-0042", supplier: "Bakker BV", total: 1210.5 }), "ann@acme.example");
+  const header = ["document", "approved_at", "approved_by", "delivery_id", "invoice_number", "total"];
+  expect(sheetLayout(header, rows)).toEqual({
+    inserts: [{ index: 1, name: "supplier" }],
+    values: [
+      ["werkbon-118.pdf", "Bakker BV", "2026-10-06T09:30:00.000Z", "ann@acme.example", "dlv_1", "F-2026-0042", 1210.5],
+    ],
+  });
+});
+
+test("without an approved_at column, a new Field goes before the next of Vink's columns, or on the right", () => {
+  const rows = rowsOf(approved({ invoice_number: "F-2026-0042" }), null);
+  expect(sheetLayout(["document", "approved_by", "delivery_id"], rows).inserts).toEqual([
+    { index: 1, name: "invoice_number" },
+    { index: 4, name: "approved_at" },
+  ]);
+  expect(sheetLayout(["notes"], rows).inserts.map((i) => i.name)).toEqual([
+    "document",
+    "invoice_number",
+    "approved_at",
+    "approved_by",
+    "delivery_id",
   ]);
 });
 

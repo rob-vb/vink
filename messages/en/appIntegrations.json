@@ -79,7 +79,7 @@
     "sheetNameHint": "Also the name of the sheet Vink makes.",
     "connectSignIn": "You sign in with Google on its own page, then come back here.",
     "connectAccess": "Vink can only open the sheet it makes, none of your other files.",
-    "connectRows": "Columns are the Form's Field keys. A new Field gets a new column on the right.",
+    "connectRows": "Columns are the Form's Field keys. A new Field gets a new column just before Vink's three columns on the right.",
     "openSheet": "Open the sheet",
     "connect": "Connect Google account",
     "reconnectHint": "Signs in with Google again. The sheet stays the same, so use the Google account that made it.",

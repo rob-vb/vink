@@ -1,7 +1,8 @@
 // The Excel adapter: adds a Document's rows (lib/rows.ts, ADR 0009) to the
-// table of the Integration's workbook, a new Field's column on the right. A
-// Delivery whose `delivery_id` is already in the table adds nothing, so a
-// retry after a lost answer, or a re-send, doesn't write its rows twice.
+// table of the Integration's workbook, a new Field's column just before
+// `approved_at`. A Delivery whose `delivery_id` is already in the table adds
+// nothing, so a retry after a lost answer, or a re-send, doesn't write its
+// rows twice.
 // Every access token comes with a new refresh token, which is kept.
 import type { IntegrationAdapter, SendResult } from "./integrationAdapters";
 import { microsoft, MicrosoftFailure } from "./microsoft";
@@ -41,8 +42,8 @@ export const excelAdapter: IntegrationAdapter<"excel"> = {
       if (column.includes(envelope.delivery_id)) {
         return { outcome: { kind: "delivered" }, status: 200, body: "Already in the workbook: no rows added", error: null };
       }
-      const { added, values } = sheetLayout(header, rowsOf(envelope, approverEmail));
-      await microsoft.append(token.accessToken, integration, added, values);
+      const { inserts, values } = sheetLayout(header, rowsOf(envelope, approverEmail));
+      await microsoft.append(token.accessToken, integration, inserts, values);
       const body = values.length === 1 ? "1 row added to the workbook" : `${values.length} rows added to the workbook`;
       return { outcome: { kind: "delivered" }, status: 200, body, error: null };
     } catch (error) {

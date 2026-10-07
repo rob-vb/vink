@@ -433,14 +433,20 @@ export const fakeGoogle = {
   async append(
     token: string,
     sheet: { spreadsheetId: string },
-    added: { from: number; cells: string[]; columnCount: number },
+    columns: { inserts: Array<{ index: number; name: string }>; columnCount: number },
     rows: FilledValue[][],
   ) {
     await fakeGoogle.next(token);
     const stored = fakeGoogle.sheets.get(sheet.spreadsheetId)!;
-    const header = [...(stored.rows[0] ?? [])];
-    added.cells.forEach((cell, i) => (header[added.from + i] = cell));
-    stored.rows = [header, ...stored.rows.slice(1), ...rows];
+    const grid = stored.rows.length === 0 ? [[]] : stored.rows.map((row) => [...row]);
+    // Each insert shifts every row's cells from its index on one to the right.
+    for (const { index, name } of columns.inserts) {
+      grid.forEach((row, r) => {
+        while (row.length < index) row.push(null);
+        row.splice(index, 0, r === 0 ? name : null);
+      });
+    }
+    stored.rows = [...grid, ...rows];
   },
 };
 
@@ -555,9 +561,19 @@ export const fakeMicrosoft = {
     await meanwhile?.();
     return read;
   },
-  async append(token: string, workbook: { itemId: string }, added: string[], rows: FilledValue[][]) {
+  async append(
+    token: string,
+    workbook: { itemId: string },
+    inserts: Array<{ index: number; name: string }>,
+    rows: FilledValue[][],
+  ) {
     await fakeMicrosoft.next(token);
     const stored = fakeMicrosoft.workbooks.get(workbook.itemId)!;
-    stored.rows = [[...(stored.rows[0] ?? []), ...added], ...stored.rows.slice(1), ...rows];
+    const table = stored.rows.map((row) => [...row]);
+    // Each insert shifts the table's cells from its index on one to the right.
+    for (const { index, name } of inserts) {
+      table.forEach((row, r) => row.splice(index, 0, r === 0 ? name : null));
+    }
+    stored.rows = [...table, ...rows];
   },
 };

@@ -12,7 +12,7 @@
 // itself (a tenant can still ask for it). A SharePoint site would need
 // `Sites.ReadWrite.All`, which always needs an admin, so Vink uses OneDrive.
 import { ConvexError } from "convex/values";
-import { type Cell, columnLetter } from "./rows";
+import { type Cell, type ColumnInsert, columnLetter } from "./rows";
 
 const LOGIN_URL = "https://login.microsoftonline.com/organizations";
 const GRAPH_URL = "https://graph.microsoft.com/v1.0";
@@ -63,8 +63,12 @@ export type MicrosoftClient = {
   createWorkbook(accessToken: string, title: string, header: string[]): Promise<WorkbookRef & { url: string }>;
   /** The table's header row, and every value in the column headed `column` (none if there is no such column). */
   read(accessToken: string, workbook: WorkbookRef, column: string): Promise<{ header: string[]; column: Cell[] }>;
-  /** Adds the `added` columns on the right of the table, then `rows` below it. Values are text, never formulas. */
-  append(accessToken: string, workbook: WorkbookRef, added: string[], rows: Cell[][]): Promise<void>;
+  /**
+   * Inserts each of `inserts`, in order, as a new table column at its index
+   * (the columns from there on shift right), then adds `rows` below the
+   * table. Values are text, never formulas.
+   */
+  append(accessToken: string, workbook: WorkbookRef, inserts: ColumnInsert[], rows: Cell[][]): Promise<void>;
 };
 
 /** The app registration's id and secret, from the deployment's environment. */
@@ -266,10 +270,10 @@ export const microsoft: MicrosoftClient = {
     return { header, column: body.values.map((row) => (row[0] === "" ? null : (row[0] ?? null))) };
   },
 
-  async append(token, workbook, added, rows) {
+  async append(token, workbook, inserts, rows) {
     const table = tableUrl(workbook);
-    for (const name of added) {
-      await call(`${table}/columns/add`, json("POST", { index: null, name }, token));
+    for (const { index, name } of inserts) {
+      await call(`${table}/columns/add`, json("POST", { index, name }, token));
     }
     const answer = (await call(
       `${table}/rows/add`,

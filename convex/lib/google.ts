@@ -4,7 +4,7 @@
 // test.setup.ts). Needs GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET
 // on the deployment.
 import { ConvexError } from "convex/values";
-import { type Cell, columnLetter } from "./rows";
+import { type Cell, type ColumnInsert, columnLetter } from "./rows";
 
 export const DRIVE_FILE_SCOPE = "https://www.googleapis.com/auth/drive.file";
 
@@ -52,15 +52,16 @@ export type GoogleClient = {
     column: string,
   ): Promise<{ header: string[]; column: Cell[]; columnCount: number }>;
   /**
-   * In one request: writes `added` into row 1 from column `from` on (widening
-   * the grid of `columnCount` columns, as `read` gave it, if need be), and
-   * appends `rows` below the last row with data. Values are stored as they
-   * are, never read as formulas.
+   * In one request: inserts each of `inserts`, in order, as a new column at
+   * its index with its name in row 1 (the columns from there on shift right;
+   * the grid has `columnCount` columns, as `read` gave it), and appends
+   * `rows` below the last row with data. Values are stored as they are,
+   * never read as formulas.
    */
   append(
     accessToken: string,
     sheet: SheetRef,
-    added: { from: number; cells: string[]; columnCount: number },
+    columns: { inserts: ColumnInsert[]; columnCount: number },
     rows: Cell[][],
   ): Promise<void>;
 };
@@ -242,17 +243,28 @@ export const google: GoogleClient = {
     return { header, column: cells, columnCount };
   },
 
-  async append(token, sheet, added, rows) {
+  async append(token, sheet, columns, rows) {
     const requests: unknown[] = [];
-    if (added.cells.length > 0) {
-      const missing = added.from + added.cells.length - added.columnCount;
-      if (missing > 0) {
-        requests.push({ appendDimension: { sheetId: sheet.sheetId, dimension: "COLUMNS", length: missing } });
+    let columnCount = columns.columnCount;
+    for (const { index, name } of columns.inserts) {
+      if (index < columnCount) {
+        // Shifts the columns from `index` on, with their cells, one to the right.
+        requests.push({
+          insertDimension: {
+            range: { sheetId: sheet.sheetId, dimension: "COLUMNS", startIndex: index, endIndex: index + 1 },
+            inheritFromBefore: index > 0,
+          },
+        });
+        columnCount += 1;
+      } else {
+        // Past the grid's last column: widen the grid.
+        requests.push({ appendDimension: { sheetId: sheet.sheetId, dimension: "COLUMNS", length: index + 1 - columnCount } });
+        columnCount = index + 1;
       }
       requests.push({
         updateCells: {
-          start: { sheetId: sheet.sheetId, rowIndex: 0, columnIndex: added.from },
-          rows: [{ values: added.cells.map(cellData) }],
+          start: { sheetId: sheet.sheetId, rowIndex: 0, columnIndex: index },
+          rows: [{ values: [cellData(name)] }],
           fields: "userEnteredValue",
         },
       });
