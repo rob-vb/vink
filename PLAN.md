@@ -114,7 +114,7 @@ Each step ends green on `npm run typecheck`, `npm run lint` and `npm test`. Each
 
 ## Status
 
-- [x] 1 · [x] 2 · [x] 3 · [x] 4 · [x] 5 · [x] 6 · [x] 7 · [ ] 8 · [ ] 9 · [ ] 10 · [x] 11 · [ ] 12a · [ ] 12b · [ ] 13 · [ ] 14 · [ ] 15
+- [x] 1 · [x] 2 · [x] 3 · [x] 4 · [x] 5 · [x] 6 · [x] 7 · [ ] 8 · [ ] 9 · [ ] 10 · [x] 11 · [x] 12a · [ ] 12b · [ ] 13 · [ ] 14 · [ ] 15
 
 ## Assumptions to confirm with the user
 
@@ -128,6 +128,7 @@ Each step ends green on `npm run typecheck`, `npm run lint` and `npm test`. Each
 - Step 5: real Jev run of the Router (pick quality, probabilities, tokens with many Forms). Max 254 Forms offered. Jev may answer `none`. Step 8 must add the No Form tab (`listedStates`), No Form review actions and the `routed`/`no_form` history events.
 - Step 6: real Jev run of the split question (is 0.8 right?); real Worker run (text + HTML-only, HEIC/PNG, inline logo); R2 copy under `${emailKey}/n` + delete; browser check of "All Forms" in the Email-in dialog. Worker and Convex must deploy together (skip names changed). Out-of-items now refuses a whole mail. Total attachment cap 12 MB.
 - Step 7: browser check of the upload dialog (tabs, "Vink picks the Form", double submit, HEIC/.eml drop, out-of-items). Real R2 PUT with image/heic and message/rfc822. Deploy `deploy/nginx.conf` (new 413 text). Real iPhone HEIC via app + API. New `POST /v1/documents` (form optional); spoofed Content-Type → 415 `media_type_mismatch`. `.eml` uses a hand-written parser (`convex/lib/emailParse.ts`, no new dependency); upload/API emails are never split. Step 13: `messages/*/developers.json` still says PDF only.
+- Step 12a: real Zap run (PDF, photo, .eml) and `zapier push` by the user; zapier-platform-core 19.1 → 19.2 warning (D027) not upgraded.
 - Step 11: browser render of the terms page (NL+EN); a lawyer reads the new clause.
 
 ## Review follow-ups (from the step 2–3 review)

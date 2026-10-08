@@ -4,7 +4,7 @@ A Zapier Platform CLI app (`zapier-platform-core` 19) on Vink's public API (`htt
 
 - **Auth:** an API Key (`Authorization: Bearer …`), tested with `GET /v1/forms`. The connection is labelled with the key's hint, `vink_live_…abcd`.
 - **Trigger "Document Approved"** (`triggers/document-approved.js`): a REST hook on `POST`/`DELETE /v1/subscriptions`. The Form is a dropdown filled by the hidden trigger `forms`. The sample comes from `GET /v1/forms/{id}/sample`, the output fields from the Form's Fields. List Fields arrive as line items.
-- **Action "Send in a Document"** (`creates/send-document.js`): streams a Zapier file (or any URL) into `POST /v1/forms/{id}/documents` as the multipart part `file`. A refusal shows Vink's own message.
+- **Action "Send in a Document"** (`creates/send-document.js`): streams a Zapier file (or any URL) as the multipart part `file`: a PDF, a JPG, PNG or HEIC photo, or an `.eml` email. With a Form it goes to `POST /v1/forms/{id}/documents`; with the Form left empty, Vink's Router picks the Form (`POST /v1/documents`, `state: no_form` when none fits). The action answers with the new Document's `id` and `state` (`processing`) only. A refusal shows Vink's own message.
 
 ## Work on it
 
