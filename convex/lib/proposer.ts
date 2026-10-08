@@ -4,7 +4,7 @@
 import { ThinkingLevel } from "@google/genai";
 import { isValidKey } from "./fieldKeys";
 import { complete, models, parseJsonObject } from "./models";
-import type { ProposedField, Proposer } from "./pipeline";
+import { filesOf, type ProposedField, type Proposer, type ReaderInput } from "./pipeline";
 
 const PROMPT = `You design a data-entry Form from one sample Document. You get the PDF, its text layer, and the Reading: a JSON description of everything the Document says, with English keys.
 
@@ -16,6 +16,16 @@ Propose one Field per piece of data in the Reading. List everything, and set "ti
 - "type": text, number (amounts and measures), date, boolean (ticks), choice or list. Use "choice" only when the options are printed on the paper (pre-printed boxes or a list), never from one filled-in value; give them as "options". Use "list" for repeated objects (one entry per delivery note line, per invoice line), with their "fields" (never lists themselves).
 
 Answer with {"fields": [...]} only.`;
+
+// What the Proposer gets, by kind. The PDF words are the benchmarked ones.
+const GETS_PDF = "You get the PDF, its text layer, and the Reading";
+const GETS = {
+  pdf: GETS_PDF,
+  image: "You get the photo (it has no text layer) and the Reading",
+  email:
+    "You get the email as text (page 1 of the text layer: its headers and body), its attachments, and the Reading",
+};
+const promptFor = (kind: ReaderInput["kind"]) => PROMPT.replace(GETS_PDF, GETS[kind]);
 
 type Proposed = {
   label: string;
@@ -48,16 +58,16 @@ function toField(p: Proposed, list: boolean): ProposedField["field"] | null {
 }
 
 export const proposer: Proposer = {
-  async propose({ pdf, reading, textLayer }) {
+  async propose({ input, reading, textLayer }) {
     const answer = await complete({
       model: models.proposer,
-      pdf,
+      files: filesOf(input),
       maxTokens: 32000,
       thinking: ThinkingLevel.HIGH,
       texts: [
         `# Text layer\n\n${textLayer.map((p) => `## Page ${p.page}\n\n${p.text}`).join("\n\n") || "(none: a scan)"}`,
         `# Reading\n\n${JSON.stringify(reading, null, 2)}`,
-        PROMPT,
+        promptFor(input.kind),
       ],
     });
     const { fields } = parseJsonObject(answer) as { fields?: Proposed[] };

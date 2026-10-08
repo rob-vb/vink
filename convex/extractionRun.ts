@@ -1,5 +1,5 @@
 "use node";
-// One Extraction (ADR 0003): Read, then Match, Fill and Verify (lib/extract).
+// One Extraction (ADR 0003, ADR 0010): Read (by the Document's kind), then Match, Fill and Verify (lib/extract).
 // Workpool retries the whole action, and a retry skips Read once a Reading is
 // stored. A Verify failure doesn't fail the Extraction: the Document is just
 // not Jev-verified.
@@ -12,18 +12,20 @@ import { matcher } from "./lib/matcher";
 import { pdfStore } from "./lib/pdfStore";
 import type { Reading } from "./lib/pipeline";
 import { reader } from "./lib/reader";
+import { readerInputOf } from "./lib/readerInput";
 import { verifier } from "./lib/verifier";
 
 export const run = internalAction({
   args: { documentId: v.id("documents") },
   handler: async (ctx, { documentId }) => {
-    const { fileKey, readingJson } = await ctx.runQuery(internal.extraction.input, {
-      documentId,
-    });
+    const { fileKey, kind, mimeType, pageCount, readingJson } = await ctx.runQuery(
+      internal.extraction.input,
+      { documentId },
+    );
     if (readingJson === null) {
-      const pdf = await pdfStore.read(fileKey);
-      if (pdf === null) throw new Error(`No PDF stored under ${fileKey}`);
-      const { reading, textLayer } = await reader.read(pdf);
+      // The Reader is picked by the Document's kind, with no model (ADR 0010).
+      const input = await readerInputOf(pdfStore, { fileKey, kind, mimeType, pageCount });
+      const { reading, textLayer } = await reader.read(input);
       await ctx.runMutation(internal.extraction.saveReading, {
         documentId,
         json: JSON.stringify(reading),

@@ -17,6 +17,7 @@ import type {
   ProposedField,
   Proposer,
   Reader,
+  ReaderInput,
   Reading,
   Verification,
   Verifier,
@@ -193,6 +194,10 @@ type Step = "read" | "match" | "fill" | "verify" | "propose";
 export const fakePipeline = {
   recording: null as Recording | null,
   failing: new Map<Step, number>(),
+  /** What the Reader was given, per read. */
+  reads: [] as ReaderInput[],
+  /** What the Proposer was given as the sample, per propose. */
+  proposed: [] as ReaderInput[],
   calls: [] as Array<
     | { step: "read" }
     | { step: "match"; reading: Reading; fields: string[]; lists: string[] }
@@ -215,6 +220,8 @@ export const fakePipeline = {
     fakePipeline.recording = null;
     fakePipeline.failing.clear();
     fakePipeline.calls = [];
+    fakePipeline.reads = [];
+    fakePipeline.proposed = [];
   },
   failIfAsked(step: Step) {
     const left = fakePipeline.failing.get(step) ?? 0;
@@ -230,8 +237,9 @@ export const fakePipeline = {
 };
 
 export const fakeReader: Reader = {
-  async read() {
+  async read(input) {
     fakePipeline.calls.push({ step: "read" });
+    fakePipeline.reads.push(input);
     fakePipeline.failIfAsked("read");
     const { reading, textLayer = [] } = fakePipeline.played();
     return { reading, textLayer };
@@ -274,7 +282,8 @@ export const fakeFiller: Filler = {
 };
 
 export const fakeProposer: Proposer = {
-  async propose({ reading }) {
+  async propose({ input, reading }) {
+    fakePipeline.proposed.push(input);
     fakePipeline.calls.push({ step: "propose", reading });
     fakePipeline.failIfAsked("propose");
     return fakePipeline.played().proposal ?? [];

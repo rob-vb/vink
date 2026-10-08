@@ -246,6 +246,9 @@ export const runInput = internalQuery({
     const current = formVersion?.fields ?? [];
     return {
       key: proposal.key,
+      kind: kindOf(proposal),
+      mimeType: mimeTypeOf(proposal),
+      pageCount: proposal.pageCount,
       readingJson: proposal.readingJson ?? null,
       textLayer: proposal.textLayer ?? [],
       extends: form !== null,

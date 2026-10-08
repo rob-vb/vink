@@ -1,0 +1,33 @@
+{
+  "form": "work-order",
+  "source": "document.jpg",
+  "category": "handwritten",
+  "pages": 1,
+  "fieldValues": {
+    "workOrderNumber": "4821",
+    "customerName": "J. Hofman",
+    "customerCity": "Zwolle",
+    "visitDate": "2026-10-07",
+    "workDone": "Lekkende mengkraan keuken vervangen, aansluitingen gecontroleerd. Geen lekkage meer.",
+    "hoursWorked": 2.5,
+    "materials": [
+      { "description": "Mengkraan", "quantity": 1 },
+      { "description": "Koppelingen", "quantity": 2 }
+    ]
+  },
+  "verified": [
+    "workOrderNumber",
+    "customerName",
+    "customerCity",
+    "visitDate",
+    "workDone",
+    "hoursWorked",
+    "materials[0].description",
+    "materials[0].quantity",
+    "materials[1].description",
+    "materials[1].quantity"
+  ],
+  "unverified": [],
+  "unknown": [],
+  "note": "Synthetic: a photo drawn on the box (SVG with jittered italic type, then a crooked-paper-on-desk look), invented names. Ground truth is true by construction."
+}

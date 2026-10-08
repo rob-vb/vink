@@ -10,6 +10,7 @@ import { matcher } from "./lib/matcher";
 import { matchRequests } from "./lib/matchPlan";
 import { proposer } from "./lib/proposer";
 import { reader } from "./lib/reader";
+import { readerInputOf } from "./lib/readerInput";
 import { readingLeaves, withoutPaths } from "./lib/reading";
 
 export const run = internalAction({
@@ -17,12 +18,16 @@ export const run = internalAction({
   handler: async (ctx, { proposalId }) => {
     const input = await ctx.runQuery(internal.formProposals.runInput, { proposalId });
     if (input === null) return;
-    const pdf = await pdfStore.read(input.key);
-    if (pdf === null) throw new Error(`No PDF stored under ${input.key}`);
+    const sample = await readerInputOf(pdfStore, {
+      fileKey: input.key,
+      kind: input.kind,
+      mimeType: input.mimeType,
+      pageCount: input.pageCount,
+    });
     let reading: Reading;
     let textLayer = input.textLayer;
     if (input.readingJson === null) {
-      const read = await reader.read(pdf);
+      const read = await reader.read(sample);
       reading = read.reading;
       textLayer = read.textLayer;
       await ctx.runMutation(internal.formProposals.saveReading, {
@@ -51,7 +56,7 @@ export const run = internalAction({
         return;
       }
     }
-    const fields = await proposer.propose({ pdf, reading, textLayer });
+    const fields = await proposer.propose({ input: sample, reading, textLayer });
     await ctx.runMutation(internal.formProposals.saveFields, { proposalId, fields });
   },
 });

@@ -1,0 +1,20 @@
+{
+  "name": "work-order",
+  "description": "A work order (werkbon) a technician fills in by hand after a visit to a customer.",
+  "fields": [
+    { "name": "workOrderNumber", "type": "string", "description": "Number of the work order (Werkbon nr.)" },
+    { "name": "customerName", "type": "string", "description": "Name of the customer the work was done for (Klant)" },
+    { "name": "customerCity", "type": "string", "description": "City of the customer (Woonplaats)" },
+    { "name": "visitDate", "type": "date", "description": "Date of the visit (ISO yyyy-mm-dd)" },
+    { "name": "workDone", "type": "string", "description": "What was done (Uitgevoerd werk), on one line" },
+    { "name": "hoursWorked", "type": "number", "description": "Hours worked (Uren)" },
+    {
+      "name": "materials",
+      "type": "list",
+      "fields": [
+        { "name": "description", "type": "string", "description": "Material used (Omschrijving)" },
+        { "name": "quantity", "type": "number", "description": "How many (Aantal)" }
+      ]
+    }
+  ]
+}

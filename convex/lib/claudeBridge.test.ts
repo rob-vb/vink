@@ -42,7 +42,7 @@ test("Read sends the PDF and its text layer to the bridge and returns the Readin
   const used: Usage[] = [];
   usage.listener = (u) => used.push(u);
 
-  const { reading, textLayer } = await reader.read(pdf);
+  const { reading, textLayer } = await reader.read({ kind: "pdf", bytes: pdf, pageCount: 1 });
 
   expect(reading).toEqual({ invoice: { number: "F-2024-001", _pages: [1] } });
   expect(textLayer.length).toBeGreaterThan(0);
@@ -79,7 +79,7 @@ test("the Proposer sends the sample's PDF and Reading to the bridge", async () =
   );
 
   const proposed = await proposer.propose({
-    pdf: new Uint8Array(Buffer.from("%PDF-1.7 sample")),
+    input: { kind: "pdf", bytes: new Uint8Array(Buffer.from("%PDF-1.7 sample")), pageCount: 1 },
     reading: { invoice: { number: "F-1" } },
     textLayer: [{ page: 1, text: "Factuur F-1" }],
   });

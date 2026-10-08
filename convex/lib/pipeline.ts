@@ -37,12 +37,50 @@ export type FilledValue = string | number | boolean | null;
 /** The text of one page's text layer. A scanned page has none. */
 export type PageText = { page: number; text: string };
 
+/** A file the vision model gets as a part of its prompt, with its real MIME type. */
+export type InputFile = { bytes: Uint8Array; mimeType: string };
+
+/** One attachment of an email: a PDF or an image. */
+export type EmailAttachment = { filename: string; mimeType: string; bytes: Uint8Array };
+
+/**
+ * What a Reader gets, by the kind of the Document (ADR 0010). The kind is
+ * known from the file, so the Reader is picked by it and never by a model.
+ */
+export type ReaderInput =
+  /** `pageCount` is the PDF's stored count (the Items it costs); the Reader reads the file's own pages. */
+  | { kind: "pdf"; bytes: Uint8Array; pageCount: number }
+  | { kind: "image"; bytes: Uint8Array; mimeType: string }
+  | {
+      kind: "email";
+      subject: string;
+      from: string;
+      date: string;
+      /** The body as text. */
+      body: string;
+      attachments: EmailAttachment[];
+    };
+
+/** The files of an input that go to the vision model as parts: the PDF, the image, or an email's attachments. */
+export function filesOf(input: ReaderInput): InputFile[] {
+  switch (input.kind) {
+    case "pdf":
+      return [{ bytes: input.bytes, mimeType: "application/pdf" }];
+    case "image":
+      return [{ bytes: input.bytes, mimeType: input.mimeType }];
+    case "email":
+      return input.attachments.map(({ bytes, mimeType }) => ({ bytes, mimeType }));
+  }
+}
+
 export type Reader = {
   /**
-   * Reads every page of the PDF into a Reading, and returns the text layer of
-   * the pages that have one, for Verify.
+   * Reads the input into a Reading, and returns the text layer of the pages
+   * that have one, for Verify. A PDF's pages are its own; an image is page 1
+   * and has no text layer; an email's page 1 is its headers and body, and the
+   * pages of its attachments follow in order.
    */
-  read(pdf: Uint8Array): Promise<{ reading: Reading; textLayer: PageText[] }>;
+  read(input: ReaderInput): Promise<{ reading: Reading; textLayer: PageText[] }>;
 };
 
 export type Matcher = {
@@ -96,10 +134,11 @@ export type ProposedField = { field: Infer<typeof field>; ticked: boolean };
 
 export type Proposer = {
   /**
-   * Proposes a Form's Fields from a sample: its PDF (page images and text
-   * layer) and its Reading, which lists everything on it.
+   * Proposes a Form's Fields from a sample: its input (a PDF, an image or an
+   * email), its text layer when it has one, and its Reading, which lists
+   * everything on it.
    */
   propose(
-    sample: { pdf: Uint8Array; reading: Reading; textLayer: PageText[] },
+    sample: { input: ReaderInput; reading: Reading; textLayer: PageText[] },
   ): Promise<ProposedField[]>;
 };

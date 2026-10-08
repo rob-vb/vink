@@ -102,6 +102,7 @@ export const input = internalQuery({
       // A Document from before kinds is a PDF (lib/inputLimits.ts).
       kind: kindOf(document),
       mimeType: mimeTypeOf(document),
+      pageCount: document.pageCount,
       formName: form.name,
       formDescription: form.description ?? null,
       fields: formVersion.fields.filter((f): f is FlatField => f.type !== "list"),
