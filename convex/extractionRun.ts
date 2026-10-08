@@ -15,6 +15,7 @@ import { matcher } from "./lib/matcher";
 import { pdfStore } from "./lib/pdfStore";
 import type { Reading } from "./lib/pipeline";
 import { reader } from "./lib/reader";
+import { readingLeaves } from "./lib/reading";
 import { router } from "./lib/router";
 import { readerInputOf, UnreadableInput } from "./lib/readerInput";
 import { verifier } from "./lib/verifier";
@@ -54,15 +55,18 @@ export const run = internalAction({
     let form = stored;
     let routed;
     if (stored.routableForms !== null) {
-      // With no Forms there is nothing to ask Jev.
-      const pick =
+      // Nothing to ask Jev with no Forms, or with a Reading that holds no value.
+      const unroutable =
         stored.routableForms.length === 0
-          ? { formId: null, probability: 1 }
-          : await router.route(reading, stored.routableForms);
+          ? "The Organisation has no Forms"
+          : readingLeaves(reading).length === 0
+            ? "Nothing could be read"
+            : null;
+      const pick = unroutable === null ? await router.route(reading, stored.routableForms) : { formId: null, probability: 1 };
       if (pick.formId === null) {
         await ctx.runMutation(internal.extraction.noForm, {
           documentId,
-          detail: stored.routableForms.length === 0 ? "The Organisation has no Forms" : "No Form fits",
+          detail: unroutable ?? "No Form fits",
         });
         return;
       }

@@ -280,7 +280,12 @@ export const finish = internalMutation({
       if (routed === undefined) throw new ConvexError("A Document without a Form needs the Router's pick");
       const picked = (await ctx.db.get(routed.formId))!;
       // The fit check gates Jev's pick: a Document that does not fit it has no Form.
-      if (doesNotFit) {
+      // Too, when no Field matched at all: a Form with no required Fields would
+      // otherwise fit every input. (A Document that came with a Form keeps the
+      // plain fit check.)
+      const nothingMatched =
+        fieldValues.every((f) => f.sourcePath === null) && lists.every((l) => l.sourcePath === null);
+      if (doesNotFit || nothingMatched) {
         await putInNoForm(ctx, document, `Does not fit ${picked.name}`);
         return;
       }
@@ -346,8 +351,12 @@ export const finish = internalMutation({
 
     // Auto-Send is evaluated here, once, right after the Extraction succeeds.
     const form = (await ctx.db.get(formId))!;
+    // A Form the Router picked never Auto-Sends in v1: the Document always goes
+    // to Needs Review, where the user can approve it. Reconsider with a
+    // probability threshold on the Router's pick after real Jev runs.
     const clean =
       form.autoSend &&
+      routed === undefined &&
       jevVerified &&
       !doesNotFit &&
       !document.userTouched &&

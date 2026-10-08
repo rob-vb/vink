@@ -317,3 +317,97 @@ test("a failed Router is retried from the stored Reading: no new Read, no new ch
   expect(await read(org, documentId)).toMatchObject({ state: "needs_review", formName: "Invoice" });
   expect(await used(org)).toBe(1);
 });
+
+test("a Document the Router routed never Auto-Sends, and one that came with the same Form does", async () => {
+  const t = newBackend();
+  const org = await acme(t, ["invoice"]);
+  await org.user.mutation(api.forms.updateSettings, {
+    organisationSlug: org.slug,
+    formId: org.ids.invoice,
+    reviewThreshold: 0.8,
+    autoSend: true,
+  });
+
+  const routed = await arrivesWithoutForm(t, org.organisationId, invoice);
+  fakePipeline.replay(invoice);
+  fakePdfStore.objects.set("org/with-form-auto.pdf", await pdfWithPages(1));
+  const given = await t.mutation(internal.documents.insert, {
+    organisationId: org.organisationId,
+    formId: org.ids.invoice,
+    key: "org/with-form-auto.pdf",
+    filename: "factuur.pdf",
+    pageCount: 1,
+    uploadedBy: "ann",
+    uploaderEmail: "ann@example.com",
+  });
+  await settle(t);
+
+  // The same Form, the same clean Reading: only the route to the Form differs.
+  expect(await read(org, routed)).toMatchObject({ state: "needs_review", formName: "Invoice", approval: null });
+  expect(await read(org, given)).toMatchObject({ state: "approved", approval: { mode: "auto" } });
+});
+
+test("a routed Document that matches no Field of a Form without required Fields goes to No Form", async () => {
+  const t = newBackend();
+  const org = await acme(t, []);
+  const { formId } = await org.user.mutation(api.forms.create, {
+    organisationSlug: org.slug,
+    name: "Notes",
+    fields: [{ type: "text", label: "Opmerking", key: "remark", required: false }],
+  });
+
+  const nothing = await arrivesWithoutForm(t, org.organisationId, { ...postcard, route: "Notes" });
+  const something = await arrivesWithoutForm(t, org.organisationId, {
+    ...postcard,
+    matches: { remark: { path: "postcard.text", probability: 0.9 } },
+    fills: { remark: "Groeten uit Zeeland" },
+    route: "Notes",
+  });
+
+  expect(await read(org, nothing)).toMatchObject({ state: "no_form", formId: null });
+  expect((await read(org, nothing)).history[1].detail).toBe("Does not fit Notes");
+  expect(await read(org, something)).toMatchObject({ state: "needs_review", formId });
+});
+
+test("a Document that arrives with a Form keeps the plain fit check: no matched Field is not a No Form", async () => {
+  const t = newBackend();
+  const org = await acme(t, []);
+  const { formId } = await org.user.mutation(api.forms.create, {
+    organisationSlug: org.slug,
+    name: "Notes",
+    fields: [{ type: "text", label: "Opmerking", key: "remark", required: false }],
+  });
+  fakePipeline.replay(postcard);
+  fakePdfStore.objects.set("org/notes.pdf", await pdfWithPages(1));
+
+  const documentId = await t.mutation(internal.documents.insert, {
+    organisationId: org.organisationId,
+    formId,
+    key: "org/notes.pdf",
+    filename: "notes.pdf",
+    pageCount: 1,
+    uploadedBy: "ann",
+    uploaderEmail: "ann@example.com",
+  });
+  await settle(t);
+
+  expect(await read(org, documentId)).toMatchObject({ state: "needs_review", formId, doesNotFit: false });
+});
+
+test("a Reading with no values goes to No Form without asking Jev", async () => {
+  const t = newBackend();
+  const org = await acme(t, ["invoice", "complaint"]);
+
+  const documentId = await arrivesWithoutForm(t, org.organisationId, {
+    reading: { page: { text: "", _pages: [1] } },
+    matches: {},
+    fills: {},
+    route: "Invoice",
+  });
+
+  const document = await read(org, documentId);
+  expect(document).toMatchObject({ state: "no_form", formId: null });
+  expect(document.history[1].detail).toBe("Nothing could be read");
+  expect(steps()).toEqual(["read"]);
+  expect(await used(org)).toBe(1);
+});
