@@ -133,6 +133,13 @@ Each step ends green on `npm run typecheck`, `npm run lint` and `npm test`. Each
 - [x] Paginate `documents.backfillInputKind` (and `items.backfillItems`) with a cursor; one mutation over the whole `documents` table breaks past ~8k rows. Do this right after step 4 (step 4 may touch `documents.ts`).
 - [ ] Step 8: `messages/*/demo.json` still says "pages left"; the demo must mirror the app ("items").
 
+## Review follow-ups (from the step 4–5 review)
+
+- [ ] (to step 6 worker) Server builds the email JSON; attachment keys under `${emailKey}/`, checked per org; shape validated; delete helper removes attachments (reject/delete/retention); total-bytes cap; deterministic read failures not retried.
+- [ ] After step 6: a routed Document never Auto-Sends in v1 (always Needs Review; reconsider with a probability threshold after real Jev runs). A routed Document with zero matched Fields counts as does-not-fit (Forms without required Fields would otherwise swallow everything). Router token budget like `matchPlan.ts` (shorten Reading/criteria; over budget → No Form, not a failure). Skip the Router when the Reading has no leaves.
+- [ ] Step 7: sniff magic bytes at intake, never trust the client MIME type. Ship the `form_id: null` / `no_form` API contract change with step 7 and note it for API clients.
+- [ ] Step 8: No Form tab + Change Form / Reject buttons for `no_form` (step 5 is not deployable before step 8).
+
 ## Failed attempts
 
 (none yet; after two failed tries on one step, note it here and re-plan)
