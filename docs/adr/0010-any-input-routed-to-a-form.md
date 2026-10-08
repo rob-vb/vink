@@ -1,0 +1,28 @@
+# Any input is read by kind, routed to a Form, and counted in Items
+
+Supersedes the PDF-only assumption of [ADR 0003](0003-reading-then-jev-matching.md): a Document is no longer always a PDF, and it no longer always has a Form. Supersedes the Page unit of [ADR 0007](0007-stripe-billing-vink-sells-owns-pages.md): the unit is now the **Item**. The four-step Extraction of ADR 0003 (Read, Match, Fill, Verify), Stripe as the source of truth for the Subscription and Vink as the source of truth for the allowance all still hold.
+
+Customers' input is not only PDF. Vink now takes three kinds of input: a PDF, an email (its body, with its attachments) and an image (JPG, PNG or HEIC). They all end as a Reading, and the rest of the pipeline stays: Match, Fill, review, Approval, Integrations.
+
+**The Reader is picked by MIME type, with no AI.** A PDF gets the PDF reader of ADR 0003. An image gets the image reader: the vision model gets the image, which has no text layer, so Verify skips the check against the text. An email gets the email reader: subject, sender, date and body go in as text, the attachments as extra parts, and Verify treats the body as one page. The kind is known from the file, so a model call to tell kinds apart would add cost and a new way to be wrong.
+
+**The Router picks the Form.** A Document may come in without a Form: uploaded or sent through the API with none, or sent to the Organisation's Intake Address. Then Jev picks a Form from the Reading and the name and description of each of the Organisation's Forms. This is a choice, like Match, so it comes with a probability. Jev's pick is not final: Match and the existing fit check (`doesNotFit` in `convex/lib/fit.ts`) act as the gate. If the gate fails, the Document goes to **No Form**. The gate also runs when the Organisation has only one Form, so a single Form does not swallow everything that arrives. We rejected skipping the router in that case: input that does not fit would fill a Form with empty or wrong values, and a user would have to find that out by hand.
+
+**No Form is a state, not a Form.** The Document keeps its Reading and its Items, appears in its own list, and is never approved or sent. A user moves it to a Form with the existing "move to another Form" flow (Match and Fill run again on the same Reading) or marks it Rejected. We rejected a catch-all Form that an Admin must make: it would need Fields, and it would send junk to Integrations.
+
+**Jev decides whether an email is one Document or several.** An email with a complaint and a photo is one Document. An email with an empty body and three PDFs is three. When Jev is unsure, Vink splits and marks the Documents Needs Review, because a Document that holds two different papers fills one Form with a mix of both, and that is worse than a split that a user can see. There is no split or merge screen in v1.
+
+**Two kinds of email address.** Each Organisation can have one **Organisation Intake Address**. Everything sent to it goes through the Router. The per-Form addresses stay as they are, and a Document sent to one of them skips the Router, because the sender has already chosen the Form. The Organisation address is a secret in the same way: an Admin switches it on and can replace it. The Form is optional at upload and in the API; when it is given, it is used.
+
+**The billing unit is the Item.** 1 PDF page, 1 email or 1 photo is 1 Item. Every Item counts, including those of Documents that end in No Form, and it is charged when the input is read, whatever the outcome. We rejected not charging for No Form: the Reading, and so the cost, has been made by then. We also rejected a noise filter for mail: customers send to Vink only what Vink must process, and a filter would be a second classifier to get wrong. An Item still counts once; a retry, a move to another Form and a sample that becomes a Document do not count again. Plans, Top-ups and Free Items are the same things as before with the new unit. `pageCount` stays: it is a real fact about a PDF, and for a PDF it is the number of Items.
+
+## Consequences
+
+- `Document.formId` is optional. Code that assumed a Form (Match, Auto-Send, Delivery, the review screen) must handle a Document without one.
+- Jev is on the critical path one more time: without Jev there is no Router and no email split, as for Match in ADR 0003. TypeSafe now also receives email text, in the Reading. Its zero-retention quote and the transfer impact assessment already block launch, and cover this too.
+- A Document stores its kind and the real MIME type of its file. The stored file is not always a PDF, so the code and the limits that said "PDF" get a neutral name.
+- Limits per kind (size, and for PDF the number of pages) move to one place. The nginx config and the intake Worker keep their own copies and must change with it.
+- The allowance, the Stripe Products and Prices, the Plan and Top-up names and the data of existing Organisations are renamed from Pages to Items. Existing counts carry over one to one, so no Organisation gets more or less than before. ADR 0006 and ADR 0007 keep the word Pages where they describe what was decided then.
+- The Reader of an image has no text layer, so Verify cannot check an image value against the text. It still checks that the value fits and is plausible.
+- A Reader for a kind is a new place for the pipeline to fail. A failed Read is Extraction Failed and a manual retry resumes, as in ADR 0003; the Item has been charged and is not charged again.
+- Review of an email shows headers, body and the attachment list, with the source text highlighted. Review of an image is a zoomable image with no highlighting in v1. The marketing demo mirrors the app, so it gets both.

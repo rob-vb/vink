@@ -1,5 +1,7 @@
 # Stripe owns the billing, Vink is the seller and owns the Pages
 
+Status: superseded in part by [ADR 0010](0010-any-input-routed-to-a-form.md) (2026-10-08): the billing unit is now the Item (1 PDF page, 1 email or 1 photo), not the Page. The Stripe design, and Vink owning the allowance, still hold; read Pages below as Items.
+
 Supersedes [ADR 0006](0006-polar-owns-billing-vink-owns-pages.md): Vink bills through its own Stripe account instead of through Polar. The split between Subscription (Stripe) and Pages (Vink) still holds.
 
 Paid Plans and Top-ups go through Stripe: Checkout to start a Plan or buy Top-ups, the Customer Portal to change Plan, cancel, update the payment method, address and VAT number, and see invoices. Custom Plans stay by hand (`pages:setPlan`), paid by invoice.

@@ -1,0 +1,121 @@
+# PLAN — Vink: any input, routed to a Form
+
+Source: the grilling session of 2026-10-08. The full decision record is in the memory file `employer-pivot.md`.
+Goal: Vink takes any input (PDF, email text, photo/scan). A router picks the Form. The rest of the pipeline stays: Read → Match → Fill → review → Integrations.
+
+## Start here (new session)
+
+1. Read this file, then `GLOSSARY.md`, `docs/adr/0003-reading-then-jev-matching.md` and the Next.js docs note in `AGENTS.md`.
+2. Create or check out the branch `any-input` from `main`.
+3. Take the first unchecked step under **Status**. Do it, prove it, tick it off, and commit it.
+4. Do not push and do not deploy. Report to the user in Dutch at B1 level.
+
+## Gates (read first)
+
+- **Approved to build (user, 2026-10-08).** Steps 1–12a may be built now, before the employer talk. Start a new session at step 1. No need to ask again.
+- **Employer talk.** The user talks to Heisterkamp in person. Until the user reports the outcome, nothing reaches prod and no marketing copy changes (Q10). This blocks steps 13 and 15 and any deploy.
+- **Make app.** It is in review. Step 12b waits until Make approves it.
+- **Real services.** Build on fakes. Test Vertex, R2 and the Worker on the real services once, at the end (step 15).
+- **Branch.** Use `any-input` from `main`. Nothing gets pushed without the user's OK.
+
+## Decisions (do not re-open)
+
+| # | Decision |
+|---|---|
+| Inputs v1 | PDF, email body (with attachments), images (JPG/PNG/HEIC) |
+| Reader choice | Picked by MIME type, with no AI |
+| Form choice | Jev picks among the Organisation's Forms, then the existing `doesNotFit` (`convex/lib/fit.ts`) gates the result. With one Form, the gate still runs. If no Form fits, the Document goes to the **No Form** list. |
+| Email split | Jev decides whether an email becomes one Document or several. When unsure: split + Needs Review. No split/merge UI in v1. |
+| Intake | New: one Intake Address per Organisation, which goes through the router. The per-Form addresses stay and skip the router. Form is optional at upload and in the API. |
+| Usage | Customers send only mails Vink must process. There is no noise filter. Every Item counts, including Items in No Form. |
+| Billing unit | **Page → Item**. 1 PDF page, 1 email or 1 photo = 1 Item. Rename it in UI, Stripe, GLOSSARY and code. `pageCount` stays (it is a real fact about a PDF). |
+| Transport | No technical exclusion. No marketing, examples or templates for SBI H, 45 or 77.1. The terms get a right to refuse/end accounts. |
+| Review pane | Email = headers + body + attachment list, with highlighting of the source text. Image = zoomable, with no source highlighting in v1. The Demo mirrors the app. |
+| Onboarding | Setup in 3 steps after sign-up: Form → System (can be skipped; Documents then shows "Nog geen systeem gekoppeld") → Input. After that, Documents stays the home page. |
+| New Form | From a sample (PDF, photo or email), from a description in words (new), or blank. No templates in v1. |
+| Renames (approved) | `pdfKey` → `fileKey` and `convex/lib/pdfLimits.ts` → `inputLimits.ts`, because they will cover images and emails as well (step 3) |
+| Homepage | Headline "Input. Vink. Klaar."; a "Zo werkt het" section in the order Form → Systeem → Input; the story is "stuur door naar je Vink-adres". |
+
+## Steps
+
+Each step ends green on `npm run typecheck`, `npm run lint` and `npm test`. Each step also has its own proof below.
+
+### 1. Domain docs
+- Add ADR `docs/adr/0010-any-input-routed-to-a-form.md`. It supersedes the PDF-only assumption in ADR 0003 and the Page unit in ADR 0007.
+- Update `GLOSSARY.md`: Document (PDF, email or image), Item (replaces Page, Free Items), Router, No Form, Organisation Intake Address. Update the Relationships section too ("processed against exactly one Form" becomes "at most one").
+- **Proof:** the user reads the ADR and the GLOSSARY diff. `grep -n "PDF" GLOSSARY.md` shows only definitions where PDF is meant.
+
+### 2. Rename Page → Item
+- Rename in `convex/pages.ts` (→ `items.ts`), `chargePages`, `FREE_PAGES`, `setFreePages`, `pages-card.tsx`, `pages-usage.tsx`, `messages/*`, the billing tests and the Stripe sandbox product/price names.
+- Organisation fields in the Convex schema: widen → backfill → narrow. Prod has data.
+- **Proof:** tests pass. `grep -rnE "chargePages|FREE_PAGES|freePages|Free Pages" --exclude-dir=node_modules .` returns 0 hits, except `pageCount`. The Stripe sandbox shows the new names (check with the Stripe CLI). The migration runs on a dev copy and gives the same totals.
+
+### 3. Input model
+- Document gets `kind: "pdf" | "email" | "image"` and `mimeType`. `pdfKey` → `fileKey` (the stored file is no longer always a PDF). `pdfStore.ts` stores the real MIME type.
+- Item count: pdf = `pageCount`, email = 1, image = 1.
+- Limits: `convex/lib/pdfLimits.ts` → `inputLimits.ts`. Also update the copies in `deploy/nginx.conf` and the Worker.
+- **Proof:** unit tests for the Item count per kind. The existing PDF tests are unchanged and still green.
+
+### 4. Readers per kind
+- `models.ts` `viaVertex` takes a `mimeType` (it is hardcoded to `application/pdf` at line 139 now).
+- Image reader: Vertex with the image MIME type. There is no text layer, so Verify skips the support check (that path already exists).
+- Email reader: subject, sender, date and body go in as text. Attachments go in as extra parts. Verify uses the body as one "page".
+- `Reader.read(pdf)` becomes `read(input)`. Also update `proposer` `sample.pdf`.
+- **Proof:** vitest with the fake model for each kind, Jev included. Eval fixtures: one complaint email, one photo of a handwritten work order, one PDF invoice.
+
+### 5. Router: choose the Form
+- `formId` on Document becomes optional, with the new state **No Form**.
+- Jev picks a Form from the Reading plus each Form's name/description. Then Match + `doesNotFit` act as the gate. If the gate fails, the Document goes to No Form.
+- The Item is charged at Read, whatever the outcome.
+- **Proof:** tests with fake Jev: 2 Forms route correctly; input that does not fit goes to No Form; with 1 Form, input that does not fit goes to No Form; the Item is charged in every case. Moving a Document from No Form to a Form reuses the "move to another Form" flow (`changeForm.test.ts` covers it).
+
+### 6. Email in: whole mails + split
+- Worker (`workers/intake-email/src/map.ts`): pass the whole mail (body + PDF/image attachments) instead of PDFs only. `skipped: "not_pdf"` only applies to other file types now.
+- Convex: Jev decides one Document or several. When unsure: split + Needs Review.
+- Organisation Intake Address next to the per-Form addresses.
+- **Proof:** Worker unit tests: Organisation address → router; Form address → that Form. Fixtures: complaint + photo → 1 Document; empty body + 3 PDFs → 3 Documents; ambiguous mail → split + Needs Review; a newsletter still counts 1 Item.
+
+### 7. Upload + public API
+- Upload dialog and API accept PDF, JPG, PNG, HEIC and email text. Form is optional.
+- Update the 415 errors and the API docs.
+- **Proof:** `convex/publicApi/documents.test.ts` gets cases for each kind and for a missing Form. An unknown type still gets 415.
+
+### 8. Review screen + Demo
+- Email pane and image pane next to `pdf-pane.tsx`. A No Form list in Documents.
+- Mirror both in `components/demo/` (the demo must mirror the app).
+- **Proof:** local browser e2e on port 3013 (see the memory file `local-e2e-against-dev.md`). Open each kind. Try empty values, double approve and a refresh during review. Publish the screenshots to an Artifact for the user.
+
+### 9. Onboarding in 3 steps
+- After sign-up: Form → System (can be skipped) → Input. This replaces the empty state in `document-list.tsx:53`. Members without Forms keep the current message.
+- **Proof:** e2e with a new account: complete all steps; skip System and check that the notice appears; refresh in the middle of the setup and resume at the right step.
+
+### 10. New Form: sample, description, blank
+- `sample-upload.tsx` accepts PDF, photo or a pasted email. New: "describe in words", where AI proposes the Fields (Form Proposal).
+- **Proof:** vitest with the fake model for the description path. e2e: make one Form each way.
+
+### 11. Terms: right to refuse
+- Add a clause to the legal texts (NL+EN): Vink may refuse a sign-up or end an account.
+- **Proof:** both pages render and show the clause.
+
+### 12. Integrations
+- a) Zapier `send-document`: Form optional, more file types. **Proof:** the Zapier tests pass.
+- b) Make: **only after approval.** Publish the change as a new version.
+
+### 13. Marketing copy (gate: employer OK)
+- "Input. Vink. Klaar.", the inputs line, "Zo werkt het" (Form → Systeem → Input), "stuur door naar je Vink-adres", and the Item rule on the pricing page. NL+EN.
+- **Proof:** grep the copy, placeholders and example names for the whole transport domain: transport, logistiek, vracht, vrachtbrief, CMR, chauffeur, rit, koerier, expeditie, fleet, wagenpark, lease, verhuur, garage, banden, kenteken, truck, trailer. Show the hit list to the user before calling this done. Then take e2e screenshots.
+
+### 14. Demo film
+- Re-record it with an email scene and a photo scene, after steps 8 and 13. Project: `/mnt/HC_Volume_105734306/vink-video`.
+
+### 15. Real-service checks (end)
+- Vertex with an email and with an image. R2 with image MIME types. The Worker on the real domain. Stripe sandbox with the Item names.
+- **Proof:** one real run per kind on dev/prod, done with the user.
+
+## Status
+
+- [x] 1 · [ ] 2 · [ ] 3 · [ ] 4 · [ ] 5 · [ ] 6 · [ ] 7 · [ ] 8 · [ ] 9 · [ ] 10 · [ ] 11 · [ ] 12a · [ ] 12b · [ ] 13 · [ ] 14 · [ ] 15
+
+## Failed attempts
+
+(none yet; after two failed tries on one step, note it here and re-plan)

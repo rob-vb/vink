@@ -1,6 +1,6 @@
 # Vink
 
-Multi-tenant SaaS that reads documents (PDF, incl. handwritten), extracts their data into user-defined Forms, and — after approval — sends it to external systems via Integrations.
+Multi-tenant SaaS that reads any input (PDF, email or photo, incl. handwritten), picks the Form it belongs to, extracts its data into that user-defined Form, and — after approval — sends it to external systems via Integrations.
 
 ## Language
 
@@ -27,36 +27,52 @@ _Avoid_: table, repeating group
 A frozen state of a Form's Fields. A Document is processed and sent according to the Form Version that was current when it was uploaded.
 
 **Form Proposal**:
-A draft set of Fields that Vink proposes from one sample PDF, before it is a Form (or before it is added to one). It holds the sample, its Reading and the proposed Fields. An Admin edits it and saves it as a Form Version, and the sample can then become that Form's first Document. An unsaved Form Proposal is deleted after 7 days.
+A draft set of Fields that Vink proposes, before it is a Form (or before it is added to one). It starts from one sample (a PDF, a photo or an email) or from a description in words. It holds the sample if there is one, its Reading and the proposed Fields. An Admin edits it and saves it as a Form Version, and the sample can then become that Form's first Document. An unsaved Form Proposal is deleted after 7 days.
 _Avoid_: template, template agent, form suggestion
 
 **Document**:
-An incoming file (PDF) to be processed against one Form. All its pages together fill one set of Field Values; a PDF is never split into several Documents.
+An incoming PDF, email or image, processed against at most one Form. All its pages together fill one set of Field Values; a PDF or an image is never split into several Documents. Jev decides whether an email becomes one Document or several; when unsure it splits the email and marks the Documents Needs Review. A Document that no Form fits is in No Form.
 _Avoid_: upload, file
 
-**Intake Address**:
-An email address that belongs to one Form: each PDF attached to an email sent to it becomes a Document of that Form. Anyone who knows the address can send to it, so it is treated as a secret: an Admin switches it on and can replace it, which stops the old address at once. Vink never replies to the sender; an attachment that is not a PDF, too long, or over the Organisation's Pages is refused and creates no Document.
+**Form Intake Address**:
+An email address that belongs to one Form: each email sent to it becomes one or more Documents of that Form, and the Router does not run. Anyone who knows the address can send to it, so it is treated as a secret: an Admin switches it on and can replace it, which stops the old address at once. Vink never replies to the sender; an attachment of another file type, one that is too long, or one over the Organisation's Items is refused and creates no Document.
 _Avoid_: inbox, mailbox, email-in address
 
-**Page**:
-One page of a PDF that Vink reads. It is the unit in which an Organisation's usage and Plans are measured, so a 10-page Document counts as ten. A Page counts once, when Vink accepts the PDF for reading (a Document or a Form Proposal sample); a retry, a move to another Form, or the sample becoming a Document does not count again.
-_Avoid_: credit, unit
+**Organisation Intake Address**:
+An email address that belongs to the Organisation, next to the Form Intake Addresses. Each email sent to it becomes one or more Documents without a Form, and the Router picks the Form for each. It is a secret in the same way as a Form Intake Address: an Admin switches it on and can replace it. Vink never replies to the sender.
+_Avoid_: inbox, mailbox, catch-all address
+
+**Item**:
+One unit of input that Vink reads. It is the unit in which an Organisation's usage and Plans are measured: 1 PDF page, 1 email or 1 photo is 1 Item, so a 10-page PDF counts as ten. Every Item counts, including those of Documents in No Form. An Item counts once, when Vink reads the input (a Document or a Form Proposal sample); a retry, a move to another Form, or the sample becoming a Document does not count again.
+_Avoid_: credit, unit, Page
 
 **Plan**:
-What an Organisation pays for: a number of Pages per billing period. Every Plan has the same features and unlimited users; unused Pages expire at the end of the period. When the Pages run out, new uploads are refused until the Organisation upgrades or buys a Top-up.
+What an Organisation pays for: a number of Items per billing period. Every Plan has the same features and unlimited users; unused Items expire at the end of the period. When the Items run out, new uploads are refused until the Organisation upgrades or buys a Top-up.
 _Avoid_: tier, subscription, package
 
-**Free Pages**:
-A one-time number of Pages given to the first Organisation a user creates, to try Vink before choosing a Plan. They never renew or expire.
+**Free Items**:
+A one-time number of Items given to the first Organisation a user creates, to try Vink before choosing a Plan. They never renew or expire.
 _Avoid_: trial, free tier, free plan
 
 **Top-up**:
-Extra Pages bought once on top of a Plan, valid until the end of the current billing period.
+Extra Items bought once on top of a Plan, valid until the end of the current billing period.
 _Avoid_: add-on, overage
 
 **Extraction**:
-One run that turns a Document into Field Values for its Form Version, in four steps: Read, Match, Fill and verify. It can fail (Extraction Failed) and then be started again by hand; a new run never overwrites a user's corrections.
+One run that turns a Document into Field Values for its Form Version, in four steps: Read, Match, Fill and verify. A Document that came without a Form gets the Router between Read and Match. It can fail (Extraction Failed) and then be started again by hand; a new run never overwrites a user's corrections.
 _Avoid_: OCR, parse, scan
+
+**Reader**:
+The Read step, chosen by the Document's MIME type and not by AI: the PDF reader gets every page image plus the text layer; the image reader gets the image, which has no text layer, so verify skips the check against the text; the email reader gets the headers and body as text and the attachments as extra parts, and verify treats the body as one page.
+_Avoid_: OCR engine, parser
+
+**Router**:
+The step where Jev picks the Form for a Document that has none, from its Reading and the name and description of each of the Organisation's Forms. Match and the fit check then decide whether the picked Form really fits; if not, the Document goes to No Form. The fit check runs also when the Organisation has only one Form. The Router does not run when the Form is already known: chosen by a user at upload, in the API request, or by a Form Intake Address.
+_Avoid_: classifier, sorter
+
+**No Form**:
+The state of a Document that no Form fits, or that came in without a Form and the Router found none. It stays visible in its own list and counts its Items, but it has no Field Values, is never approved or sent, and can be moved to a Form or marked Rejected.
+_Avoid_: unmatched, unassigned, inbox
 
 **Reading**:
 A clean JSON description of everything a Document says, written by the vision model without knowing any Form: one object per real-world thing (a delivered item, an invoice line), with duplicates across bundled papers merged, conflicting readings kept side by side, and the pages each fact came from. It is stored with the Document and never sent.
@@ -90,7 +106,7 @@ _Avoid_: Auto-Send Threshold, auto-approve
 The go-ahead that a Document's Field Values are correct — given by a user, or automatically through Auto-Send. It sends the Payload to every Integration attached to the Form; with no Integration attached, nothing is sent.
 
 **Rejected**:
-End state of a Document that a user has ruled unusable (blank, unreadable, or not this kind of document) before Approval. A Rejected Document is never approved or sent, stays visible in the Document list with who rejected it, when and an optional reason, and can be reopened while its PDF is still kept. An Admin can delete any Document's data outright, Rejected or not.
+End state of a Document that a user has ruled unusable (blank, unreadable, or not this kind of document) before Approval. A Rejected Document is never approved or sent, stays visible in the Document list with who rejected it, when and an optional reason, and can be reopened while its file is still kept. An Admin can delete any Document's data outright, Rejected or not.
 _Avoid_: declined, archived, deleted
 
 **Payload**:
@@ -120,18 +136,20 @@ _Avoid_: webhook call, send
 
 - An **Extraction** writes one **Reading** per **Document**; **Match** and **Fill** turn it into **Field Values** for the Document's **Form Version**
 - An **Organisation** owns its **Forms**, **Integrations** and **Documents**; users reach them only through a **Membership**
-- An **Organisation** has at most one **Plan**; without one it runs on its **Free Pages**, if it got any
-- A **Document** is processed against exactly one **Form**, chosen by the user at upload, by the **Intake Address** it was sent to, or in the API request that sent it in
-- A **Form** has at most one **Intake Address**
+- An **Organisation** has at most one **Plan**; without one it runs on its **Free Items**, if it got any
+- A **Document** is processed against at most one **Form**: chosen by the user at upload, by the **Form Intake Address** it was sent to, or in the API request that sent it in; otherwise picked by the **Router**. If none fits, it is in **No Form**.
+- A **Form** has at most one **Form Intake Address**; an **Organisation** has at most one **Organisation Intake Address**, and mail sent to it goes through the **Router**
+- The **Reader** is chosen by a **Document**'s kind (PDF, email or image); every kind yields a **Reading**
+- Every **Item** counts when its input is read, whether the **Document** ends in a **Form** or in **No Form**
 - A **Form** has many **Fields**; each **Document** yields one **Field Value** per **Field** (per sub-Field per entry for a **List Field**)
 - A **Field Value** below the Form's **Review Threshold** is **Needs Review**. So is a required Field without a value, and a value that doesn't fit its Field's type.
 - **Auto-Send** approves a **Document** only when none of its **Field Values** is **Needs Review**
 - A **Form Proposal** is made from one sample's **Reading** and becomes a **Form Version** when an Admin saves it
-- A **Document** belongs to exactly one **Form Version**. Editing a Form creates a new version and leaves existing Documents alone.
+- A **Document** with a **Form** belongs to exactly one **Form Version**. Editing a Form creates a new version and leaves existing Documents alone.
 - A **Payload** reaches an **Integration** only after **Approval**; through an **API Key** too, a Document's Payload can be read only after Approval
 - An **Integration** is attached to one or more **Forms**; a **Form** can have several **Integrations**
 - **Approval** of a **Document** creates one **Delivery** per **Integration** attached to its **Form**
-- Before **Approval**, a user can move a **Document** to another **Form** (it takes that Form's current **Form Version**, and **Match** and **Fill** run again on its **Reading**) or mark it **Rejected**; after **Approval**, neither is possible
+- Before **Approval**, a user can move a **Document** to another **Form**, also out of **No Form** (it takes that Form's current **Form Version**, and **Match** and **Fill** run again on its **Reading**) or mark it **Rejected**; after **Approval**, neither is possible
 
 ## Flagged ambiguities
 

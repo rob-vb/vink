@@ -1,5 +1,7 @@
 # A vision model writes a Reading, Jev matches it to the Form, a small model fills the values
 
+Status: superseded in part by [ADR 0010](0010-any-input-routed-to-a-form.md) (2026-10-08): a Document is no longer always a PDF and no longer always has a Form; the Read step now depends on the kind of input, and Jev also picks the Form when there is none. The four steps and the Match, Fill and Verify design still hold.
+
 Supersedes [ADR 0002](0002-vision-extraction-with-jev-verification.md) on how Field Values are produced. Vertex EU as the provider route, Jev as verifier and TypeSafe as a US subprocessor all still hold.
 
 An Extraction runs in four steps:
