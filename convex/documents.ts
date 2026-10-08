@@ -4,6 +4,7 @@ import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import {
   type ActionCtx,
+  internalAction,
   internalMutation,
   type MutationCtx,
   type QueryCtx,
@@ -448,42 +449,81 @@ export const list = orgQuery({
   },
 });
 
+/** Rows one backfill page reads. Far under a mutation's limits (~16k reads, ~8k writes). */
+const BACKFILL_PAGE_SIZE = 500;
+
 /**
  * The input model (ADR 0010, step 3), backfill step: gives every Document and
  * Form Proposal from before kinds its `kind: "pdf"` and `mimeType:
  * "application/pdf"`. Idempotent; it changes nothing else, so no totals move.
  * Run once per deployment, after the code that reads a missing kind as a PDF
- * is deployed:
+ * is deployed. One command walks both tables to the end, one page per
+ * mutation (a single mutation over a big table would roll back whole):
  *   npx convex run documents:backfillInputKind          (dev)
  *   npx convex run --prod documents:backfillInputKind   (prod)
- * Returns what it filled per table; a second run returns zeros.
+ * Returns the total it filled per table. The check is a full second run: it
+ * must return `{ documents: 0, formProposals: 0 }`. If a run stops half way,
+ * run it again: pages already done find nothing to fill.
  *
  * TODO(narrow): once it ran on dev AND prod (a second run says 0 for both),
  * make `kind` and `mimeType` required on `documents` and `formProposals` in
  * schema.ts, drop the fallbacks in lib/inputLimits.ts (kindOf, mimeTypeOf) and
- * their callers, and remove this mutation.
+ * their callers, and remove these two functions.
  */
-export const backfillInputKind = internalMutation({
-  args: {},
-  handler: async (ctx) => {
-    let documents = 0;
-    for await (const document of ctx.db.query("documents")) {
-      if (document.kind !== undefined && document.mimeType !== undefined) continue;
-      await ctx.db.patch(document._id, {
-        kind: document.kind ?? "pdf",
-        mimeType: document.mimeType ?? PDF_MIME_TYPE,
-      });
-      documents++;
+export const backfillInputKind = internalAction({
+  args: { numItems: v.optional(v.number()) },
+  handler: async (ctx, { numItems }): Promise<{ documents: number; formProposals: number }> => {
+    const filled = { documents: 0, formProposals: 0 };
+    for (const table of ["documents", "formProposals"] as const) {
+      let cursor: string | null = null;
+      for (;;) {
+        const page: BackfillPage = await ctx.runMutation(internal.documents.backfillInputKindPage, {
+          table,
+          cursor,
+          numItems,
+        });
+        filled[table] += page.filled;
+        if (page.isDone) break;
+        cursor = page.continueCursor;
+      }
     }
-    let formProposals = 0;
-    for await (const proposal of ctx.db.query("formProposals")) {
+    return filled;
+  },
+});
+
+type BackfillPage = { filled: number; continueCursor: string; isDone: boolean };
+
+/** One page of `backfillInputKind`: patches only the rows on it that still lack a kind or MIME type. */
+export const backfillInputKindPage = internalMutation({
+  args: {
+    table: v.union(v.literal("documents"), v.literal("formProposals")),
+    cursor: v.optional(v.union(v.string(), v.null())),
+    numItems: v.optional(v.number()),
+  },
+  handler: async (ctx, { table, cursor, numItems }): Promise<BackfillPage> => {
+    const paginationOpts = { cursor: cursor ?? null, numItems: numItems ?? BACKFILL_PAGE_SIZE };
+    let filled = 0;
+    if (table === "documents") {
+      const { page, continueCursor, isDone } = await ctx.db.query("documents").paginate(paginationOpts);
+      for (const document of page) {
+        if (document.kind !== undefined && document.mimeType !== undefined) continue;
+        await ctx.db.patch(document._id, {
+          kind: document.kind ?? "pdf",
+          mimeType: document.mimeType ?? PDF_MIME_TYPE,
+        });
+        filled++;
+      }
+      return { filled, continueCursor, isDone };
+    }
+    const { page, continueCursor, isDone } = await ctx.db.query("formProposals").paginate(paginationOpts);
+    for (const proposal of page) {
       if (proposal.kind !== undefined && proposal.mimeType !== undefined) continue;
       await ctx.db.patch(proposal._id, {
         kind: proposal.kind ?? "pdf",
         mimeType: proposal.mimeType ?? PDF_MIME_TYPE,
       });
-      formProposals++;
+      filled++;
     }
-    return { documents, formProposals };
+    return { filled, continueCursor, isDone };
   },
 });

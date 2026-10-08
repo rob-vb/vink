@@ -658,7 +658,7 @@ test("the backfill moves every old field to its new name and every Organisation 
   expect(before.none).toMatchObject({ unlimited: true, remaining: null });
   expect(before.new).toMatchObject({ remaining: 3, used: 17 });
 
-  const first = await t.mutation(internal.items.backfillItems, {});
+  const first = await t.action(internal.items.backfillItems, {});
 
   expect(first).toEqual({ organisations: 3, topUpPayments: 1, intakeAddresses: 1 });
   expect(await allUsage(t)).toEqual(before);
@@ -686,7 +686,7 @@ test("the backfill moves every old field to its new name and every Organisation 
   ]);
 
   // Idempotent: a second run finds nothing, and the totals stay.
-  expect(await t.mutation(internal.items.backfillItems, {})).toEqual({
+  expect(await t.action(internal.items.backfillItems, {})).toEqual({
     organisations: 0,
     topUpPayments: 0,
     intakeAddresses: 0,
@@ -701,9 +701,67 @@ test("the backfill keeps the new field when an Organisation somehow has both", a
     await ctx.db.patch(id, { items: { ...OLD_FREE_ONLY, free: 1, used: 19 } });
   });
 
-  await t.mutation(internal.items.backfillItems, {});
+  await t.action(internal.items.backfillItems, {});
 
   const stored = await t.run(async (ctx) => (await ctx.db.get(id))!);
   expect(stored.pages).toBeUndefined();
   expect(stored.items).toMatchObject({ free: 1, used: 19 });
+});
+
+test("the backfill walks tables of several pages: every row is filled, the totals are unchanged, a second full run changes nothing", async () => {
+  const t = newBackend();
+  const ids = await seedDevCopy(t);
+  // More old rows than one page of 2 in each table.
+  await t.run(async (ctx) => {
+    for (let i = 0; i < 5; i++) {
+      const organisationId = await ctx.db.insert("organisations", {
+        name: `extra-${i}`,
+        slug: `extra-${i}`,
+        pages: { ...OLD_TOP_UP, free: i, used: i },
+      });
+      await ctx.db.insert("memberships", { organisationId, userId: `extra-${i}`, role: "admin" });
+      await ctx.db.insert("topUpPayments", { organisationId, checkoutSessionId: `cs_old_${i}`, pages: 10 + i });
+      const formId = await ctx.db.insert("forms", {
+        organisationId,
+        name: "Invoice",
+        reviewThreshold: 0.8,
+        autoSend: false,
+        version: 1,
+      });
+      await ctx.db.insert("intakeAddresses", { organisationId, formId, token: `tok-${i}`, outOfPagesAlertAt: 100 + i });
+    }
+    // One of each already under the new name: the walk must pass them by.
+    await ctx.db.insert("topUpPayments", { organisationId: ids.team, checkoutSessionId: "cs_new", items: 7 });
+  });
+  const before = await allUsage(t);
+  for (let i = 0; i < 5; i++) {
+    before[`extra-${i}`] = await usage(owner(t, `extra-${i}`), `extra-${i}`);
+  }
+
+  const first = await t.action(internal.items.backfillItems, { numItems: 2 });
+
+  // 3 old Organisations in the dev copy plus 5 extra.
+  expect(first).toEqual({ organisations: 8, topUpPayments: 5, intakeAddresses: 5 });
+  const slugs = Object.keys(before);
+  const totals: typeof before = {};
+  for (const slug of slugs) totals[slug] = await usage(owner(t, slug), slug);
+  expect(totals).toEqual(before);
+  const stored = await t.run(async (ctx) => ({
+    organisations: await ctx.db.query("organisations").collect(),
+    topUpPayments: await ctx.db.query("topUpPayments").collect(),
+    intakeAddresses: await ctx.db.query("intakeAddresses").collect(),
+  }));
+  expect(stored.organisations.every((o) => o.pages === undefined)).toBe(true);
+  expect(stored.topUpPayments.every((p) => p.pages === undefined && p.items !== undefined)).toBe(true);
+  expect(stored.intakeAddresses.every((a) => a.outOfPagesAlertAt === undefined)).toBe(true);
+  expect(stored.intakeAddresses.map((a) => a.outOfItemsAlertAt).sort()).toEqual([100, 101, 102, 103, 104]);
+  expect(stored.topUpPayments.map((p) => p.items).sort((a, b) => a! - b!)).toEqual([7, 10, 11, 12, 13, 14]);
+
+  // A full second run changes nothing, with a page size of 2 and with the default.
+  const zeros = { organisations: 0, topUpPayments: 0, intakeAddresses: 0 };
+  expect(await t.action(internal.items.backfillItems, { numItems: 2 })).toEqual(zeros);
+  expect(await t.action(internal.items.backfillItems, {})).toEqual(zeros);
+  const again: typeof before = {};
+  for (const slug of slugs) again[slug] = await usage(owner(t, slug), slug);
+  expect(again).toEqual(before);
 });

@@ -93,7 +93,7 @@ test("the backfill gives old Documents and samples kind pdf and application/pdf,
   const snapshot = async (id: Id<"documents">) => await t.run(async (ctx) => await ctx.db.get(id));
   const before = await snapshot(old);
 
-  const first = await t.mutation(internal.documents.backfillInputKind, {});
+  const first = await t.action(internal.documents.backfillInputKind, {});
 
   expect(first).toEqual({ documents: 2, formProposals: 1 });
   const after = await snapshot(old);
@@ -117,8 +117,8 @@ test("the backfill is idempotent: a second run fills nothing", async () => {
   const t = newBackend();
   await seedOld(t);
 
-  await t.mutation(internal.documents.backfillInputKind, {});
-  const second = await t.mutation(internal.documents.backfillInputKind, {});
+  await t.action(internal.documents.backfillInputKind, {});
+  const second = await t.action(internal.documents.backfillInputKind, {});
 
   expect(second).toEqual({ documents: 0, formProposals: 0 });
 });
@@ -138,4 +138,74 @@ test("a Document uploaded now is stored with kind pdf and application/pdf", asyn
 
   const stored = await t.run(async (ctx) => await ctx.db.query("documents").collect());
   expect(stored).toMatchObject([{ key, kind: "pdf", mimeType: "application/pdf", pageCount: 2 }]);
+});
+
+function withoutSystemFields<T extends { _id: unknown; _creationTime: number }>(row: T) {
+  const { _id, _creationTime, ...fields } = row;
+  void _id;
+  void _creationTime;
+  return fields;
+}
+
+/** Copies of the old Document and old sample, so every table holds more than one page of rows to fill. */
+async function addMoreOld(t: Backend, ids: Awaited<ReturnType<typeof seedOld>>) {
+  await t.run(async (ctx) => {
+    const document = withoutSystemFields((await ctx.db.get(ids.old))!);
+    for (let i = 0; i < 4; i++) await ctx.db.insert("documents", { ...document, key: `org/more-${i}` });
+    const sample = withoutSystemFields((await ctx.db.get(ids.sample))!);
+    for (let i = 0; i < 3; i++) await ctx.db.insert("formProposals", { ...sample, key: `org/sample-${i}` });
+    // One more that the new code wrote: the walk must pass it by.
+    await ctx.db.insert("formProposals", { ...sample, key: "org/sample-new", kind: "image", mimeType: "image/png" });
+  });
+}
+
+async function everyRow(t: Backend) {
+  return await t.run(async (ctx) => ({
+    documents: await ctx.db.query("documents").collect(),
+    formProposals: await ctx.db.query("formProposals").collect(),
+  }));
+}
+
+test("the backfill walks tables of several pages: every row is filled, nothing else changes, a second full run changes nothing", async () => {
+  const t = newBackend();
+  const ids = await seedOld(t);
+  await addMoreOld(t, ids);
+  const before = await everyRow(t);
+  // 2 + 4 old Documents plus 1 new; 1 + 3 old samples plus 1 new.
+  expect(before.documents).toHaveLength(7);
+  expect(before.formProposals).toHaveLength(5);
+
+  // The first table really takes several pages.
+  const firstPage = await t.mutation(internal.documents.backfillInputKindPage, {
+    table: "documents",
+    cursor: null,
+    numItems: 2,
+  });
+  expect(firstPage.isDone).toBe(false);
+  expect(firstPage.filled).toBeLessThanOrEqual(2);
+
+  const first = await t.action(internal.documents.backfillInputKind, { numItems: 2 });
+
+  // The page above already filled up to two of the six old Documents.
+  expect(first.documents + firstPage.filled).toBe(6);
+  expect(first.formProposals).toBe(4);
+  const after = await everyRow(t);
+  for (const document of after.documents) {
+    const old = before.documents.find((d) => d._id === document._id)!;
+    expect(document).toEqual({ ...old, kind: old.kind ?? "pdf", mimeType: old.mimeType ?? "application/pdf" });
+  }
+  for (const proposal of after.formProposals) {
+    const old = before.formProposals.find((p) => p._id === proposal._id)!;
+    expect(proposal).toEqual({ ...old, kind: old.kind ?? "pdf", mimeType: old.mimeType ?? "application/pdf" });
+  }
+  expect(after.documents.filter((d) => d.kind === "image")).toHaveLength(1);
+  expect(after.formProposals.filter((p) => p.kind === "image")).toHaveLength(1);
+
+  // A full second run, with a page size of 2 and with the default, changes nothing.
+  expect(await t.action(internal.documents.backfillInputKind, { numItems: 2 })).toEqual({
+    documents: 0,
+    formProposals: 0,
+  });
+  expect(await t.action(internal.documents.backfillInputKind, {})).toEqual({ documents: 0, formProposals: 0 });
+  expect(await everyRow(t)).toEqual(after);
 });

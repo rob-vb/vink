@@ -129,7 +129,7 @@ Each step ends green on `npm run typecheck`, `npm run lint` and `npm test`. Each
 
 ## Review follow-ups (from the step 2–3 review)
 
-- [ ] Paginate `documents.backfillInputKind` (and `items.backfillItems`) with a cursor; one mutation over the whole `documents` table breaks past ~8k rows. Do this right after step 4 (step 4 may touch `documents.ts`).
+- [x] Paginate `documents.backfillInputKind` (and `items.backfillItems`) with a cursor; one mutation over the whole `documents` table breaks past ~8k rows. Do this right after step 4 (step 4 may touch `documents.ts`).
 - [ ] Step 8: `messages/*/demo.json` still says "pages left"; the demo must mirror the app ("items").
 
 ## Failed attempts

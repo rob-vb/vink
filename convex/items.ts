@@ -3,8 +3,9 @@
 // Custom Plans we set by hand with the internal functions below, from the
 // Convex dashboard or CLI.
 import { ConvexError, v, type Infer } from "convex/values";
+import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
-import { internalMutation, type MutationCtx } from "./_generated/server";
+import { internalAction, internalMutation, type MutationCtx } from "./_generated/server";
 import { orgQuery } from "./lib/functions";
 import { planName } from "./schema";
 
@@ -261,47 +262,94 @@ export const migrateExistingToUnlimited = internalMutation({
   },
 });
 
+/** Rows one backfill page reads. Far under a mutation's limits (~16k reads, ~8k writes). */
+const BACKFILL_PAGE_SIZE = 500;
+
+const BACKFILL_TABLES = ["organisations", "topUpPayments", "intakeAddresses"] as const;
+
+type BackfillPage = { filled: number; continueCursor: string; isDone: boolean };
+
 /**
  * The Page → Item rename (ADR 0010), backfill step: copies every field that
  * still has its old name to the new one and clears the old one. Idempotent, so
  * run it as often as you like; it changes no totals (allowance, used, free).
  * Run once per deployment, after the code that reads `items ?? pages` is
- * deployed:
+ * deployed. One command walks the three tables to the end, one page per
+ * mutation (a single mutation over a big table would roll back whole):
  *   npx convex run items:backfillItems          (dev)
  *   npx convex run --prod items:backfillItems   (prod)
- * Returns what it filled per table; a second run returns zeros everywhere.
+ * Returns the total it filled per table. The check is a full second run: it
+ * must return zeros everywhere. If a run stops half way, run it again: pages
+ * already done find nothing to fill.
  *
  * TODO(narrow): once it ran on dev AND prod (a second run says 0 everywhere),
  * remove `organisations.pages` with its `by_periodEndsAt` index,
  * `topUpPayments.pages` and `intakeAddresses.outOfPagesAlertAt` from
- * schema.ts, the fallbacks in this file and intake.ts, and this mutation.
+ * schema.ts, the fallbacks in this file and intake.ts, and these two functions.
  */
-export const backfillItems = internalMutation({
-  args: {},
-  handler: async (ctx) => {
-    let organisations = 0;
-    for await (const organisation of ctx.db.query("organisations")) {
-      if (organisation.pages === undefined) continue;
-      // `items` wins if both are somehow set: it is the newer write.
-      await ctx.db.patch(organisation._id, itemsPatch(organisation.items ?? organisation.pages));
-      organisations++;
+export const backfillItems = internalAction({
+  args: { numItems: v.optional(v.number()) },
+  handler: async (
+    ctx,
+    { numItems },
+  ): Promise<{ organisations: number; topUpPayments: number; intakeAddresses: number }> => {
+    const filled = { organisations: 0, topUpPayments: 0, intakeAddresses: 0 };
+    for (const table of BACKFILL_TABLES) {
+      let cursor: string | null = null;
+      for (;;) {
+        const page: BackfillPage = await ctx.runMutation(internal.items.backfillItemsPage, {
+          table,
+          cursor,
+          numItems,
+        });
+        filled[table] += page.filled;
+        if (page.isDone) break;
+        cursor = page.continueCursor;
+      }
     }
-    let topUpPayments = 0;
-    for await (const payment of ctx.db.query("topUpPayments")) {
-      if (payment.pages === undefined) continue;
-      await ctx.db.patch(payment._id, { items: payment.items ?? payment.pages, pages: undefined });
-      topUpPayments++;
+    return filled;
+  },
+});
+
+/** One page of `backfillItems`: patches only the rows on it that still hold a field under its old name. */
+export const backfillItemsPage = internalMutation({
+  args: {
+    table: v.union(v.literal("organisations"), v.literal("topUpPayments"), v.literal("intakeAddresses")),
+    cursor: v.optional(v.union(v.string(), v.null())),
+    numItems: v.optional(v.number()),
+  },
+  handler: async (ctx, { table, cursor, numItems }): Promise<BackfillPage> => {
+    const paginationOpts = { cursor: cursor ?? null, numItems: numItems ?? BACKFILL_PAGE_SIZE };
+    let filled = 0;
+    if (table === "organisations") {
+      const { page, continueCursor, isDone } = await ctx.db.query("organisations").paginate(paginationOpts);
+      for (const organisation of page) {
+        if (organisation.pages === undefined) continue;
+        // `items` wins if both are somehow set: it is the newer write.
+        await ctx.db.patch(organisation._id, itemsPatch(organisation.items ?? organisation.pages));
+        filled++;
+      }
+      return { filled, continueCursor, isDone };
     }
-    let intakeAddresses = 0;
-    for await (const intake of ctx.db.query("intakeAddresses")) {
+    if (table === "topUpPayments") {
+      const { page, continueCursor, isDone } = await ctx.db.query("topUpPayments").paginate(paginationOpts);
+      for (const payment of page) {
+        if (payment.pages === undefined) continue;
+        await ctx.db.patch(payment._id, { items: payment.items ?? payment.pages, pages: undefined });
+        filled++;
+      }
+      return { filled, continueCursor, isDone };
+    }
+    const { page, continueCursor, isDone } = await ctx.db.query("intakeAddresses").paginate(paginationOpts);
+    for (const intake of page) {
       if (intake.outOfPagesAlertAt === undefined) continue;
       await ctx.db.patch(intake._id, {
         outOfItemsAlertAt: intake.outOfItemsAlertAt ?? intake.outOfPagesAlertAt,
         outOfPagesAlertAt: undefined,
       });
-      intakeAddresses++;
+      filled++;
     }
-    return { organisations, topUpPayments, intakeAddresses };
+    return { filled, continueCursor, isDone };
   },
 });
 
