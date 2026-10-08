@@ -36,6 +36,8 @@ export default {
         attachments: parsed.attachments.map((a) => ({
           filename: a.filename,
           mimeType: a.mimeType,
+          disposition: a.disposition,
+          contentId: a.contentId,
           content: a.content,
         })),
       },

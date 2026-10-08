@@ -24,7 +24,6 @@ import { orgMutation, orgQuery } from "./lib/functions";
 import {
   IMAGE_MIME_TYPES,
   IMAGE_TOO_LARGE,
-  itemCountOf,
   MAX_EMAIL_ATTACHMENT_BYTES,
   MAX_EMAIL_ATTACHMENTS,
   MAX_EMAIL_BODY_BYTES,
@@ -32,7 +31,7 @@ import {
   PDF_MIME_TYPE,
   PDF_TOO_LARGE,
 } from "./lib/inputLimits";
-import { itemsOfPlanned, type MailPart, needsSplitCall, planMail } from "./lib/mailPlan";
+import { itemsOfMail, itemsOfPlanned, type MailPart, needsSplitCall, planMail } from "./lib/mailPlan";
 import { pdfStore } from "./lib/pdfStore";
 import type { StoredEmail } from "./lib/readerInput";
 import { sameSecret } from "./lib/secrets";
@@ -374,7 +373,13 @@ const receiveArgs = {
  * decides whether the parts are one Document or several (lib/mailPlan.ts), and
  * the Items of the whole email are charged once; an email Vink cannot afford is
  * refused whole. A refused part creates nothing and is removed from R2. An
- * email with nothing to process creates no Document and costs nothing.
+ * email with nothing to process creates no Document and costs nothing, and a
+ * text Jev calls a cover note ("see attachment") is no Document and costs
+ * nothing either.
+ *
+ * Which attachments reach this action is the Worker's call: it drops small
+ * inline images (signature logos, social icons) before it sends the list
+ * (workers/intake-email/src/map.ts). This action does not filter them again.
  */
 export const receive = internalAction({
   args: receiveArgs,
@@ -447,6 +452,12 @@ export const receive = internalAction({
         })
       : null;
     const plan = planMail(text, parts, decision);
+    // A cover note is no Document, so it has no row in Recent emails either.
+    if (plan.coverNote && textAt >= 0) {
+      outcomes.splice(textAt, 1);
+      for (const part of parts) part.outcomeAt -= 1;
+      textAt = -1;
+    }
 
     const emailKeys: string[] = [];
     const documents: Array<typeof planned.type> = [];
@@ -492,12 +503,8 @@ export const receive = internalAction({
           items,
         });
       }
-      // However it is split, the Documents add up to the whole email.
-      const whole = itemCountOf({
-        kind: "email",
-        body: text,
-        attachments: parts.map((p) => (p.kind === "pdf" ? { kind: "pdf", pageCount: p.pageCount } : { kind: "image" })),
-      });
+      // However it is split, the Documents add up to the whole email (a cover note is no Document and costs nothing).
+      const whole = itemsOfMail(text, parts, plan);
       if (documents.reduce((sum, d) => sum + d.items, 0) !== whole) {
         throw new Error("The Items of the split do not add up to the email's");
       }

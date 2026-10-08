@@ -22,9 +22,24 @@ export const MAX_EMAIL_ATTACHMENT_BYTES = 12 * 1024 * 1024;
  */
 export const MAX_MESSAGE_BYTES = 25 * 1024 * 1024;
 
+/**
+ * An inline image smaller than this is a signature logo or icon, not a paper.
+ * Logos, social icons and tracking pixels weigh 1-30 KB (even a retina logo
+ * stays under 50 KB). A photo that a phone mail app puts inline, with a
+ * Content-ID like a logo, is hundreds of KB to several MB, so the size is what
+ * tells them apart. A real inline image under 50 KB (a small screenshot) is
+ * lost: send it as an attachment. Only the Worker applies this; Vink never
+ * sees what is dropped.
+ */
+export const MAX_INLINE_ICON_BYTES = 50 * 1024;
+
 export type ParsedAttachment = {
   filename: string | null;
   mimeType: string;
+  /** From the MIME headers (Content-Disposition). */
+  disposition?: "attachment" | "inline" | null;
+  /** The Content-ID header, usually in angle brackets. */
+  contentId?: string | null;
   content: ArrayBuffer | Uint8Array | string;
 };
 
@@ -89,6 +104,24 @@ function imageTypeOf(attachment: ParsedAttachment) {
   return IMAGE_BY_EXTENSION[extension] ?? null;
 }
 
+/** Whether the HTML body shows this attachment itself, as `src="cid:<its Content-ID>"`. */
+function isReferencedByHtml(contentId: string | null | undefined, html: string) {
+  const id = (contentId ?? "").trim().replace(/^<|>$/g, "").toLowerCase();
+  return id !== "" && html.toLowerCase().includes(`cid:${id}`);
+}
+
+/**
+ * A signature logo or icon: an image part that is inline (Content-Disposition
+ * inline, or shown by the HTML body through `cid:`) and smaller than
+ * MAX_INLINE_ICON_BYTES. Size is checked too because phones send real photos
+ * inline as well.
+ */
+function isInlineIcon(attachment: ParsedAttachment, size: number, html: string) {
+  if (!attachment.mimeType.toLowerCase().startsWith("image/")) return false;
+  if (size >= MAX_INLINE_ICON_BYTES) return false;
+  return attachment.disposition === "inline" || isReferencedByHtml(attachment.contentId, html);
+}
+
 const ENTITIES: Record<string, string> = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " " };
 
 /** Plain text from an HTML body, for mail that has no text part. */
@@ -139,6 +172,7 @@ export function planEmail(
   let storedBytes = 0;
   input.attachments.forEach((attachment, index) => {
     const bytes = bytesOf(attachment.content);
+    if (isInlineIcon(attachment, bytes.length, input.html ?? "")) return;
     const filename = attachment.filename?.trim() || `attachment-${index + 1}`;
     const kind = isPdf(attachment, bytes) ? "pdf" : imageTypeOf(attachment);
     if (kind === null) {

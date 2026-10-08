@@ -18,10 +18,11 @@ export const splitter: Splitter = {
       state: { mail: { ...mail, body: mail.body.slice(0, MAX_BODY_CHARS) } },
       questions: {
         parts: choice(
-          "`mail` is one email: its subject, its text in `body` (may be empty) and its attachments. Does the text with its attachments describe one case that belongs on one form (e.g. a complaint with a photo of the damage, a letter with its annex, one invoice sent as several files), or is each attachment a separate paper that stands on its own (e.g. several invoices, orders or scans sent in one go, with the text at most a cover note)?",
+          "`mail` is one email: its subject, its text in `body` (may be empty) and its attachments. Does the text with its attachments describe one case that belongs on one form (e.g. a complaint with a photo of the damage, a letter with its annex, one invoice sent as several files)? Or is each attachment a separate paper that stands on its own (e.g. several invoices, orders or scans sent in one go), and then is the text only a cover note (a greeting, 'see attachment', 'please process') or a paper of its own (e.g. a complaint, an order or a question that happens to come with other papers)?",
           {
             together: "One case: the text and the attachments belong together",
-            apart: "Separate papers: each attachment stands on its own",
+            cover_note: "Separate papers: each attachment stands on its own, and the text is only a cover note that holds nothing to read or process",
+            apart: "Separate papers: each attachment stands on its own, and the text is a paper of its own",
           },
         ),
       },
@@ -33,7 +34,7 @@ export const splitter: Splitter = {
     });
     const answer = result.answers.parts;
     return {
-      answer: answer.choice === "together" ? "together" : "apart",
+      answer: answer.choice === "together" || answer.choice === "cover_note" ? answer.choice : "apart",
       probability: answer.probabilities[answer.choice],
     };
   },

@@ -25,6 +25,7 @@ import type {
   Verification,
   Verifier,
 } from "./lib/pipeline";
+import type { SplitDecision } from "./lib/mailPlan";
 import schema from "./schema";
 
 export const modules = import.meta.glob([
@@ -191,7 +192,7 @@ export type Recording = {
    * Jev's call on whether an email is one Document or several, with its
    * probability; left out, it is a sure `apart`.
    */
-  split?: { answer: "together" | "apart"; probability: number };
+  split?: SplitDecision;
 };
 
 type Step = "read" | "route" | "split" | "match" | "fill" | "verify" | "propose";

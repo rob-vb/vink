@@ -323,6 +323,110 @@ test("an ambiguous mail is split, and every Document is marked Needs Review with
   }
 });
 
+test("a cover note with 3 PDFs: 3 Documents, charged the pages of the PDFs, no Document for the text", async () => {
+  const t = newBackend();
+  const org = await bakkerij(t);
+  const token = await organisationAddress(org);
+  fakePipeline.replay({ ...complaint, split: { answer: "cover_note", probability: 0.94 } });
+
+  await mail(t, token, {
+    subject: "Facturen",
+    body: "Zie bijlage, groet Jan",
+    parts: [
+      { filename: "F-118.pdf", pages: 2 },
+      { filename: "F-119.pdf", pages: 1 },
+      { filename: "F-120.pdf", pages: 3 },
+    ],
+  });
+
+  const created = await documents(t);
+  expect(created.map((d) => [d.filename, d.kind, d.pageCount])).toEqual([
+    ["F-118.pdf", "pdf", 2],
+    ["F-119.pdf", "pdf", 1],
+    ["F-120.pdf", "pdf", 3],
+  ]);
+  expect(created.every((d) => d.splitReason === undefined)).toBe(true);
+  expect(await used(org)).toBe(6);
+  // Jev was asked once, with the text; the cover note is no row in Recent emails.
+  expect(steps().filter((s) => s === "split")).toHaveLength(1);
+  expect(fakePipeline.calls[0]).toMatchObject({ step: "split", mail: { body: "Zie bijlage, groet Jan" } });
+  const { recentEmails } = await org.cas.query(api.intake.get, { organisationSlug: org.slug });
+  expect(recentEmails[0].attachments.map((a) => [a.filename, a.outcome])).toEqual([
+    ["F-118.pdf", "created"],
+    ["F-119.pdf", "created"],
+    ["F-120.pdf", "created"],
+  ]);
+  // The text was not stored anywhere: only the three PDFs are in storage.
+  expect(fakePdfStore.objects.size).toBe(3);
+});
+
+test("a cover note with one PDF: only the PDF becomes a Document", async () => {
+  const t = newBackend();
+  const org = await bakkerij(t);
+  const token = await formAddress(org, "Invoice");
+  fakePipeline.replay({ ...complaint, split: { answer: "cover_note", probability: 0.9 } });
+
+  await mail(t, token, { body: "Zie bijlage", parts: [{ filename: "F-118.pdf", pages: 2 }] });
+
+  expect((await documents(t)).map((d) => [d.kind, d.pageCount])).toEqual([["pdf", 2]]);
+  expect(await used(org)).toBe(2);
+});
+
+test("a real complaint with 2 photos, apart and its own Document: 3 Documents of 1 Item each", async () => {
+  const t = newBackend();
+  const org = await bakkerij(t);
+  const token = await formAddress(org, "Complaint");
+  fakePipeline.replay({ ...complaint, split: { answer: "apart", probability: 0.9 } });
+
+  await mail(t, token, {
+    subject: "Klacht over levering 4410",
+    body: "De levering van gisteren was onvolledig en de bon klopt niet.",
+    parts: [
+      { filename: "a.jpg", mimeType: "image/jpeg" },
+      { filename: "b.jpg", mimeType: "image/jpeg" },
+    ],
+  });
+
+  const created = await documents(t);
+  expect(created.map((d) => [d.kind, d.filename])).toEqual([
+    ["email", "Klacht over levering 4410"],
+    ["image", "a.jpg"],
+    ["image", "b.jpg"],
+  ]);
+  expect(created.every((d) => d.splitReason === undefined)).toBe(true);
+  expect(await used(org)).toBe(3);
+});
+
+test("a cover note Jev is unsure about is not dropped: the text is its own Document and all wait for a user", async () => {
+  const t = newBackend();
+  const org = await bakkerij(t);
+  const token = await formAddress(org, "Invoice");
+  fakePipeline.replay({ ...complaint, split: { answer: "cover_note", probability: 0.7 } });
+
+  await mail(t, token, {
+    subject: "Facturen",
+    body: "Zie bijlage, groet Jan",
+    parts: [
+      { filename: "F-118.pdf", pages: 2 },
+      { filename: "F-119.pdf", pages: 1 },
+    ],
+  });
+
+  const created = await documents(t);
+  expect(created.map((d) => [d.kind, d.filename])).toEqual([
+    ["email", "Facturen"],
+    ["pdf", "F-118.pdf"],
+    ["pdf", "F-119.pdf"],
+  ]);
+  expect(await used(org)).toBe(4);
+  for (const document of created) {
+    expect(document.splitReason).toContain("70%");
+    expect((await read(org, document._id)).state).toBe("needs_review");
+  }
+  const { recentEmails } = await org.cas.query(api.intake.get, { organisationSlug: org.slug, formId: org.forms.Invoice });
+  expect(recentEmails[0].attachments.map((a) => a.filename)).toEqual(["Facturen", "F-118.pdf", "F-119.pdf"]);
+});
+
 test("a split Vink was unsure about never goes through Auto-Send, a sure one does", async () => {
   const t = newBackend();
   const org = await bakkerij(t);
@@ -423,15 +527,21 @@ test("whatever the split, the Items of a mail add up to itemCountOf of the whole
     { filename: "c.jpg", mimeType: "image/jpeg" },
   ];
 
+  // A sure cover note drops the text: the charge is the whole without its 1 Item, and nothing else.
+  // (An unsure one keeps the text and charges the whole: see its own test. 20 Free Items fit 5+5+5+4.)
+  const withoutText = itemCountOf({ kind: "email", body: "", attachments: [{ kind: "pdf", pageCount: 2 }, { kind: "pdf", pageCount: 1 }, { kind: "image" }] });
+  expect(withoutText).toBe(whole - 1);
+
   let before = 0;
-  for (const split of [
-    { answer: "together", probability: 0.99 },
-    { answer: "apart", probability: 0.99 },
-    { answer: "together", probability: 0.5 },
+  for (const [split, charged] of [
+    [{ answer: "together", probability: 0.99 }, whole],
+    [{ answer: "apart", probability: 0.99 }, whole],
+    [{ answer: "together", probability: 0.5 }, whole],
+    [{ answer: "cover_note", probability: 0.99 }, withoutText],
   ] as const) {
     fakePipeline.replay({ ...complaint, split });
     await mail(t, token, { body: "Zie bijlagen", parts });
-    expect((await used(org)) - before).toBe(whole);
+    expect((await used(org)) - before).toBe(charged);
     before = await used(org);
   }
 });

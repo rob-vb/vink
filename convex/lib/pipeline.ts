@@ -3,6 +3,7 @@
 // replay recorded responses (see test.setup.ts).
 import type { Infer } from "convex/values";
 import type { field, flatField } from "../schema";
+import type { SplitDecision } from "./mailPlan";
 
 type Json = string | number | boolean | null | Json[] | { [key: string]: Json };
 
@@ -118,11 +119,12 @@ export type MailSummary = {
 export type Splitter = {
   /**
    * Jev's call on whether the parts of one email (its text and attachments)
-   * belong together as one case, or are separate papers. `probability` is that
-   * of the answer given; a low one makes Vink split and mark Needs Review
-   * (lib/mailPlan.ts).
+   * belong together as one case, or are separate papers, and in that case
+   * whether the text is only a cover note or a paper of its own (SplitAnswer in
+   * lib/mailPlan.ts). `probability` is that of the answer given; a low one makes
+   * Vink split, keep the text as a Document and mark Needs Review.
    */
-  split(mail: MailSummary): Promise<{ answer: "together" | "apart"; probability: number }>;
+  split(mail: MailSummary): Promise<SplitDecision>;
 };
 
 /**

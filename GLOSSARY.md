@@ -43,7 +43,7 @@ An email address that belongs to the Organisation, next to the Form Intake Addre
 _Avoid_: inbox, mailbox, catch-all address
 
 **Item**:
-One unit of input that Vink reads. It is the unit in which an Organisation's usage and Plans are measured: 1 PDF page, 1 email or 1 photo is 1 Item, so a 10-page PDF counts as ten. Every Item counts, including those of Documents in No Form. An Item counts once, when Vink reads the input (a Document or a Form Proposal sample); a retry, a move to another Form, or the sample becoming a Document does not count again.
+One unit of input that Vink reads. It is the unit in which an Organisation's usage and Plans are measured: 1 PDF page, 1 email or 1 photo is 1 Item, so a 10-page PDF counts as ten. An email counts its parts: its text 1 (unless Jev judges it only a cover note for the attachments), each attached PDF its pages, each attached image 1; small inline signature images are dropped and do not count. Every Item counts, including those of Documents in No Form. An Item counts once, when Vink reads the input (a Document or a Form Proposal sample); a retry, a move to another Form, or the sample becoming a Document does not count again.
 _Avoid_: credit, unit, Page
 
 **Plan**:

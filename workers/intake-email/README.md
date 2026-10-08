@@ -36,6 +36,10 @@ until the permanent intake domain is live.
   to the vision model in one request), at most 10 PDF and image attachments
   (`too_many_attachments`), and 200 KiB of text (a longer text is not sent, with
   `bodyTooLarge`). Any other file type is `unsupported_type`. Each shows as refused.
+- A small inline image (under 50 KiB, Content-Disposition inline or shown by the
+  HTML through `cid:`) is a signature logo or icon: the Worker drops it, so it is
+  not stored, not listed and not counted. A phone's inline photo is far larger
+  and stays. Vink does no such filtering itself.
 - PDFs over 20 pages, unreadable PDFs and mail that doesn't fit the Organisation's
   Items are refused by Vink and removed from R2.
 - If Vink is unreachable, the Worker throws so the sending server retries later.

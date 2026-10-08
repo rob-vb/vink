@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { failsDmarc, htmlToText, planEmail, tokenOf } from "./map";
+import { failsDmarc, htmlToText, MAX_INLINE_ICON_BYTES, planEmail, tokenOf } from "./map";
 
 const pdf = new TextEncoder().encode("%PDF-1.7 …");
 
@@ -175,6 +175,79 @@ test("an email without attachments still reaches Vink, with none listed", () => 
     store: [],
     entries: [],
   });
+});
+
+test("a signature logo and icons are dropped; a real photo inline from a phone is kept", () => {
+  let n = 0;
+  const kb = (size: number) => new Uint8Array(size * 1024);
+  const plan = planEmail(
+    {
+      to: "t@x.test",
+      from: "a@b.test",
+      html: '<p>Zie de foto.</p><img src="cid:photo-1@phone"><p>Groet,<br>Anouk</p><img src="CID:logo@sig"><img src="cid:linkedin@sig">',
+      text: "Zie de foto.\nGroet, Anouk",
+      attachments: [
+        // Referenced by the HTML and inline: the signature logo.
+        { filename: "logo.png", mimeType: "image/png", disposition: "inline", contentId: "<logo@sig>", content: kb(12) },
+        // No disposition header at all, but the HTML shows it by cid: a social icon.
+        { filename: "linkedin.png", mimeType: "image/png", contentId: "<LinkedIn@sig>", content: kb(2) },
+        // An icon type Vink does not read anyway: dropped, not listed as refused.
+        { filename: "twitter.gif", mimeType: "image/gif", disposition: "inline", content: kb(1) },
+        // A phone's inline photo: far larger than an icon.
+        { filename: "IMG_0042.jpg", mimeType: "image/jpeg", disposition: "inline", contentId: "<photo-1@phone>", content: kb(2400) },
+      ],
+    },
+    () => `intake/${++n}`,
+  );
+  expect(plan.entries).toEqual([{ key: "intake/1", filename: "IMG_0042.jpg", mimeType: "image/jpeg" }]);
+  expect(plan.store).toHaveLength(1);
+  expect(plan.body).toBe("Zie de foto.\nGroet, Anouk");
+});
+
+test("only small inline images are dropped: attachments, big images and PDFs are kept, and the icon limit is 50 KB", () => {
+  let n = 0;
+  const icon = new Uint8Array(MAX_INLINE_ICON_BYTES - 1);
+  const edge = new Uint8Array(MAX_INLINE_ICON_BYTES);
+  const plan = planEmail(
+    {
+      to: "t@x.test",
+      from: "a@b.test",
+      html: '<img src="cid:a@x"><img src="cid:b@x">',
+      attachments: [
+        // A small image that is a real attachment (not inline, not shown in the text): a scan.
+        { filename: "scan.png", mimeType: "image/png", disposition: "attachment", content: icon },
+        // Not inline and not referenced, though it has a Content-ID.
+        { filename: "other.png", mimeType: "image/png", contentId: "<zzz@x>", content: icon },
+        // Referenced, small: dropped.
+        { filename: "a.png", mimeType: "image/png", disposition: "inline", contentId: "<a@x>", content: icon },
+        // Exactly 50 KB, inline: kept (the limit is below 50 KB).
+        { filename: "b.png", mimeType: "image/png", disposition: "inline", contentId: "<b@x>", content: edge },
+        // An inline PDF is never an icon.
+        { filename: "f.pdf", mimeType: "application/pdf", disposition: "inline", content: pdf },
+      ],
+    },
+    () => `intake/${++n}`,
+  );
+  expect(plan.entries.map((e) => e.filename)).toEqual(["scan.png", "other.png", "b.png", "f.pdf"]);
+});
+
+test("dropped icons do not count towards the 10 attachments", () => {
+  const icons = Array.from({ length: 12 }, (_, i) => ({
+    filename: `i${i}.png`,
+    mimeType: "image/png",
+    disposition: "inline" as const,
+    content: new Uint8Array(1024),
+  }));
+  const plan = planEmail(
+    {
+      to: "t@x.test",
+      from: "a@b.test",
+      attachments: [...icons, ...Array.from({ length: 10 }, (_, i) => ({ filename: `p${i}.pdf`, mimeType: "application/pdf", content: pdf }))],
+    },
+    () => "k",
+  );
+  expect(plan.store).toHaveLength(10);
+  expect(plan.entries.every((e) => "key" in e)).toBe(true);
 });
 
 test("the token is the recipient's local part", () => {

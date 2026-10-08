@@ -78,11 +78,16 @@ export type CountedInput =
  *   image = 1
  *   email = its body (1 when it has content, 0 when it is empty) plus each
  *           attachment: a PDF its pages, an image 1.
+ * The email's text is counted as one Item when it is a Document, or part of
+ * one. A text that Jev calls only a cover note ("see attachment, regards") is no
+ * Document and costs nothing: the caller passes it as an empty `body`
+ * (itemsOfMail in lib/mailPlan.ts does). So "Zie bijlage" with three PDFs costs
+ * the pages of the three PDFs, a complaint with a photo costs 2, and a complaint
+ * with two photos sent as separate papers costs 3.
  * ASSUMPTION, NOT CONFIRMED BY THE USER YET: ADR 0010 says "1 email = 1 Item".
- * Read as "the email's own text is 1 Item", the attachments count as the
- * PDFs and photos they are, so a complaint with a photo is 2 and a mail with
- * an empty body and 3 PDFs costs the sum of their pages. If the user decides
- * otherwise (say, 1 per email whatever it holds), change only the `email` case.
+ * Read as "the email's own text is 1 Item", the attachments count as the PDFs
+ * and photos they are. If the user decides otherwise (say, 1 per email whatever
+ * it holds), change only the `email` case and itemsOfMail.
  */
 export function itemCountOf(input: CountedInput): number {
   switch (input.kind) {
