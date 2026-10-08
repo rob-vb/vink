@@ -26,7 +26,7 @@
     "notPdf": "Not a PDF.",
     "tooLarge": "Larger than 10 MB. Vink takes PDFs of up to 10 MB.",
     "failed": "We couldn't upload this PDF. Try again.",
-    "outOfPages": "You have {remaining} {remaining, plural, one {page} other {pages}} left; this PDF has {needed}.",
+    "outOfItems": "You have {remaining} {remaining, plural, one {item} other {items}} left; this PDF needs {needed}.",
     "uploaded": "{count, plural, one {# PDF uploaded} other {# PDFs uploaded}}",
     "readingNow": "Vink is reading them now.",
     "view": "View",

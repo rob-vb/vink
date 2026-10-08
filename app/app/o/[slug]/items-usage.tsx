@@ -16,7 +16,7 @@ export function UpgradeButton({
   organisationSlug: string;
   size?: "sm" | "default";
 }) {
-  const t = useTranslations("app.pages");
+  const t = useTranslations("app.items");
   return (
     <Button
       size={size}
@@ -35,11 +35,11 @@ export function formatResetDate(at: number, locale = "en") {
   });
 }
 
-/** The Pages left and when they reset, next to Upload. Nothing for internal unlimited. */
-export function PagesLeft({ organisationSlug }: { organisationSlug: string }) {
-  const t = useTranslations("app.pages");
+/** The Items left and when they reset, next to Upload. Nothing for internal unlimited. */
+export function ItemsLeft({ organisationSlug }: { organisationSlug: string }) {
+  const t = useTranslations("app.items");
   const locale = useLocale();
-  const usage = useQuery(api.pages.usage, { organisationSlug });
+  const usage = useQuery(api.items.usage, { organisationSlug });
   if (!usage || usage.remaining === null) return null;
   return (
     <p className="text-sm text-muted-foreground tabular-nums">
@@ -49,11 +49,11 @@ export function PagesLeft({ organisationSlug }: { organisationSlug: string }) {
   );
 }
 
-/** For Admins: shown once 80% of the Organisation's Pages are used. */
-export function PagesWarning({ organisationSlug }: { organisationSlug: string }) {
-  const t = useTranslations("app.pages");
+/** For Admins: shown once 80% of the Organisation's Items are used. */
+export function ItemsWarning({ organisationSlug }: { organisationSlug: string }) {
+  const t = useTranslations("app.items");
   const locale = useLocale();
-  const usage = useQuery(api.pages.usage, { organisationSlug });
+  const usage = useQuery(api.items.usage, { organisationSlug });
   if (!usage?.warning || usage.remaining === null) return null;
   const out = usage.remaining === 0;
   return (

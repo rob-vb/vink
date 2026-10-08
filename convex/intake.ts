@@ -151,9 +151,9 @@ export const record = internalMutation({
     from: v.string(),
     receivedAt: v.number(),
     attachments: v.array(outcome),
-    outOfPages: v.boolean(),
+    outOfItems: v.boolean(),
   },
-  handler: async (ctx, { outOfPages, ...email }) => {
+  handler: async (ctx, { outOfItems, ...email }) => {
     await ctx.db.insert("intakeEmails", email);
     const older = await ctx.db
       .query("intakeEmails")
@@ -162,14 +162,16 @@ export const record = internalMutation({
       .collect();
     for (const stale of older.slice(RECENT_EMAILS)) await ctx.db.delete(stale._id);
 
-    if (!outOfPages) return;
+    if (!outOfItems) return;
     const intake = await ctx.db
       .query("intakeAddresses")
       .withIndex("by_formId", (q) => q.eq("formId", email.formId))
       .unique();
     const now = Date.now();
-    if (!intake || (intake.outOfPagesAlertAt ?? 0) > now - ALERT_EVERY) return;
-    await ctx.db.patch(intake._id, { outOfPagesAlertAt: now });
+    // TODO(narrow): read only `outOfItemsAlertAt` (see items.backfillItems).
+    const alertedAt = intake?.outOfItemsAlertAt ?? intake?.outOfPagesAlertAt ?? 0;
+    if (!intake || alertedAt > now - ALERT_EVERY) return;
+    await ctx.db.patch(intake._id, { outOfItemsAlertAt: now, outOfPagesAlertAt: undefined });
     const form = (await ctx.db.get(email.formId))!;
     const admins = (
       await ctx.db
@@ -180,7 +182,7 @@ export const record = internalMutation({
         .collect()
     ).filter((m) => m.role === "admin" && m.email);
     for (const admin of admins) {
-      await ctx.scheduler.runAfter(0, internal.intake.alertOutOfPages, {
+      await ctx.scheduler.runAfter(0, internal.intake.alertOutOfItems, {
         to: admin.email!,
         formName: form.name,
       });
@@ -188,14 +190,14 @@ export const record = internalMutation({
   },
 });
 
-export const alertOutOfPages = internalAction({
+export const alertOutOfItems = internalAction({
   args: { to: v.string(), formName: v.string() },
   handler: async (_ctx, { to, formName }) => {
     const upgrade = `${process.env.SITE_URL ?? ""}/contact`;
     await sendEmail({
       to,
-      subject: `Emails to ${formName} are being refused: out of Pages`,
-      html: `<p>PDFs emailed to the Intake Address of <strong>${escapeHtml(formName)}</strong> are being refused because your Organisation has no pages left. Nothing is sent back to the sender.</p><p><a href="${upgrade}">Upgrade to get more pages</a></p><p>You get this email at most once a day.</p>`,
+      subject: `Emails to ${formName} are being refused: out of Items`,
+      html: `<p>PDFs emailed to the Intake Address of <strong>${escapeHtml(formName)}</strong> are being refused because your Organisation has no items left. Nothing is sent back to the sender.</p><p><a href="${upgrade}">Upgrade to get more items</a></p><p>You get this email at most once a day.</p>`,
     });
   },
 });
@@ -205,8 +207,8 @@ function reasonOf(error: unknown) {
   if (!(error instanceof ConvexError)) throw error;
   const { data } = error;
   return typeof data === "object" && data !== null && "message" in data
-    ? { reason: String(data.message), outOfPages: data.code === "out_of_pages" }
-    : { reason: String(data), outOfPages: false };
+    ? { reason: String(data.message), outOfItems: data.code === "out_of_items" }
+    : { reason: String(data), outOfItems: false };
 }
 
 const attachment = v.union(
@@ -216,7 +218,7 @@ const attachment = v.union(
 
 /**
  * One email from the Worker: each PDF attachment passes the same checks as an
- * upload (readable, at most 20 pages, fits the Pages) and becomes a Document of
+ * upload (readable, at most 20 pages, fits the Items) and becomes a Document of
  * the Form. A refused one creates nothing and is removed from R2.
  */
 export const receive = internalAction({
@@ -233,7 +235,7 @@ export const receive = internalAction({
       return { found: false as const };
     }
     const outcomes = [];
-    let outOfPages = false;
+    let outOfItems = false;
     for (const a of attachments) {
       if ("skipped" in a) {
         outcomes.push({ filename: a.filename, outcome: "refused" as const, reason: skipReasons[a.skipped] });
@@ -251,7 +253,7 @@ export const receive = internalAction({
         outcomes.push({ filename: a.filename, outcome: "created" as const, reason: null });
       } catch (error) {
         const refused = reasonOf(error);
-        outOfPages ||= refused.outOfPages;
+        outOfItems ||= refused.outOfItems;
         outcomes.push({ filename: a.filename, outcome: "refused" as const, reason: refused.reason });
       }
     }
@@ -260,7 +262,7 @@ export const receive = internalAction({
       from,
       receivedAt,
       attachments: outcomes,
-      outOfPages,
+      outOfItems,
     });
     return { found: true as const, attachments: outcomes };
   },

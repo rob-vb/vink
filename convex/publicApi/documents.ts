@@ -34,8 +34,8 @@ type Refusal = { status: number; code: string; message: string };
 function refusalOf(error: unknown): Refusal | null {
   if (!(error instanceof ConvexError)) return null;
   const { data } = error;
-  if (typeof data === "object" && data !== null && data.code === "out_of_pages") {
-    return { status: 402, code: "out_of_pages", message: String(data.message) };
+  if (typeof data === "object" && data !== null && data.code === "out_of_items") {
+    return { status: 402, code: "out_of_items", message: String(data.message) };
   }
   if (data === NOT_A_PDF) return { status: 415, code: "not_a_pdf", message: data };
   if (typeof data === "string" && data === tooManyPages(Number(data.match(/\d+/)?.[0]))) {

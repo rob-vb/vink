@@ -227,7 +227,7 @@ test("Recent emails keeps the last 50 per Form", async () => {
   expect(recentEmails[49].attachments[0].filename).toBe("mail-2.jpg");
 });
 
-test("out of Pages, emailed PDFs are refused and Admins hear once a day", async () => {
+test("out of Items, emailed PDFs are refused and Admins hear once a day", async () => {
   const t = newBackend();
   const { token, cas, on } = await switchedOn(t, { plan: null });
 
@@ -240,13 +240,13 @@ test("out of Pages, emailed PDFs are refused and Admins hear once a day", async 
   const { recentEmails } = (await cas.query(api.intake.get, on))!;
   expect(recentEmails[0].attachments[0]).toMatchObject({
     outcome: "refused",
-    reason: "You have 5 pages left; this PDF has 8.",
+    reason: "You have 5 items left; this PDF needs 8.",
   });
   const alerts = () => sent.filter((m) => m.subject.includes("being refused"));
   expect(alerts()).toHaveLength(1);
   expect(alerts()[0]).toMatchObject({
     to: ["ann@example.com"],
-    subject: "Emails to Invoice are being refused: out of Pages",
+    subject: "Emails to Invoice are being refused: out of Items",
   });
   expect(alerts()[0].html).toContain("/contact");
 
@@ -254,6 +254,21 @@ test("out of Pages, emailed PDFs are refused and Admins hear once a day", async 
   await email(t, token, [{ filename: "tomorrow.pdf", pages: 8 }]);
   await t.finishAllScheduledFunctions(vi.runAllTimers);
   expect(alerts()).toHaveLength(2);
+});
+
+test("an alert stamp still under its old name (before the Item backfill) still holds back the next alert", async () => {
+  const t = newBackend();
+  const { token } = await switchedOn(t, { plan: null });
+  await t.run(async (ctx) => {
+    const address = (await ctx.db.query("intakeAddresses").collect())[0];
+    await ctx.db.patch(address._id, { outOfPagesAlertAt: Date.now() - HOUR });
+  });
+
+  await email(t, token, [{ filename: "big.pdf", pages: 15 }]);
+  await email(t, token, [{ filename: "next.pdf", pages: 8 }]);
+  await t.finishAllScheduledFunctions(vi.runAllTimers);
+
+  expect(sent.filter((m) => m.subject.includes("being refused"))).toHaveLength(0);
 });
 
 test("an Intake Address belongs to one Form only", async () => {

@@ -31,10 +31,10 @@ import { Spinner } from "@/components/ui/spinner";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { MAX_PDF_BYTES } from "@/convex/lib/pdfLimits";
-import { isOutOfPages } from "@/lib/convex-error";
+import { isOutOfItems } from "@/lib/convex-error";
 import { cn } from "@/lib/utils";
 import { useErrorText } from "../../../error-text";
-import { UpgradeButton } from "../pages-usage";
+import { UpgradeButton } from "../items-usage";
 
 type Form = { id: Id<"forms">; name: string };
 
@@ -46,7 +46,7 @@ type Item = {
   status: "ready" | "uploading" | "done" | "failed";
   progress: number;
   error: string | null;
-  outOfPages: boolean;
+  outOfItems: boolean;
 };
 
 function isPdf(file: File) {
@@ -119,7 +119,7 @@ export function UploadDialog({
         status: error === null ? "ready" : "failed",
         progress: 0,
         error,
-        outOfPages: false,
+        outOfItems: false,
       };
     });
     setItems((current) => [...current, ...added]);
@@ -140,14 +140,14 @@ export function UploadDialog({
       update(item.id, { status: "done", progress: 100 });
       return true;
     } catch (error) {
-      const outOfPages = isOutOfPages(error);
+      const outOfItems = isOutOfItems(error);
       update(item.id, {
         status: "failed",
-        // Out of Pages carries its numbers, so the sentence is built here in the app's language.
-        error: outOfPages
-          ? t("upload.outOfPages", (error as ConvexError<{ remaining: number; needed: number }>).data)
+        // Out of Items carries its numbers, so the sentence is built here in the app's language.
+        error: outOfItems
+          ? t("upload.outOfItems", (error as ConvexError<{ remaining: number; needed: number }>).data)
           : errorText(error, t("upload.failed")),
-        outOfPages,
+        outOfItems,
       });
       return false;
     }
@@ -160,7 +160,7 @@ export function UploadDialog({
     if (queue.length === 0) return;
     setUploading(true);
     let uploaded = 0;
-    // One at a time, so each PDF's Pages are counted in order.
+    // One at a time, so each PDF's Items are counted in order.
     for (const item of queue) {
       if (await uploadOne(item, formId)) uploaded++;
     }
@@ -295,7 +295,7 @@ function FileRow({
   onRemove,
 }: {
   item: Item;
-  /** For Admins, next to an out-of-Pages refusal. */
+  /** For Admins, next to an out-of-Items refusal. */
   upgrade: ReactNode;
   disabled: boolean;
   onRemove: () => void;
@@ -330,7 +330,7 @@ function FileRow({
           <p role="alert" className="text-destructive">
             {item.error}
           </p>
-          {item.outOfPages && upgrade}
+          {item.outOfItems && upgrade}
         </div>
       )}
     </li>

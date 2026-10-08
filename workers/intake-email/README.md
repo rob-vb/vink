@@ -3,7 +3,7 @@
 Receives every email sent to a Form's Intake Address (`<token>@<intake domain>`),
 stores its PDF attachments in the app's EU R2 bucket under `intake/…`, and calls
 Vink's Convex HTTP action `POST /intake/email`. All decisions (which Form, page
-limits, Pages quota, Recent emails, Admin alerts) live in `convex/intake.ts`.
+limits, Items quota, Recent emails, Admin alerts) live in `convex/intake.ts`.
 The Worker never replies to the sender.
 
 ## Deploy (once the permanent intake domain is on Cloudflare)
@@ -28,7 +28,7 @@ until the permanent intake domain is live.
 - 25 MiB per message (Email Routing's limit); larger mail is rejected.
 - 10 MiB per PDF attachment (`MAX_BYTES`, the same limit as `convex/lib/pdfLimits.ts`); a larger one is listed as `too_large` and shows as refused.
 - PDFs over 20 pages, unreadable PDFs and PDFs that don't fit the Organisation's
-  Pages are refused by Vink and removed from R2.
+  Items are refused by Vink and removed from R2.
 - If Vink is unreachable, the Worker throws so the sending server retries later.
   PDFs stored for such an attempt stay in R2 until the orphan-upload cleanup.
 

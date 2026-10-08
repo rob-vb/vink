@@ -6,6 +6,7 @@ import { PDFDocument } from "pdf-lib";
 import { expect, vi } from "vitest";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
+import { itemsOf, itemsPatch } from "./items";
 import type {
   FilledValue,
   Filler,
@@ -44,8 +45,8 @@ export function asUser(t: Backend, userId: string) {
 
 /**
  * A user signs up and gets their own Organisation; returns them and its slug.
- * The Organisation is put on the internal unlimited Plan so Pages never get in
- * a test's way; pass `plan: null` to keep what a real sign-up gets (Free Pages).
+ * The Organisation is put on the internal unlimited Plan so Items never get in
+ * a test's way; pass `plan: null` to keep what a real sign-up gets (Free Items).
  */
 export async function signUp(
   t: Backend,
@@ -63,9 +64,7 @@ export async function signUp(
         .query("organisations")
         .withIndex("by_slug", (q) => q.eq("slug", slug))
         .unique())!;
-      await ctx.db.patch(organisation._id, {
-        pages: { ...organisation.pages!, plan, periodEndsAt: null },
-      });
+      await ctx.db.patch(organisation._id, itemsPatch({ ...itemsOf(organisation), plan, periodEndsAt: null }));
     });
   }
   return { user, slug };

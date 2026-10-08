@@ -58,7 +58,7 @@ module.exports = {
         required: true,
         type: 'file',
         helpText:
-          'A PDF file from an earlier step, or a URL to one. At most 10 MB and 20 pages; it uses Pages of your Organisation.',
+          'A PDF file from an earlier step, or a URL to one. At most 10 MB and 20 pages; it uses Items of your Organisation.',
       },
       {
         key: 'filename',

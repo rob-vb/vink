@@ -86,6 +86,26 @@ export const planName = v.union(
   v.literal("internal_unlimited"),
 );
 
+// An Organisation's Plan and Items. The same shape sits under `items` and, until
+// the narrow step, under its old name `pages` (see organisations below).
+const itemsState = v.object({
+  // `null`: no Plan, only Free Items.
+  plan: v.union(planName, v.null()),
+  // Items per period, and how many of them this period has used.
+  allowance: v.number(),
+  allowanceUsed: v.number(),
+  // When the period ends: the allowance renews and Top-ups expire.
+  // `null` without a period (no Plan, or internal unlimited).
+  periodEndsAt: v.union(v.number(), v.null()),
+  // The day of the month periods end on, so a period ending on the 31st
+  // ends on the 28th in February and on the 31st again in March.
+  anchorDay: v.optional(v.number()),
+  topUp: v.number(),
+  free: v.number(),
+  // Every Item charged this period (without a period: ever), for the 80% warning.
+  used: v.number(),
+});
+
 export const billingInterval = v.union(v.literal("monthly"), v.literal("annual"));
 
 // Every table except `organisations` itself carries an indexed `organisationId`.
@@ -97,35 +117,23 @@ export default defineSchema({
     // (or its Approval, with no Integration). 30 when unset.
     retentionDays: v.optional(v.number()),
     // The user who created it, so only a user's first Organisation gets Free
-    // Pages. Unset for Organisations created before Plans.
+    // Items. Unset for Organisations created before Plans.
     createdBy: v.optional(v.string()),
-    // Its Plan and Pages (see pages.ts). Unset for Organisations created
+    // Its Plan and Items (see items.ts). Unset for Organisations created
     // before Plans, which count as the internal unlimited Plan.
-    pages: v.optional(
-      v.object({
-        // `null`: no Plan, only Free Pages.
-        plan: v.union(planName, v.null()),
-        // Pages per period, and how many of them this period has used.
-        allowance: v.number(),
-        allowanceUsed: v.number(),
-        // When the period ends: the allowance renews and Top-ups expire.
-        // `null` without a period (no Plan, or internal unlimited).
-        periodEndsAt: v.union(v.number(), v.null()),
-        // The day of the month periods end on, so a period ending on the 31st
-        // ends on the 28th in February and on the 31st again in March.
-        anchorDay: v.optional(v.number()),
-        topUp: v.number(),
-        free: v.number(),
-        // Every Page charged this period (without a period: ever), for the 80% warning.
-        used: v.number(),
-      }),
-    ),
+    items: v.optional(itemsState),
+    // The Page → Item rename (ADR 0010), widen step: Organisations from before
+    // it still hold this under the old name until `items:backfillItems` has
+    // run. items.ts reads `items ?? pages` and every write moves it to `items`.
+    // TODO(narrow, after `items:backfillItems` ran on dev AND prod): remove
+    // this field and the `by_periodEndsAt` index, and the fallbacks in items.ts.
+    pages: v.optional(itemsState),
     // Its Stripe Customer, made at its first Checkout (see billing.ts).
     stripeCustomerId: v.optional(v.string()),
     // When billing.ts last read its Subscriptions from Stripe, ms (billingState.ts).
     billingSyncedAt: v.optional(v.number()),
-    // Its Stripe Subscription as the last webhook left it, for the Pages card.
-    // Unset without one; the Plan itself lives in `pages`.
+    // Its Stripe Subscription as the last webhook left it, for the Items card.
+    // Unset without one; the Plan itself lives in `items`.
     subscription: v.optional(
       v.object({
         id: v.string(),
@@ -138,6 +146,8 @@ export default defineSchema({
   })
     .index("by_slug", ["slug"])
     .index("by_createdBy", ["createdBy"])
+    .index("by_itemsPeriodEndsAt", ["items.periodEndsAt"])
+    // Narrow step: remove with `pages` (see above).
     .index("by_periodEndsAt", ["pages.periodEndsAt"])
     .index("by_stripeCustomerId", ["stripeCustomerId"]),
 
@@ -145,7 +155,9 @@ export default defineSchema({
   topUpPayments: defineTable({
     organisationId: v.id("organisations"),
     checkoutSessionId: v.string(),
-    pages: v.number(),
+    items: v.optional(v.number()),
+    // Old name of `items`; TODO(narrow): remove after `items:backfillItems` ran on prod.
+    pages: v.optional(v.number()),
   })
     .index("by_checkoutSessionId", ["checkoutSessionId"])
     .index("by_organisationId", ["organisationId"]),
@@ -226,6 +238,8 @@ export default defineSchema({
     formId: v.id("forms"),
     token: v.string(),
     // The last "Emails to [Form] are being refused" mail to its Admins: at most one a day.
+    outOfItemsAlertAt: v.optional(v.number()),
+    // Old name of `outOfItemsAlertAt`; TODO(narrow): remove after `items:backfillItems` ran on prod.
     outOfPagesAlertAt: v.optional(v.number()),
   })
     .index("by_token", ["token"])

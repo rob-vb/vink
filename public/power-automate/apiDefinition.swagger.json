@@ -131,7 +131,7 @@
             }
           },
           "402": {
-            "description": "Your Organisation has fewer Pages left than the PDF has.",
+            "description": "Your Organisation has fewer Items left than the PDF needs.",
             "schema": {
               "$ref": "#/definitions/Error"
             }

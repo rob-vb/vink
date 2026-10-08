@@ -118,7 +118,7 @@ test("a multipart `filename` part names the Document", async () => {
   expect(documents).toMatchObject([{ filename: "Werkbon 12.pdf" }]);
 });
 
-test("the Document is processed like any other and its Pages are counted once", async () => {
+test("the Document is processed like any other and its Items are counted once", async () => {
   const t = newBackend();
   const { ann, organisationSlug, formId, key } = await kantoorNoord(t, { plan: null });
 
@@ -127,7 +127,7 @@ test("the Document is processed like any other and its Pages are counted once", 
 
   const { documents } = await ann.query(api.documents.list, { organisationSlug, state: "needs_review" });
   expect(documents.map((d) => d.id)).toEqual([body.id]);
-  expect(await ann.query(api.pages.usage, { organisationSlug })).toMatchObject({ remaining: 17, used: 3 });
+  expect(await ann.query(api.items.usage, { organisationSlug })).toMatchObject({ remaining: 17, used: 3 });
   expect(fakePdfStore.objects.size).toBe(1);
 });
 
@@ -206,7 +206,7 @@ test("a body over 10 MB is refused with 413", async () => {
   await nothingCreated(t);
 });
 
-test("a PDF that doesn't fit the Pages left is refused with 402 and charges nothing", async () => {
+test("a PDF that doesn't fit the Items left is refused with 402 and charges nothing", async () => {
   const t = newBackend();
   const { ann, organisationSlug, formId, key } = await kantoorNoord(t, { plan: null });
   await send(t, `/v1/forms/${formId}/documents`, key, await pdf(15));
@@ -215,9 +215,9 @@ test("a PDF that doesn't fit the Pages left is refused with 402 and charges noth
 
   expect({ status, body }).toEqual({
     status: 402,
-    body: { error: { code: "out_of_pages", message: "You have 5 pages left; this PDF has 8." } },
+    body: { error: { code: "out_of_items", message: "You have 5 items left; this PDF needs 8." } },
   });
-  expect(await ann.query(api.pages.usage, { organisationSlug })).toMatchObject({ remaining: 5 });
+  expect(await ann.query(api.items.usage, { organisationSlug })).toMatchObject({ remaining: 5 });
   expect(await t.run(async (ctx) => (await ctx.db.query("documents").collect()).length)).toBe(1);
   expect(fakePdfStore.objects.size).toBe(1);
 });

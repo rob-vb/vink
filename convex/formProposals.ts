@@ -9,7 +9,7 @@ import { extractionPool } from "./extraction";
 import { insertForm, saveVersion } from "./forms";
 import { orgAction, orgMutation, orgQuery } from "./lib/functions";
 import { pdfStore } from "./lib/pdfStore";
-import { chargePages } from "./pages";
+import { chargeItems } from "./items";
 import type { FlatField, ListField } from "./lib/pipeline";
 import { field } from "./schema";
 
@@ -91,9 +91,9 @@ export const insert = internalMutation({
         throw new ConvexError("Form not found");
       }
     }
-    // The sample is read like a Document, so its Pages count now; saving it
+    // The sample is read like a Document, so its Items count now; saving it
     // as the Form's first Document later costs nothing more.
-    await chargePages(ctx, args.organisationId, args.pageCount);
+    await chargeItems(ctx, args.organisationId, args.pageCount);
     const proposalId = await ctx.db.insert("formProposals", { ...args, state: "reading" });
     await claimUpload(ctx, args.key);
     await startProposal(ctx, proposalId);

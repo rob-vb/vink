@@ -114,7 +114,15 @@ Each step ends green on `npm run typecheck`, `npm run lint` and `npm test`. Each
 
 ## Status
 
-- [x] 1 · [ ] 2 · [ ] 3 · [ ] 4 · [ ] 5 · [ ] 6 · [ ] 7 · [ ] 8 · [ ] 9 · [ ] 10 · [ ] 11 · [ ] 12a · [ ] 12b · [ ] 13 · [ ] 14 · [ ] 15
+- [x] 1 · [x] 2 · [ ] 3 · [ ] 4 · [ ] 5 · [ ] 6 · [ ] 7 · [ ] 8 · [ ] 9 · [ ] 10 · [ ] 11 · [ ] 12a · [ ] 12b · [ ] 13 · [ ] 14 · [ ] 15
+
+## Assumptions to confirm with the user
+
+- **Items for an email** (not fixed above): a Document counts the sum of its parts. Email body with content = 1, each PDF attachment = its `pageCount`, each image = 1. So a newsletter = 1, complaint + photo = 2, empty body + 3 PDFs = their pages. This closes the "attach 20 pages to one email = 1 Item" gap.
+
+## Open checks (need a deployment, a real service or the user)
+
+- Step 2: run `items:backfillItems` on dev, then on prod (a second run returns zeros); after that, do the `TODO(narrow)` cleanup. Run `scripts/stripe-setup.mts` on the sandbox (prod uses it too) for the Item names. Browser check of the Items card and the out-of-items message. The public API error code is now `out_of_items` (was `out_of_pages`).
 
 ## Failed attempts
 

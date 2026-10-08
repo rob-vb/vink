@@ -5,13 +5,13 @@ import { useState } from "react";
 import { Slider } from "@/components/ui/slider";
 import { custom, formatEuro, formatNumber, plans } from "@/lib/plans";
 
-/** Working days in a month, and Pages per Document, for the estimate. */
+/** Working days in a month, and Items per Document, for the estimate. */
 const WORKDAYS = 21;
-const PAGES_PER_DOCUMENT = 1;
+const ITEMS_PER_DOCUMENT = 1;
 
 /** The smallest Plan that fits the month, or Custom above the largest. */
-function vinkCost(pages: number) {
-  const plan = plans.find((p) => p.pages >= pages);
+function vinkCost(items: number) {
+  const plan = plans.find((p) => p.items >= items);
   return plan ? { name: plan.name, monthly: plan.monthly, from: false } : { name: custom.name, monthly: custom.fromMonthly, from: true };
 }
 
@@ -25,7 +25,7 @@ export function RetypingCalculator() {
 
   const hours = Math.round((documents * minutes * WORKDAYS) / 60);
   const byHand = hours * hourly;
-  const vink = vinkCost(documents * WORKDAYS * PAGES_PER_DOCUMENT);
+  const vink = vinkCost(documents * WORKDAYS * ITEMS_PER_DOCUMENT);
   const widest = Math.max(byHand, vink.monthly, 1);
 
   const inputs = [

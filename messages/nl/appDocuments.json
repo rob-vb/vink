@@ -26,7 +26,7 @@
     "notPdf": "Geen pdf.",
     "tooLarge": "Groter dan 10 MB. Vink neemt pdf's tot 10 MB aan.",
     "failed": "We konden deze pdf niet uploaden. Probeer het opnieuw.",
-    "outOfPages": "Je hebt nog {remaining} {remaining, plural, one {pagina} other {pagina's}}; deze pdf heeft er {needed}.",
+    "outOfItems": "Je hebt nog {remaining} {remaining, plural, one {item} other {items}}; deze pdf heeft er {needed} nodig.",
     "uploaded": "{count, plural, one {# pdf geüpload} other {# pdf's geüpload}}",
     "readingNow": "Vink leest ze nu.",
     "view": "Bekijken",

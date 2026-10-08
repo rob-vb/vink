@@ -105,7 +105,7 @@ export function PlanDialog({
               </p>
               <p className="mt-3 inline-flex items-center gap-1.5 text-sm">
                 <Check className="size-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden />
-                {t("pages", { count: formatNumber(plan.pages, locale) })}
+                {t("items", { count: formatNumber(plan.items, locale) })}
               </p>
               <Button
                 className="mt-4"

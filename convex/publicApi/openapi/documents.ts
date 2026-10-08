@@ -17,7 +17,7 @@ export const documents: OpenApiPart = {
         operationId: "sendDocument",
         summary: "Send a Document in",
         description:
-          "Sends a PDF to a Form. It becomes a Document exactly as if it was emailed to the Form's Intake Address: the same checks, the same Pages counted once, and it shows in Vink with the API Key's name as its source. Vink then reads it; the Document needs review or is approved later. The PDF must be readable, at most 20 pages and at most 10 MB, and your Organisation must have enough Pages left for it.",
+          "Sends a PDF to a Form. It becomes a Document exactly as if it was emailed to the Form's Intake Address: the same checks, the same Items counted once, and it shows in Vink with the API Key's name as its source. Vink then reads it; the Document needs review or is approved later. The PDF must be readable, at most 20 pages and at most 10 MB, and your Organisation must have enough Items left for it.",
         tags: ["Documents"],
         parameters: [
           {
@@ -67,9 +67,9 @@ export const documents: OpenApiPart = {
           "400": refusal("The request has no PDF in it.", "missing_file", "The request has no PDF in it."),
           "401": { $ref: "#/components/responses/Unauthorized" },
           "402": refusal(
-            "Your Organisation has fewer Pages left than the PDF has.",
-            "out_of_pages",
-            "You have 5 pages left; this PDF has 8.",
+            "Your Organisation has fewer Items left than the PDF needs.",
+            "out_of_items",
+            "You have 5 items left; this PDF needs 8.",
           ),
           "404": refusal("No Form with this id in your Organisation.", "not_found", "There's no Form with that id in your Organisation."),
           "413": refusal(PDF_TOO_LARGE, "file_too_large", PDF_TOO_LARGE),
@@ -104,7 +104,7 @@ export const documents: OpenApiPart = {
   },
   errors: [
     { status: 400, code: "missing_file", meaning: "No `file` part, or an empty body." },
-    { status: 402, code: "out_of_pages", meaning: "Not enough Pages left for this PDF." },
+    { status: 402, code: "out_of_items", meaning: "Not enough Items left for this PDF." },
     { status: 413, code: "file_too_large", meaning: PDF_TOO_LARGE },
     { status: 415, code: "not_a_pdf", meaning: "The file isn't a PDF Vink can read." },
     {

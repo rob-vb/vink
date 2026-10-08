@@ -3,7 +3,7 @@ import { internal } from "./_generated/api";
 import { internalAction, type MutationCtx } from "./_generated/server";
 import { escapeHtml, sendEmail } from "./email";
 import { userMutation } from "./lib/functions";
-import { initialPages } from "./pages";
+import { initialItems } from "./items";
 
 /**
  * The last step of sign-up: the new user becomes Admin of a new Organisation.
@@ -26,7 +26,7 @@ export const createOrganisation = userMutation({
       name,
       slug,
       createdBy: ctx.userId,
-      pages: await initialPages(ctx, ctx.userId),
+      items: await initialItems(ctx, ctx.userId),
     });
     await ctx.db.insert("memberships", {
       organisationId,

@@ -125,7 +125,7 @@ async function freshSignUp(t: Backend) {
 }
 
 function usage(t: Backend, slug: string) {
-  return asUser(t, "ann").query(api.pages.usage, { organisationSlug: slug });
+  return asUser(t, "ann").query(api.items.usage, { organisationSlug: slug });
 }
 
 function subscription(overrides: Record<string, unknown> = {}) {
@@ -239,7 +239,7 @@ test("only Admins can open Checkout or the Customer Portal", async () => {
   expect(fake.state.sessions).toHaveLength(0);
 });
 
-test("a new Subscription puts the Organisation on its Plan, with a monthly Pages period", async () => {
+test("a new Subscription puts the Organisation on its Plan, with a monthly Items period", async () => {
   const t = newBackend();
   const { slug } = await freshSignUp(t);
 
@@ -249,7 +249,7 @@ test("a new Subscription puts the Organisation on its Plan, with a monthly Pages
     plan: "team",
     allowance: 1000,
     allowanceLeft: 1000,
-    freePages: 20,
+    freeItems: 20,
     remaining: 1020,
     resetsAt: new Date("2026-11-06T09:00:00Z").getTime(),
     subscription: { interval: "monthly", endsAt: null },
@@ -323,7 +323,7 @@ test("a later renewal that is not paid yet keeps the Plan", async () => {
   expect(fake.state.cancelled).toEqual([]);
 });
 
-test("an annual Subscription still renews its Pages every month", async () => {
+test("an annual Subscription still renews its Items every month", async () => {
   const t = newBackend();
   const { slug } = await freshSignUp(t);
 
@@ -345,7 +345,7 @@ test("the same webhook twice changes nothing more", async () => {
   await subscribe(t, slug);
   await t.run(async (ctx) => {
     const organisation = (await ctx.db.query("organisations").first())!;
-    await ctx.db.patch(organisation._id, { pages: { ...organisation.pages!, allowanceUsed: 400, used: 400 } });
+    await ctx.db.patch(organisation._id, { items: { ...organisation.items!, allowanceUsed: 400, used: 400 } });
   });
 
   await deliver(t, "customer.subscription.updated", fake.state.subscriptions[0]);
@@ -354,13 +354,13 @@ test("the same webhook twice changes nothing more", async () => {
   expect(await usage(t, slug)).toMatchObject({ plan: "team", allowanceLeft: 600 });
 });
 
-test("a change of Plan keeps the period and the Pages used", async () => {
+test("a change of Plan keeps the period and the Items used", async () => {
   const t = newBackend();
   const { slug } = await freshSignUp(t);
   await subscribe(t, slug);
   await t.run(async (ctx) => {
     const organisation = (await ctx.db.query("organisations").first())!;
-    await ctx.db.patch(organisation._id, { pages: { ...organisation.pages!, allowanceUsed: 900, used: 900 } });
+    await ctx.db.patch(organisation._id, { items: { ...organisation.items!, allowanceUsed: 900, used: 900 } });
   });
   const before = await usage(t, slug);
 
@@ -374,7 +374,7 @@ test("a change of Plan keeps the period and the Pages used", async () => {
   });
 });
 
-test("a cancelled Subscription runs to its end, then the Organisation is back on Free Pages", async () => {
+test("a cancelled Subscription runs to its end, then the Organisation is back on Free Items", async () => {
   const t = newBackend();
   const { slug } = await freshSignUp(t);
   await subscribe(t, slug);
@@ -388,8 +388,8 @@ test("a cancelled Subscription runs to its end, then the Organisation is back on
   expect(await usage(t, slug)).toMatchObject({
     plan: null,
     allowance: 0,
-    topUpPages: 0,
-    freePages: 20,
+    topUpItems: 0,
+    freeItems: 20,
     remaining: 20,
     resetsAt: null,
     subscription: null,
@@ -408,7 +408,7 @@ test("a failed renewal keeps the Plan while Stripe retries; unpaid ends it", asy
   expect(await usage(t, slug)).toMatchObject({ plan: null, subscription: null });
 });
 
-test("a paid Top-up adds its Pages once, however often Stripe sends it", async () => {
+test("a paid Top-up adds its Items once, however often Stripe sends it", async () => {
   const t = newBackend();
   const { user, slug } = await freshSignUp(t);
   await subscribe(t, slug);
@@ -434,7 +434,7 @@ test("a paid Top-up adds its Pages once, however often Stripe sends it", async (
   await deliver(t, "checkout.session.completed", session);
   await deliver(t, "checkout.session.completed", session);
 
-  expect(await usage(t, slug)).toMatchObject({ topUpPages: 300, remaining: 1320 });
+  expect(await usage(t, slug)).toMatchObject({ topUpItems: 300, remaining: 1320 });
 });
 
 test("a Top-up paid by bank later is added when the payment succeeds", async () => {
@@ -444,7 +444,7 @@ test("a Top-up paid by bank later is added when the payment succeeds", async () 
   fake.state.lineItems.set("cs_9", [{ price: { lookup_key: "vink_topup_100" }, quantity: 1 }]);
 
   await deliver(t, "checkout.session.completed", { id: "cs_9", mode: "payment", payment_status: "unpaid", customer: "cus_1" });
-  expect(await usage(t, slug)).toMatchObject({ topUpPages: 0 });
+  expect(await usage(t, slug)).toMatchObject({ topUpItems: 0 });
 
   await deliver(t, "checkout.session.async_payment_succeeded", {
     id: "cs_9",
@@ -452,10 +452,10 @@ test("a Top-up paid by bank later is added when the payment succeeds", async () 
     payment_status: "paid",
     customer: "cus_1",
   });
-  expect(await usage(t, slug)).toMatchObject({ topUpPages: 100 });
+  expect(await usage(t, slug)).toMatchObject({ topUpItems: 100 });
 });
 
-test("a paid Checkout without Top-ups adds no Pages", async () => {
+test("a paid Checkout without Top-ups adds no Items", async () => {
   const t = newBackend();
   const { slug } = await freshSignUp(t);
   await subscribe(t, slug);
@@ -463,7 +463,7 @@ test("a paid Checkout without Top-ups adds no Pages", async () => {
 
   await deliver(t, "checkout.session.completed", { id: "cs_5", mode: "payment", payment_status: "paid", customer: "cus_1" });
 
-  expect(await usage(t, slug)).toMatchObject({ topUpPages: 0 });
+  expect(await usage(t, slug)).toMatchObject({ topUpItems: 0 });
 });
 
 test("Top-ups need a Plan", async () => {
@@ -570,7 +570,7 @@ test("a Top-up from a Customer that is no Organisation is taken and ignored", as
   const stranger = { id: "cs_7", mode: "payment", payment_status: "paid", customer: "cus_9" };
   expect(await deliver(t, "checkout.session.completed", stranger)).toBe(true);
 
-  expect(await usage(t, slug)).toMatchObject({ topUpPages: 0 });
+  expect(await usage(t, slug)).toMatchObject({ topUpItems: 0 });
 });
 
 test("a webhook with a bad signature is refused", async () => {

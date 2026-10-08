@@ -20,7 +20,7 @@ import { DocumentStateTabs, DocumentsHeading } from "@/components/documents/docu
 import { useDocumentsLabels, type ListedState } from "@/components/documents/labels";
 import { api } from "@/convex/_generated/api";
 import { cn } from "cn";
-import { PagesLeft, PagesWarning } from "../pages-usage";
+import { ItemsLeft, ItemsWarning } from "../items-usage";
 import { DocumentTable } from "./document-table";
 import { EmailInDialog } from "./email-in-dialog";
 import { UploadDialog } from "./upload-dialog";
@@ -83,7 +83,7 @@ export function DocumentList({
       <DocumentsHeading
         actions={
           <>
-            <PagesLeft organisationSlug={organisationSlug} />
+            <ItemsLeft organisationSlug={organisationSlug} />
             <Button
               variant="outline"
               nativeButton={false}
@@ -101,7 +101,7 @@ export function DocumentList({
         }
       />
 
-      {isAdmin && <PagesWarning organisationSlug={organisationSlug} />}
+      {isAdmin && <ItemsWarning organisationSlug={organisationSlug} />}
 
       <DocumentStateTabs value={state} onValueChange={setState} counts={list?.counts} />
 

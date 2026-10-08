@@ -12,7 +12,7 @@ import { deliveriesOf } from "./deliveries";
 import { startExtraction } from "./extraction";
 import { countIn } from "./lib/documentStates";
 import { orgAction, orgMutation, orgQuery } from "./lib/functions";
-import { chargePages } from "./pages";
+import { chargeItems } from "./items";
 import { MAX_PDF_BYTES, PDF_TOO_LARGE } from "./lib/pdfLimits";
 import { pdfStore } from "./lib/pdfStore";
 import type { FlatField } from "./lib/pipeline";
@@ -121,7 +121,7 @@ export const create = orgAction({
 
 /**
  * The one way a stored PDF becomes a Document of a Form, for every way in
- * (upload, Intake Address, public API): checkPdf, then charge its Pages and
+ * (upload, Intake Address, public API): checkPdf, then charge its Items and
  * create the Document in one transaction. A refused PDF creates nothing,
  * charges nothing and is removed from storage; the refusal is thrown.
  */
@@ -156,7 +156,7 @@ export const insert = internalMutation({
     uploaderEmail: v.string(),
   },
   handler: async (ctx, args) => {
-    await chargePages(ctx, args.organisationId, args.pageCount);
+    await chargeItems(ctx, args.organisationId, args.pageCount);
     return await createDocument(ctx, args);
   },
 });

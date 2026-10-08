@@ -13,7 +13,7 @@ import { api } from "@/convex/_generated/api";
 import { useErrorText } from "../../../error-text";
 import { ApiKeysCard } from "./api-keys-card";
 import { DangerZone } from "./danger-zone";
-import { PagesCard } from "./pages-card";
+import { ItemsCard } from "./items-card";
 
 function Settings({
   organisationSlug,
@@ -32,7 +32,7 @@ function Settings({
 
   return (
     <div className="flex flex-col gap-6">
-      <PagesCard organisationSlug={organisationSlug} />
+      <ItemsCard organisationSlug={organisationSlug} />
 
       <Card>
         <CardHeader>

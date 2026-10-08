@@ -1,13 +1,13 @@
 // What Vink sells through Stripe, by Price lookup key, so the code needs no
 // Price IDs per environment: scripts/stripe-setup.mts makes the same keys in a
-// sandbox and in live mode. Pages and prices come from lib/plans.ts.
+// sandbox and in live mode. Items and prices come from lib/plans.ts.
 import { plans } from "../../lib/plans";
 
 export type PaidPlan = "starter" | "team" | "business";
 export type BillingInterval = "monthly" | "annual";
 
-/** One Top-up: 100 Pages for €10, until the end of the period. */
-export const TOP_UP_PAGES = 100;
+/** One Top-up: 100 Items for €10, until the end of the period. */
+export const TOP_UP_ITEMS = 100;
 export const TOP_UP_CENTS = 1000;
 export const TOP_UP_LOOKUP_KEY = "vink_topup_100";
 /** At most this many Top-ups in one Checkout. */
@@ -37,7 +37,7 @@ export function planOfLookupKey(
   return { plan: match[1] as PaidPlan, interval: match[2] as BillingInterval };
 }
 
-/** Pages per month on a paid Plan, billed monthly or annually alike. */
+/** Items per month on a paid Plan, billed monthly or annually alike. */
 export function allowanceOf(plan: PaidPlan) {
-  return plans.find((p) => p.id === plan)!.pages;
+  return plans.find((p) => p.id === plan)!.items;
 }

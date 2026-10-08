@@ -6,7 +6,7 @@ import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { annualTotal, formatEuro, formatNumber, perPage, plans } from "@/lib/plans";
+import { annualTotal, formatEuro, formatNumber, perItem, plans } from "@/lib/plans";
 import { cn } from "@/lib/utils";
 import { StartFreeLink } from "./cta-links";
 
@@ -66,10 +66,10 @@ export function PricingCards() {
               </p>
               <p className="mt-5 inline-flex items-center gap-2 self-start rounded-full border bg-muted px-3 py-1 font-mono text-sm">
                 <Check className="size-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden />
-                {t("card.pages", { count: formatNumber(plan.pages, locale) })}
+                {t("card.pages", { count: formatNumber(plan.items, locale) })}
               </p>
               <p className="mt-2 text-xs text-muted-foreground">
-                {t("card.perPage", { price: formatEuro(perPage(plan, billing), locale, 3) })}
+                {t("card.perPage", { price: formatEuro(perItem(plan, billing), locale, 3) })}
               </p>
               <StartFreeLink
                 location={`pricing-${plan.id}`}

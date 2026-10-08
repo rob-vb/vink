@@ -64,7 +64,7 @@ export default async function PricingPage({ params }: PageProps<"/[locale]/prici
             name: plan.name,
             price: plan.monthly.toFixed(2),
             priceCurrency: CURRENCY,
-            description: t("jsonld.offer", { count: plan.pages }),
+            description: t("jsonld.offer", { count: plan.items }),
             url: localeUrl(locale, "/pricing"),
             priceSpecification: {
               "@type": "UnitPriceSpecification",
