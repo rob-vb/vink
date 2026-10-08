@@ -1,0 +1,91 @@
+// What Vink takes in, per kind of input (ADR 0010): how big it may be on every
+// way in (app upload, Intake Address, public API), and how many Items it costs.
+// Kept free of Convex imports: the app imports this file too.
+//
+// Copies of these limits live where this file cannot be imported. Change them
+// together (workers/intake-email/src/map.test.ts fails when the Worker drifts):
+//   - deploy/nginx.conf: `client_max_body_size` (the biggest file below, plus room)
+//   - workers/intake-email/src/map.ts: MAX_BYTES and the other MAX_* there
+
+export type InputKind = "pdf" | "email" | "image";
+
+// A Document from before kinds existed (the widen step of step 3 of the "any
+// input" plan) has no `kind` and no `mimeType`: it is a PDF.
+// TODO(narrow, after `documents:backfillInputKind` ran on dev AND prod): make
+// `kind` and `mimeType` required in schema.ts, and drop these fallbacks.
+export const PDF_MIME_TYPE = "application/pdf";
+
+export function kindOf(stored: { kind?: InputKind }): InputKind {
+  return stored.kind ?? "pdf";
+}
+
+export function mimeTypeOf(stored: { mimeType?: string }): string {
+  return stored.mimeType ?? PDF_MIME_TYPE;
+}
+
+// --- PDF ---
+
+export const MAX_PDF_BYTES = 10 * 1024 * 1024;
+
+// The refusal's text. The app translates it by this exact text
+// (lib/server-errors.ts); the public API answers it as 413 file_too_large.
+export const PDF_TOO_LARGE = "The PDF is larger than 10 MB.";
+
+// --- Image ---
+
+// JPG, PNG and HEIC (what an iPhone takes). `image/heif` is HEIC's other
+// registered name; some phones and mail apps send that one.
+export const IMAGE_MIME_TYPES = ["image/jpeg", "image/png", "image/heic", "image/heif"] as const;
+
+// 10 MB, the same as a PDF. A phone photo is 2-6 MB as JPEG and about half that
+// as HEIC; 10 MB takes the biggest phone cameras and scans at a good
+// resolution, and it still fits in one model request after base64 (+33%). The
+// same number as the PDF limit means nginx and the Worker need no new size.
+export const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
+
+export const IMAGE_TOO_LARGE = "The image is larger than 10 MB.";
+
+// --- Email ---
+
+// The body as text (the Worker turns HTML into text), not the whole message.
+// 200 KiB is about 50 pages of plain text: more than any mail a person writes,
+// and little enough for one Reading request to the models.
+export const MAX_EMAIL_BODY_BYTES = 200 * 1024;
+
+// PDF and image attachments together. Each one is an Item at least, so a mail
+// with more is a batch that belongs in the upload or the API.
+export const MAX_EMAIL_ATTACHMENTS = 10;
+
+// --- Items ---
+
+export type CountedAttachment = { kind: "pdf"; pageCount: number } | { kind: "image" };
+
+export type CountedInput =
+  | { kind: "pdf"; pageCount: number }
+  | { kind: "image" }
+  | { kind: "email"; body: string; attachments: CountedAttachment[] };
+
+/**
+ * How many Items an input costs: the one place that decides it.
+ *   pdf   = its pages
+ *   image = 1
+ *   email = its body (1 when it has content, 0 when it is empty) plus each
+ *           attachment: a PDF its pages, an image 1.
+ * ASSUMPTION, NOT CONFIRMED BY THE USER YET: ADR 0010 says "1 email = 1 Item".
+ * Read as "the email's own text is 1 Item", the attachments count as the
+ * PDFs and photos they are, so a complaint with a photo is 2 and a mail with
+ * an empty body and 3 PDFs costs the sum of their pages. If the user decides
+ * otherwise (say, 1 per email whatever it holds), change only the `email` case.
+ */
+export function itemCountOf(input: CountedInput): number {
+  switch (input.kind) {
+    case "pdf":
+      return input.pageCount;
+    case "image":
+      return 1;
+    case "email": {
+      const body = input.body.trim() === "" ? 0 : 1;
+      return input.attachments.reduce((sum, a) => sum + itemCountOf(a), body);
+    }
+  }
+}

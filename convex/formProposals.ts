@@ -10,6 +10,7 @@ import { insertForm, saveVersion } from "./forms";
 import { orgAction, orgMutation, orgQuery } from "./lib/functions";
 import { pdfStore } from "./lib/pdfStore";
 import { chargeItems } from "./items";
+import { itemCountOf, kindOf, mimeTypeOf, PDF_MIME_TYPE } from "./lib/inputLimits";
 import type { FlatField, ListField } from "./lib/pipeline";
 import { field } from "./schema";
 
@@ -93,8 +94,13 @@ export const insert = internalMutation({
     }
     // The sample is read like a Document, so its Items count now; saving it
     // as the Form's first Document later costs nothing more.
-    await chargeItems(ctx, args.organisationId, args.pageCount);
-    const proposalId = await ctx.db.insert("formProposals", { ...args, state: "reading" });
+    await chargeItems(ctx, args.organisationId, itemCountOf({ kind: "pdf", pageCount: args.pageCount }));
+    const proposalId = await ctx.db.insert("formProposals", {
+      ...args,
+      kind: "pdf",
+      mimeType: PDF_MIME_TYPE,
+      state: "reading",
+    });
     await claimUpload(ctx, args.key);
     await startProposal(ctx, proposalId);
     return { proposalId };
@@ -181,6 +187,8 @@ export const save = orgMutation({
       organisationId: ctx.organisationId,
       formId,
       key: proposal.key,
+      kind: kindOf(proposal),
+      mimeType: mimeTypeOf(proposal),
       filename: proposal.filename,
       pageCount: proposal.pageCount,
       uploadedBy: proposal.createdBy,

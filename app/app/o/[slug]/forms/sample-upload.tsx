@@ -8,7 +8,7 @@ import { type DragEvent, useState } from "react";
 import { Spinner } from "@/components/ui/spinner";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
-import { MAX_PDF_BYTES } from "@/convex/lib/pdfLimits";
+import { MAX_PDF_BYTES } from "@/convex/lib/inputLimits";
 import { cn } from "@/lib/utils";
 import { useErrorText } from "../../../error-text";
 

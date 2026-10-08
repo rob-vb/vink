@@ -26,7 +26,7 @@ until the permanent intake domain is live.
 ## Limits
 
 - 25 MiB per message (Email Routing's limit); larger mail is rejected.
-- 10 MiB per PDF attachment (`MAX_BYTES`, the same limit as `convex/lib/pdfLimits.ts`); a larger one is listed as `too_large` and shows as refused.
+- 10 MiB per PDF attachment (`MAX_BYTES`, the same limit as `MAX_PDF_BYTES` in `convex/lib/inputLimits.ts`; that file also holds the image and email limits, copied in `src/map.ts`); a larger one is listed as `too_large` and shows as refused.
 - PDFs over 20 pages, unreadable PDFs and PDFs that don't fit the Organisation's
   Items are refused by Vink and removed from R2.
 - If Vink is unreachable, the Worker throws so the sending server retries later.

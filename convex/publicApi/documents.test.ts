@@ -36,6 +36,7 @@ beforeEach(() => {
   vi.useFakeTimers();
   vi.setSystemTime(new Date("2026-10-06T09:00:00Z"));
   fakePdfStore.objects.clear();
+  fakePdfStore.types.clear();
   fakePipeline.reset();
   fakePipeline.replay(invoice);
 });
@@ -129,6 +130,10 @@ test("the Document is processed like any other and its Items are counted once", 
   expect(documents.map((d) => d.id)).toEqual([body.id]);
   expect(await ann.query(api.items.usage, { organisationSlug })).toMatchObject({ remaining: 17, used: 3 });
   expect(fakePdfStore.objects.size).toBe(1);
+  // The stored file carries its real MIME type, and the Document its kind.
+  expect([...fakePdfStore.types.values()]).toEqual(["application/pdf"]);
+  const stored = await t.run(async (ctx) => await ctx.db.query("documents").collect());
+  expect(stored).toMatchObject([{ kind: "pdf", mimeType: "application/pdf" }]);
 });
 
 async function nothingCreated(t: Backend) {

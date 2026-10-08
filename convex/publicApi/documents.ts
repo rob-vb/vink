@@ -6,7 +6,7 @@ import { ConvexError, v } from "convex/values";
 import { internal } from "../_generated/api";
 import { internalAction, internalQuery } from "../_generated/server";
 import { acceptPdf, NOT_A_PDF, tooManyPages } from "../documents";
-import { MAX_PDF_BYTES, PDF_TOO_LARGE } from "../lib/pdfLimits";
+import { MAX_PDF_BYTES, PDF_MIME_TYPE, PDF_TOO_LARGE } from "../lib/inputLimits";
 import { pdfStore } from "../lib/pdfStore";
 import { apiError, apiJson } from "./respond";
 import { type ApiRoute, route } from "./router";
@@ -181,7 +181,7 @@ export const documentsRoutes: ApiRoute[] = [
     const filename = cleanFilename(new URL(request.url).searchParams.get("filename"), ...pdf.filenames);
 
     const key = `${caller.organisationId}/${crypto.randomUUID()}`;
-    await pdfStore.store(ctx, key, pdf.bytes);
+    await pdfStore.store(ctx, key, pdf.bytes, PDF_MIME_TYPE);
     let accepted;
     try {
       accepted = await ctx.runAction(internal.publicApi.documents.accept, {

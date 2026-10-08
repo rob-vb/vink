@@ -3,10 +3,20 @@
 
 /**
  * The largest PDF attachment Vink takes: 10 MB, as on every way in. A copy of
- * MAX_PDF_BYTES in convex/lib/pdfLimits.ts (this package can't import it);
- * change both together.
+ * MAX_PDF_BYTES in convex/lib/inputLimits.ts (this package can't import it);
+ * change both together. map.test.ts fails when a copy here drifts.
  */
 export const MAX_BYTES = 10 * 1024 * 1024;
+
+/**
+ * The other limits of convex/lib/inputLimits.ts, copied here for when the
+ * Worker passes whole emails (step 6 of the "any input" plan). Nothing reads
+ * them yet. Change them together with that file.
+ */
+export const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
+export const IMAGE_MIME_TYPES = ["image/jpeg", "image/png", "image/heic", "image/heif"] as const;
+export const MAX_EMAIL_BODY_BYTES = 200 * 1024;
+export const MAX_EMAIL_ATTACHMENTS = 10;
 
 /**
  * The largest email the Worker reads: Cloudflare Email Routing's own limit.

@@ -102,17 +102,21 @@ export async function addMembership(
  */
 export const fakePdfStore = {
   objects: new Map<string, Uint8Array>(),
+  /** The MIME type each `store` call was given, by key. */
+  types: new Map<string, string>(),
   async uploadUrl(key: string) {
     return `https://r2.test/upload/${key}`;
   },
-  async store(_ctx: unknown, key: string, bytes: Uint8Array) {
+  async store(_ctx: unknown, key: string, bytes: Uint8Array, mimeType: string) {
     fakePdfStore.objects.set(key, bytes);
+    fakePdfStore.types.set(key, mimeType);
   },
   async read(key: string) {
     return fakePdfStore.objects.get(key) ?? null;
   },
   async remove(_ctx: unknown, key: string) {
     fakePdfStore.objects.delete(key);
+    fakePdfStore.types.delete(key);
   },
   async viewUrl(key: string, expiresInSeconds: number) {
     return `https://r2.test/view/${key}?expires=${expiresInSeconds}`;

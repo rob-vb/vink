@@ -13,7 +13,13 @@ import { startExtraction } from "./extraction";
 import { countIn } from "./lib/documentStates";
 import { orgAction, orgMutation, orgQuery } from "./lib/functions";
 import { chargeItems } from "./items";
-import { MAX_PDF_BYTES, PDF_TOO_LARGE } from "./lib/pdfLimits";
+import {
+  type InputKind,
+  itemCountOf,
+  MAX_PDF_BYTES,
+  PDF_MIME_TYPE,
+  PDF_TOO_LARGE,
+} from "./lib/inputLimits";
 import { pdfStore } from "./lib/pdfStore";
 import type { FlatField } from "./lib/pipeline";
 import {
@@ -156,7 +162,7 @@ export const insert = internalMutation({
     uploaderEmail: v.string(),
   },
   handler: async (ctx, args) => {
-    await chargeItems(ctx, args.organisationId, args.pageCount);
+    await chargeItems(ctx, args.organisationId, itemCountOf({ kind: "pdf", pageCount: args.pageCount }));
     return await createDocument(ctx, args);
   },
 });
@@ -170,6 +176,8 @@ export async function createDocument(
   {
     formId,
     reading,
+    kind = "pdf",
+    mimeType = PDF_MIME_TYPE,
     ...document
   }: {
     organisationId: Id<"organisations">;
@@ -177,6 +185,9 @@ export async function createDocument(
     key: string;
     filename: string;
     pageCount: number;
+    // Default to a PDF until the readers and intake of the other kinds exist.
+    kind?: InputKind;
+    mimeType?: string;
     uploadedBy: string;
     uploaderEmail: string;
     reading?: { json: string; textLayer: Array<{ page: number; text: string }> };
@@ -188,6 +199,8 @@ export async function createDocument(
   }
   const documentId = await ctx.db.insert("documents", {
     ...document,
+    kind,
+    mimeType,
     formId,
     formVersion: form.version,
     state: "extracting",
@@ -432,5 +445,45 @@ export const list = orgQuery({
         }),
       ),
     };
+  },
+});
+
+/**
+ * The input model (ADR 0010, step 3), backfill step: gives every Document and
+ * Form Proposal from before kinds its `kind: "pdf"` and `mimeType:
+ * "application/pdf"`. Idempotent; it changes nothing else, so no totals move.
+ * Run once per deployment, after the code that reads a missing kind as a PDF
+ * is deployed:
+ *   npx convex run documents:backfillInputKind          (dev)
+ *   npx convex run --prod documents:backfillInputKind   (prod)
+ * Returns what it filled per table; a second run returns zeros.
+ *
+ * TODO(narrow): once it ran on dev AND prod (a second run says 0 for both),
+ * make `kind` and `mimeType` required on `documents` and `formProposals` in
+ * schema.ts, drop the fallbacks in lib/inputLimits.ts (kindOf, mimeTypeOf) and
+ * their callers, and remove this mutation.
+ */
+export const backfillInputKind = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    let documents = 0;
+    for await (const document of ctx.db.query("documents")) {
+      if (document.kind !== undefined && document.mimeType !== undefined) continue;
+      await ctx.db.patch(document._id, {
+        kind: document.kind ?? "pdf",
+        mimeType: document.mimeType ?? PDF_MIME_TYPE,
+      });
+      documents++;
+    }
+    let formProposals = 0;
+    for await (const proposal of ctx.db.query("formProposals")) {
+      if (proposal.kind !== undefined && proposal.mimeType !== undefined) continue;
+      await ctx.db.patch(proposal._id, {
+        kind: proposal.kind ?? "pdf",
+        mimeType: proposal.mimeType ?? PDF_MIME_TYPE,
+      });
+      formProposals++;
+    }
+    return { documents, formProposals };
   },
 });

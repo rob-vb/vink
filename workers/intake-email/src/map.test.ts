@@ -65,3 +65,13 @@ test("a DMARC failure in Authentication-Results is detected", () => {
   expect(failsDmarc("mx.cloudflare.net; dkim=pass; dmarc=pass")).toBe(false);
   expect(failsDmarc(null)).toBe(false);
 });
+
+test("the Worker's copies of the input limits match convex/lib/inputLimits.ts", async () => {
+  const limits = await import("../../../convex/lib/inputLimits");
+  const worker = await import("./map");
+  expect(worker.MAX_BYTES).toBe(limits.MAX_PDF_BYTES);
+  expect(worker.MAX_IMAGE_BYTES).toBe(limits.MAX_IMAGE_BYTES);
+  expect([...worker.IMAGE_MIME_TYPES]).toEqual([...limits.IMAGE_MIME_TYPES]);
+  expect(worker.MAX_EMAIL_BODY_BYTES).toBe(limits.MAX_EMAIL_BODY_BYTES);
+  expect(worker.MAX_EMAIL_ATTACHMENTS).toBe(limits.MAX_EMAIL_ATTACHMENTS);
+});

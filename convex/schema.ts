@@ -47,6 +47,10 @@ export const field = v.union(
   }),
 );
 
+// What a Document is (ADR 0010). Stored with its real MIME type, since the file
+// is no longer always a PDF.
+export const inputKind = v.union(v.literal("pdf"), v.literal("email"), v.literal("image"));
+
 export const documentState = v.union(
   v.literal("extracting"),
   v.literal("needs_review"),
@@ -212,8 +216,13 @@ export default defineSchema({
     organisationId: v.id("organisations"),
     createdBy: v.string(),
     createdByEmail: v.string(),
-    // The sample's PDF in R2, like `documents.key`.
+    // The sample's file in R2, like `documents.key`.
     key: v.string(),
+    // Its kind and MIME type, like a Document's. Widen step: unset on samples
+    // from before kinds; they read as a PDF (lib/inputLimits.ts kindOf).
+    // TODO(narrow, after `documents:backfillInputKind` ran on dev AND prod): make both required.
+    kind: v.optional(inputKind),
+    mimeType: v.optional(v.string()),
     filename: v.string(),
     pageCount: v.number(),
     // For "Suggest Fields from PDF": the Form being extended.
@@ -262,14 +271,21 @@ export default defineSchema({
     ),
   }).index("by_formId", ["formId"]),
 
-  // A PDF processed against the Form Version that was current at upload.
+  // A Document (a PDF, for now) processed against the Form Version that was current at upload.
   documents: defineTable({
     organisationId: v.id("organisations"),
     formId: v.id("forms"),
     formVersion: v.number(),
-    // The PDF's key in R2 (see lib/pdfStore.ts), prefixed with the Organisation.
+    // The file's key in R2 (see lib/pdfStore.ts), prefixed with the Organisation.
     key: v.string(),
+    // Its kind and the real MIME type of the stored file. Widen step: unset on
+    // Documents from before kinds, which are PDFs (lib/inputLimits.ts reads a
+    // missing one as "pdf" / "application/pdf") until `documents:backfillInputKind` has run.
+    // TODO(narrow, after `documents:backfillInputKind` ran on dev AND prod): make both required.
+    kind: v.optional(inputKind),
+    mimeType: v.optional(v.string()),
     filename: v.string(),
+    // A PDF's pages. For other kinds the number of Items is itemCountOf's to say.
     pageCount: v.number(),
     uploadedBy: v.string(),
     // Copied from the uploader at upload time, for the Document list.

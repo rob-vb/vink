@@ -9,6 +9,7 @@ import { confidenceOf, reviewReasonsOf } from "./lib/confidence";
 import { createDeliveries } from "./deliveries";
 import { moveTo } from "./lib/documentStates";
 import { orgMutation } from "./lib/functions";
+import { kindOf, mimeTypeOf } from "./lib/inputLimits";
 import { openReviews } from "./review";
 import type { FlatField, ListField } from "./lib/pipeline";
 
@@ -97,7 +98,10 @@ export const input = internalQuery({
       .withIndex("by_documentId", (q) => q.eq("documentId", documentId))
       .unique();
     return {
-      pdfKey: document.key,
+      fileKey: document.key,
+      // A Document from before kinds is a PDF (lib/inputLimits.ts).
+      kind: kindOf(document),
+      mimeType: mimeTypeOf(document),
       formName: form.name,
       formDescription: form.description ?? null,
       fields: formVersion.fields.filter((f): f is FlatField => f.type !== "list"),

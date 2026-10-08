@@ -15,7 +15,7 @@ import {
 import { acceptPdf } from "./documents";
 import { escapeHtml, sendEmail } from "./email";
 import { orgMutation, orgQuery } from "./lib/functions";
-import { PDF_TOO_LARGE } from "./lib/pdfLimits";
+import { PDF_TOO_LARGE } from "./lib/inputLimits";
 import { pdfStore } from "./lib/pdfStore";
 import { sameSecret } from "./lib/secrets";
 

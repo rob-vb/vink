@@ -1,5 +1,5 @@
 // POST /v1/forms/{form_id}/documents (publicApi/documents.ts).
-import { PDF_TOO_LARGE } from "../../lib/pdfLimits";
+import { PDF_TOO_LARGE } from "../../lib/inputLimits";
 import type { OpenApiPart, Response } from "./types";
 
 const refusal = (description: string, code: string, message: string): Response => ({

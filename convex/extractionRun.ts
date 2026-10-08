@@ -17,12 +17,12 @@ import { verifier } from "./lib/verifier";
 export const run = internalAction({
   args: { documentId: v.id("documents") },
   handler: async (ctx, { documentId }) => {
-    const { pdfKey, readingJson } = await ctx.runQuery(internal.extraction.input, {
+    const { fileKey, readingJson } = await ctx.runQuery(internal.extraction.input, {
       documentId,
     });
     if (readingJson === null) {
-      const pdf = await pdfStore.read(pdfKey);
-      if (pdf === null) throw new Error(`No PDF stored under ${pdfKey}`);
+      const pdf = await pdfStore.read(fileKey);
+      if (pdf === null) throw new Error(`No PDF stored under ${fileKey}`);
       const { reading, textLayer } = await reader.read(pdf);
       await ctx.runMutation(internal.extraction.saveReading, {
         documentId,

@@ -114,7 +114,7 @@ Each step ends green on `npm run typecheck`, `npm run lint` and `npm test`. Each
 
 ## Status
 
-- [x] 1 · [x] 2 · [ ] 3 · [ ] 4 · [ ] 5 · [ ] 6 · [ ] 7 · [ ] 8 · [ ] 9 · [ ] 10 · [x] 11 · [ ] 12a · [ ] 12b · [ ] 13 · [ ] 14 · [ ] 15
+- [x] 1 · [x] 2 · [x] 3 · [ ] 4 · [ ] 5 · [ ] 6 · [ ] 7 · [ ] 8 · [ ] 9 · [ ] 10 · [x] 11 · [ ] 12a · [ ] 12b · [ ] 13 · [ ] 14 · [ ] 15
 
 ## Assumptions to confirm with the user
 
@@ -123,6 +123,8 @@ Each step ends green on `npm run typecheck`, `npm run lint` and `npm test`. Each
 ## Open checks (need a deployment, a real service or the user)
 
 - Step 2: run `items:backfillItems` on dev, then on prod (a second run returns zeros); after that, do the `TODO(narrow)` cleanup. Run `scripts/stripe-setup.mts` on the sandbox (prod uses it too) for the Item names. Browser check of the Items card and the out-of-items message. The public API error code is now `out_of_items` (was `out_of_pages`).
+- Step 3: run `documents:backfillInputKind` on dev, then prod (second run returns zeros), then `TODO(narrow)`. Note: the schema never had `pdfKey`; only `extraction.input`'s return value was renamed to `fileKey`. Image max 10 MB; email body 200 KiB, max 10 attachments.
+- Step 11: browser render of the terms page (NL+EN); a lawyer reads the new clause.
 
 ## Failed attempts
 
