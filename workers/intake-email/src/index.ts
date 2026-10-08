@@ -1,7 +1,9 @@
 // Cloudflare Email Worker for Vink's Intake Addresses (<token>@<intake domain>).
 // Email Routing's catch-all on the intake apex sends every message here. The
-// Worker holds no business logic: it stores PDF attachments in R2 and tells
-// Vink, which decides per attachment (see convex/intake.ts). It never replies.
+// Worker holds no business logic: it stores PDF and image attachments in R2 and
+// tells Vink the whole mail (subject, date, text, attachments); Vink decides
+// which Form, and whether it is one Document or several (see convex/intake.ts).
+// It never replies.
 import PostalMime from "postal-mime";
 import { failsDmarc, MAX_MESSAGE_BYTES, planEmail } from "./map";
 
@@ -27,6 +29,10 @@ export default {
       {
         to: message.to,
         from: parsed.from?.address ?? message.from,
+        subject: parsed.subject,
+        date: parsed.date,
+        text: parsed.text,
+        html: parsed.html,
         attachments: parsed.attachments.map((a) => ({
           filename: a.filename,
           mimeType: a.mimeType,
@@ -37,7 +43,7 @@ export default {
     );
     for (const object of plan.store) {
       await env.PDFS.put(object.key, object.bytes, {
-        httpMetadata: { contentType: "application/pdf" },
+        httpMetadata: { contentType: object.mimeType },
       });
     }
     const response = await fetch(`${env.CONVEX_SITE_URL}/intake/email`, {
@@ -50,6 +56,10 @@ export default {
         token: plan.token,
         from: plan.from,
         receivedAt: Date.now(),
+        subject: plan.subject,
+        date: plan.date,
+        body: plan.body,
+        bodyTooLarge: plan.bodyTooLarge,
         attachments: plan.entries,
       }),
     });

@@ -16,19 +16,27 @@ import { pdfStore } from "./lib/pdfStore";
 import type { Reading } from "./lib/pipeline";
 import { reader } from "./lib/reader";
 import { router } from "./lib/router";
-import { readerInputOf } from "./lib/readerInput";
+import { readerInputOf, UnreadableInput } from "./lib/readerInput";
 import { verifier } from "./lib/verifier";
 
 export const run = internalAction({
   args: { documentId: v.id("documents") },
   handler: async (ctx, { documentId }) => {
-    const { fileKey, kind, mimeType, pageCount, readingJson } = await ctx.runQuery(
+    const { organisationId, fileKey, kind, mimeType, pageCount, readingJson } = await ctx.runQuery(
       internal.extraction.input,
       { documentId },
     );
     if (readingJson === null) {
       // The Reader is picked by the Document's kind, with no model (ADR 0010).
-      const input = await readerInputOf(pdfStore, { fileKey, kind, mimeType, pageCount });
+      let input;
+      try {
+        input = await readerInputOf(pdfStore, { fileKey, kind, mimeType, pageCount }, organisationId);
+      } catch (error) {
+        if (!(error instanceof UnreadableInput)) throw error;
+        // Trying again cannot help: fail now, not after the pool's retries.
+        await ctx.runMutation(internal.extraction.failUnreadable, { documentId, error: error.message });
+        return;
+      }
       const { reading, textLayer } = await reader.read(input);
       await ctx.runMutation(internal.extraction.saveReading, {
         documentId,

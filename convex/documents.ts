@@ -181,6 +181,7 @@ export async function createDocument(
     reading,
     kind = "pdf",
     mimeType = PDF_MIME_TYPE,
+    splitReason,
     ...document
   }: {
     organisationId: Id<"organisations">;
@@ -191,6 +192,10 @@ export async function createDocument(
     // Default to a PDF until the readers and intake of the other kinds exist.
     kind?: InputKind;
     mimeType?: string;
+    /** An email's attachments, stored under `${key}/…` (lib/documentFiles.ts removes them with it). */
+    attachmentKeys?: string[];
+    /** Why Vink split an email it was unsure about; the Document then waits for a user (never Auto-Send). */
+    splitReason?: string;
     uploadedBy: string;
     uploaderEmail: string;
     reading?: { json: string; textLayer: Array<{ page: number; text: string }> };
@@ -205,6 +210,8 @@ export async function createDocument(
     kind,
     mimeType,
     ...(form === null ? {} : { formId: form._id, formVersion: form.version }),
+    // `userTouched` rules out Auto-Send: a split Vink was unsure about needs a look.
+    ...(splitReason === undefined ? {} : { splitReason, userTouched: true }),
     state: "extracting",
   });
   await claimUpload(ctx, document.key);
@@ -216,6 +223,17 @@ export async function createDocument(
     byEmail: document.uploaderEmail,
     at: Date.now(),
   });
+  if (splitReason !== undefined) {
+    await ctx.db.insert("documentEvents", {
+      organisationId: document.organisationId,
+      documentId,
+      event: "mail_split",
+      detail: splitReason,
+      by: "vink",
+      byEmail: "Vink",
+      at: Date.now(),
+    });
+  }
   await countIn(ctx, document.organisationId, "extracting");
   if (reading) {
     await ctx.db.insert("readings", {

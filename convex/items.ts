@@ -79,6 +79,8 @@ export async function chargeItems(
   ctx: MutationCtx,
   organisationId: Id<"organisations">,
   needed: number,
+  /** What is refused in the message: "this PDF needs 8". */
+  what = "PDF",
 ) {
   const organisation = (await ctx.db.get(organisationId))!;
   const items = itemsOf(organisation);
@@ -87,7 +89,7 @@ export async function chargeItems(
   if (needed > remaining) {
     throw new ConvexError({
       code: "out_of_items",
-      message: `You have ${remaining} ${remaining === 1 ? "item" : "items"} left; this PDF needs ${needed}.`,
+      message: `You have ${remaining} ${remaining === 1 ? "item" : "items"} left; this ${what} needs ${needed}.`,
       remaining,
       needed,
     });

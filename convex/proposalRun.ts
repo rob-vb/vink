@@ -10,7 +10,7 @@ import { matcher } from "./lib/matcher";
 import { matchRequests } from "./lib/matchPlan";
 import { proposer } from "./lib/proposer";
 import { reader } from "./lib/reader";
-import { readerInputOf } from "./lib/readerInput";
+import { readerInputOf, UnreadableInput } from "./lib/readerInput";
 import { readingLeaves, withoutPaths } from "./lib/reading";
 
 export const run = internalAction({
@@ -18,12 +18,19 @@ export const run = internalAction({
   handler: async (ctx, { proposalId }) => {
     const input = await ctx.runQuery(internal.formProposals.runInput, { proposalId });
     if (input === null) return;
-    const sample = await readerInputOf(pdfStore, {
-      fileKey: input.key,
-      kind: input.kind,
-      mimeType: input.mimeType,
-      pageCount: input.pageCount,
-    });
+    let sample;
+    try {
+      sample = await readerInputOf(
+        pdfStore,
+        { fileKey: input.key, kind: input.kind, mimeType: input.mimeType, pageCount: input.pageCount },
+        input.organisationId,
+      );
+    } catch (error) {
+      if (!(error instanceof UnreadableInput)) throw error;
+      // Trying again cannot help: fail now, not after the pool's retries.
+      await ctx.runMutation(internal.formProposals.failUnreadable, { proposalId, error: error.message });
+      return;
+    }
     let reading: Reading;
     let textLayer = input.textLayer;
     if (input.readingJson === null) {

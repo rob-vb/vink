@@ -106,6 +106,25 @@ export type Router = {
   route(reading: Reading, forms: RoutableForm[]): Promise<{ formId: string | null; probability: number }>;
 };
 
+/** What Jev is told of an email to decide whether it is one Document or several; never the files' contents. */
+export type MailSummary = {
+  subject: string;
+  from: string;
+  /** The text of the email, cut to what fits in a request. */
+  body: string;
+  attachments: Array<{ filename: string; kind: "pdf" | "image"; pageCount: number | null }>;
+};
+
+export type Splitter = {
+  /**
+   * Jev's call on whether the parts of one email (its text and attachments)
+   * belong together as one case, or are separate papers. `probability` is that
+   * of the answer given; a low one makes Vink split and mark Needs Review
+   * (lib/mailPlan.ts).
+   */
+  split(mail: MailSummary): Promise<{ answer: "together" | "apart"; probability: number }>;
+};
+
 /**
  * One value to fill. Its id is the Field key, or for a sub-Field of a List
  * entry `list[entry].key`, e.g. `lines[0].quantity`.

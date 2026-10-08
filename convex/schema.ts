@@ -242,11 +242,12 @@ export default defineSchema({
     fields: v.optional(v.array(v.object({ field, ticked: v.boolean() }))),
   }).index("by_organisationId", ["organisationId"]),
 
-  // A Form's Intake Address: `<token>@<INBOUND_DOMAIN>`. At most one per Form;
-  // replacing it deletes the row, so the old token stops at once.
+  // An Intake Address: `<token>@<INBOUND_DOMAIN>`. At most one per Form and one
+  // per Organisation (the row without a `formId`; its mail goes through the
+  // Router, ADR 0010). Replacing it deletes the row, so the old token stops at once.
   intakeAddresses: defineTable({
     organisationId: v.id("organisations"),
-    formId: v.id("forms"),
+    formId: v.optional(v.id("forms")),
     token: v.string(),
     // The last "Emails to [Form] are being refused" mail to its Admins: at most one a day.
     outOfItemsAlertAt: v.optional(v.number()),
@@ -254,13 +255,16 @@ export default defineSchema({
     outOfPagesAlertAt: v.optional(v.number()),
   })
     .index("by_token", ["token"])
-    .index("by_formId", ["formId"]),
+    .index("by_formId", ["formId"])
+    // The Organisation's own address is the one with `formId` unset.
+    .index("by_organisationId_and_formId", ["organisationId", "formId"]),
 
-  // "Recent emails": what happened to each email sent to a Form's Intake
-  // Address, per attachment. The last 50 per Form are kept.
+  // "Recent emails": what happened to each email sent to an Intake Address,
+  // per part (its text, each attachment). The last 50 per address are kept.
   intakeEmails: defineTable({
     organisationId: v.id("organisations"),
-    formId: v.id("forms"),
+    // Unset for an email sent to the Organisation Intake Address.
+    formId: v.optional(v.id("forms")),
     from: v.string(),
     receivedAt: v.number(),
     attachments: v.array(
@@ -271,7 +275,9 @@ export default defineSchema({
         reason: v.union(v.string(), v.null()),
       }),
     ),
-  }).index("by_formId", ["formId"]),
+  })
+    .index("by_formId", ["formId"])
+    .index("by_organisationId_and_formId", ["organisationId", "formId"]),
 
   // A Document (a PDF, for now) processed against the Form Version that was current at upload.
   documents: defineTable({
@@ -292,6 +298,12 @@ export default defineSchema({
     filename: v.string(),
     // A PDF's pages. For other kinds the number of Items is itemCountOf's to say.
     pageCount: v.number(),
+    // An email Document's attachments, stored as files of their own (see
+    // `StoredEmail` in lib/readerInput.ts); removed together with `key`.
+    attachmentKeys: v.optional(v.array(v.string())),
+    // Why Vink split an email it was unsure about into this Document and its
+    // siblings (convex/intake.ts). It keeps Auto-Send off: a user looks first.
+    splitReason: v.optional(v.string()),
     uploadedBy: v.string(),
     // Copied from the uploader at upload time, for the Document list.
     uploaderEmail: v.string(),
@@ -544,6 +556,8 @@ export default defineSchema({
       // The Router picked the Form, or found none (ADR 0010).
       v.literal("routed"),
       v.literal("no_form"),
+      // An email became several Documents and Vink was unsure it should (ADR 0010).
+      v.literal("mail_split"),
       v.literal("data_deleted"),
       v.literal("deleted"),
     ),

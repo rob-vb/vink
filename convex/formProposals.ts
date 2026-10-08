@@ -51,6 +51,16 @@ export const completed = extractionPool.defineOnComplete<DataModel, typeof compl
   },
 });
 
+/** A sample that cannot be read and never will be (lib/readerInput.ts UnreadableInput): failed at once. */
+export const failUnreadable = internalMutation({
+  args: { proposalId: v.id("formProposals"), error: v.string() },
+  handler: async (ctx, { proposalId, error }) => {
+    const proposal = await ctx.db.get(proposalId);
+    if (proposal === null || (proposal.state !== "reading" && proposal.state !== "proposing")) return;
+    await ctx.db.patch(proposalId, { state: "failed", error: error.slice(0, 300) });
+  },
+});
+
 /** Step 2 of a sample upload (step 1 is `documents.generateUploadUrl`). */
 export const create = orgAction({
   role: "admin",
@@ -245,6 +255,7 @@ export const runInput = internalQuery({
       : null;
     const current = formVersion?.fields ?? [];
     return {
+      organisationId: proposal.organisationId,
       key: proposal.key,
       kind: kindOf(proposal),
       mimeType: mimeTypeOf(proposal),

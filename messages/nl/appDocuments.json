@@ -14,7 +14,8 @@
   "emailIn": {
     "button": "Per e-mail",
     "title": "Documenten per e-mail insturen",
-    "description": "Elk Formulier kan een eigen e-mailadres hebben. Pdf's die je daarheen stuurt, worden Documenten van dat Formulier."
+    "description": "De Organisatie heeft een e-mailadres, en elk Formulier kan er ook een hebben. Post aan het adres van de Organisatie gaat naar het Formulier dat past; post aan het adres van een Formulier gaat naar dat Formulier.",
+    "organisation": "Alle Formulieren (Vink kiest het Formulier)"
   },
   "upload": {
     "button": "PDF's uploaden",

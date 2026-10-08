@@ -37,6 +37,7 @@ export type DocumentEvent =
   | "form_changed"
   | "routed"
   | "no_form"
+  | "mail_split"
   | "data_deleted"
   | "deleted"
   | "corrected"
@@ -118,6 +119,7 @@ export const englishLabels = {
       form_changed: "Form changed",
       routed: "Form picked",
       no_form: "No Form fits",
+      mail_split: "Email split",
       data_deleted: "Data deleted",
       deleted: "Deleted",
       corrected: "Corrected",

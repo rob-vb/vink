@@ -39,22 +39,35 @@ export const completed = extractionPool.defineOnComplete<DataModel, typeof compl
   context: completedContext,
   handler: async (ctx, { context: { documentId }, result }) => {
     if (result.kind === "success") return;
-    const document = await ctx.db.get(documentId);
-    if (document === null || document.state !== "extracting") return;
-    await ctx.db.patch(documentId, {
-      // Enough to diagnose; a full stack trace means nothing to a user.
-      extractionError: result.kind === "failed" ? result.error.slice(0, 300) : "canceled",
-    });
-    await moveTo(ctx, document, "extraction_failed");
-    await ctx.db.insert("documentEvents", {
-      organisationId: document.organisationId,
-      documentId,
-      event: "extraction_failed",
-      by: "vink",
-      byEmail: "Vink",
-      at: Date.now(),
-    });
+    await markFailed(ctx, documentId, result.kind === "failed" ? result.error : "canceled");
   },
+});
+
+async function markFailed(ctx: MutationCtx, documentId: Id<"documents">, error: string) {
+  const document = await ctx.db.get(documentId);
+  if (document === null || document.state !== "extracting") return;
+  await ctx.db.patch(documentId, {
+    // Enough to diagnose; a full stack trace means nothing to a user.
+    extractionError: error.slice(0, 300),
+  });
+  await moveTo(ctx, document, "extraction_failed");
+  await ctx.db.insert("documentEvents", {
+    organisationId: document.organisationId,
+    documentId,
+    event: "extraction_failed",
+    by: "vink",
+    byEmail: "Vink",
+    at: Date.now(),
+  });
+}
+
+/**
+ * An input that cannot be read and never will be (lib/readerInput.ts
+ * UnreadableInput): Extraction Failed at once, with no retries from the pool.
+ */
+export const failUnreadable = internalMutation({
+  args: { documentId: v.id("documents"), error: v.string() },
+  handler: async (ctx, { documentId, error }) => await markFailed(ctx, documentId, error),
 });
 
 /** Starts a failed Extraction again. It resumes at Match when a Reading is stored. */
@@ -118,6 +131,7 @@ export const input = internalQuery({
       .withIndex("by_documentId", (q) => q.eq("documentId", documentId))
       .unique();
     return {
+      organisationId: document.organisationId,
       fileKey: document.key,
       // A Document from before kinds is a PDF (lib/inputLimits.ts).
       kind: kindOf(document),

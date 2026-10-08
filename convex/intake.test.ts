@@ -1,6 +1,7 @@
 import { ConvexError } from "convex/values";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { api } from "./_generated/api";
+import { UNSUPPORTED_TYPE } from "./intake";
 import {
   addMembership,
   fakePdfStore,
@@ -11,6 +12,10 @@ import {
 
 vi.mock("./lib/pdfStore", async () => ({
   pdfStore: (await import("./test.setup")).fakePdfStore,
+}));
+
+vi.mock("./lib/splitter", async () => ({
+  splitter: (await import("./test.setup")).fakeSplitter,
 }));
 
 type Backend = ReturnType<typeof newBackend>;
@@ -184,7 +189,7 @@ test("each attachment has its own outcome in Recent emails; refused PDFs are del
     { filename: "F-118.pdf", pages: 1 },
     { filename: "manual.pdf", pages: 21 },
     { filename: "broken.pdf", bytes: new TextEncoder().encode("not a pdf") },
-    { filename: "photo.jpg", skipped: "not_pdf" },
+    { filename: "photo.jpg", skipped: "unsupported_type" },
     { filename: "huge.pdf", skipped: "too_large" },
   ]);
 
@@ -200,7 +205,7 @@ test("each attachment has its own outcome in Recent emails; refused PDFs are del
         reason: "This PDF has 21 pages. Vink reads up to 20 pages per Document.",
       },
       { filename: "broken.pdf", outcome: "refused", reason: "This file isn't a PDF Vink can read." },
-      { filename: "photo.jpg", outcome: "refused", reason: "Not a PDF." },
+      { filename: "photo.jpg", outcome: "refused", reason: UNSUPPORTED_TYPE },
       { filename: "huge.pdf", outcome: "refused", reason: "The PDF is larger than 10 MB." },
     ],
   });
@@ -217,7 +222,7 @@ test("Recent emails keeps the last 50 per Form", async () => {
   const { cas, on, token } = await switchedOn(t);
 
   for (let i = 0; i < 52; i++) {
-    await email(t, token, [{ filename: `mail-${i}.jpg`, skipped: "not_pdf" }]);
+    await email(t, token, [{ filename: `mail-${i}.jpg`, skipped: "unsupported_type" }]);
     vi.advanceTimersByTime(1000);
   }
 

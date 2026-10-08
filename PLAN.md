@@ -114,7 +114,7 @@ Each step ends green on `npm run typecheck`, `npm run lint` and `npm test`. Each
 
 ## Status
 
-- [x] 1 · [x] 2 · [x] 3 · [x] 4 · [x] 5 · [ ] 6 · [ ] 7 · [ ] 8 · [ ] 9 · [ ] 10 · [x] 11 · [ ] 12a · [ ] 12b · [ ] 13 · [ ] 14 · [ ] 15
+- [x] 1 · [x] 2 · [x] 3 · [x] 4 · [x] 5 · [x] 6 · [ ] 7 · [ ] 8 · [ ] 9 · [ ] 10 · [x] 11 · [ ] 12a · [ ] 12b · [ ] 13 · [ ] 14 · [ ] 15
 
 ## Assumptions to confirm with the user
 
@@ -126,6 +126,7 @@ Each step ends green on `npm run typecheck`, `npm run lint` and `npm test`. Each
 - Step 3: run `documents:backfillInputKind` on dev, then prod (second run returns zeros), then `TODO(narrow)`. Note: the schema never had `pdfKey`; only `extraction.input`'s return value was renamed to `fileKey`. Image max 10 MB; email body 200 KiB, max 10 attachments.
 - Step 4: real Vertex run per kind (HEIC, multi-part email, thinking levels); `npm run eval` on the two synthetic fixtures + `invoice-001`. An email is stored as one JSON file (`StoredEmail` in `convex/lib/readerInput.ts`) with each attachment under its own key; step 6 intake must write that shape. Verify truncates page text at 6000 chars (long email bodies).
 - Step 5: real Jev run of the Router (pick quality, probabilities, tokens with many Forms). Max 254 Forms offered. Jev may answer `none`. Step 8 must add the No Form tab (`listedStates`), No Form review actions and the `routed`/`no_form` history events.
+- Step 6: real Jev run of the split question (is 0.8 right?); real Worker run (text + HTML-only, HEIC/PNG, inline logo); R2 copy under `${emailKey}/n` + delete; browser check of "All Forms" in the Email-in dialog. Worker and Convex must deploy together (skip names changed). Out-of-items now refuses a whole mail. Total attachment cap 12 MB.
 - Step 11: browser render of the terms page (NL+EN); a lawyer reads the new clause.
 
 ## Review follow-ups (from the step 2–3 review)
@@ -135,7 +136,7 @@ Each step ends green on `npm run typecheck`, `npm run lint` and `npm test`. Each
 
 ## Review follow-ups (from the step 4–5 review)
 
-- [ ] (to step 6 worker) Server builds the email JSON; attachment keys under `${emailKey}/`, checked per org; shape validated; delete helper removes attachments (reject/delete/retention); total-bytes cap; deterministic read failures not retried.
+- [x] (to step 6 worker) Server builds the email JSON; attachment keys under `${emailKey}/`, checked per org; shape validated; delete helper removes attachments (reject/delete/retention); total-bytes cap; deterministic read failures not retried.
 - [ ] After step 6: a routed Document never Auto-Sends in v1 (always Needs Review; reconsider with a probability threshold after real Jev runs). A routed Document with zero matched Fields counts as does-not-fit (Forms without required Fields would otherwise swallow everything). Router token budget like `matchPlan.ts` (shorten Reading/criteria; over budget → No Form, not a failure). Skip the Router when the Reading has no leaves.
 - [ ] Step 7: sniff magic bytes at intake, never trust the client MIME type. Ship the `form_id: null` / `no_form` API contract change with step 7 and note it for API clients.
 - [ ] Step 8: No Form tab + Change Form / Reject buttons for `no_form` (step 5 is not deployable before step 8).

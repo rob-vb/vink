@@ -52,8 +52,9 @@ export function CopyAddress({ address }: { address: string }) {
 }
 
 /**
- * A Form's Intake Address: Admins switch it on, off or replace it; every
- * Member can copy it and see what happened to the last 50 emails.
+ * A Form's Intake Address, or with no Form the Organisation's: Admins switch it
+ * on, off or replace it; every Member can copy it and see what happened to the
+ * last 50 emails.
  */
 export function IntakePanel({
   organisationSlug,
@@ -61,13 +62,17 @@ export function IntakePanel({
   isAdmin,
 }: {
   organisationSlug: string;
-  formId: Id<"forms">;
+  /** `null`: the Organisation Intake Address, whose mail the Router sends to a Form. */
+  formId: Id<"forms"> | null;
   isAdmin: boolean;
 }) {
   const t = useTranslations("appForms");
   const errorText = useErrorText();
   const failed = (error: unknown) => toast.error(errorText(error, t("tryAgain")));
-  const on = { organisationSlug, formId };
+  const on = formId === null ? { organisationSlug } : { organisationSlug, formId };
+  const scope = formId === null ? "organisation" : "";
+  const word = (key: "Legend" | "Description" | "AdminCanSwitchOn" | "ReplaceDescription") =>
+    scope ? t(`intake.organisation${key}`) : null;
   const intake = useQuery(api.intake.get, on);
   const switchOn = useMutation(api.intake.switchOn);
   const switchOff = useMutation(api.intake.switchOff);
@@ -77,8 +82,8 @@ export function IntakePanel({
   return (
     <section className="rounded-lg border p-4 md:p-6">
       <FieldSet>
-        <FieldLegend>{t("intake.legend")}</FieldLegend>
-        <FieldDescription>{t("intake.description")}</FieldDescription>
+        <FieldLegend>{word("Legend") ?? t("intake.legend")}</FieldLegend>
+        <FieldDescription>{word("Description") ?? t("intake.description")}</FieldDescription>
         {intake === undefined ? (
           <Skeleton className="h-10" />
         ) : !enabled ? (
@@ -90,7 +95,7 @@ export function IntakePanel({
               </Button>
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">{t("intake.adminCanSwitchOn")}</p>
+            <p className="text-sm text-muted-foreground">{word("AdminCanSwitchOn") ?? t("intake.adminCanSwitchOn")}</p>
           )
         ) : (
           <div className="flex flex-col gap-3">
@@ -108,7 +113,7 @@ export function IntakePanel({
                   <AlertDialogContent>
                     <AlertDialogHeader>
                       <AlertDialogTitle>{t("intake.replaceTitle")}</AlertDialogTitle>
-                      <AlertDialogDescription>{t("intake.replaceDescription")}</AlertDialogDescription>
+                      <AlertDialogDescription>{word("ReplaceDescription") ?? t("intake.replaceDescription")}</AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel>{t("intake.cancel")}</AlertDialogCancel>

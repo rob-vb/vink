@@ -5,7 +5,7 @@ import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx } from "./_generated/server";
 import { moveTo } from "./lib/documentStates";
 import { orgMutation } from "./lib/functions";
-import { pdfStore } from "./lib/pdfStore";
+import { removeDocumentFiles } from "./lib/documentFiles";
 
 async function ownDocument(
   ctx: MutationCtx,
@@ -111,7 +111,7 @@ export const remove = orgMutation({
  * history and the Delivery log (times and statuses) stay.
  */
 export async function deleteData(ctx: MutationCtx, document: Doc<"documents">) {
-  if (document.dataDeletedAt === undefined) await pdfStore.remove(ctx, document.key);
+  if (document.dataDeletedAt === undefined) await removeDocumentFiles(ctx, document);
   for (const table of ["readings", "fieldValues", "listValues"] as const) {
     const rows = await ctx.db
       .query(table)

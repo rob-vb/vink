@@ -77,6 +77,7 @@ export const dutchLabels: DocumentsLabels = {
       form_changed: "Formulier gewijzigd",
       routed: "Formulier gekozen",
       no_form: "Geen formulier past",
+      mail_split: "E-mail gesplitst",
       data_deleted: "Gegevens verwijderd",
       deleted: "Verwijderd",
       corrected: "Gecorrigeerd",

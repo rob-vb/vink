@@ -56,6 +56,13 @@ export const MAX_EMAIL_BODY_BYTES = 200 * 1024;
 // with more is a batch that belongs in the upload or the API.
 export const MAX_EMAIL_ATTACHMENTS = 10;
 
+// All the attachments of one email together. They go to the vision model in one
+// request, inline as base64 (+33%), and Vertex takes 20 MB for such a request:
+// 12 MB of files is 16 MB of base64, which leaves room for the email's text,
+// the prompt and the answer's schema. One PDF and one photo of 10 MB each do not
+// fit; a mail of that size is a batch that belongs in the upload or the API.
+export const MAX_EMAIL_ATTACHMENT_BYTES = 12 * 1024 * 1024;
+
 // --- Items ---
 
 export type CountedAttachment = { kind: "pdf"; pageCount: number } | { kind: "image" };

@@ -27,6 +27,7 @@ import type * as forms from "../forms.js";
 import type * as googleSheets from "../googleSheets.js";
 import type * as http from "../http.js";
 import type * as intake from "../intake.js";
+import type * as intakeSplit from "../intakeSplit.js";
 import type * as integrations from "../integrations.js";
 import type * as invitations from "../invitations.js";
 import type * as items from "../items.js";
@@ -121,6 +122,7 @@ declare const fullApi: ApiFromModules<{
   googleSheets: typeof googleSheets;
   http: typeof http;
   intake: typeof intake;
+  intakeSplit: typeof intakeSplit;
   integrations: typeof integrations;
   invitations: typeof invitations;
   items: typeof items;

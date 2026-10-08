@@ -147,7 +147,11 @@
   "intake": {
     "copy": "Copy address",
     "legend": "Email in",
-    "description": "Each PDF attached to an email sent to this address becomes a Document of this Form. Up to 10 MB and 20 pages per PDF. Vink never replies to the sender. Anyone who knows the address can send to it, so share it only with the people and systems that send you these documents.",
+    "description": "An email sent to this address becomes a Document of this Form: its text, with the PDFs and photos (JPG, PNG, HEIC) attached to it. When the attachments are separate papers, each becomes its own Document. Up to 10 attachments, 12 MB together, and 20 pages per PDF. Vink never replies to the sender. Anyone who knows the address can send to it, so share it only with the people and systems that send you these documents.",
+    "organisationLegend": "Email in for all Forms",
+    "organisationDescription": "An email sent to this address becomes one or more Documents, and Vink picks the Form for each. One that fits no Form waits under No Form. The Forms' own addresses skip this choice. Vink never replies to the sender. Anyone who knows the address can send to it, so share it only with the people and systems that send you mail to process.",
+    "organisationAdminCanSwitchOn": "An Admin can switch on an email address for the Organisation.",
+    "organisationReplaceDescription": "The current address stops working at once. Give the new one to everyone who sends mail to the Organisation.",
     "switchOn": "Switch on email in",
     "adminCanSwitchOn": "An Admin can switch on an email address for this Form.",
     "pending": "Switched on. The address appears once email in is set up for Vink.",

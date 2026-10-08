@@ -12,6 +12,7 @@ import type {
   Filler,
   ListMatch,
   Match,
+  MailSummary,
   Matcher,
   PageText,
   ProposedField,
@@ -20,6 +21,7 @@ import type {
   ReaderInput,
   Reading,
   Router,
+  Splitter,
   Verification,
   Verifier,
 } from "./lib/pipeline";
@@ -185,9 +187,14 @@ export type Recording = {
   proposal?: ProposedField[];
   /** The name of the Form Jev picks in the Router; `null`, or left out, for none. */
   route?: string | null;
+  /**
+   * Jev's call on whether an email is one Document or several, with its
+   * probability; left out, it is a sure `apart`.
+   */
+  split?: { answer: "together" | "apart"; probability: number };
 };
 
-type Step = "read" | "route" | "match" | "fill" | "verify" | "propose";
+type Step = "read" | "route" | "split" | "match" | "fill" | "verify" | "propose";
 
 /**
  * Stands in for the Extraction's adapters (lib/reader.ts, lib/matcher.ts,
@@ -204,6 +211,7 @@ export const fakePipeline = {
   calls: [] as Array<
     | { step: "read" }
     | { step: "route"; forms: string[] }
+    | { step: "split"; mail: MailSummary }
     | { step: "match"; reading: Reading; fields: string[]; lists: string[] }
     | { step: "fill"; fields: string[] }
     | { step: "verify"; fields: string[]; supportAskedFor: string[] }
@@ -256,6 +264,14 @@ export const fakeRouter: Router = {
     fakePipeline.failIfAsked("route");
     const { route = null } = fakePipeline.played();
     return { formId: forms.find((f) => f.name === route)?.id ?? null, probability: route === null ? 1 : 0.9 };
+  },
+};
+
+export const fakeSplitter: Splitter = {
+  async split(mail) {
+    fakePipeline.calls.push({ step: "split", mail });
+    fakePipeline.failIfAsked("split");
+    return fakePipeline.recording?.split ?? { answer: "apart", probability: 0.95 };
   },
 };
 

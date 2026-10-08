@@ -14,7 +14,8 @@
   "emailIn": {
     "button": "Email in",
     "title": "Email documents in",
-    "description": "Each Form can have its own email address. PDFs sent there become Documents of that Form."
+    "description": "The Organisation has an email address, and so can each Form. Mail sent to the Organisation address goes to the Form that fits; mail sent to a Form's address goes to that Form.",
+    "organisation": "All Forms (Vink picks the Form)"
   },
   "upload": {
     "button": "Upload PDFs",
