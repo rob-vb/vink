@@ -75,7 +75,7 @@ export const DEMO_USER = "demo@kantoornoord.nl";
 export const seedDocuments: SeedDocument[] = [
   {
     id: "complaint",
-    filename: "Levering PB-77120 beschadigd",
+    filename: "Espressomachine lekt (ORD-3318)",
     kind: "email",
     form: { en: "Complaints", nl: "Klachten" },
     uploadedBy: { en: "email from sanne@hetanker.nl", nl: "e-mail van sanne@hetanker.nl" },
@@ -85,17 +85,17 @@ export const seedDocuments: SeedDocument[] = [
       from: "Sanne de Vries <sanne@hetanker.nl>",
       date: "2026-09-30T06:18:00Z",
       body: {
-        en: "Hello,\n\nOur delivery PB-77120 of 28-09-2026 arrived yesterday. Two of the six boxes of espresso beans were crushed and the bags inside are torn. I attached a photo of one box.\n\nCan you send new beans this week? Our terrace is open and we are nearly out.\n\nKind regards,\nSanne de Vries\nCafé Het Anker",
-        nl: "Goedemiddag,\n\nOnze levering PB-77120 van 28-09-2026 kwam gisteren binnen. Twee van de zes dozen espressobonen waren ingedrukt en de zakken erin zijn gescheurd. Ik heb een foto van één doos bijgevoegd.\n\nKunnen jullie deze week nieuwe bonen sturen? Ons terras is open en we hebben bijna niets meer.\n\nMet vriendelijke groet,\nSanne de Vries\nCafé Het Anker",
+        en: "Hello,\n\nOn 21-09-2026 we bought the espresso machine Lumo E2 (order ORD-3318). After one week it started to leak: every morning there is a puddle under the machine. I attached a photo.\n\nCan you repair it or send a replacement? Our terrace is open and we cannot serve coffee without it.\n\nKind regards,\nSanne de Vries\nCafé Het Anker",
+        nl: "Goedemiddag,\n\nOp 21-09-2026 hebben we de espressomachine Lumo E2 gekocht (bestelling ORD-3318). Na een week begon hij te lekken: elke ochtend staat er een plas water onder de machine. Ik heb een foto bijgevoegd.\n\nKunnen jullie hem repareren of een vervangende sturen? Ons terras is open en zonder machine kunnen we geen koffie schenken.\n\nMet vriendelijke groet,\nSanne de Vries\nCafé Het Anker",
       },
       attachments: [
         {
-          filename: "doos-espresso.jpg",
+          filename: "espressomachine-lekt.jpg",
           mimeType: "image/jpeg",
           photo: "complaint",
           alt: {
-            en: "Photo of a cardboard box with a crushed corner",
-            nl: "Foto van een kartonnen doos met een ingedrukte hoek",
+            en: "Photo of an espresso machine on a counter with a puddle of water under it",
+            nl: "Foto van een espressomachine op een aanrecht met een plas water eronder",
           },
         },
       ],
@@ -103,9 +103,10 @@ export const seedDocuments: SeedDocument[] = [
     fields: [
       { key: "name", label: { en: "Name", nl: "Naam" }, type: "text", required: true, value: "Sanne de Vries", readText: "Sanne de Vries", page: 1, confidence: 0.96, lowestSignal: "support" },
       { key: "customer", label: { en: "Customer", nl: "Klant" }, type: "text", value: "Café Het Anker", readText: "Café Het Anker", page: 1, confidence: 0.95, lowestSignal: "match" },
-      { key: "delivery_number", label: { en: "Delivery number", nl: "Pakbonnummer" }, type: "text", required: true, value: "PB-77120", readText: "PB-77120", page: 1, confidence: 0.78, lowestSignal: "fit", reasons: ["below_threshold"] },
-      { key: "delivery_date", label: { en: "Delivery date", nl: "Leverdatum" }, type: "date", value: "2026-09-28", readText: "28-09-2026", page: 1, confidence: 0.94, lowestSignal: "fit" },
-      { key: "damage", label: { en: "Damage seen", nl: "Zichtbare schade" }, type: "text", value: "Box corner crushed", readText: "Box corner crushed", page: 2, confidence: 0.74, lowestSignal: "support", reasons: ["below_threshold"] },
+      { key: "order_number", label: { en: "Order number", nl: "Bestelnummer" }, type: "text", required: true, value: "ORD-3318", readText: "ORD-3318", page: 1, confidence: 0.78, lowestSignal: "fit", reasons: ["below_threshold"] },
+      { key: "order_date", label: { en: "Order date", nl: "Besteldatum" }, type: "date", value: "2026-09-21", readText: "21-09-2026", page: 1, confidence: 0.94, lowestSignal: "fit" },
+      { key: "product", label: { en: "Product", nl: "Product" }, type: "text", value: "Lumo E2", readText: "Lumo E2", page: 1, confidence: 0.91, lowestSignal: "support" },
+      { key: "problem", label: { en: "Problem seen", nl: "Probleem op de foto" }, type: "text", value: "Puddle under the machine", readText: "Puddle under the machine", page: 2, confidence: 0.74, lowestSignal: "support", reasons: ["below_threshold"] },
     ],
   },
   {

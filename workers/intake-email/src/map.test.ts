@@ -270,3 +270,53 @@ test("the Worker's copies of the input limits match convex/lib/inputLimits.ts", 
   expect(worker.MAX_EMAIL_ATTACHMENTS).toBe(limits.MAX_EMAIL_ATTACHMENTS);
   expect(worker.MAX_EMAIL_ATTACHMENT_BYTES).toBe(limits.MAX_EMAIL_ATTACHMENT_BYTES);
 });
+
+test("htmlToText takes linear time on mail built to make regexes backtrack, and reads only the first 256 KB", () => {
+  const hostile = [
+    "<".repeat(200_000),
+    "<a".repeat(100_000),
+    "<script>".repeat(30_000),
+    "<head>".repeat(30_000) + "x",
+    "<br" + " ".repeat(200_000),
+    "a" + " ".repeat(200_000) + "b",
+    "&" + "a".repeat(200_000),
+  ];
+  for (const html of hostile) {
+    const start = performance.now();
+    htmlToText(html);
+    expect(performance.now() - start).toBeLessThan(200);
+  }
+  expect(htmlToText("x".repeat(300 * 1024))).toHaveLength(256 * 1024);
+  expect(htmlToText("<head><title>t</title></head><header>Kop</header><SCRIPT>a<b</SCRIPT>tekst<style>p{}</style>")).toBe("Koptekst");
+  expect(htmlToText("<script>open <b>zonder</b> einde")).toBe("open zonder einde");
+});
+
+test("the Worker's htmlToText gives the same text as convex/lib/emailParse.ts", async () => {
+  const { htmlToText: app } = await import("../../../convex/lib/emailParse");
+  for (const html of [
+    "<html><head><style>p{}</style></head><body><p>Hallo&nbsp;Anouk,</p><p>Fa&uuml;ctuur &amp; werkbon &#8364;5<br>Groet</p><script>x()</script></body></html>",
+    "<div>een</div><div>twee   </div>\n\n\n\n<header>kop</header>",
+    "<script>a</script>b<script>c",
+    "<<b>>x",
+  ]) {
+    expect(htmlToText(html)).toBe(app(html));
+  }
+});
+
+test("a file name over 255 characters and a From or Subject over 320 are cut", () => {
+  const plan = planEmail(
+    {
+      to: "t@x.test",
+      from: `${"a".repeat(400)}@b.test`,
+      subject: "s".repeat(1000),
+      attachments: [
+        { filename: `${"n".repeat(400)}.pdf`, mimeType: "application/pdf", content: pdf },
+        { filename: `${"m".repeat(400)}.docx`, mimeType: "application/msword", content: pdf },
+      ],
+    },
+    () => "k",
+  );
+  expect(plan.from).toHaveLength(320);
+  expect(plan.subject).toHaveLength(320);
+  expect(plan.entries.map((e) => e.filename.length)).toEqual([255, 255]);
+});

@@ -66,7 +66,7 @@ async function sendMail(t: Backend, token: string) {
   const pdfKey = `intake/${crypto.randomUUID()}`;
   const photoKey = `intake/${crypto.randomUUID()}`;
   fakePdfStore.objects.set(pdfKey, await pdfWithPages(3));
-  fakePdfStore.objects.set(photoKey, new TextEncoder().encode("jpeg bytes"));
+  fakePdfStore.objects.set(photoKey, Uint8Array.from([0xff, 0xd8, 0xff, 0xe0, ...new TextEncoder().encode("jpeg bytes")]));
   await t.fetch("/intake/email", {
     method: "POST",
     headers: { Authorization: "Bearer intake-secret", "Content-Type": "application/json" },

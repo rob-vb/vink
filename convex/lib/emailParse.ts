@@ -56,12 +56,64 @@ function decodeText(bytes: Uint8Array, charset: string | undefined) {
 
 const ENTITIES: Record<string, string> = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " " };
 
+/**
+ * The most HTML read for the text. Mail with more is not a letter; the rest is
+ * ignored, which also bounds the work on mail from anyone.
+ */
+const MAX_HTML_CHARS = 256 * 1024;
+
+/** `<script>`, `<style>` and `<head>` blocks removed, by scanning (no backtracking regex, so linear). */
+function withoutBlocks(html: string) {
+  const lower = html.toLowerCase();
+  const names = ["script", "style", "head"];
+  const next = new Map<string, number>();
+  const open = (name: string, from: number) => {
+    let at = lower.indexOf(`<${name}`, from);
+    // `<header>` is not `<head>`: the name must end there.
+    while (at >= 0 && /[a-z0-9_]/.test(lower[at + name.length + 1] ?? "")) at = lower.indexOf(`<${name}`, at + 1);
+    return at;
+  };
+  let out = "";
+  let at = 0;
+  for (;;) {
+    let first = -1;
+    let which = "";
+    for (const name of names) {
+      let found = next.get(name);
+      if (found === undefined || (found >= 0 && found < at)) found = open(name, at);
+      next.set(name, found);
+      if (found >= 0 && (first < 0 || found < first)) {
+        first = found;
+        which = name;
+      }
+    }
+    if (first < 0) break;
+    const tagEnd = lower.indexOf(">", first);
+    const close = tagEnd < 0 ? -1 : lower.indexOf(`</${which}>`, tagEnd);
+    if (close < 0) {
+      // No end: this name has no block to remove from here on, so the scan skips it.
+      next.set(which, -1);
+      if (names.every((name) => next.get(name) === -1)) break;
+      continue;
+    }
+    out += html.slice(at, first);
+    at = close + which.length + 3;
+  }
+  return out + html.slice(at);
+}
+
+/** A line without its trailing spaces and tabs, by scanning (a regex would be quadratic on a long run of spaces). */
+function trimLineEnd(line: string) {
+  let end = line.length;
+  while (end > 0 && (line[end - 1] === " " || line[end - 1] === "\t")) end--;
+  return line.slice(0, end);
+}
+
 /** Plain text from an HTML body, for mail that has no text part. Same as the Worker's htmlToText. */
 export function htmlToText(html: string) {
-  return html
-    .replace(/<(script|style|head)\b[^>]*>[\s\S]*?<\/\1>/gi, "")
+  return withoutBlocks(html.slice(0, MAX_HTML_CHARS))
     .replace(/<br\s*\/?>|<\/(p|div|li|tr|h[1-6]|blockquote)>/gi, "\n")
-    .replace(/<[^>]+>/g, "")
+    .replace(/<[^<>]*>/g, "")
     .replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (match, entity: string) => {
       if (entity[0] === "#") {
         const code = entity[1].toLowerCase() === "x" ? parseInt(entity.slice(2), 16) : parseInt(entity.slice(1), 10);
@@ -69,24 +121,42 @@ export function htmlToText(html: string) {
       }
       return ENTITIES[entity.toLowerCase()] ?? match;
     })
-    .replace(/[ \t]+\n/g, "\n")
+    .split("\n")
+    .map(trimLineEnd)
+    .join("\n")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 }
 
-function decodeQuotedPrintable(text: string) {
-  const joined = text.replace(/=\r?\n/g, "");
-  const bytes: number[] = [];
-  for (let i = 0; i < joined.length; i++) {
-    const hex = joined[i] === "=" ? joined.slice(i + 1, i + 3) : "";
-    if (/^[0-9a-f]{2}$/i.test(hex)) {
-      bytes.push(parseInt(hex, 16));
-      i += 2;
-    } else {
-      bytes.push(joined.charCodeAt(i) & 0xff);
+function hexValue(code: number) {
+  if (code >= 48 && code <= 57) return code - 48;
+  if (code >= 65 && code <= 70) return code - 55;
+  if (code >= 97 && code <= 102) return code - 87;
+  return -1;
+}
+
+/** Bytes from text where `marker` followed by two hex digits is one byte and every other character is one byte. Never longer than the text. */
+function decodeEscapes(text: string, marker: "=" | "%") {
+  const bytes = new Uint8Array(text.length);
+  let length = 0;
+  for (let i = 0; i < text.length; i++) {
+    const code = text.charCodeAt(i);
+    if (text[i] === marker) {
+      const high = hexValue(text.charCodeAt(i + 1));
+      const low = hexValue(text.charCodeAt(i + 2));
+      if (high >= 0 && low >= 0) {
+        bytes[length++] = high * 16 + low;
+        i += 2;
+        continue;
+      }
     }
+    bytes[length++] = code & 0xff;
   }
-  return Uint8Array.from(bytes);
+  return bytes.slice(0, length);
+}
+
+function decodeQuotedPrintable(text: string) {
+  return decodeEscapes(text.replace(/=\r?\n/g, ""), "=");
 }
 
 function decodeBase64(text: string) {
@@ -162,15 +232,38 @@ function decodeWords(value: string) {
     });
 }
 
-/** A parameter's value, also from its RFC 2231 form `name*=utf-8''%E2%82%AC`. */
+/**
+ * A parameter's value, also from its RFC 2231 forms: `name*=utf-8''%E2%82%AC`
+ * and the continued `name*0*=utf-8''%E2%82; name*1*=%AC` (a piece without the
+ * last `*` is plain text), which mailers use for a long or non-ASCII file name.
+ */
 function parameter(params: Record<string, string>, name: string) {
   const extended = params[`${name}*`];
   if (extended !== undefined) {
     const match = extended.match(/^([^']*)'[^']*'(.*)$/);
-    if (match) {
-      const bytes = decodeQuotedPrintable(match[2].replace(/%/g, "="));
-      return decodeText(bytes, match[1] || "utf-8");
+    if (match) return decodeText(decodeEscapes(match[2], "%"), match[1] || "utf-8");
+  }
+  const pieces: Array<{ index: number; value: string; encoded: boolean }> = [];
+  for (const key of Object.keys(params)) {
+    const piece = key.startsWith(`${name}*`) ? key.slice(name.length + 1).match(/^(\d{1,3})(\*?)$/) : null;
+    if (piece) pieces.push({ index: Number(piece[1]), value: params[key], encoded: piece[2] === "*" });
+  }
+  if (pieces.length > 0) {
+    pieces.sort((a, b) => a.index - b.index);
+    const first = pieces[0].encoded ? pieces[0].value.match(/^([^']*)'[^']*'(.*)$/) : null;
+    const charset = first?.[1] || "utf-8";
+    const chunks: Uint8Array[] = [];
+    for (const [i, piece] of pieces.entries()) {
+      const value = i === 0 && first ? first[2] : piece.value;
+      chunks.push(piece.encoded ? decodeEscapes(value, "%") : new TextEncoder().encode(value));
     }
+    const all = new Uint8Array(chunks.reduce((sum, c) => sum + c.length, 0));
+    let at = 0;
+    for (const chunk of chunks) {
+      all.set(chunk, at);
+      at += chunk.length;
+    }
+    return decodeText(all, charset);
   }
   const plain = params[name];
   return plain === undefined ? undefined : decodeWords(plain);

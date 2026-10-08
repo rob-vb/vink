@@ -23,6 +23,7 @@ import { chargeItems } from "./items";
 import { orgMutation, orgQuery } from "./lib/functions";
 import {
   ATTACHMENTS_TOO_LARGE,
+  COVER_NOTE_NOT_READ,
   EMAIL_BODY_TOO_LARGE,
   IMAGE_MIME_TYPES,
   IMAGE_TOO_LARGE,
@@ -38,9 +39,13 @@ import {
 import { itemsOfMail, itemsOfPlanned, type MailPart, needsSplitCall, planMail } from "./lib/mailPlan";
 import { pdfStore } from "./lib/pdfStore";
 import { sameSecret } from "./lib/secrets";
+import { sniffFile } from "./lib/sniff";
 import { emailFilename, storeEmail } from "./lib/storedEmail";
 
 const RECENT_EMAILS = 50;
+// The Worker cuts these too (workers/intake-email/src/map.ts); a caller with the secret is cut here.
+const MAX_FILENAME_CHARS = 255;
+const MAX_HEADER_CHARS = 320;
 const ALERT_EVERY = 24 * 60 * 60 * 1000;
 
 // Why an email part was refused without a Document: the texts of lib/inputLimits.ts.
@@ -292,7 +297,10 @@ async function checkPart(
     const bytes = await pdfStore.read(key);
     if (bytes === null) throw new ConvexError("The upload didn't arrive. Try again.");
     if (bytes.length > MAX_IMAGE_BYTES) throw new ConvexError(IMAGE_TOO_LARGE);
-    return { kind: "image", mimeType, pageCount: 1, size: bytes.length };
+    // The sender's type is a claim: the bytes say what the file is (HEIF is HEIC).
+    const sniffed = sniffFile(bytes);
+    if (sniffed === null || sniffed.kind !== "image") throw new ConvexError(UNSUPPORTED_TYPE);
+    return { kind: "image", mimeType: sniffed.mimeType, pageCount: 1, size: bytes.length };
   } catch (error) {
     await pdfStore.remove(ctx, key);
     throw error;
@@ -368,8 +376,11 @@ const receiveArgs = {
  * the Items of the whole email are charged once; an email Vink cannot afford is
  * refused whole. A refused part creates nothing and is removed from R2. An
  * email with nothing to process creates no Document and costs nothing, and a
- * text Jev calls a cover note ("see attachment") is no Document and costs
- * nothing either.
+ * text Jev calls a cover note ("see attachment", at most 4000 characters) is
+ * no Document and costs nothing either; its row in Recent emails says it was
+ * not read. When anything fails before the Documents exist, every file the
+ * Worker stored is removed and the error goes back, so the sender retries. After
+ * that the mail is accepted whatever else fails (a retry would charge twice).
  *
  * Which attachments reach this action is the Worker's call: it drops small
  * inline images (signature logos, social icons) before it sends the list
@@ -377,160 +388,195 @@ const receiveArgs = {
  */
 export const receive = internalAction({
   args: receiveArgs,
-  handler: async (ctx, { token, from, receivedAt, subject = "", date = "", body = "", ...rest }) => {
-    const target = await ctx.runQuery(internal.intake.resolve, { token });
-    if (target === null) {
-      for (const a of rest.attachments) if ("key" in a) await pdfStore.remove(ctx, a.key);
-      return { found: false as const };
-    }
-
-    // Recent emails: the text first, then each attachment. A placeholder stands for
-    // every part until the email is accepted or refused whole.
-    const outcomes: Outcome[] = [];
-    let text = body.trim();
-    let textAt = -1;
-    if (rest.bodyTooLarge || new TextEncoder().encode(text).length > MAX_EMAIL_BODY_BYTES) {
-      outcomes.push(refusedOutcome(emailFilename(subject, from), EMAIL_BODY_TOO_LARGE));
-      text = "";
-    } else if (text !== "") {
-      textAt = outcomes.push(created(emailFilename(subject, from))) - 1;
-    }
-    const parts: CheckedPart[] = [];
-    let bytesLeft = MAX_EMAIL_ATTACHMENT_BYTES;
-    for (const a of rest.attachments) {
-      if ("skipped" in a) {
-        outcomes.push(refusedOutcome(a.filename, skipReasons[a.skipped]));
-        continue;
-      }
-      const refuse = async (reason: string) => {
-        outcomes.push(refusedOutcome(a.filename, reason));
-        await pdfStore.remove(ctx, a.key);
-      };
-      if (parts.length >= MAX_EMAIL_ATTACHMENTS) {
-        await refuse(TOO_MANY_ATTACHMENTS);
-        continue;
-      }
-      let checked;
-      try {
-        checked = await checkPart(ctx, a.key, (a.mimeType ?? PDF_MIME_TYPE).toLowerCase());
-      } catch (error) {
-        outcomes.push(refusedOutcome(a.filename, reasonOf(error).reason));
-        continue;
-      }
-      if (checked.size > bytesLeft) {
-        await refuse(ATTACHMENTS_TOO_LARGE);
-        continue;
-      }
-      bytesLeft -= checked.size;
-      parts.push({
-        filename: a.filename,
-        mimeType: checked.mimeType,
-        key: a.key,
-        kind: checked.kind,
-        pageCount: checked.pageCount,
-        outcomeAt: outcomes.push(created(a.filename)) - 1,
-      });
-    }
-
-    // Before anything is written: Jev's call. If it fails, the sender's server retries.
-    const decision = needsSplitCall(text, parts)
-      ? await ctx.runAction(internal.intakeSplit.decide, {
-          subject,
-          from,
-          body: text,
-          attachments: parts.map((p) => ({
-            filename: p.filename,
-            kind: p.kind,
-            pageCount: p.kind === "pdf" ? p.pageCount : null,
-          })),
-        })
-      : null;
-    const plan = planMail(text, parts, decision);
-    // A cover note is no Document, so it has no row in Recent emails either.
-    if (plan.coverNote && textAt >= 0) {
-      outcomes.splice(textAt, 1);
-      for (const part of parts) part.outcomeAt -= 1;
-      textAt = -1;
-    }
-
+  handler: async (ctx, args) => {
+    // Every file the Worker stored. Until the Documents exist, a failure here must not leave them in storage.
+    const stored = args.attachments.flatMap((a) => ("key" in a ? [a.key] : []));
     const emailKeys: string[] = [];
-    const documents: Array<typeof planned.type> = [];
-    let outOfItems = false;
-    let accepted = false;
+    let committed = false;
     try {
-      for (const d of plan.documents) {
-        const items = itemsOfPlanned(d, text);
-        if (d.kind !== "email") {
-          documents.push({
-            kind: d.kind,
-            mimeType: d.part.mimeType,
-            key: d.part.key,
-            filename: d.part.filename,
-            pageCount: d.part.pageCount,
-            attachmentKeys: [],
-            items,
-          });
-          continue;
-        }
-        // The server writes the email's file, under the Organisation's prefix, and moves
-        // its attachments beside it, where only this email's file points (lib/storedEmail.ts).
-        const stored = await storeEmail(
-          ctx,
-          target.organisationId,
-          { subject, from, date, body: text },
-          await Promise.all(
-            d.parts.map(async (part) => ({
-              filename: part.filename,
-              mimeType: part.mimeType,
-              pageCount: part.pageCount,
-              bytes: (await pdfStore.read(part.key))!,
-            })),
-          ),
-        );
-        emailKeys.push(stored.key, ...stored.attachmentKeys);
+      return await receiveMail(ctx, args, emailKeys, () => {
+        committed = true;
+      });
+    } catch (error) {
+      if (!committed) for (const key of [...emailKeys, ...stored]) await pdfStore.remove(ctx, key);
+      throw error;
+    }
+  },
+});
+
+async function receiveMail(
+  ctx: ActionCtx,
+  { token, receivedAt, ...mail }: ObjectType<typeof receiveArgs>,
+  emailKeys: string[],
+  onCommitted: () => void,
+) {
+  const from = mail.from.slice(0, MAX_HEADER_CHARS);
+  const subject = (mail.subject ?? "").slice(0, MAX_HEADER_CHARS);
+  const date = mail.date ?? "";
+  const body = mail.body ?? "";
+  const rest = {
+    bodyTooLarge: mail.bodyTooLarge,
+    attachments: mail.attachments.map((a) => ({ ...a, filename: a.filename.slice(0, MAX_FILENAME_CHARS) })),
+  };
+  const target = await ctx.runQuery(internal.intake.resolve, { token });
+  if (target === null) {
+    for (const a of rest.attachments) if ("key" in a) await pdfStore.remove(ctx, a.key);
+    return { found: false as const };
+  }
+
+  // Recent emails: the text first, then each attachment. A placeholder stands for
+  // every part until the email is accepted or refused whole.
+  const outcomes: Outcome[] = [];
+  let text = body.trim();
+  let textAt = -1;
+  if (rest.bodyTooLarge || new TextEncoder().encode(text).length > MAX_EMAIL_BODY_BYTES) {
+    outcomes.push(refusedOutcome(emailFilename(subject, from), EMAIL_BODY_TOO_LARGE));
+    text = "";
+  } else if (text !== "") {
+    textAt = outcomes.push(created(emailFilename(subject, from))) - 1;
+  }
+  const parts: CheckedPart[] = [];
+  let bytesLeft = MAX_EMAIL_ATTACHMENT_BYTES;
+  for (const a of rest.attachments) {
+    if ("skipped" in a) {
+      outcomes.push(refusedOutcome(a.filename, skipReasons[a.skipped]));
+      continue;
+    }
+    const refuse = async (reason: string) => {
+      outcomes.push(refusedOutcome(a.filename, reason));
+      await pdfStore.remove(ctx, a.key);
+    };
+    if (parts.length >= MAX_EMAIL_ATTACHMENTS) {
+      await refuse(TOO_MANY_ATTACHMENTS);
+      continue;
+    }
+    let checked;
+    try {
+      checked = await checkPart(ctx, a.key, (a.mimeType ?? PDF_MIME_TYPE).toLowerCase());
+    } catch (error) {
+      outcomes.push(refusedOutcome(a.filename, reasonOf(error).reason));
+      continue;
+    }
+    if (checked.size > bytesLeft) {
+      await refuse(ATTACHMENTS_TOO_LARGE);
+      continue;
+    }
+    bytesLeft -= checked.size;
+    parts.push({
+      filename: a.filename,
+      mimeType: checked.mimeType,
+      key: a.key,
+      kind: checked.kind,
+      pageCount: checked.pageCount,
+      outcomeAt: outcomes.push(created(a.filename)) - 1,
+    });
+  }
+
+  // Before anything is written: Jev's call. If it fails, the sender's server retries.
+  const decision = needsSplitCall(text, parts)
+    ? await ctx.runAction(internal.intakeSplit.decide, {
+        subject,
+        from,
+        body: text,
+        attachments: parts.map((p) => ({
+          filename: p.filename,
+          kind: p.kind,
+          pageCount: p.kind === "pdf" ? p.pageCount : null,
+        })),
+      })
+    : null;
+  const plan = planMail(text, parts, decision);
+  // A cover note is no Document, but its row stays in Recent emails: it shows that the text was not read.
+  if (plan.coverNote && textAt >= 0) {
+    outcomes[textAt] = refusedOutcome(outcomes[textAt].filename, COVER_NOTE_NOT_READ);
+    textAt = -1;
+  }
+
+  const documents: Array<typeof planned.type> = [];
+  let outOfItems = false;
+  let accepted = false;
+  try {
+    for (const d of plan.documents) {
+      const items = itemsOfPlanned(d, text);
+      if (d.kind !== "email") {
         documents.push({
-          kind: "email",
-          mimeType: "application/json",
-          key: stored.key,
-          filename: emailFilename(subject, from),
-          // The email's own page: the body (see Verify in lib/reader.ts).
-          pageCount: 1,
-          attachmentKeys: stored.attachmentKeys,
+          kind: d.kind,
+          mimeType: d.part.mimeType,
+          key: d.part.key,
+          filename: d.part.filename,
+          pageCount: d.part.pageCount,
+          attachmentKeys: [],
           items,
         });
+        continue;
       }
-      // However it is split, the Documents add up to the whole email (a cover note is no Document and costs nothing).
-      const whole = itemsOfMail(text, parts, plan);
-      if (documents.reduce((sum, d) => sum + d.items, 0) !== whole) {
-        throw new Error("The Items of the split do not add up to the email's");
-      }
-      if (documents.length > 0) {
-        const lone = documents.length === 1 ? documents[0] : null;
-        await ctx.runMutation(internal.intake.accept, {
-          organisationId: target.organisationId,
-          formId: target.formId,
-          documents,
-          what: lone?.kind === "pdf" ? "PDF" : lone?.kind === "image" ? "image" : "email",
-          ...(plan.unsure === null ? {} : { splitReason: plan.unsure }),
-          uploaderEmail: `email from ${from}`,
-        });
-      }
-      accepted = true;
-    } catch (error) {
-      // Refused whole: nothing stays in storage.
-      for (const key of emailKeys) await pdfStore.remove(ctx, key);
-      for (const part of parts) await pdfStore.remove(ctx, part.key);
-      const refused = reasonOf(error);
-      outOfItems = refused.outOfItems;
-      if (textAt >= 0) outcomes[textAt] = refusedOutcome(outcomes[textAt].filename, refused.reason);
-      for (const part of parts) outcomes[part.outcomeAt] = refusedOutcome(part.filename, refused.reason);
+      // The server writes the email's file, under the Organisation's prefix, and moves
+      // its attachments beside it, where only this email's file points (lib/storedEmail.ts).
+      const stored = await storeEmail(
+        ctx,
+        target.organisationId,
+        { subject, from, date, body: text },
+        await Promise.all(
+          d.parts.map(async (part) => ({
+            filename: part.filename,
+            mimeType: part.mimeType,
+            pageCount: part.pageCount,
+            bytes: (await pdfStore.read(part.key))!,
+          })),
+        ),
+      );
+      emailKeys.push(stored.key, ...stored.attachmentKeys);
+      documents.push({
+        kind: "email",
+        mimeType: "application/json",
+        key: stored.key,
+        filename: emailFilename(subject, from),
+        // The email's own page: the body (see Verify in lib/reader.ts).
+        pageCount: 1,
+        attachmentKeys: stored.attachmentKeys,
+        items,
+      });
     }
-    if (accepted) {
-      // The attachments of an email Document were copied under its own key.
+    // However it is split, the Documents add up to the whole email (a cover note is no Document and costs nothing).
+    const whole = itemsOfMail(text, parts, plan);
+    if (documents.reduce((sum, d) => sum + d.items, 0) !== whole) {
+      throw new Error("The Items of the split do not add up to the email's");
+    }
+    if (documents.length > 0) {
+      const lone = documents.length === 1 ? documents[0] : null;
+      await ctx.runMutation(internal.intake.accept, {
+        organisationId: target.organisationId,
+        formId: target.formId,
+        documents,
+        what: lone?.kind === "pdf" ? "PDF" : lone?.kind === "image" ? "image" : "email",
+        ...(plan.unsure === null ? {} : { splitReason: plan.unsure }),
+        uploaderEmail: `email from ${from}`,
+      });
+    }
+    // From here the Documents exist: storage is not rolled back, and a failure below must not make the Worker retry (that would charge twice).
+    onCommitted();
+    accepted = true;
+  } catch (error) {
+    // Refused whole: nothing stays in storage.
+    for (const key of emailKeys) await pdfStore.remove(ctx, key);
+    for (const part of parts) await pdfStore.remove(ctx, part.key);
+    const refused = reasonOf(error);
+    outOfItems = refused.outOfItems;
+    if (textAt >= 0) outcomes[textAt] = refusedOutcome(outcomes[textAt].filename, refused.reason);
+    for (const part of parts) outcomes[part.outcomeAt] = refusedOutcome(part.filename, refused.reason);
+  }
+  if (accepted) {
+    // The attachments of an email Document were copied under its own key.
+    try {
       for (const part of plan.documents.flatMap((d) => (d.kind === "email" ? d.parts : []))) {
         await pdfStore.remove(ctx, part.key);
       }
+    } catch (error) {
+      // The Documents exist; a file left behind is only clutter. Not a reason to have the mail sent again.
+      console.error("Could not remove the stored attachments of an accepted email", error);
     }
+  }
+  try {
     await ctx.runMutation(internal.intake.record, {
       ...target,
       from,
@@ -538,9 +584,13 @@ export const receive = internalAction({
       attachments: outcomes,
       outOfItems,
     });
-    return { found: true as const, attachments: outcomes };
-  },
-});
+  } catch (error) {
+    if (!accepted) throw error;
+    // The Documents exist, so the Worker must not retry; only the row in Recent emails is lost.
+    console.error("Could not record an accepted email in Recent emails", error);
+  }
+  return { found: true as const, attachments: outcomes };
+}
 
 /** POST /intake/email, from the Worker only: `Authorization: Bearer <INTAKE_SECRET>`. */
 export const email = httpAction(async (ctx, request) => {

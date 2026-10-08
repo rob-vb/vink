@@ -7,9 +7,10 @@ const FormData = require('form-data');
 
 const { API_URL } = require('../lib/api');
 
-// The file types Vink reads, by extension. Vink decides from the bytes; the
-// Content-Type sent here only has to agree with them. Anything else goes as
-// application/octet-stream, which leaves the bytes to decide.
+// The file types Vink reads, by extension. They only name a download that has
+// no filename (filenameOf). The part's own Content-Type is always
+// application/octet-stream: Vink decides from the bytes (and the .eml name), and
+// answers 415 media_type_mismatch when a Content-Type contradicts the bytes.
 const TYPE_OF_EXTENSION = {
   pdf: 'application/pdf',
   jpg: 'image/jpeg',
@@ -39,16 +40,14 @@ const filenameOf = (given, download) => {
   if (fromHost) return decodeURIComponent(fromHost[1]);
   const fromUrl = new URL(download.url).pathname.split('/').pop();
   if (fromUrl && typeOfName(fromUrl)) return decodeURIComponent(fromUrl);
-  const hostType = contentTypeOf(null, download);
-  return EXTENSION_OF_TYPE[hostType] ? `document.${EXTENSION_OF_TYPE[hostType]}` : 'document';
+  const hostType = hostTypeOf(download);
+  return hostType ? `document.${EXTENSION_OF_TYPE[hostType]}` : 'document';
 };
 
-// The type by the name, else the host's type when it is one Vink reads, else octet-stream.
-const contentTypeOf = (name, download) => {
-  const byName = typeOfName(name);
-  if (byName) return byName;
+// The file host's type when it is one Vink reads; used only to name a file that has no name.
+const hostTypeOf = (download) => {
   const host = (download.headers.get('content-type') || '').split(';')[0].trim().toLowerCase();
-  return Object.values(TYPE_OF_EXTENSION).includes(host) ? host : 'application/octet-stream';
+  return EXTENSION_OF_TYPE[host] ? host : null;
 };
 
 const perform = async (z, bundle) => {
@@ -59,7 +58,8 @@ const perform = async (z, bundle) => {
   const form = new FormData();
   form.append('file', download.body, {
     filename: name,
-    contentType: contentTypeOf(name, download),
+    // Never the type of the name: a JPEG named scan.pdf must not be refused as a mismatch.
+    contentType: 'application/octet-stream',
   });
 
   // An empty Form (Zapier sends "" for it) lets Vink pick the Form.

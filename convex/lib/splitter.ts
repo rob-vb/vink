@@ -4,12 +4,15 @@
 // here, as in the Router; the vision model never sees the email for this. It is
 // told the subject, the text and the list of attachments, not their contents.
 import { TypeSafeClient, choice } from "@typesafe-ai/sdk";
+import { COVER_NOTE_MAX_CHARS } from "./mailPlan";
 import { models } from "./models";
 import type { Splitter } from "./pipeline";
 import { usage } from "./usage";
 
 // Enough of the text to tell a complaint from a cover note; the rest costs tokens.
-const MAX_BODY_CHARS = 4000;
+// Jev's `cover_note` only counts for a text this short (planMail), so the part Jev
+// never sees can't be dropped with it.
+const MAX_BODY_CHARS = COVER_NOTE_MAX_CHARS;
 
 export const splitter: Splitter = {
   async split(mail) {

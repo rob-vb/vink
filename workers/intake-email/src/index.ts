@@ -5,6 +5,7 @@
 // which Form, and whether it is one Document or several (see convex/intake.ts).
 // It never replies.
 import PostalMime from "postal-mime";
+import { deliver } from "./deliver";
 import { failsDmarc, MAX_MESSAGE_BYTES, planEmail } from "./map";
 
 type Env = {
@@ -43,36 +44,21 @@ export default {
       },
       () => `intake/${crypto.randomUUID()}`,
     );
-    for (const object of plan.store) {
-      await env.PDFS.put(object.key, object.bytes, {
-        httpMetadata: { contentType: object.mimeType },
-      });
-    }
-    const response = await fetch(`${env.CONVEX_SITE_URL}/intake/email`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${env.INTAKE_SECRET}`,
-        "Content-Type": "application/json",
+    const result = await deliver(plan, Date.now(), {
+      put: async (key, bytes, mimeType) => {
+        await env.PDFS.put(key, bytes, { httpMetadata: { contentType: mimeType } });
       },
-      body: JSON.stringify({
-        token: plan.token,
-        from: plan.from,
-        receivedAt: Date.now(),
-        subject: plan.subject,
-        date: plan.date,
-        body: plan.body,
-        bodyTooLarge: plan.bodyTooLarge,
-        attachments: plan.entries,
-      }),
+      remove: (keys) => env.PDFS.delete(keys),
+      send: (body) =>
+        fetch(`${env.CONVEX_SITE_URL}/intake/email`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${env.INTAKE_SECRET}`,
+            "Content-Type": "application/json",
+          },
+          body,
+        }),
     });
-    if (response.status === 404) {
-      // No such Intake Address (or it was replaced): bounce, like any unknown mailbox.
-      message.setReject("Unknown address");
-      return;
-    }
-    if (!response.ok) {
-      // Let the sending server retry later; Vink removes what it stored on refusal.
-      throw new Error(`Vink answered ${response.status}`);
-    }
+    if (result === "unknown_address") message.setReject("Unknown address");
   },
 };

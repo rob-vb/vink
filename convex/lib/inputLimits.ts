@@ -79,6 +79,8 @@ export const EMAIL_BODY_TOO_LARGE = "The email text is longer than 200 KB.";
 export const TOO_MANY_ATTACHMENTS = `Vink reads up to ${MAX_EMAIL_ATTACHMENTS} attachments per email.`;
 export const ATTACHMENTS_TOO_LARGE = "The attachments of this email are larger than 12 MB together.";
 export const EMPTY_EMAIL = "This email has no text and no attachments.";
+// The row in Recent emails for a text Jev called a cover note ("see attachment"): it is no Document and costs nothing.
+export const COVER_NOTE_NOT_READ = "Cover note, not read";
 
 // --- Items ---
 

@@ -13,6 +13,13 @@ export type MailPart = {
   pageCount: number;
 };
 
+/**
+ * Jev reads this many characters of the text (lib/splitter.ts). A longer text
+ * can hold more than a cover note in the part Jev never saw, so it is never
+ * dropped as one.
+ */
+export const COVER_NOTE_MAX_CHARS = 4000;
+
 /** Below this, Jev's call is not trusted: Vink splits and marks Needs Review. */
 export const SPLIT_CONFIDENCE = 0.8;
 
@@ -73,6 +80,7 @@ const ANSWER_LABELS: Record<SplitAnswer, string> = {
  *     `cover_note` = each attachment as a Document of its own and the text
  *     dropped (no Document, no Items), `apart` = the text (if it has content)
  *     as an email Document and each attachment as a Document of its own.
+ *     A `cover_note` for a text over COVER_NOTE_MAX_CHARS counts as `apart`.
  * When Jev's probability is under SPLIT_CONFIDENCE, any answer is treated as
  * unsure: split, the text as its own Document (never dropped on a doubtful
  * call), and mark every Document Needs Review.
@@ -91,7 +99,8 @@ export function planMail(body: string, parts: MailPart[], decision: SplitDecisio
   if (decision.answer === "together" && sure) {
     return { documents: [{ kind: "email", parts }], coverNote: false, unsure: null };
   }
-  if (decision.answer === "cover_note" && sure) {
+  // A text Jev saw only the start of is never dropped: it is a paper of its own (`apart`).
+  if (decision.answer === "cover_note" && sure && body.trim().length <= COVER_NOTE_MAX_CHARS) {
     return { documents: parts.map((part): PlannedDocument => ({ kind: part.kind, part })), coverNote: hasBody, unsure: null };
   }
   const documents: PlannedDocument[] = [

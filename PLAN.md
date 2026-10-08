@@ -134,6 +134,7 @@ Each step ends green on `npm run typecheck`, `npm run lint` and `npm test`. Each
 - Step 8 e2e (port 3013): each kind (PDF, email body-only / with PDF / with image, JPG/PNG, old Document without kind); email body highlight + jump to attachment page; image zoom (buttons, Ctrl+wheel, pinch, keys), HEIC fallback in Chrome; empty values; double approve; refresh mid-review; No Form tab → Change Form / Reject; history events + split alert; demo NL+EN, dark, phone width. R2 CORS GET for the email JSON. `features.json` (demo description) changed with the demo; `done.body` "20 free pages" is for step 13.
 - Step 10 e2e: one Form each way (PDF / JPG / HEIC / pasted email / .eml sample, describe in words, blank); double click on Describe makes one proposal; refresh mid-progress; out of Items; phone width. Real Vertex run of `proposer.describe`.
 - Step 9 e2e: new account completes all 3 steps; skip System → notice, then connect an Integration → notice gone; refresh at each step + second Admin; return via the setup bar from each new-Form way; Organisation address in step 3 (needs `INBOUND_DOMAIN`); Member session; older Organisation without a Form gets step 1; dark mode, phone width, screen reader.
+- Review 6–10 fixes: `.eml` parsing still runs inside the upload/API action (not moved to an internal action; memory risk with a ~10 MB quoted-printable mail). If Convex is unreachable, the Worker keeps its R2 files (Vink may have committed them), so rare orphans under `intake/` are possible. The cover-note row shows as "refused" in Recent emails.
 - Step 11: browser render of the terms page (NL+EN); a lawyer reads the new clause.
 
 ## Review follow-ups (from the step 2–3 review)
@@ -150,7 +151,14 @@ Each step ends green on `npm run typecheck`, `npm run lint` and `npm test`. Each
 
 ## Questions for the user
 
+- **Live demo is transport-flavoured (found 10-08, not changed: marketing gate).** The demo and home page use a "pakbon" from "Van Dijk Logistiek" with pallets and "1 pallet corner damaged": `components/demo/demo-data.ts:148-158`, `demo-papers.tsx:147-183,413`, `home-stills.tsx:141-150`, `demo-state.ts:104`, `app/(marketing)/[locale]/page.tsx:222,252,292,302`, `features/page.tsx:166`, `messages/*/home.json` (lines 4, 12, 84, 136), `messages/*/features.json` (alts 75, 106); Orders "Leverdatum"/"Please deliver" (`demo-data.ts:186`, `demo-papers.tsx:243,254`); newsletter "gratis bezorging". Proposal: replace with a quote or service report in step 13 (or earlier if the user wants it off prod now). Tests still use tyre/kenteken/Acme Fleet data (not visible to customers).
+
 - "Describe in words" costs model tokens but no Items, and has no limit per Organisation. Add a daily cap?
+
+## Review follow-ups (from the step 6–10 review)
+
+- [x] Linear `htmlToText` (was quadratic), cover note only ≤ 4000 chars + trace row, R2 clean-up on failure, image sniffing at intake, length caps, idempotent after accept, RFC 2231 filenames, Zapier sends octet-stream, `checkIssued` needs an `uploads` row, demo complaint is now a leaking espresso machine.
+- [ ] Optional: move `.eml` parsing into an internal action.
 
 ## Failed attempts
 

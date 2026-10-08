@@ -58,7 +58,15 @@ afterEach(() => {
 
 const settle = (t: Backend) => t.finishAllScheduledFunctions(vi.runAllTimers);
 const bytes = (text: string) => new TextEncoder().encode(text);
-const photo = bytes("jpeg bytes");
+// Real file signatures: the mail intake decides the type of an image by its bytes, not by the sender's word.
+const JPEG_START = [0xff, 0xd8, 0xff, 0xe0];
+const PNG_START = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+const withStart = (start: number[], size: number) => {
+  const file = new Uint8Array(size);
+  file.set(start);
+  return file;
+};
+const photo = Uint8Array.from([...JPEG_START, ...bytes("jpeg bytes")]);
 
 const complaint: Recording = {
   reading: { complaint: { subject: "Klacht over levering 4410", _pages: [1] }, photo: { number: "WB-2217", _pages: [2] } },
@@ -125,7 +133,13 @@ type Part = {
 async function mail(
   t: Backend,
   token: string,
-  { subject = "", body = "", parts = [], ...more }: { subject?: string; body?: string; parts?: Part[]; bodyTooLarge?: boolean },
+  {
+    subject = "",
+    body = "",
+    parts = [],
+    from = "anouk@bakkerij-dewit.example",
+    ...more
+  }: { subject?: string; body?: string; parts?: Part[]; bodyTooLarge?: boolean; from?: string },
 ) {
   const attachments = [];
   const keys: string[] = [];
@@ -148,7 +162,7 @@ async function mail(
     headers: { Authorization: "Bearer intake-secret", "Content-Type": "application/json" },
     body: JSON.stringify({
       token,
-      from: "anouk@bakkerij-dewit.example",
+      from,
       receivedAt: Date.now(),
       subject,
       date: "2026-10-06T07:12:00.000Z",
@@ -347,17 +361,61 @@ test("a cover note with 3 PDFs: 3 Documents, charged the pages of the PDFs, no D
   ]);
   expect(created.every((d) => d.splitReason === undefined)).toBe(true);
   expect(await used(org)).toBe(6);
-  // Jev was asked once, with the text; the cover note is no row in Recent emails.
+  // Jev was asked once, with the text; the cover note is no Document, and its row says it was not read.
   expect(steps().filter((s) => s === "split")).toHaveLength(1);
   expect(fakePipeline.calls[0]).toMatchObject({ step: "split", mail: { body: "Zie bijlage, groet Jan" } });
   const { recentEmails } = await org.cas.query(api.intake.get, { organisationSlug: org.slug });
-  expect(recentEmails[0].attachments.map((a) => [a.filename, a.outcome])).toEqual([
-    ["F-118.pdf", "created"],
-    ["F-119.pdf", "created"],
-    ["F-120.pdf", "created"],
+  expect(recentEmails[0].attachments.map((a) => [a.filename, a.outcome, a.reason])).toEqual([
+    ["Facturen", "refused", "Cover note, not read"],
+    ["F-118.pdf", "created", null],
+    ["F-119.pdf", "created", null],
+    ["F-120.pdf", "created", null],
   ]);
   // The text was not stored anywhere: only the three PDFs are in storage.
   expect(fakePdfStore.objects.size).toBe(3);
+});
+
+test("a long text is never dropped as a cover note: Jev saw only its first 4000 characters", async () => {
+  const t = newBackend();
+  const org = await bakkerij(t);
+  const token = await formAddress(org, "Invoice");
+  fakePipeline.replay({ ...complaint, split: { answer: "cover_note", probability: 0.99 } });
+
+  // Exactly 4000 characters (trimmed) is still a cover note; one more is a paper of its own.
+  await mail(t, token, { body: `  ${"x".repeat(4000)}  `, parts: [{ filename: "a.pdf" }, { filename: "b.pdf" }] });
+  expect((await documents(t)).map((d) => d.kind)).toEqual(["pdf", "pdf"]);
+
+  await mail(t, token, { body: "x".repeat(4001), parts: [{ filename: "c.pdf" }, { filename: "d.pdf" }] });
+  const created = await documents(t);
+  expect(created.map((d) => d.kind)).toEqual(["pdf", "pdf", "email", "pdf", "pdf"]);
+  // Sure of `apart`: nothing to check by hand, and the text was charged (1 Item) like any text.
+  expect(created.slice(2).every((d) => d.splitReason === undefined)).toBe(true);
+  expect(await used(org)).toBe(2 + 1 + 2);
+  const { recentEmails } = await org.cas.query(api.intake.get, { organisationSlug: org.slug, formId: org.forms.Invoice });
+  // The text, c.pdf and d.pdf: no "Cover note, not read" row.
+  expect(recentEmails[0].attachments.map((a) => [a.outcome, a.reason])).toEqual([
+    ["created", null],
+    ["created", null],
+    ["created", null],
+  ]);
+});
+
+test("a cover note keeps its row in Recent emails when the rest of the mail is refused for lack of Items", async () => {
+  const t = newBackend();
+  const org = await bakkerij(t);
+  const token = await formAddress(org, "Invoice");
+  fakePipeline.replay({ ...complaint, split: { answer: "cover_note", probability: 0.99 } });
+
+  // 20 Free Items: 15 + 8 do not fit together.
+  await mail(t, token, { subject: "Facturen", body: "Zie bijlage", parts: [{ filename: "big.pdf", pages: 15 }, { filename: "next.pdf", pages: 8 }] });
+
+  expect(await documents(t)).toHaveLength(0);
+  const { recentEmails } = await org.cas.query(api.intake.get, { organisationSlug: org.slug, formId: org.forms.Invoice });
+  expect(recentEmails[0].attachments).toMatchObject([
+    { filename: "Facturen", outcome: "refused", reason: "Cover note, not read" },
+    { filename: "big.pdf", outcome: "refused", reason: "You have 20 items left; this email needs 23." },
+    { filename: "next.pdf", outcome: "refused", reason: "You have 20 items left; this email needs 23." },
+  ]);
 });
 
 test("a cover note with one PDF: only the PDF becomes a Document", async () => {
@@ -588,7 +646,7 @@ test("unsupported types, too many, too large and an over-long text are refused o
   const org = await bakkerij(t);
   const token = await formAddress(org, "Complaint");
   fakePipeline.replay(complaint);
-  const mb = (n: number) => new Uint8Array(n * 1024 * 1024);
+  const mb = (n: number) => withStart(PNG_START, n * 1024 * 1024);
 
   const { keys } = await mail(t, token, {
     subject: "Veel",
@@ -596,7 +654,7 @@ test("unsupported types, too many, too large and an over-long text are refused o
     parts: [
       { filename: "ok.pdf", pages: 1 },
       { filename: "doc.docx", skipped: "unsupported_type" },
-      { filename: "huge.jpg", mimeType: "image/jpeg", bytes: new Uint8Array(10 * 1024 * 1024 + 1) },
+      { filename: "huge.jpg", mimeType: "image/jpeg", bytes: withStart(JPEG_START, 10 * 1024 * 1024 + 1) },
       { filename: "weird.bmp", mimeType: "image/bmp" },
       { filename: "photo.png", mimeType: "image/png", bytes: mb(10) },
       { filename: "photo2.png", mimeType: "image/png", bytes: mb(10) },
@@ -651,6 +709,112 @@ test("Jev being down creates nothing: the sender's server retries, and nothing i
   expect(first.response.status).toBe(400);
   expect(await documents(t)).toHaveLength(0);
   expect(await used(org)).toBe(0);
+  // The sender retries with the files again, so these must not stay in storage.
+  expect(fakePdfStore.objects.size).toBe(0);
+});
+
+test("a storage failure while checking a part creates nothing, and no file stays in storage", async () => {
+  const t = newBackend();
+  const org = await bakkerij(t);
+  const token = await formAddress(org, "Invoice");
+  fakePipeline.replay(complaint);
+  const read = vi.spyOn(fakePdfStore, "read");
+  read.mockResolvedValueOnce(await pdfWithPages(1));
+  read.mockRejectedValueOnce(new Error("R2 is down"));
+
+  const result = await mail(t, token, { parts: [{ filename: "a.pdf" }, { filename: "b.pdf" }, { filename: "c.pdf" }] });
+  read.mockRestore();
+
+  expect(result.response.status).toBe(400);
+  expect(await documents(t)).toHaveLength(0);
+  expect(await used(org)).toBe(0);
+  expect(fakePdfStore.objects.size).toBe(0);
+});
+
+test("an unknown address removes the files the Worker stored", async () => {
+  const t = newBackend();
+  await bakkerij(t);
+
+  const { response } = await mail(t, "doesnotexist", { parts: [{ filename: "a.pdf" }] });
+
+  expect(response.status).toBe(404);
+  expect(fakePdfStore.objects.size).toBe(0);
+});
+
+test("an image is what its bytes say, not what the sender says: a ZIP, a web page or a PDF as image/png is refused", async () => {
+  const t = newBackend();
+  const org = await bakkerij(t);
+  const token = await formAddress(org, "Complaint");
+  fakePipeline.replay(complaint);
+  const heif = Uint8Array.from([0, 0, 0, 24, ...bytes("ftypmif1"), 0, 0, 0, 0, ...bytes("mif1heic")]);
+
+  const { keys } = await mail(t, token, {
+    parts: [
+      { filename: "archive.png", mimeType: "image/png", bytes: Uint8Array.from([0x50, 0x4b, 0x03, 0x04, 0, 0]) },
+      { filename: "page.png", mimeType: "image/png", bytes: bytes("<html><body>hi</body></html>") },
+      { filename: "paper.png", mimeType: "image/png", bytes: await pdfWithPages(1) },
+      { filename: "empty.jpg", mimeType: "image/jpeg", bytes: new Uint8Array() },
+      { filename: "wrong.png", mimeType: "image/png", bytes: photo },
+      { filename: "phone.heif", mimeType: "image/heif", bytes: heif },
+    ],
+  });
+
+  const { recentEmails } = await org.cas.query(api.intake.get, { organisationSlug: org.slug, formId: org.forms.Complaint });
+  expect(recentEmails[0].attachments.map((a) => [a.filename, a.outcome, a.reason])).toEqual([
+    ["archive.png", "refused", expect.stringContaining("isn't supported")],
+    ["page.png", "refused", expect.stringContaining("isn't supported")],
+    ["paper.png", "refused", expect.stringContaining("isn't supported")],
+    ["empty.jpg", "refused", expect.stringContaining("isn't supported")],
+    // The bytes are a JPEG: that is what it is read as, whatever it was called.
+    ["wrong.png", "created", null],
+    ["phone.heif", "created", null],
+  ]);
+  const [email] = await documents(t);
+  const stored = JSON.parse(new TextDecoder().decode(fakePdfStore.objects.get(email.key)!)) as StoredEmail;
+  expect(stored.attachments.map((a) => [a.filename, a.mimeType])).toEqual([
+    ["wrong.png", "image/jpeg"],
+    ["phone.heif", "image/heic"],
+  ]);
+  for (const key of keys) expect(fakePdfStore.objects.has(key)).toBe(false);
+});
+
+test("a long subject, From and file name are cut", async () => {
+  const t = newBackend();
+  const org = await bakkerij(t);
+  const token = await formAddress(org, "Invoice");
+
+  await mail(t, token, {
+    subject: "s".repeat(1000),
+    parts: [{ filename: `${"n".repeat(400)}.pdf` }],
+    from: `${"a".repeat(400)}@bakkerij.example`,
+  });
+
+  const [document] = await documents(t);
+  expect(document.filename).toHaveLength(255);
+  const { recentEmails } = await org.cas.query(api.intake.get, { organisationSlug: org.slug, formId: org.forms.Invoice });
+  expect(recentEmails[0].from).toHaveLength(320);
+  expect(recentEmails[0].attachments[0].filename).toHaveLength(255);
+});
+
+test("once the Documents exist, a failing clean-up does not fail the mail: a retry would charge twice", async () => {
+  const t = newBackend();
+  const org = await bakkerij(t);
+  const token = await formAddress(org, "Complaint");
+  fakePipeline.replay(complaint);
+  const error = vi.spyOn(console, "error").mockImplementation(() => {});
+  // The photo is copied under the email's key, and the original is then removed: that removal fails.
+  const remove = vi.spyOn(fakePdfStore, "remove").mockRejectedValue(new Error("R2 is down"));
+
+  const { response } = await mail(t, token, { body: "Klacht", parts: [{ filename: "werkbon.jpg", mimeType: "image/jpeg" }] });
+  remove.mockRestore();
+
+  expect(response.status).toBe(200);
+  expect(await documents(t)).toHaveLength(1);
+  expect(await used(org)).toBe(2);
+  expect(error).toHaveBeenCalled();
+  error.mockRestore();
+  const { recentEmails } = await org.cas.query(api.intake.get, { organisationSlug: org.slug, formId: org.forms.Complaint });
+  expect(recentEmails).toHaveLength(1);
 });
 
 test("deleting an email Document removes its file and its attachments", async () => {

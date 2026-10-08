@@ -13,6 +13,9 @@ export const IMAGE_MIME_TYPES = ["image/jpeg", "image/png", "image/heic", "image
 export const MAX_EMAIL_BODY_BYTES = 200 * 1024;
 export const MAX_EMAIL_ATTACHMENTS = 10;
 export const MAX_EMAIL_ATTACHMENT_BYTES = 12 * 1024 * 1024;
+/** The longest file name, and the longest From or Subject, that is sent on (Vink cuts them again). */
+export const MAX_FILENAME_CHARS = 255;
+export const MAX_HEADER_CHARS = 320;
 
 /**
  * The largest email the Worker reads: Cloudflare Email Routing's own limit.
@@ -124,12 +127,64 @@ function isInlineIcon(attachment: ParsedAttachment, size: number, html: string) 
 
 const ENTITIES: Record<string, string> = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " " };
 
+/**
+ * The most HTML read for the text. Mail with more is not a letter; the rest is
+ * ignored, which also bounds the work on mail from anyone.
+ */
+const MAX_HTML_CHARS = 256 * 1024;
+
+/** `<script>`, `<style>` and `<head>` blocks removed, by scanning (no backtracking regex, so linear). */
+function withoutBlocks(html: string) {
+  const lower = html.toLowerCase();
+  const names = ["script", "style", "head"];
+  const next = new Map<string, number>();
+  const open = (name: string, from: number) => {
+    let at = lower.indexOf(`<${name}`, from);
+    // `<header>` is not `<head>`: the name must end there.
+    while (at >= 0 && /[a-z0-9_]/.test(lower[at + name.length + 1] ?? "")) at = lower.indexOf(`<${name}`, at + 1);
+    return at;
+  };
+  let out = "";
+  let at = 0;
+  for (;;) {
+    let first = -1;
+    let which = "";
+    for (const name of names) {
+      let found = next.get(name);
+      if (found === undefined || (found >= 0 && found < at)) found = open(name, at);
+      next.set(name, found);
+      if (found >= 0 && (first < 0 || found < first)) {
+        first = found;
+        which = name;
+      }
+    }
+    if (first < 0) break;
+    const tagEnd = lower.indexOf(">", first);
+    const close = tagEnd < 0 ? -1 : lower.indexOf(`</${which}>`, tagEnd);
+    if (close < 0) {
+      // No end: this name has no block to remove from here on, so the scan skips it.
+      next.set(which, -1);
+      if (names.every((name) => next.get(name) === -1)) break;
+      continue;
+    }
+    out += html.slice(at, first);
+    at = close + which.length + 3;
+  }
+  return out + html.slice(at);
+}
+
+/** A line without its trailing spaces and tabs, by scanning (a regex would be quadratic on a long run of spaces). */
+function trimLineEnd(line: string) {
+  let end = line.length;
+  while (end > 0 && (line[end - 1] === " " || line[end - 1] === "\t")) end--;
+  return line.slice(0, end);
+}
+
 /** Plain text from an HTML body, for mail that has no text part. */
 export function htmlToText(html: string) {
-  return html
-    .replace(/<(script|style|head)\b[^>]*>[\s\S]*?<\/\1>/gi, "")
+  return withoutBlocks(html.slice(0, MAX_HTML_CHARS))
     .replace(/<br\s*\/?>|<\/(p|div|li|tr|h[1-6]|blockquote)>/gi, "\n")
-    .replace(/<[^>]+>/g, "")
+    .replace(/<[^<>]*>/g, "")
     .replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (match, entity: string) => {
       if (entity[0] === "#") {
         const code = entity[1].toLowerCase() === "x" ? parseInt(entity.slice(2), 16) : parseInt(entity.slice(1), 10);
@@ -137,7 +192,9 @@ export function htmlToText(html: string) {
       }
       return ENTITIES[entity.toLowerCase()] ?? match;
     })
-    .replace(/[ \t]+\n/g, "\n")
+    .split("\n")
+    .map(trimLineEnd)
+    .join("\n")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 }
@@ -173,7 +230,7 @@ export function planEmail(
   input.attachments.forEach((attachment, index) => {
     const bytes = bytesOf(attachment.content);
     if (isInlineIcon(attachment, bytes.length, input.html ?? "")) return;
-    const filename = attachment.filename?.trim() || `attachment-${index + 1}`;
+    const filename = (attachment.filename?.trim() || `attachment-${index + 1}`).slice(0, MAX_FILENAME_CHARS);
     const kind = isPdf(attachment, bytes) ? "pdf" : imageTypeOf(attachment);
     if (kind === null) {
       entries.push({ filename, skipped: "unsupported_type" });
@@ -196,8 +253,8 @@ export function planEmail(
   const bodyTooLarge = new TextEncoder().encode(text).length > MAX_EMAIL_BODY_BYTES;
   return {
     token: tokenOf(input.to),
-    from: input.from.trim().toLowerCase(),
-    subject: input.subject?.trim() ?? "",
+    from: input.from.trim().toLowerCase().slice(0, MAX_HEADER_CHARS),
+    subject: (input.subject?.trim() ?? "").slice(0, MAX_HEADER_CHARS),
     date: input.date ?? "",
     body: bodyTooLarge ? "" : text,
     bodyTooLarge,

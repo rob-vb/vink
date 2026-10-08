@@ -322,3 +322,39 @@ test("a user can't read a Document of an Organisation they have no Membership in
     bob.user.query(api.documents.get, { organisationSlug: bob.slug, documentId: id }),
   ).rejects.toThrow("Document not found");
 });
+
+test("create refuses a key that is not an unused upload of this Organisation, and deletes nothing", async () => {
+  const t = newBackend();
+  const { ann, cas, slug, formId } = await acmeWithForm(t);
+  await upload(cas, slug, formId, "order.pdf", await pdfWithPages(1));
+  // Another Document's own file, and an email attachment's file (`<document key>/1`).
+  const [document] = await t.run((ctx) => ctx.db.query("documents").collect());
+  const attachmentKey = `${document.key}/1`;
+  fakePdfStore.objects.set(attachmentKey, await pdfWithPages(1));
+  const { key: unused } = await cas.mutation(api.documents.generateUploadUrl, { organisationSlug: slug });
+  const dotted = `${unused.split("/")[0]}/../${document.key}`;
+  const before = new Map(fakePdfStore.objects);
+
+  for (const key of [document.key, attachmentKey, dotted, `${slug}/not-an-upload`]) {
+    await expect(
+      cas.action(api.documents.create, { organisationSlug: slug, formId, key, filename: "x.pdf" }),
+    ).rejects.toThrow("Forbidden");
+    await expect(
+      ann.user.action(api.formProposals.create, { organisationSlug: slug, key, filename: "x.pdf" }),
+    ).rejects.toThrow("Forbidden");
+  }
+  expect(new Map(fakePdfStore.objects)).toEqual(before);
+});
+
+test("an upload can be turned into a Document only once", async () => {
+  const t = newBackend();
+  const { cas, slug, formId } = await acmeWithForm(t);
+  const { key, url } = await cas.mutation(api.documents.generateUploadUrl, { organisationSlug: slug });
+  putToUploadUrl(url, await pdfWithPages(1));
+  await cas.action(api.documents.create, { organisationSlug: slug, formId, key, filename: "a.pdf" });
+
+  await expect(
+    cas.action(api.documents.create, { organisationSlug: slug, formId, key, filename: "b.pdf" }),
+  ).rejects.toThrow("Forbidden");
+  expect(fakePdfStore.objects.get(key)).toBeDefined();
+});

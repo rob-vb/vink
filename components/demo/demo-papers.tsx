@@ -420,24 +420,36 @@ export type DemoPdfId = keyof typeof demoPages;
 
 /*
  * The demo's photos, drawn as SVG so they scale with the image pane's zoom: a
- * crushed box (the complaint email's attachment) and a handwritten work order
+ * leaking espresso machine (the complaint email's attachment) and a handwritten work order
  * on a table (a photo Document).
  */
 
-function BoxPhoto({ alt }: { alt: string }) {
+function MachinePhoto({ alt }: { alt: string }) {
   return (
     <svg viewBox="0 0 400 300" role="img" aria-label={alt} className="block h-auto w-full">
-      <rect width="400" height="300" fill="#8B8C8E" />
-      <rect y="190" width="400" height="110" fill="#6E6F72" />
-      <ellipse cx="205" cy="262" rx="150" ry="16" fill="#000" opacity=".25" />
-      <path d="M95 130 L205 100 L320 130 L320 245 L205 270 L95 245 Z" fill="#C79A64" />
-      <path d="M95 130 L205 160 L320 130 L205 100 Z" fill="#D8B07C" />
-      <path d="M205 160 L205 270 L95 245 L95 130 Z" fill="#B88850" />
-      <path d="M205 160 L320 130 L320 245 L205 270 Z" fill="#A87A44" />
-      <path d="M296 128 L330 150 L318 190 L300 170 L306 150 Z" fill="#7A5528" />
-      <path d="M300 170 L318 190 L312 205 L292 182 Z" fill="#5E3F1C" opacity=".8" />
-      <rect x="130" y="188" width="46" height="26" fill="#F2F0EA" transform="rotate(8 153 201)" />
-      <rect x="196" y="140" width="22" height="30" fill="#E8E1CF" opacity=".9" transform="skewY(-14)" />
+      <rect width="400" height="300" fill="#9A9B9D" />
+      <rect y="205" width="400" height="95" fill="#6E6F72" />
+      <rect y="200" width="400" height="8" fill="#85868A" />
+      <ellipse cx="215" cy="262" rx="150" ry="22" fill="#3F6F8F" opacity=".55" />
+      <ellipse cx="190" cy="258" rx="70" ry="9" fill="#9CC3DB" opacity=".5" />
+      <ellipse cx="190" cy="220" rx="125" ry="9" fill="#000" opacity=".22" />
+      <rect x="95" y="40" width="190" height="165" rx="10" fill="#8B1E1E" />
+      <rect x="95" y="40" width="190" height="26" rx="10" fill="#B9BCC2" />
+      <circle cx="140" cy="94" r="18" fill="#F2F0EA" />
+      <path d="M140 94 L151 84" stroke="#2B2E33" strokeWidth="2.5" />
+      <circle cx="225" cy="94" r="9" fill="#B9BCC2" />
+      <circle cx="252" cy="94" r="9" fill="#B9BCC2" />
+      <rect x="150" y="122" width="80" height="14" rx="3" fill="#B9BCC2" />
+      <path d="M160 136 H220 L214 150 H166 Z" fill="#6B7078" />
+      <rect x="222" y="143" width="62" height="9" rx="4" fill="#2B2E33" />
+      <rect x="168" y="162" width="44" height="26" rx="4" fill="#F2F0EA" />
+      <path d="M212 168 q14 1 12 12 q-2 6 -12 5" fill="none" stroke="#F2F0EA" strokeWidth="4" />
+      <rect x="120" y="190" width="140" height="15" rx="3" fill="#2B2E33" />
+      <path d="M130 195 H250 M130 200 H250" stroke="#6B7078" strokeWidth="1.5" strokeDasharray="6 4" />
+      <path d="M285 80 H312 V176" fill="none" stroke="#B9BCC2" strokeWidth="5" strokeLinejoin="round" />
+      <path d="M118 204 q-5 14 0 24 q5 -10 0 -24 Z" fill="#7DB4D6" />
+      <path d="M250 204 q-4 11 0 18 q4 -7 0 -18 Z" fill="#7DB4D6" />
+      <path d="M96 150 q-6 18 0 32 q6 -14 0 -32 Z" fill="#7DB4D6" opacity=".9" />
     </svg>
   );
 }
@@ -479,7 +491,7 @@ function WorkOrderPhoto({ alt }: { alt: string }) {
 }
 
 /** The photos of the demo's photo Documents and email attachments, by Document. */
-export const demoPhotos = { complaint: BoxPhoto, workorder: WorkOrderPhoto } as const;
+export const demoPhotos = { complaint: MachinePhoto, workorder: WorkOrderPhoto } as const;
 
 export type DemoPhotoId = keyof typeof demoPhotos;
 

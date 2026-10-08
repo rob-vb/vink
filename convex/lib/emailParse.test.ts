@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { looksLikeEmail, parseEml } from "./emailParse";
+import { htmlToText, looksLikeEmail, parseEml } from "./emailParse";
 
 const bytes = (text: string) => new TextEncoder().encode(text.replace(/\n/g, "\r\n"));
 const PDF = btoa("%PDF-1.4 fake");
@@ -124,4 +124,81 @@ test("recognises an email file by a header only emails have", () => {
   expect(looksLikeEmail(bytes("Just some text\nwith lines"))).toBe(false);
   expect(looksLikeEmail(bytes("Title: a note\n\nbody"))).toBe(false);
   expect(looksLikeEmail(new Uint8Array([0x53, 0x75, 0, 0x3a]))).toBe(false);
+});
+
+// --- html as text: bounded work on hostile input ---
+
+/** The time `run` takes, in ms. */
+function timed(run: () => void) {
+  const start = performance.now();
+  run();
+  return performance.now() - start;
+}
+
+test("htmlToText takes linear time on mail built to make regexes backtrack", () => {
+  const hostile = [
+    "<".repeat(200_000),
+    "<a".repeat(100_000),
+    "<script>".repeat(30_000),
+    "<head>".repeat(30_000) + "x",
+    "<style ".repeat(30_000),
+    "<br" + " ".repeat(200_000),
+    "a" + " ".repeat(200_000) + "b",
+    "&" + "a".repeat(200_000),
+    "<p>x</p>\n".repeat(25_000),
+  ];
+  for (const html of hostile) expect(timed(() => htmlToText(html))).toBeLessThan(200);
+});
+
+test("htmlToText removes script, style and head blocks, keeps header text, and reads only the first 256 KB", () => {
+  expect(htmlToText("<head><title>t</title></head><header>Kop</header><SCRIPT type=x>a<b</SCRIPT>tekst<style>p{}</style>")).toBe("Koptekst");
+  // No closing tag: only the tag itself goes.
+  expect(htmlToText("<script>open <b>zonder</b> einde")).toBe("open zonder einde");
+  expect(htmlToText("x".repeat(300 * 1024))).toHaveLength(256 * 1024);
+});
+
+test("a long quoted-printable body decodes and an email with 200k '<' parses fast", () => {
+  const body = "=C3=A9".repeat(100_000);
+  const mail = parseEml(
+    bytes(`Subject: x
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+${body}
+`),
+  );
+  expect(mail.body).toBe("é".repeat(100_000));
+  const html = bytes(`Subject: x\nContent-Type: text/html\n\n${"<".repeat(200_000)}`);
+  expect(timed(() => parseEml(html))).toBeLessThan(500);
+});
+
+test("a file name in RFC 2231 continuations is joined, in order, with encoded and plain pieces", () => {
+  const mail = parseEml(
+    bytes(`Subject: x
+Content-Type: multipart/mixed; boundary=m
+
+--m
+Content-Type: application/pdf
+Content-Disposition: attachment;
+ filename*1*=%C3%BCr%20okt%C3%B3ber.pdf;
+ filename*0*=utf-8''fact
+Content-Transfer-Encoding: base64
+
+${PDF}
+--m
+Content-Type: application/pdf
+Content-Disposition: attachment; filename*0="werk"; filename*1="bon "; filename*2*=100%25.pdf
+Content-Transfer-Encoding: base64
+
+${PDF}
+--m
+Content-Type: application/pdf; name*0*=iso-8859-1''caf%E9-; name*1="menu.pdf"
+Content-Disposition: attachment
+Content-Transfer-Encoding: base64
+
+${PDF}
+--m--
+`),
+  );
+  expect(mail.attachments.map((a) => a.filename)).toEqual(["factür október.pdf", "werkbon 100%.pdf", "café-menu.pdf"]);
 });

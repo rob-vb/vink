@@ -6,6 +6,7 @@ import {
   type ActionCtx,
   internalAction,
   internalMutation,
+  internalQuery,
   type MutationCtx,
   type QueryCtx,
 } from "./_generated/server";
@@ -85,16 +86,31 @@ export async function checkUpload(
   organisationId: Id<"organisations">,
   key: string,
 ) {
-  checkIssued(organisationId, key);
+  await checkIssued(ctx, organisationId, key);
   return await checkPdf(ctx, key);
 }
 
-/** The key must be one issued to this Organisation by generateUploadUrl. */
-export function checkIssued(organisationId: Id<"organisations">, key: string) {
-  if (!key.startsWith(`${organisationId}/`)) {
-    throw new ConvexError("Forbidden");
-  }
+/**
+ * The key must be an upload issued to this Organisation by generateUploadUrl and
+ * not used yet (claimUpload removes its row). So another Document's key, an
+ * email attachment's key or a made-up key (`..` included) is Forbidden, and a
+ * refusal afterwards can only delete the caller's own upload.
+ */
+export async function checkIssued(ctx: ActionCtx, organisationId: Id<"organisations">, key: string) {
+  const issued = await ctx.runQuery(internal.documents.isIssued, { organisationId, key });
+  if (!issued) throw new ConvexError("Forbidden");
 }
+
+export const isIssued = internalQuery({
+  args: { organisationId: v.id("organisations"), key: v.string() },
+  handler: async (ctx, { organisationId, key }) => {
+    const upload = await ctx.db
+      .query("uploads")
+      .withIndex("by_key", (q) => q.eq("key", key))
+      .unique();
+    return upload !== null && upload.organisationId === organisationId;
+  },
+});
 
 /**
  * What every way in (upload, Intake Address) checks before a PDF is accepted:
@@ -137,7 +153,7 @@ async function checkPdfBytes(bytes: Uint8Array) {
 export const create = orgAction({
   args: { formId: v.optional(v.id("forms")), key: v.string(), filename: v.string() },
   handler: async (ctx, { formId, key, filename }) => {
-    checkIssued(ctx.organisationId, key);
+    await checkIssued(ctx, ctx.organisationId, key);
     const identity = (await ctx.auth.getUserIdentity())!;
     await acceptFile(ctx, {
       organisationId: ctx.organisationId,

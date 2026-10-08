@@ -88,7 +88,7 @@ export const create = orgAction({
   role: "admin",
   args: { key: v.string(), filename: v.string(), formId: v.optional(v.id("forms")) },
   handler: async (ctx, { key, filename, formId }): Promise<{ proposalId: Id<"formProposals"> }> => {
-    checkIssued(ctx.organisationId, key);
+    await checkIssued(ctx, ctx.organisationId, key);
     const identity = (await ctx.auth.getUserIdentity())!;
     const sample: Sample = {
       organisationId: ctx.organisationId,
