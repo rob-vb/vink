@@ -9,7 +9,12 @@
     "adminIntro": "Set up a Form for each kind of document you receive, and Vink will fill it from your PDFs.",
     "memberIntro": "An Admin first sets up a Form for each kind of document you receive. Then you can upload PDFs here.",
     "goToForms": "Go to Forms",
-    "extracting": "Extracting"
+    "extracting": "Extracting",
+    "noSystem": {
+      "title": "No system connected yet",
+      "description": "Approved Documents stay in Vink. Connect a system to send them on.",
+      "action": "Connect a system"
+    }
   },
   "emailIn": {
     "button": "Email in",
@@ -109,5 +114,46 @@
   },
   "delivery": {
     "sendAgain": "Send again"
+  },
+  "setup": {
+    "welcome": "Welcome to {organisation}",
+    "intro": "Set up Vink in three steps. It takes a few minutes.",
+    "label": "Setup steps",
+    "announce": "Step {step} of 3: {name}",
+    "status": {
+      "done": "done",
+      "current": "current step",
+      "todo": "to do"
+    },
+    "tryAgain": "That didn't work. Try again.",
+    "bar": "Setup is not finished yet: you are at step {step} of 3.",
+    "barAction": "Continue setup",
+    "steps": {
+      "form": {
+        "name": "Form",
+        "title": "Make your first Form",
+        "description": "A Form lists the fields Vink fills for one kind of document, for example an invoice. Start from a sample, describe it in words, or begin blank.",
+        "action": "Make a Form"
+      },
+      "system": {
+        "name": "System",
+        "title": "Connect your system",
+        "description": "An Integration sends each approved Document to the system you work in. You can do this later.",
+        "action": "Connect a system",
+        "skip": "Skip for now"
+      },
+      "input": {
+        "name": "Input",
+        "title": "Choose how documents come in",
+        "description": "Pick one or more. You can change this at any time.",
+        "uploadTitle": "Upload",
+        "uploadDescription": "Add PDFs, photos or an email by hand. Good for a first test.",
+        "apiTitle": "API",
+        "apiDescription": "Send documents from your own software. Make an API key in Settings.",
+        "apiAction": "Open Settings",
+        "finish": "Finish setup",
+        "finishHint": "Then Documents is your home page."
+      }
+    }
   }
 }

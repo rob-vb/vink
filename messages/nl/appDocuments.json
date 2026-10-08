@@ -9,7 +9,12 @@
     "adminIntro": "Maak een Formulier voor elke soort document die je ontvangt, en Vink vult het in vanuit je pdf's.",
     "memberIntro": "Een Admin maakt eerst een Formulier voor elke soort document die je ontvangt. Daarna kun je hier pdf's uploaden.",
     "goToForms": "Naar Formulieren",
-    "extracting": "Wordt gelezen"
+    "extracting": "Wordt gelezen",
+    "noSystem": {
+      "title": "Nog geen systeem gekoppeld",
+      "description": "Goedgekeurde Documenten blijven in Vink. Koppel een systeem om ze door te sturen.",
+      "action": "Systeem koppelen"
+    }
   },
   "emailIn": {
     "button": "Per e-mail",
@@ -109,5 +114,46 @@
   },
   "delivery": {
     "sendAgain": "Opnieuw versturen"
+  },
+  "setup": {
+    "welcome": "Welkom bij {organisation}",
+    "intro": "Stel Vink in drie stappen in. Het kost een paar minuten.",
+    "label": "Stappen van de installatie",
+    "announce": "Stap {step} van 3: {name}",
+    "status": {
+      "done": "klaar",
+      "current": "huidige stap",
+      "todo": "nog te doen"
+    },
+    "tryAgain": "Dat is niet gelukt. Probeer het opnieuw.",
+    "bar": "De installatie is nog niet klaar: je zit bij stap {step} van 3.",
+    "barAction": "Verder met installeren",
+    "steps": {
+      "form": {
+        "name": "Formulier",
+        "title": "Maak je eerste Formulier",
+        "description": "Een Formulier noemt de velden die Vink invult voor één soort document, bijvoorbeeld een factuur. Begin met een voorbeeld, beschrijf het in woorden of begin leeg.",
+        "action": "Formulier maken"
+      },
+      "system": {
+        "name": "Systeem",
+        "title": "Koppel je systeem",
+        "description": "Een Koppeling stuurt elk goedgekeurd Document naar het systeem waarin je werkt. Je kunt dit ook later doen.",
+        "action": "Systeem koppelen",
+        "skip": "Nu overslaan"
+      },
+      "input": {
+        "name": "Input",
+        "title": "Kies hoe documenten binnenkomen",
+        "description": "Kies er één of meer. Je kunt dit altijd aanpassen.",
+        "uploadTitle": "Uploaden",
+        "uploadDescription": "Voeg pdf's, foto's of een e-mail met de hand toe. Handig voor een eerste test.",
+        "apiTitle": "API",
+        "apiDescription": "Stuur documenten vanuit je eigen software. Maak een API-sleutel bij Instellingen.",
+        "apiAction": "Naar Instellingen",
+        "finish": "Installatie afronden",
+        "finishHint": "Daarna is Documenten je startpagina."
+      }
+    }
   }
 }

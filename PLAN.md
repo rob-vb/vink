@@ -114,7 +114,7 @@ Each step ends green on `npm run typecheck`, `npm run lint` and `npm test`. Each
 
 ## Status
 
-- [x] 1 · [x] 2 · [x] 3 · [x] 4 · [x] 5 · [x] 6 · [x] 7 · [~] 8 · [ ] 9 · [~] 10 · [x] 11 · [x] 12a · [ ] 12b · [ ] 13 · [ ] 14 · [ ] 15
+- [x] 1 · [x] 2 · [x] 3 · [x] 4 · [x] 5 · [x] 6 · [x] 7 · [~] 8 · [~] 9 · [~] 10 · [x] 11 · [x] 12a · [ ] 12b · [ ] 13 · [ ] 14 · [ ] 15
 
 `[~]` = built and green on fakes; the browser e2e is still open.
 
@@ -133,6 +133,7 @@ Each step ends green on `npm run typecheck`, `npm run lint` and `npm test`. Each
 - Step 12a: real Zap run (PDF, photo, .eml) and `zapier push` by the user; zapier-platform-core 19.1 → 19.2 warning (D027) not upgraded.
 - Step 8 e2e (port 3013): each kind (PDF, email body-only / with PDF / with image, JPG/PNG, old Document without kind); email body highlight + jump to attachment page; image zoom (buttons, Ctrl+wheel, pinch, keys), HEIC fallback in Chrome; empty values; double approve; refresh mid-review; No Form tab → Change Form / Reject; history events + split alert; demo NL+EN, dark, phone width. R2 CORS GET for the email JSON. `features.json` (demo description) changed with the demo; `done.body` "20 free pages" is for step 13.
 - Step 10 e2e: one Form each way (PDF / JPG / HEIC / pasted email / .eml sample, describe in words, blank); double click on Describe makes one proposal; refresh mid-progress; out of Items; phone width. Real Vertex run of `proposer.describe`.
+- Step 9 e2e: new account completes all 3 steps; skip System → notice, then connect an Integration → notice gone; refresh at each step + second Admin; return via the setup bar from each new-Form way; Organisation address in step 3 (needs `INBOUND_DOMAIN`); Member session; older Organisation without a Form gets step 1; dark mode, phone width, screen reader.
 - Step 11: browser render of the terms page (NL+EN); a lawyer reads the new clause.
 
 ## Review follow-ups (from the step 2–3 review)

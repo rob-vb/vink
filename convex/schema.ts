@@ -134,6 +134,16 @@ export default defineSchema({
     // TODO(narrow, after `items:backfillItems` ran on dev AND prod): remove
     // this field and the `by_periodEndsAt` index, and the fallbacks in items.ts.
     pages: v.optional(itemsState),
+    // The setup after sign-up (onboarding.ts): Form, System, Input. Unset for
+    // Organisations from before it, which count as set up. The steps themselves
+    // are derived from facts (Forms, Integrations, Documents); this only holds
+    // what a fact can't show: the System step was skipped, the Input step was seen.
+    onboarding: v.optional(
+      v.object({
+        systemSkippedAt: v.optional(v.number()),
+        inputDoneAt: v.optional(v.number()),
+      }),
+    ),
     // Its Stripe Customer, made at its first Checkout (see billing.ts).
     stripeCustomerId: v.optional(v.string()),
     // When billing.ts last read its Subscriptions from Stripe, ms (billingState.ts).
