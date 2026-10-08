@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, CircleCheck } from "lucide-react";
+import { ArrowLeft, CircleCheck, FileQuestion, Split } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { DeliveryRow, type DeliveryView } from "@/components/deliveries/delivery-row";
@@ -18,13 +18,14 @@ import { useDocumentsLabels, type DocumentEvent, type DocumentState } from "./la
 
 export type ReviewFilter = "all" | "needs_review";
 
-/** "← Documents", the filename with its state, and "Form vN · N pages · Review Threshold". */
+/** "← Documents", the filename with its state, and "Form vN · N pages · Review Threshold" ("email" or "photo" where a PDF has its pages). */
 export function ReviewHeader({
   filename,
   state,
   formName,
   formVersion,
   pageCount,
+  kind,
   reviewThreshold,
   backHref,
   onBack,
@@ -36,6 +37,8 @@ export function ReviewHeader({
   formName: string;
   formVersion: number | null;
   pageCount: number;
+  /** An email or a photo is one unit, so it shows its kind and not "1 page". Missing: a PDF. */
+  kind?: "pdf" | "email" | "image";
   reviewThreshold: number | null;
   backHref?: string;
   onBack?: () => void;
@@ -72,7 +75,8 @@ export function ReviewHeader({
           {badges}
         </div>
         <p className="text-sm text-muted-foreground">
-          {formVersion === null ? "" : `${formName} v${formVersion} · `}{pageCount} {t.pageCount(pageCount)}
+          {formVersion === null ? "" : `${formName} v${formVersion} · `}
+          {kind === "email" || kind === "image" ? t.kinds[kind] : `${pageCount} ${t.pageCount(pageCount)}`}
           {reviewThreshold !== null && (
             <>
               {" "}
@@ -103,7 +107,34 @@ export function ApprovalAlert({
   );
 }
 
-/** The PDF on the left and the Fields on the right, stacked below `lg`. */
+/** A Document in No Form: no Form fits it. `actions` are Change Form and Reject. */
+export function NoFormAlert({ actions }: { actions?: ReactNode }) {
+  const { labels } = useDocumentsLabels();
+  return (
+    <Alert className="border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+      <FileQuestion />
+      <AlertTitle>{labels.review.noForm.title}</AlertTitle>
+      <AlertDescription className="text-amber-900/80 dark:text-amber-200/80">
+        <p>{labels.review.noForm.text}</p>
+        {actions && <div className="mt-2 flex flex-wrap gap-2">{actions}</div>}
+      </AlertDescription>
+    </Alert>
+  );
+}
+
+/** Why Vink split an email it was unsure about, on each Document it made. */
+export function SplitAlert({ reason }: { reason: string }) {
+  const { labels } = useDocumentsLabels();
+  return (
+    <Alert>
+      <Split />
+      <AlertTitle>{labels.review.split.title}</AlertTitle>
+      <AlertDescription>{labels.review.split.text(reason)}</AlertDescription>
+    </Alert>
+  );
+}
+
+/** The source (PDF, email or photo) on the left and the Fields on the right, stacked below `lg`. */
 export function ReviewColumns({ pdf, children }: { pdf: ReactNode; children: ReactNode }) {
   return (
     <div className="grid flex-1 items-start gap-4 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">

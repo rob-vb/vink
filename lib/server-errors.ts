@@ -65,6 +65,9 @@ const dutch: Record<string, string> = {
   "Only a failed proposal can be retried": "Alleen een mislukt voorstel kan opnieuw worden geprobeerd",
   "This proposal can't be saved as a new Form": "Dit voorstel kan niet als nieuw Formulier worden opgeslagen",
   "This proposal doesn't extend a Form": "Dit voorstel vult geen bestaand Formulier aan",
+  "This proposal has no sample to process": "Dit voorstel heeft geen voorbeeld om te verwerken",
+  "Describe the document and the data you need first.": "Beschrijf eerst het document en de gegevens die je nodig hebt.",
+  "The description is longer than 2000 characters.": "De beschrijving is langer dan 2000 tekens.",
 
   // Integrations and Deliveries
   "An Integration needs a name": "Een Koppeling heeft een naam nodig",

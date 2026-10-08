@@ -235,7 +235,7 @@ test("complaint + photo to the Organisation address: one Document of 2 Items, an
     from: "anouk@bakkerij-dewit.example",
     date: "2026-10-06T07:12:00.000Z",
     body: "De levering van gisteren was onvolledig, zie de werkbon.",
-    attachments: [{ filename: "werkbon.jpg", mimeType: "image/jpeg", key: `${document.key}/1` }],
+    attachments: [{ filename: "werkbon.jpg", mimeType: "image/jpeg", key: `${document.key}/1`, pageCount: 1 }],
   });
   expect(fakePdfStore.objects.get(`${document.key}/1`)).toEqual(photo);
   expect(fakePdfStore.types.get(`${document.key}/1`)).toBe("image/jpeg");

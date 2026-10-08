@@ -36,7 +36,8 @@ export type StoredEmail = {
   from: string;
   date: string;
   body: string;
-  attachments: Array<{ filename: string; mimeType: string; key: string }>;
+  /** `pageCount` is for the review screen only (the Reader reads the file's own pages); emails stored before it have none. */
+  attachments: Array<{ filename: string; mimeType: string; key: string; pageCount?: number }>;
 };
 
 async function bytesAt(store: FileStore, key: string) {

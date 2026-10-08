@@ -1,6 +1,7 @@
 "use node";
 // One Form Proposal run: Read the sample (unless its Reading is stored), then
-// one Proposer call. Workpool retries the whole action.
+// one Proposer call. A description in words has no sample: just the Proposer's
+// text-only call. Workpool retries the whole action.
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { internalAction } from "./_generated/server";
@@ -18,6 +19,19 @@ export const run = internalAction({
   handler: async (ctx, { proposalId }) => {
     const input = await ctx.runQuery(internal.formProposals.runInput, { proposalId });
     if (input === null) return;
+    if (input.description !== null) {
+      // Nothing is read, so nothing was charged (formProposals.createFromDescription).
+      const fields = await proposer.describe(input.description);
+      await ctx.runMutation(internal.formProposals.saveFields, { proposalId, fields });
+      return;
+    }
+    if (input.key === null) {
+      await ctx.runMutation(internal.formProposals.failUnreadable, {
+        proposalId,
+        error: "This proposal has no sample and no description",
+      });
+      return;
+    }
     let sample;
     try {
       sample = await readerInputOf(

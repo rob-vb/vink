@@ -137,7 +137,7 @@ export function DocumentTableView({
                 )}
               </TableCell>
               <TableCell className="hidden sm:table-cell">
-                {document.formName}
+                {document.formName || <span className="text-muted-foreground">–</span>}
                 {document.formVersion !== null && (
                   <span className="text-muted-foreground"> v{document.formVersion}</span>
                 )}

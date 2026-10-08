@@ -18,7 +18,7 @@ export type DocumentState =
   | "no_form"
   | "rejected"
   | "deleted";
-export type ListedState = "needs_review" | "approved" | "extraction_failed" | "rejected";
+export type ListedState = "needs_review" | "no_form" | "approved" | "extraction_failed" | "rejected";
 export type ReviewReason =
   | "below_threshold"
   | "required_empty"
@@ -58,12 +58,14 @@ export const englishLabels = {
     subtitle: "Status updates arrive here as soon as they happen.",
     tabs: {
       needs_review: "Needs Review",
+      no_form: "No Form",
       approved: "Approved",
       extraction_failed: "Failed",
       rejected: "Rejected",
     } satisfies Record<ListedState, string>,
     empty: {
       needs_review: "Nothing is waiting for review.",
+      no_form: "Every Document found its Form.",
       approved: "No Documents have been approved yet.",
       extraction_failed: "No Extractions have failed.",
       rejected: "No Documents have been rejected.",
@@ -93,10 +95,22 @@ export const englishLabels = {
       deleted: "Deleted",
     } satisfies Record<DocumentState, string>,
     pageCount: (n: number): string => (n === 1 ? "page" : "pages"),
+    /** The size line of an email or a photo, where a PDF has its page count. */
+    kinds: { email: "email", image: "photo" },
     reviewThreshold: "Review Threshold",
     approved: "Approved",
     approvedBy: (mode: "auto" | "manual", by: string | null) =>
       mode === "auto" ? "Automatically" : `By ${by}`,
+    noForm: {
+      title: "No Form fits this Document",
+      text: "Vink found no Form that fits it, so there is nothing to review yet. Pick a Form to fill, or reject it. Its Items are counted.",
+      empty: "No Fields yet. They appear when the Document has a Form.",
+    },
+    split: {
+      title: "Vink split this email",
+      text: (reason: string) =>
+        `Vink wasn't sure whether the parts of this email belong together, so it made separate Documents. Please check them. ${reason}`,
+    },
     fields: "Fields",
     allFields: "All fields",
     needsReviewOnly: "Needs Review only",
@@ -130,6 +144,35 @@ export const englishLabels = {
       entries_unconfirmed: "Entries no longer confirmed",
       approved: "Approved",
     } satisfies Record<DocumentEvent, string>,
+  },
+  panes: {
+    email: {
+      from: "From",
+      subject: "Subject",
+      date: "Date",
+      noSubject: "(no subject)",
+      body: "Email",
+      attachments: (n: number) => `Attachments (${n})`,
+      attachment: (name: string, pages: number | null) =>
+        pages === null ? name : `${name}, ${pages} ${pages === 1 ? "page" : "pages"}`,
+      noBody: "This email has no text.",
+      sourceFound: "The text this value was read from is marked.",
+      failed: "The email couldn't be loaded.",
+      attachmentFailed: "The attachment couldn't be loaded.",
+      switcher: "Email and attachments",
+    },
+    image: {
+      zoomIn: "Zoom in",
+      zoomOut: "Zoom out",
+      fit: "Fit to width",
+      zoomHint: "Zoom with the buttons, Ctrl and the mouse wheel, a pinch, or + and −.",
+      failed: "The photo couldn't be shown here.",
+      heicTitle: "This browser can't show HEIC photos",
+      heicText: "Vink reads the photo anyway. Download it to look at it yourself.",
+      download: "Download the photo",
+      alt: (name: string) => `The photo ${name}`,
+      zoom: "Zoomable photo",
+    },
   },
   field: {
     reasons: {

@@ -6,7 +6,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useDocumentsLabels, type ListedState } from "./labels";
 
 // Extracting has its own page: those Documents need nothing from anyone yet.
-export const listedStates = ["needs_review", "approved", "extraction_failed", "rejected"] as const;
+export const listedStates = ["needs_review", "no_form", "approved", "extraction_failed", "rejected"] as const;
 
 /** The Documents page heading, with its controls (Upload, Email in, …) on the right. */
 export function DocumentsHeading({ actions }: { actions?: ReactNode }) {
@@ -23,7 +23,7 @@ export function DocumentsHeading({ actions }: { actions?: ReactNode }) {
 }
 
 /**
- * Needs Review / Approved / Failed / Rejected with their counts. Shared by the
+ * Needs Review / No Form / Approved / Failed / Rejected with their counts. Shared by the
  * app's Documents page and the marketing demo.
  */
 export function DocumentStateTabs({

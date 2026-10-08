@@ -24,14 +24,14 @@
     "newForm": "New Form",
     "title": "Forms",
     "description": "One Form per kind of document. Each save keeps the earlier versions.",
-    "proposals": "Proposals from sample PDFs",
+    "proposals": "Proposals from samples and descriptions",
     "states": {
       "ready": "Ready to review",
       "failed": "Failed",
       "reading": "Being read"
     },
     "newFieldsForForm": "new Fields for a Form",
-    "proposalsDeleted": "An unsaved proposal is deleted after 7 days, with its PDF.",
+    "proposalsDeleted": "An unsaved proposal is deleted after 7 days, with its sample.",
     "emptyTitle": "No Forms yet",
     "emptyDescription": "A Form lists the Fields Vink fills from a kind of document, such as a work order or an invoice.",
     "name": "Name",
@@ -45,20 +45,32 @@
   "new": {
     "metaTitle": "New Form · Vink",
     "title": "New Form",
-    "description": "One Form per kind of document you receive: a delivery note, a work order, an invoice.",
-    "fromSample": "From a sample PDF",
-    "fromSampleDescription": "Vink reads one example and proposes the Fields. You untick what you don't need and adjust the rest.",
+    "description": "One Form per kind of document you receive: an invoice, a work order, a complaint. Start from an example, describe it in words, or build it yourself.",
+    "fromSample": "From a sample",
+    "fromSampleDescription": "A PDF, a photo or an email. Vink reads one example and proposes the Fields. You untick what you don't need and adjust the rest.",
     "blank": "Blank",
     "blankDescription": "Add every Field yourself.",
-    "startBlank": "Start blank"
+    "startBlank": "Start blank",
+    "describe": "Describe in words",
+    "describeDescription": "Say what the document is and which data you need. Vink proposes the Fields. Nothing is read, so it costs no Items."
   },
   "sample": {
-    "notPdf": "Choose a PDF file.",
-    "tooLarge": "This PDF is larger than 10 MB. Choose a smaller one.",
+    "tooLarge": "This file is larger than 10 MB. Choose a smaller one.",
     "failed": "The upload didn't work. Try again.",
     "uploading": "Uploading {filename}…",
-    "drop": "Drop a sample PDF here, or <browse>browse</browse>",
-    "limit": "One filled-in example, up to 10 MB and 20 pages"
+    "drop": "Drop a sample here (PDF, photo or .eml), or <browse>browse</browse>",
+    "limit": "One filled-in example, up to 10 MB and 20 pages",
+    "notSupported": "Vink reads PDFs, photos (JPG, PNG, HEIC) and emails (.eml). Choose one of those.",
+    "outOfItems": "This sample needs {needed, plural, one {# Item} other {# Items}}, and you have {remaining} left.",
+    "pasteEmail": "Paste an email instead",
+    "pasteTitle": "Use an email as the sample",
+    "pasteDescription": "Paste the text of one email that is typical for this Form. Vink reads it like an email it receives.",
+    "emailSubject": "Subject (optional)",
+    "emailBody": "Email text",
+    "emailPlaceholder": "Paste the email here",
+    "emailTooLarge": "This text is longer than 200 KB.",
+    "cancel": "Cancel",
+    "useEmail": "Use this email"
   },
   "editor": {
     "metaTitle": "Form · Vink",
@@ -72,8 +84,8 @@
     "unsaved": "Unsaved",
     "back": "Back to Forms",
     "newForm": "New Form",
-    "suggest": "Suggest Fields from PDF",
-    "suggestTitle": "Suggest Fields from a PDF",
+    "suggest": "Suggest Fields from a sample",
+    "suggestTitle": "Suggest Fields from a sample",
     "suggestDescription": "For a supplier whose documents show more than this Form has. Vink reads the sample and proposes only what the Form can't place yet.",
     "save": "Save",
     "create": "Create Form",
@@ -179,7 +191,7 @@
     "newFieldsFor": "New Fields for {form}",
     "title": "Proposed Fields",
     "from": "From {filename}",
-    "failedTitle": "Vink couldn't propose Fields from this sample",
+    "failedTitle": "Vink couldn't propose Fields",
     "retry": "Retry",
     "startBlank": "Start blank",
     "nothingNew": "Nothing new",
@@ -191,6 +203,20 @@
     "explanation": "What serves this kind of document is ticked; untick what your system doesn't need. You can still edit every Field next. None is required yet: decide that on purpose, because a required Field blocks Auto-Send.",
     "kept": "{kept} of {total} Fields kept",
     "discard": "Discard",
-    "continue": "Continue to the Form editor"
+    "continue": "Continue to the Form editor",
+    "fromDescription": "From your description",
+    "progressTitleDescribed": "Vink is proposing Fields",
+    "progressDescriptionDescribed": "This takes a minute at most. You can leave this page: the proposal waits for you under Forms.",
+    "everythingDescribed": "Everything your description names is listed.",
+    "noFieldsDescribed": "No Fields proposed",
+    "noFieldsDescribedText": "Vink could not find data to capture in your description. Say what the document is and which data you need from it.",
+    "describeAgain": "Describe again"
+  },
+  "describe": {
+    "label": "What is the document, and which data do you need?",
+    "placeholder": "A complaint from a customer. I need the subject, the customer number, the date of the complaint and what went wrong.",
+    "count": "{count} of {max} characters",
+    "submit": "Propose Fields",
+    "failed": "Vink couldn't start the proposal. Try again."
   }
 }

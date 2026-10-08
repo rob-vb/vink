@@ -10,10 +10,10 @@
     "startOver": "Opnieuw beginnen"
   },
   "heading": {
-    "pagesLeft": "Nog 480 pagina's",
+    "itemsLeft": "Nog 480 items",
     "extracting": "Wordt gelezen",
     "emailIn": "Per e-mail",
-    "upload": "PDF's uploaden"
+    "upload": "Uploaden"
   },
   "pane": {
     "previous": "Vorige pagina",
@@ -25,14 +25,15 @@
     "approved": "{filename} is goedgekeurd.",
     "nothingElse": "Er is niets meer te controleren.",
     "ownAccount": "Uploaden en documenten mailen doe je in je eigen account.",
-    "extracting": "Er wordt nu niets gelezen. Nieuwe documenten staan hier zolang Vink ze leest."
+    "extracting": "Er wordt nu niets gelezen. Nieuwe documenten staan hier zolang Vink ze leest.",
+    "noForm": "Een document naar een Formulier verplaatsen of afwijzen doe je in je eigen account."
   },
   "delivery": {
     "integration": "Verstuurd naar je systeem"
   },
   "done": {
     "eyebrow": "Niets meer te controleren",
-    "title": "Vijf documenten binnen. Niets overgetikt.",
+    "title": "Zeven documenten binnen. Niets overgetikt.",
     "time": "jouw tijd",
     "checked": "waarden gecontroleerd",
     "read": "waarden gelezen door Vink",
@@ -42,5 +43,9 @@
     "startFree": "Gratis starten",
     "lookAround": "Rondkijken",
     "startOver": "Opnieuw beginnen"
+  },
+  "noForm": {
+    "changeForm": "Formulier wijzigen",
+    "reject": "Afwijzen"
   }
 }

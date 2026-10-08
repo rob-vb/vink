@@ -27,15 +27,18 @@ type Proposed = Proposal["fields"][number];
 
 function Progress({ proposal }: { proposal: Proposal }) {
   const t = useTranslations("appForms.proposal");
+  // A description has no sample to read: it goes straight to proposing.
   const steps = [
-    { label: t("reading", { filename: proposal.filename }), done: proposal.state !== "reading" },
+    ...(proposal.hasSample
+      ? [{ label: t("reading", { filename: proposal.filename }), done: proposal.state !== "reading" }]
+      : []),
     { label: t("proposing"), done: false },
   ];
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("progressTitle")}</CardTitle>
-        <CardDescription>{t("progressDescription")}</CardDescription>
+        <CardTitle>{t(proposal.hasSample ? "progressTitle" : "progressTitleDescribed")}</CardTitle>
+        <CardDescription>{t(proposal.hasSample ? "progressDescription" : "progressDescriptionDescribed")}</CardDescription>
       </CardHeader>
       <CardContent>
         <ol className="flex flex-col gap-3 text-sm">
@@ -154,13 +157,13 @@ export function ProposalScreen({
         organisationSlug={organisationSlug}
         form={{ id: form.id, version: form.version }}
         initial={toDraft({ ...form, fields: [...form.fields, ...kept] })}
-        proposal={{ id: proposalId, filename: proposal.filename }}
+        proposal={{ id: proposalId, filename: proposal.filename, hasSample: proposal.hasSample }}
       />
     ) : (
       <FormEditor
         organisationSlug={organisationSlug}
-        initial={toDraft({ name: "", fields: kept })}
-        proposal={{ id: proposalId, filename: proposal.filename }}
+        initial={toDraft({ name: "", description: proposal.description ?? undefined, fields: kept })}
+        proposal={{ id: proposalId, filename: proposal.filename, hasSample: proposal.hasSample }}
       />
     );
   }
@@ -187,7 +190,9 @@ export function ProposalScreen({
           {form ? t("proposal.newFieldsFor", { form: form.name }) : t("proposal.title")}
         </h1>
         <p className="text-sm text-muted-foreground">
-          {t("proposal.from", { filename: proposal.filename })}
+          {proposal.hasSample
+            ? t("proposal.from", { filename: proposal.filename })
+            : t("proposal.fromDescription")}
         </p>
       </div>
 
@@ -214,7 +219,30 @@ export function ProposalScreen({
         </Alert>
       )}
 
-      {proposal.state === "ready" && proposal.fields.length === 0 && (
+      {proposal.state === "ready" && proposal.fields.length === 0 && !proposal.hasSample && (
+        <Alert>
+          <CircleAlert />
+          <AlertTitle>{t("proposal.noFieldsDescribed")}</AlertTitle>
+          <AlertDescription>
+            <p>{t("proposal.noFieldsDescribedText")}</p>
+            <Button
+              size="sm"
+              variant="outline"
+              className="mt-2"
+              onClick={() =>
+                discard({ organisationSlug, proposalId }).then(
+                  () => router.push(`/app/o/${organisationSlug}/forms/new`),
+                  failed,
+                )
+              }
+            >
+              {t("proposal.describeAgain")}
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {proposal.state === "ready" && proposal.fields.length === 0 && proposal.hasSample && (
         <Alert>
           <CircleCheck />
           <AlertTitle>{t("proposal.nothingNew")}</AlertTitle>
@@ -240,7 +268,9 @@ export function ProposalScreen({
       {proposal.state === "ready" && proposal.fields.length > 0 && (
         <>
           <p className="text-sm text-muted-foreground">
-            {form ? t("proposal.onlyNew", { form: form.name }) : t("proposal.everything")}{" "}
+            {form
+              ? t("proposal.onlyNew", { form: form.name })
+              : t(proposal.hasSample ? "proposal.everything" : "proposal.everythingDescribed")}{" "}
             {t("proposal.explanation")}
           </p>
           <ul className="overflow-hidden rounded-lg border bg-card">

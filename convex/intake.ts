@@ -482,6 +482,7 @@ export const receive = internalAction({
             d.parts.map(async (part) => ({
               filename: part.filename,
               mimeType: part.mimeType,
+              pageCount: part.pageCount,
               bytes: (await pdfStore.read(part.key))!,
             })),
           ),

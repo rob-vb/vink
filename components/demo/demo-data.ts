@@ -1,11 +1,13 @@
 import type { FieldValueType, Value } from "@/components/documents/field-row-view";
 import type { ReviewReason, Signal } from "@/components/documents/labels";
-import type { DemoDocumentId } from "./demo-papers";
+import type { DemoDocumentId, DemoPhotoId } from "./demo-papers";
 
 /*
- * The demo's five Documents: hand-written values and confidences, not
- * pipeline output. Four wait in Needs Review; the receipt was approved by
- * Auto-Send. Demo companies only (Kantoor Noord, Hoekstra, Van Dijk, Het Anker).
+ * The demo's eight Documents: hand-written values and confidences, not
+ * pipeline output. Six wait in Needs Review (a complaint email with a photo and
+ * a photographed work order among them); the receipt was approved by
+ * Auto-Send; a newsletter is in No Form, because no Form fits it. Demo
+ * companies only (Kantoor Noord, Hoekstra, Van Dijk, Het Anker).
  */
 
 type Words = { en: string; nl: string };
@@ -33,9 +35,29 @@ export type SeedList = {
   entries: Array<Record<string, { value: Value; readText: string; confidence: number }>>;
 };
 
+/** An email Document: the email's headers and body, and its attachments (each a drawn photo). */
+export type SeedEmail = {
+  from: string;
+  /** ISO, so the pane shows it like the app does. */
+  date: string;
+  /** The read text of every value read on the body appears in it word for word, in both languages. */
+  body: Words;
+  attachments: Array<{ filename: string; mimeType: string; photo: DemoPhotoId; alt: Words }>;
+};
+
 export type SeedDocument = {
   id: DemoDocumentId;
+  /** An email's name is its subject. */
   filename: string;
+  /** A PDF unless said otherwise. */
+  kind?: "email" | "image";
+  email?: SeedEmail;
+  /** The picture of a photo Document, described for the alt text. */
+  photoAlt?: Words;
+  /** Vink's pick of the Form for input that came without one: its probability. The history shows "Form picked". */
+  routed?: number;
+  /** In No Form, because no Form fits: what the history says. */
+  noForm?: string;
   form: Words;
   uploadedBy: Words;
   /** How long before the visitor arrived it came in. */
@@ -52,6 +74,41 @@ export const DEMO_USER = "demo@kantoornoord.nl";
 
 export const seedDocuments: SeedDocument[] = [
   {
+    id: "complaint",
+    filename: "Levering PB-77120 beschadigd",
+    kind: "email",
+    form: { en: "Complaints", nl: "Klachten" },
+    uploadedBy: { en: "email from sanne@hetanker.nl", nl: "e-mail van sanne@hetanker.nl" },
+    minutesAgo: 2,
+    routed: 0.94,
+    email: {
+      from: "Sanne de Vries <sanne@hetanker.nl>",
+      date: "2026-09-30T06:18:00Z",
+      body: {
+        en: "Hello,\n\nOur delivery PB-77120 of 28-09-2026 arrived yesterday. Two of the six boxes of espresso beans were crushed and the bags inside are torn. I attached a photo of one box.\n\nCan you send new beans this week? Our terrace is open and we are nearly out.\n\nKind regards,\nSanne de Vries\nCafé Het Anker",
+        nl: "Goedemiddag,\n\nOnze levering PB-77120 van 28-09-2026 kwam gisteren binnen. Twee van de zes dozen espressobonen waren ingedrukt en de zakken erin zijn gescheurd. Ik heb een foto van één doos bijgevoegd.\n\nKunnen jullie deze week nieuwe bonen sturen? Ons terras is open en we hebben bijna niets meer.\n\nMet vriendelijke groet,\nSanne de Vries\nCafé Het Anker",
+      },
+      attachments: [
+        {
+          filename: "doos-espresso.jpg",
+          mimeType: "image/jpeg",
+          photo: "complaint",
+          alt: {
+            en: "Photo of a cardboard box with a crushed corner",
+            nl: "Foto van een kartonnen doos met een ingedrukte hoek",
+          },
+        },
+      ],
+    },
+    fields: [
+      { key: "name", label: { en: "Name", nl: "Naam" }, type: "text", required: true, value: "Sanne de Vries", readText: "Sanne de Vries", page: 1, confidence: 0.96, lowestSignal: "support" },
+      { key: "customer", label: { en: "Customer", nl: "Klant" }, type: "text", value: "Café Het Anker", readText: "Café Het Anker", page: 1, confidence: 0.95, lowestSignal: "match" },
+      { key: "delivery_number", label: { en: "Delivery number", nl: "Pakbonnummer" }, type: "text", required: true, value: "PB-77120", readText: "PB-77120", page: 1, confidence: 0.78, lowestSignal: "fit", reasons: ["below_threshold"] },
+      { key: "delivery_date", label: { en: "Delivery date", nl: "Leverdatum" }, type: "date", value: "2026-09-28", readText: "28-09-2026", page: 1, confidence: 0.94, lowestSignal: "fit" },
+      { key: "damage", label: { en: "Damage seen", nl: "Zichtbare schade" }, type: "text", value: "Box corner crushed", readText: "Box corner crushed", page: 2, confidence: 0.74, lowestSignal: "support", reasons: ["below_threshold"] },
+    ],
+  },
+  {
     id: "invoice",
     filename: "invoice-F-2026-0418.pdf",
     form: { en: "Invoices", nl: "Facturen" },
@@ -64,6 +121,26 @@ export const seedDocuments: SeedDocument[] = [
       { key: "total_excl_vat", label: { en: "Total excl. VAT", nl: "Totaal excl. btw" }, type: "number", value: 1240, readText: "1.240,00", page: 1, confidence: 0.95, lowestSignal: "support" },
       { key: "vat_amount", label: { en: "VAT amount", nl: "Btw-bedrag" }, type: "number", value: 260.4, readText: "260,40", page: 1, confidence: 0.62, lowestSignal: "match", reasons: ["below_threshold"] },
       { key: "iban", label: { en: "IBAN", nl: "IBAN" }, type: "text", value: "NL91ABNA0417164300", readText: "NL91 ABNA 0417 1643 00", page: 1, confidence: 0.93, lowestSignal: "fit" },
+    ],
+  },
+  {
+    id: "workorder",
+    filename: "werkbon-0212.jpg",
+    kind: "image",
+    form: { en: "Work orders", nl: "Werkbonnen" },
+    uploadedBy: { en: "sem@kantoornoord.nl", nl: "sem@kantoornoord.nl" },
+    minutesAgo: 6,
+    routed: 0.91,
+    photoAlt: {
+      en: "Photo of a handwritten work order on a wooden table",
+      nl: "Foto van een handgeschreven werkbon op een houten tafel",
+    },
+    fields: [
+      { key: "customer", label: { en: "Customer", nl: "Klant" }, type: "text", required: true, value: "Café Het Anker", readText: "Café Het Anker", page: 1, confidence: 0.93, lowestSignal: "match" },
+      { key: "work_date", label: { en: "Date", nl: "Datum" }, type: "date", value: "2026-09-30", readText: "30/9/26", page: 1, confidence: 0.9, lowestSignal: "fit" },
+      { key: "work", label: { en: "Work done", nl: "Uitgevoerd werk" }, type: "text", value: "Tap replaced", readText: "Tap vervangen", page: 1, confidence: 0.88, lowestSignal: "support" },
+      { key: "hours", label: { en: "Hours", nl: "Uren" }, type: "number", value: 2.5, readText: "2,5 u", page: 1, confidence: 0.64, lowestSignal: "fit", reasons: ["unsure"] },
+      { key: "materials", label: { en: "Materials", nl: "Materiaal" }, type: "text", value: "Mixer tap + hoses", readText: "mengkraan + slangen", page: 1, confidence: 0.86, lowestSignal: "support" },
     ],
   },
   {
@@ -140,5 +217,24 @@ export const seedDocuments: SeedDocument[] = [
       { key: "vat", label: { en: "VAT", nl: "Btw" }, type: "number", value: 2.02, readText: "2,02", page: 1, confidence: 0.93, lowestSignal: "fit" },
       { key: "payment", label: { en: "Payment", nl: "Betaling" }, type: "text", value: "PIN", readText: "PIN", page: 1, confidence: 0.91, lowestSignal: "match" },
     ],
+  },
+  {
+    id: "newsletter",
+    filename: "Herfstacties Groothandel Bakker",
+    kind: "email",
+    form: { en: "", nl: "" },
+    uploadedBy: { en: "email from news@groothandelbakker.nl", nl: "e-mail van news@groothandelbakker.nl" },
+    minutesAgo: 12,
+    noForm: "Does not fit Invoices",
+    email: {
+      from: "Groothandel Bakker <news@groothandelbakker.nl>",
+      date: "2026-09-30T05:55:00Z",
+      body: {
+        en: "Autumn offers at Groothandel Bakker\n\nThis week: paper cups 250 ml at 8% off, and free delivery on orders over 150 euro.\n\nSee all offers on our website. You receive this newsletter because you are a customer.",
+        nl: "Herfstacties bij Groothandel Bakker\n\nDeze week: koffiebekers 250 ml met 8% korting, en gratis bezorging bij bestellingen boven 150 euro.\n\nBekijk alle acties op onze website. Je ontvangt deze nieuwsbrief omdat je klant bent.",
+      },
+      attachments: [],
+    },
+    fields: [],
   },
 ];

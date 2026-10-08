@@ -7,7 +7,7 @@ import { useDocumentsLabels } from "@/components/documents/labels";
 import { ListGroupView } from "@/components/documents/list-group-view";
 import { ScaledStill } from "@/components/features/scaled-still";
 import { DEMO_THRESHOLD } from "./demo-data";
-import { demoPages, type DemoDocumentId } from "./demo-papers";
+import { demoPages, type DemoDocumentId, type DemoPdfId } from "./demo-papers";
 import { DemoLabels } from "./demo-screens";
 import { demoReducer, initialDocuments, type DemoAction, type DemoDocument, type Locale } from "./demo-state";
 
@@ -84,7 +84,7 @@ function Fields({
   );
 }
 
-function FirstPage({ documentId }: { documentId: DemoDocumentId }) {
+function FirstPage({ documentId }: { documentId: DemoPdfId }) {
   const Page = demoPages[documentId][0];
   return <Page />;
 }
@@ -109,7 +109,7 @@ function FrameTitle({ documentId }: { documentId: DemoDocumentId }) {
 }
 
 /** The demo's papers side by side, as they arrive. */
-export function PapersRow({ documentIds, label }: { documentIds: DemoDocumentId[]; label: string }) {
+export function PapersRow({ documentIds, label }: { documentIds: DemoPdfId[]; label: string }) {
   return (
     <ScaledStill width={1440} always fade={false} label={label} className="bg-transparent">
       <div className="grid grid-flow-col gap-10 p-2">
@@ -122,7 +122,7 @@ export function PapersRow({ documentIds, label }: { documentIds: DemoDocumentId[
 }
 
 /** One Document's first page next to all its Fields. */
-export function DocumentFieldsStill({ documentId, label }: { documentId: DemoDocumentId; label: string }) {
+export function DocumentFieldsStill({ documentId, label }: { documentId: DemoPdfId; label: string }) {
   const document = useDemoDocument(documentId);
   return (
     <ScaledStill width={800} fade={false} label={label} className="bg-transparent">

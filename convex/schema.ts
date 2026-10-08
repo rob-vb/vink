@@ -213,18 +213,25 @@ export default defineSchema({
     savedBy: v.string(),
   }).index("by_formId_and_number", ["formId", "number"]),
 
-  // Fields proposed from one sample PDF, before they are a Form (Version).
+  // Fields proposed from one sample (a PDF, a photo or an email) or from the
+  // Admin's description in words, before they are a Form (Version).
   formProposals: defineTable({
     organisationId: v.id("organisations"),
     createdBy: v.string(),
     createdByEmail: v.string(),
-    // The sample's file in R2, like `documents.key`.
-    key: v.string(),
+    // The sample's file in R2, like `documents.key`. Unset for a description:
+    // it has no sample (and no Reading, and no Items are charged).
+    key: v.optional(v.string()),
+    // An email sample's attachments, stored under `${key}/…` like a Document's.
+    attachmentKeys: v.optional(v.array(v.string())),
+    // "Describe in words": what the document is and which data the Admin needs.
+    description: v.optional(v.string()),
     // Its kind and MIME type, like a Document's. Widen step: unset on samples
     // from before kinds; they read as a PDF (lib/inputLimits.ts kindOf).
     // TODO(narrow, after `documents:backfillInputKind` ran on dev AND prod): make both required.
     kind: v.optional(inputKind),
     mimeType: v.optional(v.string()),
+    // A description's first words; its `pageCount` is 0.
     filename: v.string(),
     pageCount: v.number(),
     // For "Suggest Fields from PDF": the Form being extended.

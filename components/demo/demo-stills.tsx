@@ -28,6 +28,7 @@ const inert: ReviewHandlers = {
   onRestoreEntry: nothing,
   onAddEntry: nothing,
   onApprove: nothing,
+  onNoFormAction: nothing,
 };
 
 // A fixed moment, so the pictures render the same on the server and in the browser.

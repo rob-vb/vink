@@ -308,6 +308,37 @@ test("the Proposer gets a PDF sample as before, and an image or email sample wit
   expect(proposed.map((p) => p.field.key)).toEqual(["subject"]);
 });
 
+test("the Proposer describes a Form from words alone: text only, no files, no Reading, the same Field shape", async () => {
+  vertex.answer = JSON.stringify({
+    fields: [
+      { label: "Onderwerp", key: "subject", type: "text", ticked: true },
+      { label: "Soort klacht", key: "kind", type: "choice", options: ["Levering", "Kwaliteit"], ticked: true },
+      { label: "Kapot", key: "Not A Key", type: "text" },
+    ],
+  });
+
+  const proposed = await proposer.describe("Een klacht van een klant: onderwerp en soort klacht.");
+
+  const request = lastRequest();
+  expect(filesIn(request)).toEqual([]);
+  expect(textsIn(request)[0]).toContain("Een klacht van een klant: onderwerp en soort klacht.");
+  expect(textsIn(request).at(-1)).toContain("You have no sample");
+  // A Field without a valid key is dropped, like a sample's proposal; none is required.
+  expect(proposed).toEqual([
+    { field: { type: "text", label: "Onderwerp", key: "subject", required: false }, ticked: true },
+    {
+      field: {
+        type: "choice",
+        label: "Soort klacht",
+        key: "kind",
+        required: false,
+        options: [{ value: "Levering" }, { value: "Kwaliteit" }],
+      },
+      ticked: true,
+    },
+  ]);
+});
+
 // --- the Claude bridge ---
 
 test("the Claude bridge reads a single PDF only: an image or an email's attachments don't go to it", async () => {

@@ -114,7 +114,9 @@ Each step ends green on `npm run typecheck`, `npm run lint` and `npm test`. Each
 
 ## Status
 
-- [x] 1 · [x] 2 · [x] 3 · [x] 4 · [x] 5 · [x] 6 · [x] 7 · [ ] 8 · [ ] 9 · [ ] 10 · [x] 11 · [x] 12a · [ ] 12b · [ ] 13 · [ ] 14 · [ ] 15
+- [x] 1 · [x] 2 · [x] 3 · [x] 4 · [x] 5 · [x] 6 · [x] 7 · [~] 8 · [ ] 9 · [~] 10 · [x] 11 · [x] 12a · [ ] 12b · [ ] 13 · [ ] 14 · [ ] 15
+
+`[~]` = built and green on fakes; the browser e2e is still open.
 
 ## Assumptions to confirm with the user
 
@@ -129,19 +131,25 @@ Each step ends green on `npm run typecheck`, `npm run lint` and `npm test`. Each
 - Step 6: real Jev run of the split question (is 0.8 right?); real Worker run (text + HTML-only, HEIC/PNG, inline logo); R2 copy under `${emailKey}/n` + delete; browser check of "All Forms" in the Email-in dialog. Worker and Convex must deploy together (skip names changed). Out-of-items now refuses a whole mail. Total attachment cap 12 MB.
 - Step 7: browser check of the upload dialog (tabs, "Vink picks the Form", double submit, HEIC/.eml drop, out-of-items). Real R2 PUT with image/heic and message/rfc822. Deploy `deploy/nginx.conf` (new 413 text). Real iPhone HEIC via app + API. New `POST /v1/documents` (form optional); spoofed Content-Type → 415 `media_type_mismatch`. `.eml` uses a hand-written parser (`convex/lib/emailParse.ts`, no new dependency); upload/API emails are never split. Step 13: `messages/*/developers.json` still says PDF only.
 - Step 12a: real Zap run (PDF, photo, .eml) and `zapier push` by the user; zapier-platform-core 19.1 → 19.2 warning (D027) not upgraded.
+- Step 8 e2e (port 3013): each kind (PDF, email body-only / with PDF / with image, JPG/PNG, old Document without kind); email body highlight + jump to attachment page; image zoom (buttons, Ctrl+wheel, pinch, keys), HEIC fallback in Chrome; empty values; double approve; refresh mid-review; No Form tab → Change Form / Reject; history events + split alert; demo NL+EN, dark, phone width. R2 CORS GET for the email JSON. `features.json` (demo description) changed with the demo; `done.body` "20 free pages" is for step 13.
+- Step 10 e2e: one Form each way (PDF / JPG / HEIC / pasted email / .eml sample, describe in words, blank); double click on Describe makes one proposal; refresh mid-progress; out of Items; phone width. Real Vertex run of `proposer.describe`.
 - Step 11: browser render of the terms page (NL+EN); a lawyer reads the new clause.
 
 ## Review follow-ups (from the step 2–3 review)
 
 - [x] Paginate `documents.backfillInputKind` (and `items.backfillItems`) with a cursor; one mutation over the whole `documents` table breaks past ~8k rows. Do this right after step 4 (step 4 may touch `documents.ts`).
-- [ ] Step 8: `messages/*/demo.json` still says "pages left"; the demo must mirror the app ("items").
+- [x] Step 8: `messages/*/demo.json` still says "pages left"; the demo must mirror the app ("items").
 
 ## Review follow-ups (from the step 4–5 review)
 
 - [x] (to step 6 worker) Server builds the email JSON; attachment keys under `${emailKey}/`, checked per org; shape validated; delete helper removes attachments (reject/delete/retention); total-bytes cap; deterministic read failures not retried.
 - [x] After step 6: a routed Document never Auto-Sends in v1 (always Needs Review; reconsider with a probability threshold after real Jev runs). A routed Document with zero matched Fields counts as does-not-fit (Forms without required Fields would otherwise swallow everything). Router token budget like `matchPlan.ts` (shorten Reading/criteria; over budget → No Form, not a failure). Skip the Router when the Reading has no leaves.
 - [x] Step 7: sniff magic bytes at intake, never trust the client MIME type. Ship the `form_id: null` / `no_form` API contract change with step 7 and note it for API clients.
-- [ ] Step 8: No Form tab + Change Form / Reject buttons for `no_form` (step 5 is not deployable before step 8).
+- [x] Step 8: No Form tab + Change Form / Reject buttons for `no_form` (step 5 is not deployable before step 8).
+
+## Questions for the user
+
+- "Describe in words" costs model tokens but no Items, and has no limit per Organisation. Add a daily cap?
 
 ## Failed attempts
 

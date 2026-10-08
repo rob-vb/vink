@@ -407,7 +407,7 @@ export const invoicePages = {
   smit: HandwrittenInvoicePage,
 } as const;
 
-/** Each demo Document's pages, in order. */
+/** Each PDF demo Document's pages, in order. */
 export const demoPages = {
   invoice: [InvoicePage],
   delivery: [DeliveryPage1, DeliveryPage2],
@@ -416,4 +416,74 @@ export const demoPages = {
   receipt: [ReceiptPage],
 } as const;
 
-export type DemoDocumentId = keyof typeof demoPages;
+export type DemoPdfId = keyof typeof demoPages;
+
+/*
+ * The demo's photos, drawn as SVG so they scale with the image pane's zoom: a
+ * crushed box (the complaint email's attachment) and a handwritten work order
+ * on a table (a photo Document).
+ */
+
+function BoxPhoto({ alt }: { alt: string }) {
+  return (
+    <svg viewBox="0 0 400 300" role="img" aria-label={alt} className="block h-auto w-full">
+      <rect width="400" height="300" fill="#8B8C8E" />
+      <rect y="190" width="400" height="110" fill="#6E6F72" />
+      <ellipse cx="205" cy="262" rx="150" ry="16" fill="#000" opacity=".25" />
+      <path d="M95 130 L205 100 L320 130 L320 245 L205 270 L95 245 Z" fill="#C79A64" />
+      <path d="M95 130 L205 160 L320 130 L205 100 Z" fill="#D8B07C" />
+      <path d="M205 160 L205 270 L95 245 L95 130 Z" fill="#B88850" />
+      <path d="M205 160 L320 130 L320 245 L205 270 Z" fill="#A87A44" />
+      <path d="M296 128 L330 150 L318 190 L300 170 L306 150 Z" fill="#7A5528" />
+      <path d="M300 170 L318 190 L312 205 L292 182 Z" fill="#5E3F1C" opacity=".8" />
+      <rect x="130" y="188" width="46" height="26" fill="#F2F0EA" transform="rotate(8 153 201)" />
+      <rect x="196" y="140" width="22" height="30" fill="#E8E1CF" opacity=".9" transform="skewY(-14)" />
+    </svg>
+  );
+}
+
+function WorkOrderPhoto({ alt }: { alt: string }) {
+  return (
+    <svg viewBox="0 0 400 300" role="img" aria-label={alt} className="block h-auto w-full">
+      <rect width="400" height="300" fill="#7B6249" />
+      <g transform="rotate(-3 200 150)">
+        <rect x="55" y="22" width="290" height="258" fill="#FBF7EC" />
+        <rect x="55" y="22" width="290" height="258" fill="none" stroke="#D9DDE3" />
+        <text x="70" y="48" fontSize="13" fontWeight="700" fill="#1D2433">
+          WERKBON
+        </text>
+        <text x="332" y="48" fontSize="12" fontWeight="700" textAnchor="end" fill="#B91C1C">
+          0212
+        </text>
+        <line x1="70" y1="56" x2="330" y2="56" stroke="#D9DDE3" />
+        {[
+          ["Klant", "Café Het Anker", 92],
+          ["Datum", "30/9/26", 128],
+          ["Werk", "Tap vervangen", 164],
+          ["Uren", "2,5 u", 200],
+          ["Materiaal", "mengkraan + slangen", 236],
+        ].map(([label, value, y]) => (
+          <g key={label}>
+            <text x="70" y={Number(y)} fontSize="9" fill="#6B7280">
+              {label}
+            </text>
+            <line x1="70" y1={Number(y) + 6} x2="330" y2={Number(y) + 6} stroke="#9CA3AF" strokeWidth=".6" />
+            <text x="118" y={Number(y) + 2} fontSize="22" fill="#1F3A8A" className={hand.className}>
+              {value}
+            </text>
+          </g>
+        ))}
+      </g>
+    </svg>
+  );
+}
+
+/** The photos of the demo's photo Documents and email attachments, by Document. */
+export const demoPhotos = { complaint: BoxPhoto, workorder: WorkOrderPhoto } as const;
+
+export type DemoPhotoId = keyof typeof demoPhotos;
+
+/** The demo's Documents that are emails (drawn by the email pane, not here). */
+export type DemoEmailId = "complaint" | "newsletter";
+
+export type DemoDocumentId = DemoPdfId | DemoPhotoId | DemoEmailId;

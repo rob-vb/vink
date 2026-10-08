@@ -478,8 +478,8 @@ test("an email as JSON becomes an email Document: the text and its attachments, 
     date: "2026-10-06T09:00:00.000Z",
     body: "Het totaal is 151,25 euro.",
     attachments: [
-      { filename: "factuur.pdf", mimeType: "application/pdf", key: `${document.key}/1` },
-      { filename: "bon.jpg", mimeType: "image/jpeg", key: `${document.key}/2` },
+      { filename: "factuur.pdf", mimeType: "application/pdf", key: `${document.key}/1`, pageCount: 2 },
+      { filename: "bon.jpg", mimeType: "image/jpeg", key: `${document.key}/2`, pageCount: 1 },
     ],
   });
   // The text 1 + the PDF's 2 pages + the photo 1.

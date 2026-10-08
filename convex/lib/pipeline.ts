@@ -174,4 +174,10 @@ export type Proposer = {
   propose(
     sample: { input: ReaderInput; reading: Reading; textLayer: PageText[] },
   ): Promise<ProposedField[]>;
+  /**
+   * Proposes a Form's Fields from the Admin's words alone: what the document
+   * is and which data they need. No sample and no Reading, so nothing is read
+   * and nothing is charged. The same shape as `propose`.
+   */
+  describe(description: string): Promise<ProposedField[]>;
 };

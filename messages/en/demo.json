@@ -10,10 +10,10 @@
     "startOver": "Start over"
   },
   "heading": {
-    "pagesLeft": "480 pages left",
+    "itemsLeft": "480 items left",
     "extracting": "Extracting",
     "emailIn": "Email in",
-    "upload": "Upload PDFs"
+    "upload": "Upload"
   },
   "pane": {
     "previous": "Previous page",
@@ -25,14 +25,15 @@
     "approved": "{filename} is approved.",
     "nothingElse": "Nothing else needs review.",
     "ownAccount": "Uploading and emailing documents in work in your own account.",
-    "extracting": "Nothing is being read right now. New documents show here while Vink reads them."
+    "extracting": "Nothing is being read right now. New documents show here while Vink reads them.",
+    "noForm": "Moving a document to a Form or rejecting it works in your own account."
   },
   "delivery": {
     "integration": "Sent to your system"
   },
   "done": {
     "eyebrow": "Needs Review is empty",
-    "title": "Five documents in. Nothing retyped.",
+    "title": "Seven documents in. Nothing retyped.",
     "time": "your time",
     "checked": "values you checked",
     "read": "values Vink read",
@@ -42,5 +43,9 @@
     "startFree": "Start free",
     "lookAround": "Look around",
     "startOver": "Start over"
+  },
+  "noForm": {
+    "changeForm": "Change Form",
+    "reject": "Reject"
   }
 }

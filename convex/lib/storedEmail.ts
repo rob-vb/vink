@@ -24,7 +24,8 @@ export async function storeEmail(
   ctx: ActionCtx,
   organisationId: Id<"organisations">,
   email: Pick<StoredEmail, "subject" | "from" | "date" | "body">,
-  parts: Array<{ filename: string; mimeType: string; bytes: Uint8Array }>,
+  /** `pageCount`: the PDF's pages (an image has 1), so the review screen can number an attachment's pages after the body's. */
+  parts: Array<{ filename: string; mimeType: string; bytes: Uint8Array; pageCount?: number }>,
 ): Promise<{ key: string; attachmentKeys: string[] }> {
   const key = `${organisationId}/${crypto.randomUUID()}`;
   const written: string[] = [];
@@ -34,7 +35,12 @@ export async function storeEmail(
       const copy = `${key}/${attachments.length + 1}`;
       await pdfStore.store(ctx, copy, part.bytes, part.mimeType);
       written.push(copy);
-      attachments.push({ filename: part.filename, mimeType: part.mimeType, key: copy });
+      attachments.push({
+        filename: part.filename,
+        mimeType: part.mimeType,
+        key: copy,
+        ...(part.pageCount === undefined ? {} : { pageCount: part.pageCount }),
+      });
     }
     const stored: StoredEmail = { ...email, attachments };
     await pdfStore.store(ctx, key, new TextEncoder().encode(JSON.stringify(stored)), EMAIL_MIME_TYPE);

@@ -217,6 +217,7 @@ export const fakePipeline = {
     | { step: "fill"; fields: string[] }
     | { step: "verify"; fields: string[]; supportAskedFor: string[] }
     | { step: "propose"; reading: Reading }
+    | { step: "describe"; description: string }
   >,
   replay(recording: Recording) {
     fakePipeline.recording = recording;
@@ -315,6 +316,12 @@ export const fakeProposer: Proposer = {
   async propose({ input, reading }) {
     fakePipeline.proposed.push(input);
     fakePipeline.calls.push({ step: "propose", reading });
+    fakePipeline.failIfAsked("propose");
+    return fakePipeline.played().proposal ?? [];
+  },
+  async describe(description) {
+    fakePipeline.calls.push({ step: "describe", description });
+    // Fails with the Proposer's switch: it is the same model setup.
     fakePipeline.failIfAsked("propose");
     return fakePipeline.played().proposal ?? [];
   },
