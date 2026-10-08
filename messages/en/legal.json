@@ -178,7 +178,7 @@
       "description": "The terms for using Vink: plans, payment, cancelling, your data, processing, liability, security and subprocessors."
     },
     "title": "Terms",
-    "updated": "Last updated: 7 October 2026",
+    "updated": "Last updated: 8 October 2026",
     "intro": "These terms apply to all use of Vink. With an account you accept them on behalf of your organisation. After the terms, you'll find how we handle your data.",
     "sections": {
       "parties": {
@@ -229,6 +229,7 @@
           "An Admin can cancel the plan at any time in the app, under Settings. The plan then runs to the end of the current month or year. After that you pay nothing more, and you can carry on with the free pages you have left.",
           "You can delete your account yourself in the app, from the account menu. An Admin can delete the whole organisation under Settings, in the Danger Zone. Everything is then gone at once, except what the law requires us to keep, such as invoices. Doesn't that work? Email <mail></mail> and we delete it within 30 days.",
           "We may block your access or end the agreement if you don't pay, or if you breach these terms seriously or repeatedly. Where possible, we warn you first.",
+          "Vink may refuse a sign-up, and may end or suspend an account at its own discretion, for example when use conflicts with the law, these terms, or Vink's interests. If Vink ends an account through no fault of yours, we refund the amount you paid in advance for unused periods of your plan and for unused Top-ups.",
           "If we stop offering Vink, we tell you at least 3 months in advance. We refund what you paid in advance for the time after the end date."
         ]
       },
