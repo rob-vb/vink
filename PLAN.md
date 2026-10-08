@@ -126,6 +126,11 @@ Each step ends green on `npm run typecheck`, `npm run lint` and `npm test`. Each
 - Step 3: run `documents:backfillInputKind` on dev, then prod (second run returns zeros), then `TODO(narrow)`. Note: the schema never had `pdfKey`; only `extraction.input`'s return value was renamed to `fileKey`. Image max 10 MB; email body 200 KiB, max 10 attachments.
 - Step 11: browser render of the terms page (NL+EN); a lawyer reads the new clause.
 
+## Review follow-ups (from the step 2–3 review)
+
+- [ ] Paginate `documents.backfillInputKind` (and `items.backfillItems`) with a cursor; one mutation over the whole `documents` table breaks past ~8k rows. Do this right after step 4 (step 4 may touch `documents.ts`).
+- [ ] Step 8: `messages/*/demo.json` still says "pages left"; the demo must mirror the app ("items").
+
 ## Failed attempts
 
 (none yet; after two failed tries on one step, note it here and re-plan)
