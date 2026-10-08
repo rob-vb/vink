@@ -207,7 +207,7 @@ export async function evaluate({
     try {
       const input = loadInput(dir, expected.pages);
       const { reading, textLayer } = await timed("read", reader.read)(input);
-      const recording: Required<Omit<Recording, "proposal">> = {
+      const recording: Required<Omit<Recording, "proposal" | "route">> = {
         reading,
         textLayer,
         matches: {},

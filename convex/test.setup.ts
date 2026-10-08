@@ -19,6 +19,7 @@ import type {
   Reader,
   ReaderInput,
   Reading,
+  Router,
   Verification,
   Verifier,
 } from "./lib/pipeline";
@@ -182,9 +183,11 @@ export type Recording = {
   verifications?: Record<string, { fit: number; support: number }>;
   /** What the Proposer suggests for a Form Proposal of this sample. */
   proposal?: ProposedField[];
+  /** The name of the Form Jev picks in the Router; `null`, or left out, for none. */
+  route?: string | null;
 };
 
-type Step = "read" | "match" | "fill" | "verify" | "propose";
+type Step = "read" | "route" | "match" | "fill" | "verify" | "propose";
 
 /**
  * Stands in for the Extraction's adapters (lib/reader.ts, lib/matcher.ts,
@@ -200,6 +203,7 @@ export const fakePipeline = {
   proposed: [] as ReaderInput[],
   calls: [] as Array<
     | { step: "read" }
+    | { step: "route"; forms: string[] }
     | { step: "match"; reading: Reading; fields: string[]; lists: string[] }
     | { step: "fill"; fields: string[] }
     | { step: "verify"; fields: string[]; supportAskedFor: string[] }
@@ -243,6 +247,15 @@ export const fakeReader: Reader = {
     fakePipeline.failIfAsked("read");
     const { reading, textLayer = [] } = fakePipeline.played();
     return { reading, textLayer };
+  },
+};
+
+export const fakeRouter: Router = {
+  async route(_reading, forms) {
+    fakePipeline.calls.push({ step: "route", forms: forms.map((f) => f.name) });
+    fakePipeline.failIfAsked("route");
+    const { route = null } = fakePipeline.played();
+    return { formId: forms.find((f) => f.name === route)?.id ?? null, probability: route === null ? 1 : 0.9 };
   },
 };
 

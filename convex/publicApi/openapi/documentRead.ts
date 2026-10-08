@@ -80,12 +80,12 @@ export const documentRead: OpenApiPart = {
       required: ["id", "form_id", "state", "filename", "uploaded_at", "data_deleted_at", "payload"],
       properties: {
         id: { type: "string" },
-        form_id: { type: "string", description: "The Form it is read with." },
+        form_id: { type: ["string", "null"], description: "The Form it is read with; `null` while the Router has not picked one, and in `no_form`." },
         state: {
           type: "string",
-          enum: ["processing", "needs_review", "approved", "rejected", "failed", "deleted"],
+          enum: ["processing", "needs_review", "approved", "rejected", "failed", "no_form", "deleted"],
           description:
-            "`processing`: being read. `needs_review`: waits for a user to check it. `approved`: approved; the Payload is here until its data is deleted. `rejected`: a user ruled it unusable. `failed`: Vink couldn't read it. `deleted`: its data was deleted before Approval. Only `approved` ever has a Payload.",
+            "`processing`: being read. `needs_review`: waits for a user to check it. `approved`: approved; the Payload is here until its data is deleted. `rejected`: a user ruled it unusable. `failed`: Vink couldn't read it. `no_form`: Vink read it, but none of your Forms fits; a user can move it to a Form. `deleted`: its data was deleted before Approval. Only `approved` ever has a Payload.",
         },
         filename: { type: "string" },
         uploaded_at: { type: "string", format: "date-time" },

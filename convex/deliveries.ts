@@ -17,6 +17,7 @@ import { MAX_ATTEMPTS, nextAttemptAt } from "./lib/backoff";
 import { refreshTokenKeeper, sendAlone } from "./lib/accounts";
 import { documentPayload } from "./lib/documentPayload";
 import { orgMutation, orgQuery } from "./lib/functions";
+import { formOf } from "./lib/documentForm";
 import { kindOf, sendTo } from "./lib/integrationAdapters";
 import { envelopeOf } from "./lib/payload";
 
@@ -31,9 +32,10 @@ const BUSY_WAIT_MS = 5_000;
  * right now, freezing the envelope, and sends each. None when nothing is attached.
  */
 export async function createDeliveries(ctx: MutationCtx, document: Doc<"documents">) {
+  const { formId, formVersion } = formOf(document);
   const links = await ctx.db
     .query("formIntegrations")
-    .withIndex("by_formId", (q) => q.eq("formId", document.formId))
+    .withIndex("by_formId", (q) => q.eq("formId", formId))
     .take(100);
   const approval = document.approval!;
   if (links.length === 0) {
@@ -49,7 +51,7 @@ export async function createDeliveries(ctx: MutationCtx, document: Doc<"document
       deliveryId,
       test: false,
       document: { id: document._id, filename: document.filename, uploadedAt: document._creationTime },
-      form: { id: document.formId, version: document.formVersion },
+      form: { id: formId, version: formVersion },
       approval: { mode: approval.mode, by: approval.by, at: approval.at },
       data,
     });

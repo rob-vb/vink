@@ -15,6 +15,7 @@ export type DocumentState =
   | "needs_review"
   | "approved"
   | "extraction_failed"
+  | "no_form"
   | "rejected"
   | "deleted";
 export type ListedState = "needs_review" | "approved" | "extraction_failed" | "rejected";
@@ -34,6 +35,8 @@ export type DocumentEvent =
   | "rejected"
   | "reopened"
   | "form_changed"
+  | "routed"
+  | "no_form"
   | "data_deleted"
   | "deleted"
   | "corrected"
@@ -84,6 +87,7 @@ export const englishLabels = {
       needs_review: "Needs Review",
       approved: "Approved",
       extraction_failed: "Extraction Failed",
+      no_form: "No Form",
       rejected: "Rejected",
       deleted: "Deleted",
     } satisfies Record<DocumentState, string>,
@@ -112,6 +116,8 @@ export const englishLabels = {
       rejected: "Rejected",
       reopened: "Reopened",
       form_changed: "Form changed",
+      routed: "Form picked",
+      no_form: "No Form fits",
       data_deleted: "Data deleted",
       deleted: "Deleted",
       corrected: "Corrected",

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
-import { api } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import {
   fakePdfStore,
@@ -16,6 +16,9 @@ vi.mock("./lib/pdfStore", async () => ({
 }));
 vi.mock("./lib/reader", async () => ({
   reader: (await import("./test.setup")).fakeReader,
+}));
+vi.mock("./lib/router", async () => ({
+  router: (await import("./test.setup")).fakeRouter,
 }));
 vi.mock("./lib/matcher", async () => ({
   matcher: (await import("./test.setup")).fakeMatcher,
@@ -215,4 +218,82 @@ test("a Document can't be moved to its own Form or another Organisation's", asyn
   await expect(user.mutation(api.changeForm.changeForm, { ...on, formId: eveForm })).rejects.toThrow(
     "Form not found",
   );
+});
+
+// A Document in No Form (ADR 0010): it arrived with no Form and Jev found none.
+async function inNoForm() {
+  const t = newBackend();
+  const ann = await signUp(t, "ann", "Acme Fleet", { plan: null });
+  const forms: Record<string, Id<"forms">> = {};
+  for (const [name, fields] of [
+    ["Invoice", [
+      { type: "text", label: "Leverancier", key: "supplier_name", required: true },
+      { type: "number", label: "Totaal", key: "total_incl_vat", required: true },
+    ]],
+    ["Work order", [
+      { type: "text", label: "Kenteken", key: "license_plate", required: true },
+      { type: "text", label: "Werkorder", key: "order_number", required: true },
+      { type: "number", label: "Kilometerstand", key: "mileage_km", required: true },
+    ]],
+  ] as const) {
+    forms[name] = (await ann.user.mutation(api.forms.create, { organisationSlug: ann.slug, name, fields: [...fields] })).formId;
+  }
+  // The Router finds no Form for it.
+  fakePipeline.replay({ ...invoice, route: null });
+  fakePdfStore.objects.set("org/post.pdf", await pdfWithPages(1));
+  const organisationId = await t.run(async (ctx) => (await ctx.db.query("organisations").first())!._id);
+  const documentId = await t.mutation(internal.documents.insert, {
+    organisationId,
+    key: "org/post.pdf",
+    filename: "post.pdf",
+    pageCount: 1,
+    uploadedBy: "ann",
+    uploaderEmail: "ann@example.com",
+  });
+  await t.finishAllScheduledFunctions(vi.runAllTimers);
+  const on = { organisationSlug: ann.slug, documentId };
+  const read = () => ann.user.query(api.documents.get, on);
+  const used = async () => (await ann.user.query(api.items.usage, { organisationSlug: ann.slug })).used;
+  expect((await read()).state).toBe("no_form");
+  return { t, user: ann.user, on, read, used, forms };
+}
+
+test("a Document in No Form moves to a Form: Match, Fill and Verify run on the stored Reading, with no new Read and no new charge", async () => {
+  const { t, user, on, read, used, forms } = await inNoForm();
+  expect(await used()).toBe(1);
+  expect(await user.query(api.changeForm.impact, on)).toEqual({ corrections: 0 });
+  fakePipeline.calls = [];
+
+  await user.mutation(api.changeForm.changeForm, { ...on, formId: forms.Invoice });
+  expect((await read()).state).toBe("extracting");
+  await t.finishAllScheduledFunctions(vi.runAllTimers);
+
+  expect(fakePipeline.calls.map((c) => c.step)).toEqual(["match", "fill", "verify"]);
+  const document = await read();
+  expect(document).toMatchObject({
+    state: "needs_review",
+    formName: "Invoice",
+    formId: forms.Invoice,
+    formVersion: 1,
+    doesNotFit: false,
+  });
+  expect(document.fieldValues.map((f) => [f.key, f.value])).toEqual([
+    ["supplier_name", "Vianor"],
+    ["total_incl_vat", 293.82],
+  ]);
+  expect(document.history.map((h) => h.event)).toEqual(["uploaded", "no_form", "form_changed", "extracted"]);
+  expect(document.history.find((h) => h.event === "form_changed")!.detail).toBe("No Form → Invoice");
+  expect(await used()).toBe(1);
+  const { counts } = await user.query(api.documents.list, { organisationSlug: on.organisationSlug, state: "no_form" });
+  expect(counts).toMatchObject({ no_form: 0, needs_review: 1, extracting: 0 });
+});
+
+test("a Document moved out of No Form to a Form it does not fit is flagged, as on any Form", async () => {
+  const { t, user, on, read, used, forms } = await inNoForm();
+
+  await user.mutation(api.changeForm.changeForm, { ...on, formId: forms["Work order"] });
+  await t.finishAllScheduledFunctions(vi.runAllTimers);
+
+  expect(await read()).toMatchObject({ state: "needs_review", formName: "Work order", doesNotFit: true });
+  expect(await used()).toBe(1);
 });

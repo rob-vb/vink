@@ -52,7 +52,7 @@ async function cleanOrganisation(ctx: MutationCtx, organisation: Doc<"organisati
   full ||= sent.length === BATCH;
 
   // Never approved: 90 days after upload.
-  for (const state of ["extracting", "needs_review", "extraction_failed"] as const) {
+  for (const state of ["extracting", "needs_review", "extraction_failed", "no_form"] as const) {
     const stale = await ctx.db
       .query("documents")
       .withIndex("by_organisationId_and_state", (q) =>

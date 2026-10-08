@@ -94,6 +94,18 @@ export type Matcher = {
   ): Promise<{ fields: Record<string, Match>; lists: Record<string, ListMatch> }>;
 };
 
+/** What the Router knows of a Form: its name and description, and the names of its Fields. */
+export type RoutableForm = { id: string; name: string; description: string | null; fields: string[] };
+
+export type Router = {
+  /**
+   * Jev's pick of the Form a Document that came without one belongs to, from
+   * its Reading, with its probability; `formId` is `null` when none fits. The
+   * pick is not final: Match and the fit check gate it (ADR 0010).
+   */
+  route(reading: Reading, forms: RoutableForm[]): Promise<{ formId: string | null; probability: number }>;
+};
+
 /**
  * One value to fill. Its id is the Field key, or for a sub-Field of a List
  * entry `list[entry].key`, e.g. `lines[0].quantity`.

@@ -50,7 +50,11 @@ export const reject = orgMutation({
   args: { documentId: v.id("documents"), reason: v.optional(v.string()) },
   handler: async (ctx, { documentId, reason }) => {
     const document = await ownDocument(ctx, ctx.organisationId, documentId);
-    if (document.state !== "needs_review" && document.state !== "extraction_failed") {
+    if (
+      document.state !== "needs_review" &&
+      document.state !== "extraction_failed" &&
+      document.state !== "no_form"
+    ) {
       throw new ConvexError("This Document can't be rejected now");
     }
     const text = reason?.trim() || null;

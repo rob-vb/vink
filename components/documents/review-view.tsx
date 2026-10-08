@@ -34,7 +34,7 @@ export function ReviewHeader({
   filename: string;
   state: DocumentState;
   formName: string;
-  formVersion: number;
+  formVersion: number | null;
   pageCount: number;
   reviewThreshold: number | null;
   backHref?: string;
@@ -72,7 +72,7 @@ export function ReviewHeader({
           {badges}
         </div>
         <p className="text-sm text-muted-foreground">
-          {formName} v{formVersion} · {pageCount} {t.pageCount(pageCount)}
+          {formVersion === null ? "" : `${formName} v${formVersion} · `}{pageCount} {t.pageCount(pageCount)}
           {reviewThreshold !== null && (
             <>
               {" "}

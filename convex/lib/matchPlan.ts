@@ -9,6 +9,9 @@ const TOKEN_CAP = 64_000;
 // Jev takes at most this many criteria per Choice, `none` included.
 export const MAX_CRITERIA = 255;
 
+// The Router (ADR 0010) offers Jev the Organisation's Forms and `none`: at most this many Forms.
+export const MAX_ROUTABLE_FORMS = MAX_CRITERIA - 1;
+
 // Of a Choice's criteria, at most this many are objects (see reading.sourceAt).
 export const MAX_OBJECTS = 60;
 

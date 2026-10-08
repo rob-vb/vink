@@ -180,7 +180,7 @@ test("the Document list's counts move the Document from Extracting to Needs Revi
     organisationSlug: slug,
     state: "needs_review",
   });
-  expect(counts).toEqual({ extracting: 0, needs_review: 1, approved: 0, extraction_failed: 0, rejected: 0 });
+  expect(counts).toEqual({ extracting: 0, needs_review: 1, approved: 0, extraction_failed: 0, no_form: 0, rejected: 0 });
 });
 
 // The fixture Documents' real pipeline runs, recorded by the eval harness

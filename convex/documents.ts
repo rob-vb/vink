@@ -136,7 +136,8 @@ export async function acceptPdf(
   ctx: ActionCtx,
   document: {
     organisationId: Id<"organisations">;
-    formId: Id<"forms">;
+    /** Left out: the Router picks the Form after Read (ADR 0010). */
+    formId?: Id<"forms">;
     key: string;
     filename: string;
     uploadedBy: string;
@@ -155,7 +156,7 @@ export async function acceptPdf(
 export const insert = internalMutation({
   args: {
     organisationId: v.id("organisations"),
-    formId: v.id("forms"),
+    formId: v.optional(v.id("forms")),
     key: v.string(),
     filename: v.string(),
     pageCount: v.number(),
@@ -169,8 +170,9 @@ export const insert = internalMutation({
 });
 
 /**
- * A Document of a Form at its current Form Version, in Extracting. With a
- * `reading`, the Extraction starts from it and never reads the PDF.
+ * A Document of a Form at its current Form Version, in Extracting; without a
+ * Form, it is the Router's to place after Read (ADR 0010). With a `reading`,
+ * the Extraction starts from it and never reads the PDF.
  */
 export async function createDocument(
   ctx: MutationCtx,
@@ -182,7 +184,7 @@ export async function createDocument(
     ...document
   }: {
     organisationId: Id<"organisations">;
-    formId: Id<"forms">;
+    formId?: Id<"forms">;
     key: string;
     filename: string;
     pageCount: number;
@@ -194,16 +196,15 @@ export async function createDocument(
     reading?: { json: string; textLayer: Array<{ page: number; text: string }> };
   },
 ) {
-  const form = await ctx.db.get(formId);
-  if (form === null || form.organisationId !== document.organisationId) {
+  const form = formId === undefined ? null : await ctx.db.get(formId);
+  if (formId !== undefined && (form === null || form.organisationId !== document.organisationId)) {
     throw new ConvexError("Form not found");
   }
   const documentId = await ctx.db.insert("documents", {
     ...document,
     kind,
     mimeType,
-    formId,
-    formVersion: form.version,
+    ...(form === null ? {} : { formId: form._id, formVersion: form.version }),
     state: "extracting",
   });
   await claimUpload(ctx, document.key);
@@ -277,13 +278,15 @@ export const get = orgQuery({
   args: { documentId: v.id("documents") },
   handler: async (ctx, { documentId }) => {
     const document = await getDocument(ctx, ctx.organisationId, documentId);
-    const form = await ctx.db.get(document.formId);
-    const formVersion = await ctx.db
-      .query("formVersions")
-      .withIndex("by_formId_and_number", (q) =>
-        q.eq("formId", document.formId).eq("number", document.formVersion),
-      )
-      .unique();
+    const { formId, formVersion: versionNumber } = document;
+    const form = formId === undefined ? null : await ctx.db.get(formId);
+    const formVersion =
+      formId === undefined || versionNumber === undefined
+        ? null
+        : await ctx.db
+            .query("formVersions")
+            .withIndex("by_formId_and_number", (q) => q.eq("formId", formId).eq("number", versionNumber))
+            .unique();
     const fields = formVersion?.fields ?? [];
     const fieldValues = await ctx.db
       .query("fieldValues")
@@ -307,8 +310,8 @@ export const get = orgQuery({
       pageCount: document.pageCount,
       state: document.state,
       formName: form?.name ?? "",
-      formVersion: document.formVersion,
-      formId: document.formId,
+      formVersion: document.formVersion ?? null,
+      formId: document.formId ?? null,
       jevVerified: document.jevVerified ?? false,
       doesNotFit: document.doesNotFit ?? false,
       reviewThreshold: document.reviewThreshold ?? null,
@@ -387,12 +390,13 @@ export const pdfUrl = orgMutation({
   },
 });
 
-// The states with a tab in the Document list; Rejected is behind a filter.
+// The states with a tab in the Document list (No Form has its own list); Rejected is behind a filter.
 const listedStates = [
   "extracting",
   "needs_review",
   "approved",
   "extraction_failed",
+  "no_form",
   "rejected",
 ] as const;
 
@@ -422,7 +426,7 @@ export const list = orgQuery({
       .withIndex("by_organisationId_and_state", (q) =>
         q.eq("organisationId", ctx.organisationId),
       )
-      .take(10);
+      .take(20);
     const counts = Object.fromEntries(
       listedStates.map((s) => [s, counters.find((c) => c.state === s)?.count ?? 0]),
     ) as Record<(typeof listedStates)[number], number>;
@@ -430,14 +434,14 @@ export const list = orgQuery({
       counts,
       documents: await Promise.all(
         documents.map(async (document) => {
-          const form = await ctx.db.get(document.formId);
+          const form = document.formId === undefined ? null : await ctx.db.get(document.formId);
           return {
             id: document._id,
             filename: document.filename,
             pageCount: document.pageCount,
             state: document.state,
             formName: form?.name ?? "",
-            formVersion: document.formVersion,
+            formVersion: document.formVersion ?? null,
             uploadedBy: document.uploaderEmail,
             uploadedAt: document._creationTime,
             rejection: rejectionOf(document),

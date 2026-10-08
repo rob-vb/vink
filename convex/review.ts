@@ -5,6 +5,7 @@ import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { createDeliveries } from "./deliveries";
 import { reviewReasonsOf } from "./lib/confidence";
+import { formOf } from "./lib/documentForm";
 import { moveTo } from "./lib/documentStates";
 import { fitType } from "./lib/fieldTypes";
 import { orgMutation } from "./lib/functions";
@@ -56,7 +57,7 @@ async function loadFieldValue(
   const formVersion = (await ctx.db
     .query("formVersions")
     .withIndex("by_formId_and_number", (q) =>
-      q.eq("formId", document.formId).eq("number", document.formVersion),
+      q.eq("formId", formOf(document).formId).eq("number", formOf(document).formVersion),
     )
     .unique())!;
   const top = formVersion.fields.find((f) => f.key === (fieldValue.list?.key ?? fieldValue.key))!;
@@ -184,7 +185,7 @@ async function loadList(
   const formVersion = (await ctx.db
     .query("formVersions")
     .withIndex("by_formId_and_number", (q) =>
-      q.eq("formId", document.formId).eq("number", document.formVersion),
+      q.eq("formId", formOf(document).formId).eq("number", formOf(document).formVersion),
     )
     .unique())!;
   const field = formVersion.fields.find((f) => f.key === listKey);

@@ -40,7 +40,8 @@ export function ChangeFormButton({
 }: {
   organisationSlug: string;
   documentId: Id<"documents">;
-  currentFormId: Id<"forms">;
+  /** `null` for a Document in No Form. */
+  currentFormId: Id<"forms"> | null;
   size?: "default" | "sm";
 }) {
   const t = useTranslations("appDocuments");

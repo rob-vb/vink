@@ -56,6 +56,8 @@ export const documentState = v.union(
   v.literal("needs_review"),
   v.literal("approved"),
   v.literal("extraction_failed"),
+  // Read, but no Form fits (ADR 0010): it has no Field Values and is never approved.
+  v.literal("no_form"),
   v.literal("rejected"),
   v.literal("deleted"),
 );
@@ -274,8 +276,11 @@ export default defineSchema({
   // A Document (a PDF, for now) processed against the Form Version that was current at upload.
   documents: defineTable({
     organisationId: v.id("organisations"),
-    formId: v.id("forms"),
-    formVersion: v.number(),
+    // Unset while a Document that came without a Form is Extracting before the
+    // Router has picked one, and in No Form (ADR 0010). Widened only: every
+    // Document from before keeps its Form.
+    formId: v.optional(v.id("forms")),
+    formVersion: v.optional(v.number()),
     // The file's key in R2 (see lib/pdfStore.ts), prefixed with the Organisation.
     key: v.string(),
     // Its kind and the real MIME type of the stored file. Widen step: unset on
@@ -304,7 +309,11 @@ export default defineSchema({
         byEmail: v.string(),
         at: v.number(),
         reason: v.union(v.string(), v.null()),
-        priorState: v.union(v.literal("needs_review"), v.literal("extraction_failed")),
+        priorState: v.union(
+          v.literal("needs_review"),
+          v.literal("extraction_failed"),
+          v.literal("no_form"),
+        ),
       }),
     ),
     // When its PDF, Reading and Field Values were deleted; only metadata is left.
@@ -532,6 +541,9 @@ export default defineSchema({
       v.literal("rejected"),
       v.literal("reopened"),
       v.literal("form_changed"),
+      // The Router picked the Form, or found none (ADR 0010).
+      v.literal("routed"),
+      v.literal("no_form"),
       v.literal("data_deleted"),
       v.literal("deleted"),
     ),
