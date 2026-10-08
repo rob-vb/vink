@@ -14,14 +14,27 @@ import { startExtraction } from "./extraction";
 import { countIn } from "./lib/documentStates";
 import { orgAction, orgMutation, orgQuery } from "./lib/functions";
 import { chargeItems } from "./items";
+import { looksLikeEmail, parseEml } from "./lib/emailParse";
 import {
+  ATTACHMENTS_TOO_LARGE,
+  EMAIL_BODY_TOO_LARGE,
+  EMPTY_EMAIL,
+  IMAGE_TOO_LARGE,
   type InputKind,
   itemCountOf,
+  MAX_EMAIL_ATTACHMENT_BYTES,
+  MAX_EMAIL_ATTACHMENTS,
+  MAX_EMAIL_BODY_BYTES,
+  MAX_IMAGE_BYTES,
   MAX_PDF_BYTES,
   PDF_MIME_TYPE,
   PDF_TOO_LARGE,
+  TOO_MANY_ATTACHMENTS,
+  UNSUPPORTED_TYPE,
 } from "./lib/inputLimits";
 import { pdfStore } from "./lib/pdfStore";
+import { EMAIL_MIME_TYPE, emailFilename, storeEmail } from "./lib/storedEmail";
+import { sniffFile } from "./lib/sniff";
 import type { FlatField } from "./lib/pipeline";
 import {
   fieldValueNeedsReview,
@@ -29,7 +42,7 @@ import {
   listReasons,
   needsReviewCount,
 } from "./lib/reviewState";
-import { documentState } from "./schema";
+import { documentState, inputKind } from "./schema";
 
 // An Extraction must finish within Convex's 10-minute action limit, and a PDF
 // is never split.
@@ -92,16 +105,7 @@ export async function checkPdf(ctx: ActionCtx, key: string) {
     throw new ConvexError("The upload didn't arrive. Try again.");
   }
   try {
-    if (bytes.length > MAX_PDF_BYTES) {
-      throw new ConvexError(PDF_TOO_LARGE);
-    }
-    const pdf = await PDFDocument.load(bytes, { ignoreEncryption: true }).catch(() => {
-      throw new ConvexError(NOT_A_PDF);
-    });
-    if (pdf.getPageCount() > MAX_PAGES) {
-      throw new ConvexError(tooManyPages(pdf.getPageCount()));
-    }
-    return pdf.getPageCount();
+    return await checkPdfBytes(bytes);
   } catch (error) {
     // A refused upload leaves nothing behind.
     await pdfStore.remove(ctx, key);
@@ -109,13 +113,31 @@ export async function checkPdf(ctx: ActionCtx, key: string) {
   }
 }
 
-/** Step 2 of an upload: turns the uploaded PDF into a Document of a Form. */
+/** checkPdf's checks on bytes in hand: at most 10 MB, readable, at most 20 pages. Returns the page count. */
+async function checkPdfBytes(bytes: Uint8Array) {
+  if (bytes.length > MAX_PDF_BYTES) {
+    throw new ConvexError(PDF_TOO_LARGE);
+  }
+  const pdf = await PDFDocument.load(bytes, { ignoreEncryption: true }).catch(() => {
+    throw new ConvexError(NOT_A_PDF);
+  });
+  if (pdf.getPageCount() > MAX_PAGES) {
+    throw new ConvexError(tooManyPages(pdf.getPageCount()));
+  }
+  return pdf.getPageCount();
+}
+
+/**
+ * Step 2 of an upload: turns the uploaded file (a PDF, a JPG, PNG or HEIC
+ * image, or an .eml email) into a Document. Without a `formId`, the Router
+ * picks the Form after Read (ADR 0010).
+ */
 export const create = orgAction({
-  args: { formId: v.id("forms"), key: v.string(), filename: v.string() },
+  args: { formId: v.optional(v.id("forms")), key: v.string(), filename: v.string() },
   handler: async (ctx, { formId, key, filename }) => {
     checkIssued(ctx.organisationId, key);
     const identity = (await ctx.auth.getUserIdentity())!;
-    await acceptPdf(ctx, {
+    await acceptFile(ctx, {
       organisationId: ctx.organisationId,
       formId,
       key,
@@ -126,29 +148,166 @@ export const create = orgAction({
   },
 });
 
+/** Step 2 of a pasted email: the text the user pasted becomes an email Document. */
+export const createEmail = orgAction({
+  args: { formId: v.optional(v.id("forms")), subject: v.optional(v.string()), body: v.string() },
+  handler: async (ctx, { formId, subject = "", body }) => {
+    const identity = (await ctx.auth.getUserIdentity())!;
+    const uploaderEmail = identity.email?.toLowerCase() ?? "";
+    await acceptEmail(ctx, {
+      organisationId: ctx.organisationId,
+      formId,
+      // The sender is not known from pasted text.
+      email: { subject: subject.trim(), from: "", date: "", body, attachments: [] },
+      uploadedBy: ctx.userId,
+      uploaderEmail,
+    });
+  },
+});
+
+type Acceptance = {
+  organisationId: Id<"organisations">;
+  /** Left out: the Router picks the Form after Read (ADR 0010). */
+  formId?: Id<"forms">;
+  uploadedBy: string;
+  uploaderEmail: string;
+};
+
 /**
- * The one way a stored PDF becomes a Document of a Form, for every way in
- * (upload, Intake Address, public API): checkPdf, then charge its Items and
- * create the Document in one transaction. A refused PDF creates nothing,
- * charges nothing and is removed from storage; the refusal is thrown.
+ * The one way a stored file becomes a Document, for the ways in that take a
+ * file (upload, public API). The kind comes from the file's own first bytes
+ * (lib/sniff.ts), never from a name or a Content-Type:
+ *   PDF   = checkPdf, then its pages are charged
+ *   image = JPG, PNG or HEIC at most 10 MB, 1 Item
+ *   email = an .eml file (by its name, when the bytes are no PDF or image),
+ *           read into an email Document (acceptEmail)
+ * A refused file creates nothing, charges nothing and is removed from storage;
+ * the refusal is thrown. (An Intake Address checks its parts itself, in intake.ts.)
  */
-export async function acceptPdf(
+export async function acceptFile(
   ctx: ActionCtx,
-  document: {
-    organisationId: Id<"organisations">;
-    /** Left out: the Router picks the Form after Read (ADR 0010). */
-    formId?: Id<"forms">;
-    key: string;
-    filename: string;
-    uploadedBy: string;
-    uploaderEmail: string;
+  document: Acceptance & { key: string; filename: string },
+): Promise<Id<"documents">> {
+  const bytes = await pdfStore.read(document.key);
+  if (bytes === null) throw new ConvexError("The upload didn't arrive. Try again.");
+  try {
+    const sniffed = sniffFile(bytes);
+    if (sniffed === null) {
+      const name = document.filename.toLowerCase();
+      // Named as a PDF, and the bytes are nothing Vink reads: say so in the PDF's words.
+      if (name.endsWith(".pdf")) throw new ConvexError(NOT_A_PDF);
+      if (!name.endsWith(".eml") || !looksLikeEmail(bytes)) throw new ConvexError(UNSUPPORTED_TYPE);
+      const { subject, from, date, body, attachments } = parseEml(bytes);
+      // The file itself is not kept: acceptEmail writes the email the Reader reads.
+      const id = await acceptEmail(ctx, {
+        organisationId: document.organisationId,
+        formId: document.formId,
+        uploadedBy: document.uploadedBy,
+        uploaderEmail: document.uploaderEmail,
+        email: { subject, from, date, body, attachments },
+        // Without a subject, the file's name tells the Documents apart.
+        filename: subject === "" ? document.filename : undefined,
+        uploadKey: document.key,
+      });
+      await pdfStore.remove(ctx, document.key);
+      return id;
+    }
+    if (sniffed.kind === "pdf") {
+      const pageCount = await checkPdfBytes(bytes);
+      return await insertFile(ctx, document, { kind: "pdf", mimeType: sniffed.mimeType, pageCount, items: pageCount });
+    }
+    if (bytes.length > MAX_IMAGE_BYTES) throw new ConvexError(IMAGE_TOO_LARGE);
+    return await insertFile(ctx, document, { kind: "image", mimeType: sniffed.mimeType, pageCount: 1, items: 1 });
+  } catch (error) {
+    // A refused file leaves nothing behind (a refused .eml is removed here too).
+    await pdfStore.remove(ctx, document.key);
+    throw error;
+  }
+}
+
+async function insertFile(
+  ctx: ActionCtx,
+  document: Acceptance & { key: string; filename: string },
+  file: { kind: InputKind; mimeType: string; pageCount: number; items: number },
+) {
+  return await ctx.runMutation(internal.documents.insert, {
+    ...document,
+    ...file,
+    what: file.kind === "pdf" ? "PDF" : "image",
+  });
+}
+
+/**
+ * An email as an email Document: its text (at most 200 KB) and its PDF and
+ * image attachments (at most 10, 12 MB together, each as an upload is checked)
+ * become one Document, charged as itemCountOf says: the text 1 Item if it has
+ * content, plus each attachment's. The server writes the stored email and its
+ * attachments (lib/storedEmail.ts); nothing the sender sent decides a key or a
+ * type. An email without text and attachments is refused. Unlike an Intake
+ * Address, this does not ask Jev to split the email: what a person or program
+ * sends in as one email is one Document.
+ */
+export async function acceptEmail(
+  ctx: ActionCtx,
+  {
+    email,
+    filename,
+    uploadKey,
+    ...document
+  }: Acceptance & {
+    email: {
+      subject: string;
+      from: string;
+      date: string;
+      body: string;
+      attachments: Array<{ filename: string; bytes: Uint8Array }>;
+    };
+    /** The name in the list; the subject by default. */
+    filename?: string;
+    /** The upload this email came from, which is no longer an orphan once the Document exists. */
+    uploadKey?: string;
   },
 ): Promise<Id<"documents">> {
-  const pageCount = await checkPdf(ctx, document.key);
+  const body = email.body.trim();
+  if (new TextEncoder().encode(body).length > MAX_EMAIL_BODY_BYTES) throw new ConvexError(EMAIL_BODY_TOO_LARGE);
+  if (email.attachments.length > MAX_EMAIL_ATTACHMENTS) throw new ConvexError(TOO_MANY_ATTACHMENTS);
+  if (email.attachments.reduce((sum, a) => sum + a.bytes.length, 0) > MAX_EMAIL_ATTACHMENT_BYTES) {
+    throw new ConvexError(ATTACHMENTS_TOO_LARGE);
+  }
+  if (body === "" && email.attachments.length === 0) throw new ConvexError(EMPTY_EMAIL);
+
+  const parts: Array<{ filename: string; mimeType: string; bytes: Uint8Array }> = [];
+  const counted: Array<{ kind: "pdf"; pageCount: number } | { kind: "image" }> = [];
+  for (const attachment of email.attachments) {
+    const sniffed = sniffFile(attachment.bytes);
+    if (sniffed === null) throw new ConvexError(UNSUPPORTED_TYPE);
+    if (sniffed.kind === "pdf") {
+      counted.push({ kind: "pdf", pageCount: await checkPdfBytes(attachment.bytes) });
+    } else {
+      if (attachment.bytes.length > MAX_IMAGE_BYTES) throw new ConvexError(IMAGE_TOO_LARGE);
+      counted.push({ kind: "image" });
+    }
+    parts.push({ filename: attachment.filename, mimeType: sniffed.mimeType, bytes: attachment.bytes });
+  }
+  const items = itemCountOf({ kind: "email", body, attachments: counted });
+
+  const stored = await storeEmail(ctx, document.organisationId, { ...email, body }, parts);
   try {
-    return await ctx.runMutation(internal.documents.insert, { ...document, pageCount });
+    return await ctx.runMutation(internal.documents.insert, {
+      ...document,
+      key: stored.key,
+      filename: filename ?? emailFilename(email.subject, email.from),
+      kind: "email",
+      mimeType: EMAIL_MIME_TYPE,
+      // The email's own page: the body (see Verify in lib/reader.ts).
+      pageCount: 1,
+      items,
+      what: "email",
+      attachmentKeys: stored.attachmentKeys,
+      ...(uploadKey === undefined ? {} : { uploadKey }),
+    });
   } catch (error) {
-    await pdfStore.remove(ctx, document.key);
+    for (const key of [stored.key, ...stored.attachmentKeys]) await pdfStore.remove(ctx, key);
     throw error;
   }
 }
@@ -162,10 +321,27 @@ export const insert = internalMutation({
     pageCount: v.number(),
     uploadedBy: v.string(),
     uploaderEmail: v.string(),
+    // A PDF unless said otherwise.
+    kind: v.optional(inputKind),
+    mimeType: v.optional(v.string()),
+    /** The Items to charge; a PDF's pages by default. */
+    items: v.optional(v.number()),
+    /** What an out-of-Items refusal calls the input: "this PDF needs 8". */
+    what: v.optional(v.string()),
+    attachmentKeys: v.optional(v.array(v.string())),
+    /** The upload this Document came from, when its file is not the Document's own. */
+    uploadKey: v.optional(v.string()),
   },
-  handler: async (ctx, args) => {
-    await chargeItems(ctx, args.organisationId, itemCountOf({ kind: "pdf", pageCount: args.pageCount }));
-    return await createDocument(ctx, args);
+  handler: async (ctx, { items, what, uploadKey, ...args }) => {
+    await chargeItems(
+      ctx,
+      args.organisationId,
+      items ?? itemCountOf({ kind: "pdf", pageCount: args.pageCount }),
+      what,
+    );
+    const documentId = await createDocument(ctx, args);
+    if (uploadKey !== undefined) await claimUpload(ctx, uploadKey);
+    return documentId;
   },
 });
 
@@ -189,7 +365,6 @@ export async function createDocument(
     key: string;
     filename: string;
     pageCount: number;
-    // Default to a PDF until the readers and intake of the other kinds exist.
     kind?: InputKind;
     mimeType?: string;
     /** An email's attachments, stored under `${key}/…` (lib/documentFiles.ts removes them with it). */

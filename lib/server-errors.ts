@@ -27,6 +27,7 @@ const dutch: Record<string, string> = {
   "Vink reads up to 10 attachments per email.": "Vink leest maximaal 10 bijlagen per e-mail.",
   "The attachments of this email are larger than 12 MB together.":
     "De bijlagen van deze e-mail zijn samen groter dan 12 MB.",
+  "This email has no text and no attachments.": "Deze e-mail heeft geen tekst en geen bijlagen.",
   "The attachment is larger than 25 MB.": "De bijlage is groter dan 25 MB.",
 
   // Not found

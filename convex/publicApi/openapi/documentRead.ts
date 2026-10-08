@@ -32,7 +32,7 @@ const exampleDocument = {
 };
 
 export const documentRead: OpenApiPart = {
-  tag: { name: "Documents", description: "PDFs Vink reads into a Form's Fields." },
+  tag: { name: "Documents", description: "PDFs, photos and emails Vink reads into a Form's Fields." },
   paths: {
     "/documents/{id}": {
       get: {
@@ -92,7 +92,7 @@ export const documentRead: OpenApiPart = {
         data_deleted_at: {
           type: ["string", "null"],
           format: "date-time",
-          description: "When its PDF and values were deleted; `null` while they are kept.",
+          description: "When its file and values were deleted; `null` while they are kept.",
         },
         payload: {
           oneOf: [{ $ref: "#/components/schemas/Envelope" }, { type: "null" }],

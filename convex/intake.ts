@@ -22,6 +22,8 @@ import { escapeHtml, sendEmail } from "./email";
 import { chargeItems } from "./items";
 import { orgMutation, orgQuery } from "./lib/functions";
 import {
+  ATTACHMENTS_TOO_LARGE,
+  EMAIL_BODY_TOO_LARGE,
   IMAGE_MIME_TYPES,
   IMAGE_TOO_LARGE,
   MAX_EMAIL_ATTACHMENT_BYTES,
@@ -30,22 +32,19 @@ import {
   MAX_IMAGE_BYTES,
   PDF_MIME_TYPE,
   PDF_TOO_LARGE,
+  TOO_MANY_ATTACHMENTS,
+  UNSUPPORTED_TYPE,
 } from "./lib/inputLimits";
 import { itemsOfMail, itemsOfPlanned, type MailPart, needsSplitCall, planMail } from "./lib/mailPlan";
 import { pdfStore } from "./lib/pdfStore";
-import type { StoredEmail } from "./lib/readerInput";
 import { sameSecret } from "./lib/secrets";
+import { emailFilename, storeEmail } from "./lib/storedEmail";
 
 const RECENT_EMAILS = 50;
 const ALERT_EVERY = 24 * 60 * 60 * 1000;
 
-// Why an email part was refused without a Document. The app translates these by
-// their exact text (lib/server-errors.ts).
-export const UNSUPPORTED_TYPE =
-  "Vink reads PDFs, photos (JPG, PNG, HEIC) and the email text; this file type isn't supported.";
-export const EMAIL_BODY_TOO_LARGE = "The email text is longer than 200 KB.";
-export const TOO_MANY_ATTACHMENTS = `Vink reads up to ${MAX_EMAIL_ATTACHMENTS} attachments per email.`;
-export const ATTACHMENTS_TOO_LARGE = "The attachments of this email are larger than 12 MB together.";
+// Why an email part was refused without a Document: the texts of lib/inputLimits.ts.
+export { UNSUPPORTED_TYPE };
 
 // Why the Worker skipped an attachment without storing it.
 const skipReasons = {
@@ -300,11 +299,6 @@ async function checkPart(
   }
 }
 
-/** The name an email's Document gets in the list: its subject. */
-function filenameOf(subject: string, from: string) {
-  return subject.trim().slice(0, 200) || `Email from ${from}`;
-}
-
 /** One planned Document, ready for the mutation. */
 const planned = v.object({
   kind: v.union(v.literal("pdf"), v.literal("email"), v.literal("image")),
@@ -396,10 +390,10 @@ export const receive = internalAction({
     let text = body.trim();
     let textAt = -1;
     if (rest.bodyTooLarge || new TextEncoder().encode(text).length > MAX_EMAIL_BODY_BYTES) {
-      outcomes.push(refusedOutcome(filenameOf(subject, from), EMAIL_BODY_TOO_LARGE));
+      outcomes.push(refusedOutcome(emailFilename(subject, from), EMAIL_BODY_TOO_LARGE));
       text = "";
     } else if (text !== "") {
-      textAt = outcomes.push(created(filenameOf(subject, from))) - 1;
+      textAt = outcomes.push(created(emailFilename(subject, from))) - 1;
     }
     const parts: CheckedPart[] = [];
     let bytesLeft = MAX_EMAIL_ATTACHMENT_BYTES;
@@ -479,27 +473,28 @@ export const receive = internalAction({
           continue;
         }
         // The server writes the email's file, under the Organisation's prefix, and moves
-        // its attachments beside it, where only this email's file points (lib/readerInput.ts).
-        const key = `${target.organisationId}/${crypto.randomUUID()}`;
-        emailKeys.push(key);
-        const attachments: StoredEmail["attachments"] = [];
-        for (const part of d.parts) {
-          const bytes = (await pdfStore.read(part.key))!;
-          const copy = `${key}/${attachments.length + 1}`;
-          await pdfStore.store(ctx, copy, bytes, part.mimeType);
-          emailKeys.push(copy);
-          attachments.push({ filename: part.filename, mimeType: part.mimeType, key: copy });
-        }
-        const stored: StoredEmail = { subject, from, date, body: text, attachments };
-        await pdfStore.store(ctx, key, new TextEncoder().encode(JSON.stringify(stored)), "application/json");
+        // its attachments beside it, where only this email's file points (lib/storedEmail.ts).
+        const stored = await storeEmail(
+          ctx,
+          target.organisationId,
+          { subject, from, date, body: text },
+          await Promise.all(
+            d.parts.map(async (part) => ({
+              filename: part.filename,
+              mimeType: part.mimeType,
+              bytes: (await pdfStore.read(part.key))!,
+            })),
+          ),
+        );
+        emailKeys.push(stored.key, ...stored.attachmentKeys);
         documents.push({
           kind: "email",
           mimeType: "application/json",
-          key,
-          filename: filenameOf(subject, from),
+          key: stored.key,
+          filename: emailFilename(subject, from),
           // The email's own page: the body (see Verify in lib/reader.ts).
           pageCount: 1,
-          attachmentKeys: attachments.map((a) => a.key),
+          attachmentKeys: stored.attachmentKeys,
           items,
         });
       }

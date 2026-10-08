@@ -45,6 +45,16 @@ export const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 
 export const IMAGE_TOO_LARGE = "The image is larger than 10 MB.";
 
+// --- Any file ---
+
+// The refusal for a request body (the public API, nginx) that is over the limit
+// before anyone knows what kind of file is in it. The same 10 MB for every kind.
+export const FILE_TOO_LARGE = "The file is larger than 10 MB.";
+
+// A file that is none of PDF, JPG, PNG, HEIC or an email.
+export const UNSUPPORTED_TYPE =
+  "Vink reads PDFs, photos (JPG, PNG, HEIC) and the email text; this file type isn't supported.";
+
 // --- Email ---
 
 // The body as text (the Worker turns HTML into text), not the whole message.
@@ -62,6 +72,13 @@ export const MAX_EMAIL_ATTACHMENTS = 10;
 // the prompt and the answer's schema. One PDF and one photo of 10 MB each do not
 // fit; a mail of that size is a batch that belongs in the upload or the API.
 export const MAX_EMAIL_ATTACHMENT_BYTES = 12 * 1024 * 1024;
+
+// Why an email, or a part of one, was refused. The app translates these by
+// their exact text (lib/server-errors.ts).
+export const EMAIL_BODY_TOO_LARGE = "The email text is longer than 200 KB.";
+export const TOO_MANY_ATTACHMENTS = `Vink reads up to ${MAX_EMAIL_ATTACHMENTS} attachments per email.`;
+export const ATTACHMENTS_TOO_LARGE = "The attachments of this email are larger than 12 MB together.";
+export const EMPTY_EMAIL = "This email has no text and no attachments.";
 
 // --- Items ---
 
