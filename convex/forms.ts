@@ -113,9 +113,12 @@ export async function saveVersion(
   { name, description, fields }: { name: string; description?: string; fields: Infer<typeof field>[] },
 ) {
   const form = await getForm(ctx, organisationId, formId);
-  checkContent(name, fields);
   if (await hasIntegrations(ctx, formId)) {
-    checkKeysKept((await getVersion(ctx, formId, form.version)).fields, fields);
+    const current = (await getVersion(ctx, formId, form.version)).fields;
+    checkContent(name, fields, current);
+    checkKeysKept(current, fields);
+  } else {
+    checkContent(name, fields);
   }
   const number = form.version + 1;
   await ctx.db.insert("formVersions", { organisationId, formId, number, fields, savedBy: userId });
@@ -161,11 +164,19 @@ function checkKeysKept(current: Infer<typeof field>[], next: Infer<typeof field>
   }
 }
 
-function checkContent(name: string, fields: Infer<typeof field>[]) {
+/**
+ * `locked` are the current Fields while an Integration is attached. Their keys
+ * can't change, so a key saved before keys were snake_case (ADR 0005) stays valid.
+ */
+function checkContent(
+  name: string,
+  fields: Infer<typeof field>[],
+  locked: Infer<typeof field>[] = [],
+) {
   if (name.trim() === "") {
     throw new ConvexError("A Form needs a name");
   }
-  checkFields(fields, "Field");
+  checkFields(fields, "Field", locked);
   for (const f of fields) {
     if (f.type === "list") {
       if (f.fields.length === 0) {
@@ -173,17 +184,26 @@ function checkContent(name: string, fields: Infer<typeof field>[]) {
           `The List Field "${f.key}" needs at least one sub-Field`,
         );
       }
-      checkFields(f.fields, `sub-Field of the List Field "${f.key}"`);
+      const lockedList = locked.find((l) => l.key === f.key);
+      checkFields(
+        f.fields,
+        `sub-Field of the List Field "${f.key}"`,
+        lockedList?.type === "list" ? lockedList.fields : [],
+      );
     }
   }
 }
 
 /** Keys are unique among siblings: top-level Fields, or one List Field's sub-Fields. */
-function checkFields(fields: Infer<typeof field>[], kind: string) {
+function checkFields(
+  fields: Infer<typeof field>[],
+  kind: string,
+  locked: Infer<typeof field>[],
+) {
   const keys = new Set<string>();
   for (const f of fields) {
     const { key, label } = f;
-    if (!isValidKey(key)) {
+    if (!isValidKey(key) && !locked.some((l) => l.key === key)) {
       throw new ConvexError(
         `"${key}" isn't a valid key: use snake_case: lowercase letters, digits and single underscores, starting with a letter`,
       );

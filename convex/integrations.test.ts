@@ -257,6 +257,47 @@ test("once an Integration is attached, the Form's keys are locked: renaming or r
   expect((await user.query(api.forms.get, { organisationSlug, formId })).keysLocked).toBe(false);
 });
 
+test("a camelCase key saved before keys were snake_case still saves while it is locked; a new one doesn't", async () => {
+  const t = newBackend();
+  const { user, organisationSlug, formId, create } = await acme(t);
+  // A Form Version from before ADR 0005, with camelCase keys at both levels.
+  await t.run(async (ctx) => {
+    const version = (await ctx.db.query("formVersions").collect()).find((v) => v.formId === formId)!;
+    await ctx.db.patch(version._id, {
+      fields: version.fields.map((f) =>
+        f.type === "list"
+          ? { ...f, key: "tyreChanges", fields: f.fields.map((s, i) => (i === 0 ? { ...s, key: "tyrePosition" } : s)) }
+          : f.key === "license_plate"
+            ? { ...f, key: "licensePlate" }
+            : f,
+      ),
+    });
+  });
+  const { integrationId } = await create();
+  await user.mutation(api.integrations.attach, { organisationSlug, integrationId, formId });
+  const { fields } = await user.query(api.forms.get, { organisationSlug, formId });
+
+  await user.mutation(api.forms.save, {
+    organisationSlug,
+    formId,
+    name: "Work order",
+    fields: [{ ...fields[0], label: "Nummerplaat" }, ...fields.slice(1)],
+  });
+  await expect(
+    user.mutation(api.forms.save, {
+      organisationSlug,
+      formId,
+      name: "Work order",
+      fields: [...fields, { type: "text", label: "Opmerking", key: "workNote", required: false }],
+    }),
+  ).rejects.toThrow(`"workNote" isn't a valid key`);
+
+  await user.mutation(api.integrations.detach, { organisationSlug, integrationId, formId });
+  await expect(
+    user.mutation(api.forms.save, { organisationSlug, formId, name: "Work order", fields }),
+  ).rejects.toThrow(`"licensePlate" isn't a valid key`);
+});
+
 test("a test-send posts the test envelope with example data, signed like a real Delivery, and shows the answer", async () => {
   const t = newBackend();
   const { user, organisationSlug, formId, create } = await acme(t);
