@@ -6,7 +6,7 @@ A key is lowercase letters and digits in words joined by single underscores, sta
 
 ## Consequences
 
-- No migration: the only Forms at the time of the switch were test Forms. A Form saved with a camelCase key no longer saves until its keys are changed.
+- No migration: the only Forms at the time of the switch were test Forms. A Form saved with a camelCase key no longer saves until its keys are changed. The exception is a Form with an attached Integration: its keys are locked, so a camelCase key it already has stays valid. New keys must still be snake_case.
 - Receivers built against the old envelope must read `delivery_id` and `document.uploaded_at` (the Van Dijk demo back-office reads both styles).
 - The Reading keeps its own camelCase keys. It is never sent, and its keys are the Reader's choice; only Field keys and the envelope are on the wire.
 - The recorded fixture runs in `fixtures/` still hold camelCase Field keys; `convex/extraction.test.ts` converts them when it replays them.

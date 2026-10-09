@@ -142,7 +142,8 @@ export function fieldProblems(
 ) {
   const problems: FieldProblem[] = [];
   if (field.label.trim() === "") problems.push("label");
-  if (!isValidKey(field.key)) {
+  // A locked key can't change, so one saved before keys were snake_case stays.
+  if (!isValidKey(field.key) && !field.locked) {
     problems.push("key");
   } else if (siblings.some((f) => f.id !== field.id && f.key === field.key)) {
     problems.push(duplicate);
