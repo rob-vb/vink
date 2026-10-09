@@ -259,6 +259,14 @@ export default defineSchema({
     fields: v.optional(v.array(v.object({ field, ticked: v.boolean() }))),
   }).index("by_organisationId", ["organisationId"]),
 
+  // "Describe in words" quota: the creation times of the Organisation's descriptions
+  // from the last 24 hours (at most MAX_DESCRIPTIONS_PER_DAY). Kept apart from
+  // formProposals, because a discard or a save deletes those rows.
+  descriptionQuotas: defineTable({
+    organisationId: v.id("organisations"),
+    times: v.array(v.number()),
+  }).index("by_organisationId", ["organisationId"]),
+
   // An Intake Address: `<token>@<INBOUND_DOMAIN>`. At most one per Form and one
   // per Organisation (the row without a `formId`; its mail goes through the
   // Router, ADR 0010). Replacing it deletes the row, so the old token stops at once.

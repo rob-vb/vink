@@ -17,9 +17,12 @@ import { insertForm, saveVersion } from "./forms";
 import { removeDocumentFiles } from "./lib/documentFiles";
 import {
   DESCRIPTION_EMPTY,
+  DESCRIPTION_WINDOW_MS,
   DESCRIPTION_TOO_LONG,
+  DESCRIPTIONS_PER_DAY_REACHED,
   descriptionTitle,
   MAX_DESCRIPTION_CHARS,
+  MAX_DESCRIPTIONS_PER_DAY,
 } from "./lib/formDescription";
 import { orgAction, orgMutation, orgQuery } from "./lib/functions";
 import { pdfStore } from "./lib/pdfStore";
@@ -216,6 +219,24 @@ export const insert = internalMutation({
 });
 
 /**
+ * Takes one of the Organisation's "Describe in words" slots for the last 24
+ * hours (MAX_DESCRIPTIONS_PER_DAY). The times live in descriptionQuotas, not in
+ * the proposal rows, so a discard or a save does not free a slot.
+ */
+async function takeDescriptionSlot(ctx: MutationCtx, organisationId: Id<"organisations">) {
+  const now = Date.now();
+  const quota = await ctx.db
+    .query("descriptionQuotas")
+    .withIndex("by_organisationId", (q) => q.eq("organisationId", organisationId))
+    .unique();
+  const recent = (quota?.times ?? []).filter((time) => time > now - DESCRIPTION_WINDOW_MS);
+  if (recent.length >= MAX_DESCRIPTIONS_PER_DAY) throw new ConvexError(DESCRIPTIONS_PER_DAY_REACHED);
+  recent.push(now);
+  if (quota) await ctx.db.patch(quota._id, { times: recent });
+  else await ctx.db.insert("descriptionQuotas", { organisationId, times: recent });
+}
+
+/**
  * "Describe in words": the Admin writes what the document is and which data
  * they need, and the Proposer proposes Fields from that text alone. There is no
  * sample and no Reading, so nothing is read and NO ITEMS ARE CHARGED: the Items
@@ -230,6 +251,7 @@ export const createFromDescription = orgMutation({
     const text = description.trim();
     if (text === "") throw new ConvexError(DESCRIPTION_EMPTY);
     if (text.length > MAX_DESCRIPTION_CHARS) throw new ConvexError(DESCRIPTION_TOO_LONG);
+    await takeDescriptionSlot(ctx, ctx.organisationId);
     const identity = (await ctx.auth.getUserIdentity())!;
     const proposalId = await ctx.db.insert("formProposals", {
       organisationId: ctx.organisationId,

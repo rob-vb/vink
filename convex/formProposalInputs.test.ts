@@ -3,7 +3,14 @@
 // alone ("Describe in words": no sample, no Reading, no Items charged).
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { api, internal } from "./_generated/api";
-import { DESCRIPTION_EMPTY, DESCRIPTION_TOO_LONG, MAX_DESCRIPTION_CHARS } from "./lib/formDescription";
+import {
+  DESCRIPTION_WINDOW_MS,
+  DESCRIPTION_EMPTY,
+  DESCRIPTION_TOO_LONG,
+  DESCRIPTIONS_PER_DAY_REACHED,
+  MAX_DESCRIPTION_CHARS,
+  MAX_DESCRIPTIONS_PER_DAY,
+} from "./lib/formDescription";
 import {
   addMembership,
   fakePdfStore,
@@ -401,6 +408,64 @@ test("an empty or too long description is refused, and no proposal is made", asy
 
   expect(await org.rows.proposals()).toHaveLength(1);
   expect(await org.used()).toBe(0);
+});
+
+test("an Organisation describes 20 Forms in 24 hours; the 21st is refused, even after a discard", async () => {
+  const t = newBackend();
+  const org = await klachten(t);
+  fakePipeline.replay(complaint);
+  const create = (slug: string, user: typeof org.user) =>
+    user.mutation(api.formProposals.createFromDescription, { organisationSlug: slug, description });
+
+  const ids = [];
+  for (let i = 0; i < MAX_DESCRIPTIONS_PER_DAY; i++) {
+    ids.push((await create(org.slug, org.user)).proposalId);
+  }
+  await expect(create(org.slug, org.user)).rejects.toThrow(DESCRIPTIONS_PER_DAY_REACHED);
+  expect(await org.rows.proposals()).toHaveLength(MAX_DESCRIPTIONS_PER_DAY);
+
+  // A discarded description still counts: the 21st stays refused.
+  await org.user.mutation(api.formProposals.discard, { organisationSlug: org.slug, proposalId: ids[0] });
+  expect(await org.rows.proposals()).toHaveLength(MAX_DESCRIPTIONS_PER_DAY - 1);
+  await expect(create(org.slug, org.user)).rejects.toThrow(DESCRIPTIONS_PER_DAY_REACHED);
+  await settle(t);
+});
+
+test("another Organisation is not affected by the cap", async () => {
+  const t = newBackend();
+  const org = await klachten(t);
+  fakePipeline.replay(complaint);
+  for (let i = 0; i < MAX_DESCRIPTIONS_PER_DAY; i++) {
+    await org.user.mutation(api.formProposals.createFromDescription, { organisationSlug: org.slug, description });
+  }
+  await expect(
+    org.user.mutation(api.formProposals.createFromDescription, { organisationSlug: org.slug, description }),
+  ).rejects.toThrow(DESCRIPTIONS_PER_DAY_REACHED);
+
+  const eve = await signUp(t, "eve", "Evil Corp");
+  const { proposalId } = await eve.user.mutation(api.formProposals.createFromDescription, {
+    organisationSlug: eve.slug,
+    description,
+  });
+  expect(proposalId).toBeDefined();
+  await settle(t);
+});
+
+test("the cap is rolling: the slots come back 24 hours after each description", async () => {
+  const t = newBackend();
+  const org = await klachten(t);
+  fakePipeline.replay(complaint);
+  const create = () =>
+    org.user.mutation(api.formProposals.createFromDescription, { organisationSlug: org.slug, description });
+
+  for (let i = 0; i < MAX_DESCRIPTIONS_PER_DAY; i++) await create();
+  vi.setSystemTime(Date.now() + DESCRIPTION_WINDOW_MS - 60 * 1000);
+  await expect(create()).rejects.toThrow(DESCRIPTIONS_PER_DAY_REACHED);
+
+  vi.setSystemTime(Date.now() + 60 * 1000);
+  await create();
+  expect(await org.rows.proposals()).toHaveLength(MAX_DESCRIPTIONS_PER_DAY + 1);
+  await settle(t);
 });
 
 test("a failed description shows its error and a retry proposes again, still without a Read", async () => {

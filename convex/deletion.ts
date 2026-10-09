@@ -172,7 +172,7 @@ export const purge = internalMutation({
       .withIndex("by_organisationId", (q) => q.eq("organisationId", organisationId))
       .collect();
     for (const integration of integrations) await removeIntegration(ctx, integration);
-    for (const table of ["notifications", "topUpPayments"] as const) {
+    for (const table of ["notifications", "topUpPayments", "descriptionQuotas"] as const) {
       const rows = await ctx.db
         .query(table)
         .withIndex("by_organisationId", (q) => q.eq("organisationId", organisationId))

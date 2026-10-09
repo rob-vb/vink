@@ -69,6 +69,8 @@ const dutch: Record<string, string> = {
   "This proposal has no sample to process": "Dit voorstel heeft geen voorbeeld om te verwerken",
   "Describe the document and the data you need first.": "Beschrijf eerst het document en de gegevens die je nodig hebt.",
   "The description is longer than 2000 characters.": "De beschrijving is langer dan 2000 tekens.",
+  "Your Organisation has described 20 Forms in the last 24 hours. Try again later.":
+    "Jullie organisatie heeft de afgelopen 24 uur al 20 Formulieren beschreven. Probeer het later opnieuw.",
 
   // Integrations and Deliveries
   "An Integration needs a name": "Een Koppeling heeft een naam nodig",
