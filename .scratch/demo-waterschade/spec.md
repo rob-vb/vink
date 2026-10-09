@@ -98,3 +98,11 @@ Each step ends green on `npm run typecheck`, `npm run lint` and `npm test`.
   - Plinten en ondervloer / 2019 / 210,00 / 175,00
 - Total claimed: **1.685,00**. IBAN: NL91 ABNA 0417 1643 00. Photos attached: yes.
 - Items: the email text names the policy number and what happened, so it is read and is not a cover note. Total: text 1 + PDF 1 + 2 photos = **4 Items**.
+
+### Steps 2–5 (2026-10-09, branch `demo-waterschade`)
+
+- Done: seed `claim` (email + PDF + 2 photos, routed to Schademeldingen), meldformulier page and two SVG photos, home and features show the claim (`claimForm` tab). Demo email attachments may now be a PDF drawn by the demo PDF pane.
+- Orders paper: "Delivery"/"Please deliver" became a phone number with a handwritten new number (still a "conflicting" example). Newsletter: "free delivery" became "a free bag of beans".
+- Domain grep, customer-visible hits fixed: `common.json:59`, `appForms.json:130,144` (NL + EN). Left as is: model prompts (`convex/lib/reader.ts:27`, `proposer.ts:10-12`), tests, and the Vink term Delivery/Levering for an Integration send.
+- e2e on port 3013: NL + EN, light + dark, 390 + 1280 px. Email highlight marks WH-2048-7731; PDF, both photos and zoom show; 2× "Waarde klopt" then Approve works; no console errors. Screenshots: https://claude.ai/artifact/SiYfNwKFCq2Vgnb4Eb34Yd
+- Step 6 (eval fixture): not started.
