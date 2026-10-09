@@ -1,6 +1,6 @@
 # PLAN — Vink: any input, routed to a Form
 
-Source: the grilling session of 2026-10-08. The full decision record is in the memory file `employer-pivot.md`.
+Source: the grilling session of 2026-10-08. The decision record is in the memory file `any-input-pivot.md`.
 Goal: Vink takes any input (PDF, email text, photo/scan). A router picks the Form. The rest of the pipeline stays: Read → Match → Fill → review → Integrations.
 
 ## Start here (new session)
