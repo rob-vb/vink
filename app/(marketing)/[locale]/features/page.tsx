@@ -235,7 +235,7 @@ export default async function FeaturesPage() {
       {chapter(
         "around",
         "+",
-        <div className="mt-10 grid gap-4 lg:grid-cols-2">
+        <div className="mt-10 grid grid-cols-1 gap-4 lg:grid-cols-2">
           <BentoCard
             title={t("team.title")}
             text={t("team.text")}
