@@ -209,7 +209,7 @@ export function tokenOf(to: string) {
  * Vink's POST /intake/email. `newKey` names each stored attachment. The text is
  * the text/plain part, else the HTML part as text. A PDF or image is stored;
  * any other file type is listed as skipped. Vink decides the rest (which Form,
- * one Document or several): the same for an Organisation's address and a Form's.
+ * one Submission or several): the same for an Organisation's address and a Form's.
  */
 export function planEmail(
   input: {

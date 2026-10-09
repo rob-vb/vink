@@ -1,8 +1,8 @@
 const zapier = require('zapier-platform-core');
 
 const authentication = require('./authentication');
-const sendDocument = require('./creates/send-document');
-const documentApproved = require('./triggers/document-approved');
+const sendSubmission = require('./creates/send-submission');
+const submissionApproved = require('./triggers/submission-approved');
 const forms = require('./triggers/forms');
 const { addApiKey, showVinkError } = require('./lib/api');
 
@@ -15,10 +15,10 @@ module.exports = {
   beforeRequest: [addApiKey],
   afterResponse: [showVinkError],
   triggers: {
-    [documentApproved.key]: documentApproved,
+    [submissionApproved.key]: submissionApproved,
     [forms.key]: forms,
   },
   creates: {
-    [sendDocument.key]: sendDocument,
+    [sendSubmission.key]: sendSubmission,
   },
 };

@@ -1,37 +1,37 @@
-// Reject, Reopen and Delete: ruling a Document unusable before Approval,
-// undoing that, and (Admin only) removing any Document's data outright.
+// Reject, Reopen and Delete: ruling a Submission unusable before Approval,
+// undoing that, and (Admin only) removing any Submission's data outright.
 import { ConvexError, v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx } from "./_generated/server";
-import { moveTo } from "./lib/documentStates";
+import { moveTo } from "./lib/submissionStates";
 import { orgMutation } from "./lib/functions";
-import { removeDocumentFiles } from "./lib/documentFiles";
+import { removeSubmissionFiles } from "./lib/submissionFiles";
 
-async function ownDocument(
+async function ownSubmission(
   ctx: MutationCtx,
   organisationId: Id<"organisations">,
-  documentId: Id<"documents">,
+  submissionId: Id<"submissions">,
 ) {
-  const document = await ctx.db.get(documentId);
-  if (document === null || document.organisationId !== organisationId) {
+  const submission = await ctx.db.get(submissionId);
+  if (submission === null || submission.organisationId !== organisationId) {
     throw new ConvexError("Submission not found");
   }
-  if (document.state === "approved") throw new ConvexError("This Submission is approved");
-  return document;
+  if (submission.state === "approved") throw new ConvexError("This Submission is approved");
+  return submission;
 }
 
 async function logged(
   ctx: MutationCtx,
-  document: Doc<"documents">,
+  submission: Doc<"submissions">,
   userId: string,
   event: "rejected" | "reopened" | "deleted",
   detail?: string,
 ) {
   const identity = await ctx.auth.getUserIdentity();
   const who = { by: userId, byEmail: identity?.email?.toLowerCase() ?? "", at: Date.now() };
-  await ctx.db.insert("documentEvents", {
-    organisationId: document.organisationId,
-    documentId: document._id,
+  await ctx.db.insert("submissionEvents", {
+    organisationId: submission.organisationId,
+    submissionId: submission._id,
     event,
     ...(detail ? { detail } : {}),
     ...who,
@@ -39,89 +39,89 @@ async function logged(
   return who;
 }
 
-function requireRejected(document: Doc<"documents">) {
-  if (document.state !== "rejected" || document.rejection === undefined) {
+function requireRejected(submission: Doc<"submissions">) {
+  if (submission.state !== "rejected" || submission.rejection === undefined) {
     throw new ConvexError("Only a Rejected Submission can be reopened");
   }
-  return document.rejection;
+  return submission.rejection;
 }
 
 export const reject = orgMutation({
-  args: { documentId: v.id("documents"), reason: v.optional(v.string()) },
-  handler: async (ctx, { documentId, reason }) => {
-    const document = await ownDocument(ctx, ctx.organisationId, documentId);
+  args: { submissionId: v.id("submissions"), reason: v.optional(v.string()) },
+  handler: async (ctx, { submissionId, reason }) => {
+    const submission = await ownSubmission(ctx, ctx.organisationId, submissionId);
     if (
-      document.state !== "needs_review" &&
-      document.state !== "extraction_failed" &&
-      document.state !== "no_form"
+      submission.state !== "needs_review" &&
+      submission.state !== "extraction_failed" &&
+      submission.state !== "no_form"
     ) {
       throw new ConvexError("This Submission can't be rejected now");
     }
     const text = reason?.trim() || null;
-    const who = await logged(ctx, document, ctx.userId, "rejected", text ?? undefined);
-    await ctx.db.patch(documentId, {
-      rejection: { ...who, reason: text, priorState: document.state },
+    const who = await logged(ctx, submission, ctx.userId, "rejected", text ?? undefined);
+    await ctx.db.patch(submissionId, {
+      rejection: { ...who, reason: text, priorState: submission.state },
     });
-    await moveTo(ctx, document, "rejected");
+    await moveTo(ctx, submission, "rejected");
   },
 });
 
 /** Back to the state it was rejected from, values and corrections intact. */
 export const reopen = orgMutation({
-  args: { documentId: v.id("documents") },
-  handler: async (ctx, { documentId }) => {
-    const document = await ownDocument(ctx, ctx.organisationId, documentId);
-    const { priorState } = requireRejected(document);
-    if (document.dataDeletedAt !== undefined) {
+  args: { submissionId: v.id("submissions") },
+  handler: async (ctx, { submissionId }) => {
+    const submission = await ownSubmission(ctx, ctx.organisationId, submissionId);
+    const { priorState } = requireRejected(submission);
+    if (submission.dataDeletedAt !== undefined) {
       throw new ConvexError("This Submission's PDF is gone, so it can't be reopened");
     }
-    await ctx.db.patch(documentId, { rejection: undefined, userTouched: true });
-    await moveTo(ctx, document, priorState);
-    await logged(ctx, document, ctx.userId, "reopened");
+    await ctx.db.patch(submissionId, { rejection: undefined, userTouched: true });
+    await moveTo(ctx, submission, priorState);
+    await logged(ctx, submission, ctx.userId, "reopened");
   },
 });
 
 /**
- * Delete now: removes any Document's PDF, Reading and Field Values at once,
+ * Delete now: removes any Submission's PDF, Reading and Field Values at once,
  * Approved included, and cancels its Deliveries not yet sent. The short record
  * stays: filename, uploader, approver, dates, history and Delivery status. An
- * Approved Document stays Approved; any other becomes Deleted.
+ * Approved Submission stays Approved; any other becomes Deleted.
  */
 export const remove = orgMutation({
   role: "admin",
-  args: { documentId: v.id("documents") },
-  handler: async (ctx, { documentId }) => {
-    const document = await ctx.db.get(documentId);
-    if (document === null || document.organisationId !== ctx.organisationId) {
+  args: { submissionId: v.id("submissions") },
+  handler: async (ctx, { submissionId }) => {
+    const submission = await ctx.db.get(submissionId);
+    if (submission === null || submission.organisationId !== ctx.organisationId) {
       throw new ConvexError("Submission not found");
     }
-    if (document.state === "deleted" || document.dataDeletedAt !== undefined) {
+    if (submission.state === "deleted" || submission.dataDeletedAt !== undefined) {
       throw new ConvexError("This Submission's data was already deleted");
     }
-    await deleteData(ctx, document);
-    if (document.state !== "approved") await moveTo(ctx, document, "deleted");
-    await logged(ctx, document, ctx.userId, "deleted");
+    await deleteData(ctx, submission);
+    if (submission.state !== "approved") await moveTo(ctx, submission, "deleted");
+    await logged(ctx, submission, ctx.userId, "deleted");
   },
 });
 
 /**
- * Removes a Document's PDF from R2, its Reading and Field Values, the Payload
+ * Removes a Submission's PDF from R2, its Reading and Field Values, the Payload
  * its Deliveries carried and the receivers' response bodies. Deliveries not
  * yet sent are cancelled, so the data never leaves afterwards. Metadata,
  * history and the Delivery log (times and statuses) stay.
  */
-export async function deleteData(ctx: MutationCtx, document: Doc<"documents">) {
-  if (document.dataDeletedAt === undefined) await removeDocumentFiles(ctx, document);
+export async function deleteData(ctx: MutationCtx, submission: Doc<"submissions">) {
+  if (submission.dataDeletedAt === undefined) await removeSubmissionFiles(ctx, submission);
   for (const table of ["readings", "fieldValues", "listValues"] as const) {
     const rows = await ctx.db
       .query(table)
-      .withIndex("by_documentId", (q) => q.eq("documentId", document._id))
+      .withIndex("by_submissionId", (q) => q.eq("submissionId", submission._id))
       .take(5000);
     for (const row of rows) await ctx.db.delete(row._id);
   }
   const deliveries = await ctx.db
     .query("deliveries")
-    .withIndex("by_documentId", (q) => q.eq("documentId", document._id))
+    .withIndex("by_submissionId", (q) => q.eq("submissionId", submission._id))
     .take(100);
   for (const delivery of deliveries) {
     const open = delivery.state === "pending" || delivery.state === "retrying";
@@ -135,5 +135,5 @@ export async function deleteData(ctx: MutationCtx, document: Doc<"documents">) {
       }),
     });
   }
-  await ctx.db.patch(document._id, { dataDeletedAt: Date.now(), retentionClockAt: undefined });
+  await ctx.db.patch(submission._id, { dataDeletedAt: Date.now(), retentionClockAt: undefined });
 }

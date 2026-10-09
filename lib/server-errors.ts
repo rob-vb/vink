@@ -43,7 +43,7 @@ const dutch: Record<string, string> = {
   "List not found": "Lijst niet gevonden",
   "Entry not found": "Regel niet gevonden",
 
-  // Documents
+  // Submissions
   "The upload didn't arrive. Try again.": "De upload is niet aangekomen. Probeer het opnieuw.",
   "This file isn't a PDF Vink can read.": "Dit bestand is geen pdf die Vink kan lezen.",
   "The PDF is larger than 10 MB.": "De pdf is groter dan 10 MB.",
@@ -122,7 +122,7 @@ const dutchPatterns: [RegExp, (...groups: string[]) => string][] = [
   ],
   // The same, as worded in intake skip reasons stored before it said "per PDF".
   [
-    /^This PDF has (\d+) pages\. Vink reads up to (\d+) pages per Document\.$/,
+    /^This PDF has (\d+) pages\. Vink reads up to (\d+) pages per Submission\.$/,
     (pages, max) => `Deze pdf heeft ${pages} pagina's. Vink leest maximaal ${max} pagina's per pdf.`,
   ],
   [/^Keep data from 1 to (\d+) days$/, (max) => `Bewaar data 1 tot ${max} dagen`],

@@ -11,7 +11,7 @@
     "signIn": "Inloggen · Vink",
     "signUp": "Aanmelden · Vink",
     "invitation": "Uitnodiging · Vink",
-    "documents": "Inbox · Vink",
+    "submissions": "Inbox · Vink",
     "members": "Leden · Vink"
   },
   "roles": {
@@ -96,7 +96,7 @@
   "shell": {
     "home": "Home",
     "nav": {
-      "documents": "Inbox",
+      "submissions": "Inbox",
       "forms": "Formulieren",
       "integrations": "Koppelingen",
       "members": "Leden"
@@ -112,8 +112,8 @@
     "label": "{unread, plural, =0 {Meldingen} other {Meldingen, # ongelezen}}",
     "markAllRead": "Alles als gelezen markeren",
     "empty": "Niets nieuws.",
-    "deliveryFailed": "{document} kon niet worden afgeleverd bij {integration}",
-    "aDocument": "Een Inzending"
+    "deliveryFailed": "{submission} kon niet worden afgeleverd bij {integration}",
+    "aSubmission": "Een Inzending"
   },
   "items": {
     "upgrade": "Upgraden",

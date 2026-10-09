@@ -15,9 +15,9 @@ import {
 import { removeIntegration } from "./integrations";
 import { MAX_ATTEMPTS, nextAttemptAt } from "./lib/backoff";
 import { refreshTokenKeeper, sendAlone } from "./lib/accounts";
-import { documentPayload } from "./lib/documentPayload";
+import { submissionPayload } from "./lib/submissionPayload";
 import { orgMutation, orgQuery } from "./lib/functions";
-import { formOf } from "./lib/documentForm";
+import { formOf } from "./lib/submissionForm";
 import { kindOf, sendTo } from "./lib/integrationAdapters";
 import { envelopeOf } from "./lib/payload";
 
@@ -28,36 +28,36 @@ const BODY_LOGGED = 500;
 const BUSY_WAIT_MS = 5_000;
 
 /**
- * Creates a Delivery for every Integration attached to the Document's Form
+ * Creates a Delivery for every Integration attached to the Submission's Form
  * right now, freezing the envelope, and sends each. None when nothing is attached.
  */
-export async function createDeliveries(ctx: MutationCtx, document: Doc<"documents">) {
-  const { formId, formVersion } = formOf(document);
+export async function createDeliveries(ctx: MutationCtx, submission: Doc<"submissions">) {
+  const { formId, formVersion } = formOf(submission);
   const links = await ctx.db
     .query("formIntegrations")
     .withIndex("by_formId", (q) => q.eq("formId", formId))
     .take(100);
-  const approval = document.approval!;
+  const approval = submission.approval!;
   if (links.length === 0) {
     // Nothing to send: the retention clock starts at Approval.
-    await ctx.db.patch(document._id, { retentionClockAt: approval.at });
+    await ctx.db.patch(submission._id, { retentionClockAt: approval.at });
     return;
   }
-  const data = await documentPayload(ctx, document);
+  const data = await submissionPayload(ctx, submission);
   for (const link of links) {
     const integration = (await ctx.db.get(link.integrationId))!;
     const deliveryId = `dlv_${crypto.randomUUID()}`;
     const envelope = envelopeOf({
       deliveryId,
       test: false,
-      document: { id: document._id, filename: document.filename, uploadedAt: document._creationTime },
+      submission: { id: submission._id, filename: submission.filename, uploadedAt: submission._creationTime },
       form: { id: formId, version: formVersion },
       approval: { mode: approval.mode, by: approval.by, at: approval.at },
       data,
     });
     const id = await ctx.db.insert("deliveries", {
-      organisationId: document.organisationId,
-      documentId: document._id,
+      organisationId: submission.organisationId,
+      submissionId: submission._id,
       integrationId: integration._id,
       integrationName: integration.name,
       deliveryId,
@@ -78,8 +78,8 @@ export const attemptInput = internalQuery({
     if (delivery.state !== "pending" && delivery.state !== "retrying") return null;
     const integration = await ctx.db.get(delivery.integrationId);
     if (integration === null) return null;
-    const document = await ctx.db.get(delivery.documentId);
-    return { envelope: delivery.envelope, integration, approverEmail: document?.approval?.byEmail ?? null };
+    const submission = await ctx.db.get(delivery.submissionId);
+    return { envelope: delivery.envelope, integration, approverEmail: submission?.approval?.byEmail ?? null };
   },
 });
 
@@ -137,7 +137,7 @@ export const recordAttempt = internalMutation({
   },
   handler: async (ctx, { id, attempt, outcome }) => {
     const delivery = (await ctx.db.get(id))!;
-    // Settled meanwhile (e.g. its Integration was removed, or its Document
+    // Settled meanwhile (e.g. its Integration was removed, or its Submission
     // deleted): keep the log only, and no response body once the data is gone.
     if (delivery.envelope === undefined) attempt = { ...attempt, body: null };
     const attempts = [...delivery.attempts, attempt];
@@ -148,10 +148,10 @@ export const recordAttempt = internalMutation({
     if (outcome.kind === "delivered") {
       await ctx.db.patch(id, { attempts, state: "delivered", nextAttemptAt: undefined });
       // The retention clock runs from the last successful Delivery.
-      const document = await ctx.db.get(delivery.documentId);
-      if (document && document.dataDeletedAt === undefined) {
-        await ctx.db.patch(document._id, {
-          retentionClockAt: Math.max(document.retentionClockAt ?? 0, attempt.at),
+      const submission = await ctx.db.get(delivery.submissionId);
+      if (submission && submission.dataDeletedAt === undefined) {
+        await ctx.db.patch(submission._id, {
+          retentionClockAt: Math.max(submission.retentionClockAt ?? 0, attempt.at),
         });
       }
       return;
@@ -181,7 +181,7 @@ export const recordAttempt = internalMutation({
       await markNeedsReconnect(ctx, delivery.integrationId);
     }
     await notifyFailed(ctx, delivery);
-    await startClockIfAllFailed(ctx, delivery.documentId);
+    await startClockIfAllFailed(ctx, delivery.submissionId);
   },
 });
 
@@ -205,7 +205,7 @@ async function endSubscription(ctx: MutationCtx, delivery: Doc<"deliveries">, at
     nextAttemptAt: undefined,
   });
   await removeIntegration(ctx, delivery.integrationId);
-  await startClockIfAllFailed(ctx, delivery.documentId);
+  await startClockIfAllFailed(ctx, delivery.submissionId);
   return true;
 }
 
@@ -217,30 +217,30 @@ async function markNeedsReconnect(ctx: MutationCtx, integrationId: Id<"integrati
 }
 
 /**
- * When every Delivery of a Document has ended failed, its retention clock
+ * When every Delivery of a Submission has ended failed, its retention clock
  * starts at the last attempt, so its data isn't kept forever. A later
  * successful re-send moves the clock on.
  */
-async function startClockIfAllFailed(ctx: MutationCtx, documentId: Id<"documents">) {
-  const document = await ctx.db.get(documentId);
-  if (document === null || document.dataDeletedAt !== undefined) return;
+async function startClockIfAllFailed(ctx: MutationCtx, submissionId: Id<"submissions">) {
+  const submission = await ctx.db.get(submissionId);
+  if (submission === null || submission.dataDeletedAt !== undefined) return;
   const deliveries = await ctx.db
     .query("deliveries")
-    .withIndex("by_documentId", (q) => q.eq("documentId", documentId))
+    .withIndex("by_submissionId", (q) => q.eq("submissionId", submissionId))
     .take(100);
   if (deliveries.some((d) => d.state !== "failed")) return;
   const lastAttempt = Math.max(0, ...deliveries.flatMap((d) => d.attempts.map((a) => a.at)));
-  await ctx.db.patch(documentId, {
-    retentionClockAt: Math.max(document.retentionClockAt ?? 0, lastAttempt || Date.now()),
+  await ctx.db.patch(submissionId, {
+    retentionClockAt: Math.max(submission.retentionClockAt ?? 0, lastAttempt || Date.now()),
   });
 }
 
 async function notifyFailed(ctx: MutationCtx, delivery: Doc<"deliveries">) {
-  const document = await ctx.db.get(delivery.documentId);
+  const submission = await ctx.db.get(delivery.submissionId);
   await ctx.db.insert("notifications", {
     organisationId: delivery.organisationId,
-    text: `${document?.filename ?? "A Submission"} couldn't be delivered to ${delivery.integrationName}`,
-    documentId: delivery.documentId,
+    text: `${submission?.filename ?? "A Submission"} couldn't be delivered to ${delivery.integrationName}`,
+    submissionId: delivery.submissionId,
     at: Date.now(),
     readBy: [],
   });
@@ -271,7 +271,7 @@ export const resend = orgMutation({
 
 /**
  * Fails an Integration's open Deliveries with "Integration removed" (all of
- * them, or only those of one Form's Documents when it is detached from it).
+ * them, or only those of one Form's Submissions when it is detached from it).
  */
 export async function failOpenDeliveries(
   ctx: MutationCtx,
@@ -285,8 +285,8 @@ export async function failOpenDeliveries(
   for (const delivery of deliveries) {
     if (delivery.state !== "pending" && delivery.state !== "retrying") continue;
     if (formId !== undefined) {
-      const document = await ctx.db.get(delivery.documentId);
-      if (document?.formId !== formId) continue;
+      const submission = await ctx.db.get(delivery.submissionId);
+      if (submission?.formId !== formId) continue;
     }
     await ctx.db.patch(delivery._id, {
       state: "failed",
@@ -294,7 +294,7 @@ export async function failOpenDeliveries(
       integrationRemoved: true,
       nextAttemptAt: undefined,
     });
-    await startClockIfAllFailed(ctx, delivery.documentId);
+    await startClockIfAllFailed(ctx, delivery.submissionId);
   }
 }
 
@@ -311,16 +311,16 @@ function viewOf(delivery: Doc<"deliveries">) {
   };
 }
 
-/** A Document's Deliveries, oldest first. */
-export async function deliveriesOf(ctx: QueryCtx, documentId: Id<"documents">) {
+/** A Submission's Deliveries, oldest first. */
+export async function deliveriesOf(ctx: QueryCtx, submissionId: Id<"submissions">) {
   const deliveries = await ctx.db
     .query("deliveries")
-    .withIndex("by_documentId", (q) => q.eq("documentId", documentId))
+    .withIndex("by_submissionId", (q) => q.eq("submissionId", submissionId))
     .take(100);
   return deliveries.map(viewOf);
 }
 
-/** An Integration's Deliveries, newest first, with the Document each carried. */
+/** An Integration's Deliveries, newest first, with the Submission each carried. */
 export const forIntegration = orgQuery({
   role: "admin",
   args: { integrationId: v.id("integrations") },
@@ -336,10 +336,10 @@ export const forIntegration = orgQuery({
       .take(50);
     return await Promise.all(
       deliveries.map(async (delivery) => {
-        const document = await ctx.db.get(delivery.documentId);
+        const submission = await ctx.db.get(delivery.submissionId);
         return {
           ...viewOf(delivery),
-          document: { id: delivery.documentId, filename: document?.filename ?? "" },
+          submission: { id: delivery.submissionId, filename: submission?.filename ?? "" },
         };
       }),
     );

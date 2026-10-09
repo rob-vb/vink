@@ -8,11 +8,11 @@ import { Button } from "@/components/ui/button";
 import { api } from "@/convex/_generated/api";
 
 /**
- * For Admins, on every page but Documents: while the setup is open, the way
- * back to it. (The setup itself shows on Documents; see documents/setup-guide.tsx.)
+ * For Admins, on every page but Submissions: while the setup is open, the way
+ * back to it. (The setup itself shows on Submissions; see submissions/setup-guide.tsx.)
  */
 export function SetupBar({ organisationSlug }: { organisationSlug: string }) {
-  const t = useTranslations("appDocuments.setup");
+  const t = useTranslations("appSubmissions.setup");
   const pathname = usePathname();
   const base = `/app/o/${organisationSlug}`;
   const setup = useQuery(api.onboarding.state, { organisationSlug });

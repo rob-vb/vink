@@ -1,4 +1,4 @@
-// What still waits for a user on a Document: Field Values with reasons and no
+// What still waits for a user on a Submission: Field Values with reasons and no
 // review, and List Fields whose entries aren't confirmed or are required but
 // gone. Values in a removed List entry don't count.
 import type { Doc } from "../_generated/dataModel";

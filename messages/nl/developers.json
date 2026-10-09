@@ -70,7 +70,7 @@
         },
         "lists": "<b>Lijstvelden:</b> Vink maakt één rij per regel van het eerste lijstveld. De andere waarden van de inzending staan op elke rij. Een inzending zonder regels geeft één rij. Een tweede lijstveld komt als JSON in één cel.",
         "security": "<b>Toegang:</b> Vink kan alleen de sheet openen die Vink zelf maakt. Je andere bestanden in Google Drive blijven dicht.",
-        "note": "<b>Kolommen:</b> eerst <code>document</code>, dan je velden met hun sleutel als kop, en rechts <code>approved_at</code>, <code>approved_by</code> en <code>delivery_id</code>. Een nieuw veld krijgt een nieuwe kolom vóór <code>approved_at</code>. Verander de koppen niet, want Vink zet elke waarde onder de kolom met dezelfde kop. Kan Vink niet meer in de sheet schrijven? Kies dan <b>Google-account opnieuw koppelen</b> en verstuur de mislukte Delivery opnieuw vanuit de inzending."
+        "note": "<b>Kolommen:</b> eerst <code>submission</code>, dan je velden met hun sleutel als kop, en rechts <code>approved_at</code>, <code>approved_by</code> en <code>delivery_id</code>. Een nieuw veld krijgt een nieuwe kolom vóór <code>approved_at</code>. Verander de koppen niet, want Vink zet elke waarde onder de kolom met dezelfde kop. Kan Vink niet meer in de sheet schrijven? Kies dan <b>Google-account opnieuw koppelen</b> en verstuur de mislukte Delivery opnieuw vanuit de inzending."
       },
       "n8n": {
         "title": "n8n",
@@ -127,10 +127,10 @@
     "table": {
       "key": "Sleutel",
       "meaning": "Betekenis",
-      "event": "Altijd <code>document.approved</code>.",
+      "event": "Altijd <code>submission.approved</code>.",
       "delivery_id": "Uniek per Delivery. Blijft gelijk als een Delivery opnieuw wordt geprobeerd of opnieuw verstuurd, dus gebruik het om te ontdubbelen.",
       "test": "<code>true</code> bij een test-send, <code>false</code> bij een echte Delivery.",
-      "document": "De inzending: het id, de bestandsnaam en wanneer ze is geüpload (ISO 8601, UTC).",
+      "submission": "De inzending: het id, de bestandsnaam en wanneer ze is geüpload (ISO 8601, UTC).",
       "form": "Het id van het formulier en de formulierversie waarmee de inzending is gelezen.",
       "approval": "<code>manual</code> of <code>auto</code> (Auto-Send), het id van de gebruiker die goedkeurde (<code>null</code> bij Auto-Send) en wanneer.",
       "data": "De waarden, per veld. Getallen zijn getallen, datums zijn <code>YYYY-MM-DD</code>, ja/nee-velden zijn booleans en lijsten zijn arrays van objecten."

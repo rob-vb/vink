@@ -79,7 +79,7 @@ test("only Swagger 2.0 constructs: refs to definitions that exist, single types,
 test("the trigger subscribes with Power Automate's callback URL, unsubscribes by the Location header", () => {
   const trigger = byId("createSubscription");
   expect(trigger.operation["x-ms-trigger"]).toBe("single");
-  expect(trigger.operation.summary).toBe("When a Document is approved");
+  expect(trigger.operation.summary).toBe("When a Submission is approved");
   const body = trigger.operation.parameters.find((p: Json) => p.in === "body").schema;
   expect(body.properties.url).toMatchObject({ "x-ms-notification-url": true, "x-ms-visibility": "internal" });
   expect(body.properties.form_id["x-ms-dynamic-values"]).toMatchObject({ operationId: "listForms" });
@@ -125,8 +125,8 @@ test("dynamic values and schemas call operations that exist, and their paths are
 });
 
 test("the action sends the file content in as the raw PDF body, to a Form picked from a list", () => {
-  const { operation } = byId("sendDocument");
-  expect(operation.summary).toBe("Send in a Document");
+  const { operation } = byId("sendSubmission");
+  expect(operation.summary).toBe("Send in a Submission");
   expect(operation["x-ms-trigger"]).toBeUndefined();
   expect(operation.consumes).toEqual(["application/octet-stream"]);
   const [formId, filename, file] = ["form_id", "filename", "file"].map((name) =>
@@ -135,7 +135,7 @@ test("the action sends the file content in as the raw PDF body, to a Form picked
   expect(formId).toMatchObject({ in: "path", "x-ms-dynamic-values": { operationId: "listForms" } });
   expect(filename).toMatchObject({ in: "query", type: "string" });
   expect(file).toMatchObject({ in: "body", required: true, schema: { type: "string", format: "binary" } });
-  expect((openApiDocument.paths as Json)["/forms/{form_id}/documents"].post.requestBody.content).toHaveProperty(
+  expect((openApiDocument.paths as Json)["/forms/{form_id}/submissions"].post.requestBody.content).toHaveProperty(
     "application/octet-stream",
   );
 });

@@ -7,10 +7,10 @@ import type { DataModel, Doc, Id } from "./_generated/dataModel";
 import { internalMutation, internalQuery, type MutationCtx, type QueryCtx } from "./_generated/server";
 import { confidenceOf, reviewReasonsOf } from "./lib/confidence";
 import { createDeliveries } from "./deliveries";
-import { formOf } from "./lib/documentForm";
+import { formOf } from "./lib/submissionForm";
 import type { EventInfo } from "./lib/eventInfo";
 import { failureCodeOf } from "./lib/failure";
-import { moveTo } from "./lib/documentStates";
+import { moveTo } from "./lib/submissionStates";
 import { orgMutation } from "./lib/functions";
 import { kindOf, mimeTypeOf } from "./lib/inputLimits";
 import { openReviews } from "./review";
@@ -25,42 +25,42 @@ export const extractionPool = new Workpool(components.extractionPool, {
   defaultRetryBehavior: { maxAttempts: 4, initialBackoffMs: 10_000, base: 3 },
 });
 
-export async function startExtraction(ctx: MutationCtx, documentId: Id<"documents">) {
+export async function startExtraction(ctx: MutationCtx, submissionId: Id<"submissions">) {
   await extractionPool.enqueueAction(
     ctx,
     internal.extractionRun.run,
-    { documentId },
-    { onComplete: internal.extraction.completed, context: { documentId } },
+    { submissionId },
+    { onComplete: internal.extraction.completed, context: { submissionId } },
   );
 }
 
-/** After the last attempt: a run that failed every time leaves the Document Extraction Failed. */
-const completedContext = v.object({ documentId: v.id("documents") });
+/** After the last attempt: a run that failed every time leaves the Submission Extraction Failed. */
+const completedContext = v.object({ submissionId: v.id("submissions") });
 
 export const completed = extractionPool.defineOnComplete<DataModel, typeof completedContext>({
   context: completedContext,
-  handler: async (ctx, { context: { documentId }, result }) => {
+  handler: async (ctx, { context: { submissionId }, result }) => {
     if (result.kind === "success") return;
-    await markFailed(ctx, documentId, result.kind === "failed" ? result.error : "canceled", false);
+    await markFailed(ctx, submissionId, result.kind === "failed" ? result.error : "canceled", false);
   },
 });
 
 async function markFailed(
   ctx: MutationCtx,
-  documentId: Id<"documents">,
+  submissionId: Id<"submissions">,
   error: string,
   unreadable: boolean,
 ) {
-  const document = await ctx.db.get(documentId);
-  if (document === null || document.state !== "extracting") return;
-  // The technical error is for the logs; the Document keeps a code the review
+  const submission = await ctx.db.get(submissionId);
+  if (submission === null || submission.state !== "extracting") return;
+  // The technical error is for the logs; the Submission keeps a code the review
   // screen turns into a friendly message (lib/failure.ts).
-  console.error(`Extraction of document ${documentId} failed: ${error.slice(0, 1000)}`);
-  await ctx.db.patch(documentId, { extractionError: failureCodeOf(unreadable) });
-  await moveTo(ctx, document, "extraction_failed");
-  await ctx.db.insert("documentEvents", {
-    organisationId: document.organisationId,
-    documentId,
+  console.error(`Extraction of submission ${submissionId} failed: ${error.slice(0, 1000)}`);
+  await ctx.db.patch(submissionId, { extractionError: failureCodeOf(unreadable) });
+  await moveTo(ctx, submission, "extraction_failed");
+  await ctx.db.insert("submissionEvents", {
+    organisationId: submission.organisationId,
+    submissionId,
     event: "extraction_failed",
     by: "vink",
     byEmail: "Vink",
@@ -73,33 +73,33 @@ async function markFailed(
  * UnreadableInput): Extraction Failed at once, with no retries from the pool.
  */
 export const failUnreadable = internalMutation({
-  args: { documentId: v.id("documents"), error: v.string() },
-  handler: async (ctx, { documentId, error }) => await markFailed(ctx, documentId, error, true),
+  args: { submissionId: v.id("submissions"), error: v.string() },
+  handler: async (ctx, { submissionId, error }) => await markFailed(ctx, submissionId, error, true),
 });
 
 /** Starts a failed Extraction again. It resumes at Match when a Reading is stored. */
 export const retry = orgMutation({
-  args: { documentId: v.id("documents") },
-  handler: async (ctx, { documentId }) => {
-    const document = await ctx.db.get(documentId);
-    if (document === null || document.organisationId !== ctx.organisationId) {
+  args: { submissionId: v.id("submissions") },
+  handler: async (ctx, { submissionId }) => {
+    const submission = await ctx.db.get(submissionId);
+    if (submission === null || submission.organisationId !== ctx.organisationId) {
       throw new ConvexError("Submission not found");
     }
-    if (document.state !== "extraction_failed") {
+    if (submission.state !== "extraction_failed") {
       throw new ConvexError("Only a failed Extraction can be retried");
     }
     const identity = await ctx.auth.getUserIdentity();
-    await ctx.db.patch(documentId, { extractionError: undefined });
-    await moveTo(ctx, document, "extracting");
-    await ctx.db.insert("documentEvents", {
+    await ctx.db.patch(submissionId, { extractionError: undefined });
+    await moveTo(ctx, submission, "extracting");
+    await ctx.db.insert("submissionEvents", {
       organisationId: ctx.organisationId,
-      documentId,
+      submissionId,
       event: "extraction_retried",
       by: ctx.userId,
       byEmail: identity?.email?.toLowerCase() ?? "",
       at: Date.now(),
     });
-    await startExtraction(ctx, documentId);
+    await startExtraction(ctx, submissionId);
   },
 });
 
@@ -120,30 +120,30 @@ async function formFields(ctx: QueryCtx, formId: Id<"forms">, number: number) {
 
 /**
  * What the Extraction works on: the file, the Form's Fields and any stored
- * Reading. A Document without a Form (ADR 0010) has no Fields yet; it gets
+ * Reading. A Submission without a Form (ADR 0010) has no Fields yet; it gets
  * `routableForms`, the Organisation's Forms for the Router, and `null` otherwise.
  */
 export const input = internalQuery({
-  args: { documentId: v.id("documents") },
-  handler: async (ctx, { documentId }) => {
-    const document = (await ctx.db.get(documentId))!;
+  args: { submissionId: v.id("submissions") },
+  handler: async (ctx, { submissionId }) => {
+    const submission = (await ctx.db.get(submissionId))!;
     const form =
-      document.formId === undefined
+      submission.formId === undefined
         ? { formName: "", formDescription: null, fields: [], lists: [] }
-        : await formFields(ctx, document.formId, formOf(document).formVersion);
+        : await formFields(ctx, submission.formId, formOf(submission).formVersion);
     const routableForms =
-      document.formId === undefined ? await routableFormsOf(ctx, document.organisationId) : null;
+      submission.formId === undefined ? await routableFormsOf(ctx, submission.organisationId) : null;
     const reading = await ctx.db
       .query("readings")
-      .withIndex("by_documentId", (q) => q.eq("documentId", documentId))
+      .withIndex("by_submissionId", (q) => q.eq("submissionId", submissionId))
       .unique();
     return {
-      organisationId: document.organisationId,
-      fileKey: document.key,
-      // A Document from before kinds is a PDF (lib/inputLimits.ts).
-      kind: kindOf(document),
-      mimeType: mimeTypeOf(document),
-      pageCount: document.pageCount,
+      organisationId: submission.organisationId,
+      fileKey: submission.key,
+      // A Submission from before kinds is a PDF (lib/inputLimits.ts).
+      kind: kindOf(submission),
+      mimeType: mimeTypeOf(submission),
+      pageCount: submission.pageCount,
       ...form,
       routableForms,
       readingJson: reading?.json ?? null,
@@ -180,16 +180,16 @@ export const routedForm = internalQuery({
 });
 
 /**
- * A Document that came without a Form and that the Router (or the fit check
+ * A Submission that came without a Form and that the Router (or the fit check
  * after it) found none for: it keeps its Reading and its Items, and waits in
  * No Form to be moved to a Form or rejected (ADR 0010).
  */
 export const noForm = internalMutation({
-  args: { documentId: v.id("documents"), reason: v.union(v.literal("no_forms"), v.literal("nothing_read"), v.literal("no_fit")) },
-  handler: async (ctx, { documentId, reason }) => {
-    const document = (await ctx.db.get(documentId))!;
-    if (document.state !== "extracting") return;
-    await putInNoForm(ctx, document, { code: reason });
+  args: { submissionId: v.id("submissions"), reason: v.union(v.literal("no_forms"), v.literal("nothing_read"), v.literal("no_fit")) },
+  handler: async (ctx, { submissionId, reason }) => {
+    const submission = (await ctx.db.get(submissionId))!;
+    if (submission.state !== "extracting") return;
+    await putInNoForm(ctx, submission, { code: reason });
   },
 });
 
@@ -211,20 +211,20 @@ function routingText(info: EventInfo): string {
 
 async function putInNoForm(
   ctx: MutationCtx,
-  document: Doc<"documents">,
+  submission: Doc<"submissions">,
   info: Extract<EventInfo, { code: "no_forms" | "nothing_read" | "no_fit" }>,
 ) {
-  await ctx.db.patch(document._id, {
+  await ctx.db.patch(submission._id, {
     formId: undefined,
     formVersion: undefined,
     doesNotFit: undefined,
     jevVerified: undefined,
     reviewThreshold: undefined,
   });
-  await moveTo(ctx, document, "no_form");
-  await ctx.db.insert("documentEvents", {
-    organisationId: document.organisationId,
-    documentId: document._id,
+  await moveTo(ctx, submission, "no_form");
+  await ctx.db.insert("submissionEvents", {
+    organisationId: submission.organisationId,
+    submissionId: submission._id,
     event: "no_form",
     detail: routingText(info),
     info,
@@ -236,17 +236,17 @@ async function putInNoForm(
 
 export const saveReading = internalMutation({
   args: {
-    documentId: v.id("documents"),
+    submissionId: v.id("submissions"),
     json: v.string(),
     textLayer: v.array(v.object({ page: v.number(), text: v.string() })),
   },
-  handler: async (ctx, { documentId, json, textLayer }) => {
-    const document = (await ctx.db.get(documentId))!;
+  handler: async (ctx, { submissionId, json, textLayer }) => {
+    const submission = (await ctx.db.get(submissionId))!;
     // Deleted meanwhile (Delete now): nothing it read is kept.
-    if (document.state !== "extracting") return;
+    if (submission.state !== "extracting") return;
     await ctx.db.insert("readings", {
-      organisationId: document.organisationId,
-      documentId,
+      organisationId: submission.organisationId,
+      submissionId,
       json,
       textLayer,
     });
@@ -259,9 +259,9 @@ export const saveReading = internalMutation({
  */
 export const finish = internalMutation({
   args: {
-    documentId: v.id("documents"),
+    submissionId: v.id("submissions"),
     /**
-     * For a Document that came without a Form: the Form the Router picked, the
+     * For a Submission that came without a Form: the Form the Router picked, the
      * Form Version its Fields were matched against, and Jev's probability.
      * The fit check then gates the pick (ADR 0010).
      */
@@ -299,30 +299,30 @@ export const finish = internalMutation({
       }),
     ),
   },
-  handler: async (ctx, { documentId, routed, jevVerified, doesNotFit, lists, fieldValues }) => {
-    let document = (await ctx.db.get(documentId))!;
-    // A run that comes late (the Document moved on) changes nothing, so it
+  handler: async (ctx, { submissionId, routed, jevVerified, doesNotFit, lists, fieldValues }) => {
+    let submission = (await ctx.db.get(submissionId))!;
+    // A run that comes late (the Submission moved on) changes nothing, so it
     // never overwrites a user's corrections.
-    if (document.state !== "extracting") return;
-    if (document.formId === undefined) {
+    if (submission.state !== "extracting") return;
+    if (submission.formId === undefined) {
       if (routed === undefined) throw new ConvexError("A Submission without a Form needs the Router's pick");
       const picked = (await ctx.db.get(routed.formId))!;
-      // The fit check gates Jev's pick: a Document that does not fit it has no Form.
+      // The fit check gates Jev's pick: a Submission that does not fit it has no Form.
       // Too, when no Field matched at all: a Form with no required Fields would
-      // otherwise fit every input. (A Document that came with a Form keeps the
+      // otherwise fit every input. (A Submission that came with a Form keeps the
       // plain fit check.)
       const nothingMatched =
         fieldValues.every((f) => f.sourcePath === null) && lists.every((l) => l.sourcePath === null);
       if (doesNotFit || nothingMatched) {
-        await putInNoForm(ctx, document, { code: "no_fit", form: picked.name });
+        await putInNoForm(ctx, submission, { code: "no_fit", form: picked.name });
         return;
       }
-      await ctx.db.patch(documentId, { formId: routed.formId, formVersion: routed.formVersion });
-      document = { ...document, formId: routed.formId, formVersion: routed.formVersion };
+      await ctx.db.patch(submissionId, { formId: routed.formId, formVersion: routed.formVersion });
+      submission = { ...submission, formId: routed.formId, formVersion: routed.formVersion };
       const routedInfo = { code: "routed" as const, form: picked.name, percent: Math.round(routed.probability * 100) };
-      await ctx.db.insert("documentEvents", {
-        organisationId: document.organisationId,
-        documentId,
+      await ctx.db.insert("submissionEvents", {
+        organisationId: submission.organisationId,
+        submissionId,
         event: "routed",
         detail: routingText(routedInfo),
         info: routedInfo,
@@ -331,12 +331,12 @@ export const finish = internalMutation({
         at: Date.now(),
       });
     }
-    const { formId } = formOf(document);
+    const { formId } = formOf(submission);
     const { reviewThreshold } = (await ctx.db.get(formId))!;
     for (const { required, entries, ...list } of lists) {
       await ctx.db.insert("listValues", {
-        organisationId: document.organisationId,
-        documentId,
+        organisationId: submission.organisationId,
+        submissionId,
         ...list,
         required,
         entryCount: entries,
@@ -354,8 +354,8 @@ export const finish = internalMutation({
     for (const { required, typeMismatch, unsure, conflicting, ...fieldValue } of fieldValues) {
       const { confidence, lowestSignal } = confidenceOf(fieldValue.signals);
       await ctx.db.insert("fieldValues", {
-        organisationId: document.organisationId,
-        documentId,
+        organisationId: submission.organisationId,
+        submissionId,
         ...fieldValue,
         confidence,
         lowestSignal,
@@ -370,18 +370,18 @@ export const finish = internalMutation({
         }),
       });
     }
-    await ctx.db.patch(documentId, { jevVerified, doesNotFit, reviewThreshold });
+    await ctx.db.patch(submissionId, { jevVerified, doesNotFit, reviewThreshold });
     const vink = { by: "vink", byEmail: "Vink", at: Date.now() };
-    await ctx.db.insert("documentEvents", {
-      organisationId: document.organisationId,
-      documentId,
+    await ctx.db.insert("submissionEvents", {
+      organisationId: submission.organisationId,
+      submissionId,
       event: "extracted",
       ...vink,
     });
 
     // Auto-Send is evaluated here, once, right after the Extraction succeeds.
     const form = (await ctx.db.get(formId))!;
-    // A Form the Router picked never Auto-Sends in v1: the Document always goes
+    // A Form the Router picked never Auto-Sends in v1: the Submission always goes
     // to Needs Review, where the user can approve it. Reconsider with a
     // probability threshold on the Router's pick after real Jev runs.
     const clean =
@@ -389,22 +389,22 @@ export const finish = internalMutation({
       routed === undefined &&
       jevVerified &&
       !doesNotFit &&
-      !document.userTouched &&
-      (await openReviews(ctx, documentId)) === 0;
+      !submission.userTouched &&
+      (await openReviews(ctx, submissionId)) === 0;
     if (!clean) {
-      await moveTo(ctx, document, "needs_review");
+      await moveTo(ctx, submission, "needs_review");
       return;
     }
     const approval = { mode: "auto" as const, by: null, byEmail: null, at: vink.at };
-    await ctx.db.patch(documentId, { approval });
-    await moveTo(ctx, document, "approved");
-    await ctx.db.insert("documentEvents", {
-      organisationId: document.organisationId,
-      documentId,
+    await ctx.db.patch(submissionId, { approval });
+    await moveTo(ctx, submission, "approved");
+    await ctx.db.insert("submissionEvents", {
+      organisationId: submission.organisationId,
+      submissionId,
       event: "approved",
       detail: "Auto-Send",
       ...vink,
     });
-    await createDeliveries(ctx, { ...document, approval });
+    await createDeliveries(ctx, { ...submission, approval });
   },
 });

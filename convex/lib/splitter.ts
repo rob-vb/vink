@@ -1,5 +1,5 @@
 "use node";
-// The email split (ADR 0010): Jev decides whether one email is one Document
+// The email split (ADR 0010): Jev decides whether one email is one Submission
 // (its text and attachments together) or several (one per part). Jev decides
 // here, as in the Router; the vision model never sees the email for this. It is
 // told the subject, the text and the list of attachments, not their contents.

@@ -11,7 +11,7 @@
     "signIn": "Sign in · Vink",
     "signUp": "Sign up · Vink",
     "invitation": "Invitation · Vink",
-    "documents": "Inbox · Vink",
+    "submissions": "Inbox · Vink",
     "members": "Members · Vink"
   },
   "roles": {
@@ -96,7 +96,7 @@
   "shell": {
     "home": "Home",
     "nav": {
-      "documents": "Inbox",
+      "submissions": "Inbox",
       "forms": "Forms",
       "integrations": "Integrations",
       "members": "Members"
@@ -112,8 +112,8 @@
     "label": "{unread, plural, =0 {Notifications} other {Notifications, # unread}}",
     "markAllRead": "Mark all as read",
     "empty": "Nothing new.",
-    "deliveryFailed": "{document} couldn't be delivered to {integration}",
-    "aDocument": "A Submission"
+    "deliveryFailed": "{submission} couldn't be delivered to {integration}",
+    "aSubmission": "A Submission"
   },
   "items": {
     "upgrade": "Upgrade",

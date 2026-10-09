@@ -11,8 +11,8 @@ export function NavLinks({ slug, isAdmin }: { slug: string; isAdmin: boolean }) 
   const pathname = usePathname();
   const base = `/app/o/${slug}`;
   const links = [
-    // Documents is the Organisation's home page.
-    { href: base, label: t("documents"), active: pathname === base || pathname.startsWith(`${base}/documents`) },
+    // Submissions is the Organisation's home page.
+    { href: base, label: t("submissions"), active: pathname === base || pathname.startsWith(`${base}/submissions`) },
     ...(isAdmin
       ? [
           { href: `${base}/forms`, label: t("forms") },

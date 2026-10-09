@@ -74,7 +74,7 @@ test("a workbook is uploaded to OneDrive as a new file, then gets a table over i
     ),
     Response.json({ id: "{TABLE-1}", name: "Table1" }, { status: 201 }),
   ];
-  expect(await microsoft.createWorkbook("t", "Tyre log: north/south", ["document", "approved_at", "approved_by", "delivery_id"])).toEqual({
+  expect(await microsoft.createWorkbook("t", "Tyre log: north/south", ["submission", "approved_at", "approved_by", "delivery_id"])).toEqual({
     ...workbook,
     url: "https://acme-my.sharepoint.com/x/Tyre%20log%201.xlsx",
   });
@@ -92,11 +92,11 @@ test("a workbook is uploaded to OneDrive as a new file, then gets a table over i
 
 test("reading takes the table's header and the column under its name, blanks as empty cells", async () => {
   answers = [
-    Response.json({ values: [["document", "approved_at", "approved_by", "delivery_id"]] }),
+    Response.json({ values: [["submission", "approved_at", "approved_by", "delivery_id"]] }),
     Response.json({ values: [["dlv_1"], [""], ["dlv_2"]] }),
   ];
   expect(await microsoft.read("t", workbook, "delivery_id")).toEqual({
-    header: ["document", "approved_at", "approved_by", "delivery_id"],
+    header: ["submission", "approved_at", "approved_by", "delivery_id"],
     column: ["dlv_1", null, "dlv_2"],
   });
   expect(sent.map((s) => s.url)).toEqual([
@@ -105,8 +105,8 @@ test("reading takes the table's header and the column under its name, blanks as 
   ]);
 
   sent = [];
-  answers = [Response.json({ values: [["document"]] })];
-  expect(await microsoft.read("t", workbook, "delivery_id")).toEqual({ header: ["document"], column: [] });
+  answers = [Response.json({ values: [["submission"]] })];
+  expect(await microsoft.read("t", workbook, "delivery_id")).toEqual({ header: ["submission"], column: [] });
   expect(sent).toHaveLength(1);
 });
 
@@ -190,7 +190,7 @@ function unzip(bytes: Uint8Array) {
 }
 
 test("the new workbook has one worksheet whose first row is the header, as text", () => {
-  const files = unzip(emptyWorkbook("Vink", ["document", "a<b & \"c\""]));
+  const files = unzip(emptyWorkbook("Vink", ["submission", "a<b & \"c\""]));
   expect(Object.keys(files).sort()).toEqual([
     "[Content_Types].xml",
     "_rels/.rels",
@@ -200,6 +200,6 @@ test("the new workbook has one worksheet whose first row is the header, as text"
   ]);
   expect(files["xl/workbook.xml"]).toContain('<sheet name="Vink" sheetId="1" r:id="rId1"/>');
   expect(files["xl/worksheets/sheet1.xml"]).toContain(
-    '<row r="1"><c r="A1" t="inlineStr"><is><t>document</t></is></c><c r="B1" t="inlineStr"><is><t>a&lt;b &amp; &quot;c&quot;</t></is></c></row>',
+    '<row r="1"><c r="A1" t="inlineStr"><is><t>submission</t></is></c><c r="B1" t="inlineStr"><is><t>a&lt;b &amp; &quot;c&quot;</t></is></c></row>',
   );
 });

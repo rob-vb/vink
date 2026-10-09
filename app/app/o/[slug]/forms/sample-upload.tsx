@@ -65,7 +65,7 @@ export function SampleUpload({
   const t = useTranslations("appForms.sample");
   const errorText = useErrorText();
   const router = useRouter();
-  const generateUploadUrl = useMutation(api.documents.generateUploadUrl);
+  const generateUploadUrl = useMutation(api.submissions.generateUploadUrl);
   const create = useAction(api.formProposals.create);
   const createFromEmail = useAction(api.formProposals.createFromEmail);
   const [dragging, setDragging] = useState(false);

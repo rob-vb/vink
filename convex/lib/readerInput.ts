@@ -1,4 +1,4 @@
-// Builds the Reader's input (lib/pipeline.ts ReaderInput) from what a Document
+// Builds the Reader's input (lib/pipeline.ts ReaderInput) from what a Submission
 // or a Form Proposal sample stores: its kind, MIME type and file in R2.
 import {
   IMAGE_MIME_TYPES,
@@ -9,7 +9,7 @@ import {
 } from "./inputLimits";
 import type { ReaderInput } from "./pipeline";
 
-/** What is stored of a Document or sample. */
+/** What is stored of a Submission or sample. */
 export type StoredInput = { fileKey: string; kind: InputKind; mimeType: string; pageCount: number };
 
 /** The part of the file store this needs; the real one is lib/pdfStore.ts. */

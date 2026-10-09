@@ -60,44 +60,44 @@ async function uploaded(t: Backend) {
     ],
   });
   fakePipeline.replay(workOrder);
-  const { key, url } = await ann.user.mutation(api.documents.generateUploadUrl, {
+  const { key, url } = await ann.user.mutation(api.submissions.generateUploadUrl, {
     organisationSlug,
   });
   putToUploadUrl(url, await pdfWithPages(1));
-  await ann.user.action(api.documents.create, {
+  await ann.user.action(api.submissions.create, {
     organisationSlug,
     formId,
     key,
     filename: "werkorder.pdf",
   });
   await t.finishAllScheduledFunctions(vi.runAllTimers);
-  const documentId = await t.run(async (ctx) => (await ctx.db.query("documents").first())!._id);
+  const submissionId = await t.run(async (ctx) => (await ctx.db.query("submissions").first())!._id);
   const bob = await addMembership(t, "bob", organisationSlug, "member");
-  const on = { organisationSlug, documentId };
-  const read = () => ann.user.query(api.documents.get, on);
-  return { ...ann, bob, key, documentId, on, read };
+  const on = { organisationSlug, submissionId };
+  const read = () => ann.user.query(api.submissions.get, on);
+  return { ...ann, bob, key, submissionId, on, read };
 }
 
-test("a Member rejects a Document with a reason; it is listed under Rejected with who, when and why", async () => {
+test("a Member rejects a Submission with a reason; it is listed under Rejected with who, when and why", async () => {
   const t = newBackend();
   const { bob, on, read } = await uploaded(t);
   vi.setSystemTime(new Date("2026-09-24T12:00:00Z"));
 
   await bob.mutation(api.rejection.reject, { ...on, reason: "Blank scan" });
 
-  const document = await read();
-  expect(document.state).toBe("rejected");
-  expect(document.rejection).toEqual({
+  const submission = await read();
+  expect(submission.state).toBe("rejected");
+  expect(submission.rejection).toEqual({
     by: "bob@example.com",
     at: Date.parse("2026-09-24T12:00:00Z"),
     reason: "Blank scan",
   });
-  expect(document.history.at(-1)).toMatchObject({ event: "rejected", detail: "Blank scan" });
-  const { documents, counts } = await bob.query(api.documents.list, {
+  expect(submission.history.at(-1)).toMatchObject({ event: "rejected", detail: "Blank scan" });
+  const { submissions, counts } = await bob.query(api.submissions.list, {
     organisationSlug: on.organisationSlug,
     state: "rejected",
   });
-  expect(documents).toEqual([
+  expect(submissions).toEqual([
     expect.objectContaining({
       state: "rejected",
       rejection: { by: "bob@example.com", at: Date.parse("2026-09-24T12:00:00Z"), reason: "Blank scan" },
@@ -115,7 +115,7 @@ test("a reason is optional", async () => {
   expect((await read()).rejection).toMatchObject({ reason: null });
 });
 
-test("a Document whose Extraction failed can be rejected, and reopens as failed", async () => {
+test("a Submission whose Extraction failed can be rejected, and reopens as failed", async () => {
   const t = newBackend();
   fakePipeline.failTimes("read", 4);
   const { user, on, read } = await uploaded(t);
@@ -135,15 +135,15 @@ test("Reopen brings back the prior state with the corrections, and sets user tou
 
   await user.mutation(api.rejection.reopen, on);
 
-  const document = await read();
-  expect(document.state).toBe("needs_review");
-  expect(document.rejection).toBeNull();
-  expect(document.userTouched).toBe(true);
-  expect(document.fieldValues.find((f) => f.key === "mileage_km")!.review).toMatchObject({ state: "checked" });
-  expect(document.history.map((h) => h.event).slice(-2)).toEqual(["rejected", "reopened"]);
+  const submission = await read();
+  expect(submission.state).toBe("needs_review");
+  expect(submission.rejection).toBeNull();
+  expect(submission.userTouched).toBe(true);
+  expect(submission.fieldValues.find((f) => f.key === "mileage_km")!.review).toMatchObject({ state: "checked" });
+  expect(submission.history.map((h) => h.event).slice(-2)).toEqual(["rejected", "reopened"]);
 });
 
-test("an approved Document can't be rejected", async () => {
+test("an approved Submission can't be rejected", async () => {
   const t = newBackend();
   const { user, on, read } = await uploaded(t);
   const mileage_km = (await read()).fieldValues.find((f) => f.key === "mileage_km")!;
@@ -153,14 +153,14 @@ test("an approved Document can't be rejected", async () => {
   await expect(user.mutation(api.rejection.reject, on)).rejects.toThrow("This Submission is approved");
 });
 
-test("only a Rejected Document can be reopened", async () => {
+test("only a Rejected Submission can be reopened", async () => {
   const t = newBackend();
   const { user, on } = await uploaded(t);
 
   await expect(user.mutation(api.rejection.reopen, on)).rejects.toThrow("Only a Rejected Submission");
 });
 
-test("a Member can't delete a Document", async () => {
+test("a Member can't delete a Submission", async () => {
   const t = newBackend();
   const { bob, on } = await uploaded(t);
   await bob.mutation(api.rejection.reject, on);
@@ -168,7 +168,7 @@ test("a Member can't delete a Document", async () => {
   await expect(bob.mutation(api.rejection.remove, on)).rejects.toThrow("Forbidden");
 });
 
-test("an Admin deletes a Rejected Document: the PDF and its data go, the metadata and a Deleted line stay", async () => {
+test("an Admin deletes a Rejected Submission: the PDF and its data go, the metadata and a Deleted line stay", async () => {
   const t = newBackend();
   const { user, key, on, read } = await uploaded(t);
   await user.mutation(api.rejection.reject, { ...on, reason: "Private data" });
@@ -176,44 +176,44 @@ test("an Admin deletes a Rejected Document: the PDF and its data go, the metadat
   await user.mutation(api.rejection.remove, on);
 
   expect(fakePdfStore.objects.has(key)).toBe(false);
-  const document = await read();
-  expect(document).toMatchObject({
+  const submission = await read();
+  expect(submission).toMatchObject({
     state: "deleted",
     filename: "werkorder.pdf",
     fieldValues: [],
     lists: [],
   });
-  expect(document.history.at(-1)).toMatchObject({ event: "deleted", by: "ann@example.com" });
+  expect(submission.history.at(-1)).toMatchObject({ event: "deleted", by: "ann@example.com" });
   const leftovers = await t.run(async (ctx) => ({
     readings: await ctx.db.query("readings").collect(),
     fieldValues: await ctx.db.query("fieldValues").collect(),
   }));
   expect(leftovers).toEqual({ readings: [], fieldValues: [] });
   await expect(user.mutation(api.rejection.reopen, on)).rejects.toThrow("Only a Rejected Submission");
-  await expect(user.mutation(api.documents.pdfUrl, on)).rejects.toThrow("The PDF was deleted");
+  await expect(user.mutation(api.submissions.pdfUrl, on)).rejects.toThrow("The PDF was deleted");
 });
 
-test("a deleted Document stays listed under Rejected", async () => {
+test("a deleted Submission stays listed under Rejected", async () => {
   const t = newBackend();
   const { user, on } = await uploaded(t);
   await user.mutation(api.rejection.reject, on);
   await user.mutation(api.rejection.remove, on);
 
-  const { documents, counts } = await user.query(api.documents.list, {
+  const { submissions, counts } = await user.query(api.submissions.list, {
     organisationSlug: on.organisationSlug,
     state: "rejected",
   });
 
-  expect(documents).toEqual([expect.objectContaining({ state: "deleted" })]);
+  expect(submissions).toEqual([expect.objectContaining({ state: "deleted" })]);
   expect(counts).toMatchObject({ rejected: 0 });
 });
 
-test("nobody can reject another Organisation's Document", async () => {
+test("nobody can reject another Organisation's Submission", async () => {
   const t = newBackend();
-  const { documentId } = await uploaded(t);
+  const { submissionId } = await uploaded(t);
   const eve = await signUp(t, "eve", "Evil Corp");
 
   await expect(
-    eve.user.mutation(api.rejection.reject, { organisationSlug: eve.slug, documentId }),
+    eve.user.mutation(api.rejection.reject, { organisationSlug: eve.slug, submissionId }),
   ).rejects.toThrow("Submission not found");
 });

@@ -15,7 +15,7 @@ test("every /v1 route is in the OpenAPI document, and nothing else is", () => {
   expect(documented).toEqual(routed);
 });
 
-test("GET /v1/forms answers with only the keys the Form and Field schemas document", async () => {
+test("GET /v1/forms answers with only the keys the Form and Field schemas submission", async () => {
   const t = newBackend();
   const ann = await signUp(t, "ann", "Acme Fleet");
   await ann.user.mutation(api.forms.create, {

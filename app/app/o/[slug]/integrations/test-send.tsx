@@ -58,14 +58,14 @@ export function TestSendButton({
   const [pending, setPending] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
   const testSend = useAction(api.integrations.testSend);
-  const documents = useQuery(
-    api.integrations.testDocuments,
+  const submissions = useQuery(
+    api.integrations.testSubmissions,
     open && formId ? { organisationSlug, formId } : "skip",
   );
   const formItems = forms.map((f) => ({ value: f.id, label: f.name }));
   const sourceItems = [
     { value: EXAMPLE, label: t("dummy") },
-    ...(documents ?? []).map((d) => ({ value: d.id, label: d.filename })),
+    ...(submissions ?? []).map((d) => ({ value: d.id, label: d.filename })),
   ];
 
   async function send() {
@@ -79,7 +79,7 @@ export function TestSendButton({
           integrationId,
           formId,
           mode,
-          documentId: source === EXAMPLE ? undefined : (source as Id<"documents">),
+          submissionId: source === EXAMPLE ? undefined : (source as Id<"submissions">),
         }),
       );
     } catch (error) {

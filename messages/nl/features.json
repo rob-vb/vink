@@ -16,9 +16,9 @@
     "label": "Een film van 30 seconden: een handgeschreven werkbon gaat Vink in en komt eruit als schone data."
   },
   "frames": {
-    "documents": "/app/o/kantoor-noord",
-    "invoice": "/app/o/kantoor-noord/documents/jd72q8vn",
-    "claim": "/app/o/kantoor-noord/documents/jd7f4mx1",
+    "submissions": "/app/o/kantoor-noord",
+    "invoice": "/app/o/kantoor-noord/submissions/jd72q8vn",
+    "claim": "/app/o/kantoor-noord/submissions/jd7f4mx1",
     "upload": "/app/o/kantoor-noord/forms/invoices",
     "form": "/app/o/kantoor-noord/forms/invoices",
     "integration": "/app/o/kantoor-noord/integrations",

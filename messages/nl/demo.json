@@ -2,7 +2,7 @@
   "frame": {
     "label": "Vink-demo met demodata",
     "organisation": "Kantoor Noord",
-    "documents": "Inbox",
+    "submissions": "Inbox",
     "forms": "Formulieren",
     "integrations": "Koppelingen",
     "members": "Leden",

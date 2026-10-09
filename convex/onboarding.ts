@@ -65,7 +65,7 @@ export const notifyNewOrganisation = internalAction({
 /** The facts the setup steps are read from. */
 async function factsOf(ctx: QueryCtx, organisationId: Id<"organisations">) {
   const organisation = (await ctx.db.get(organisationId))!;
-  const [form, integration, document] = await Promise.all([
+  const [form, integration, submission] = await Promise.all([
     ctx.db
       .query("forms")
       .withIndex("by_organisationId", (q) => q.eq("organisationId", organisationId))
@@ -75,7 +75,7 @@ async function factsOf(ctx: QueryCtx, organisationId: Id<"organisations">) {
       .withIndex("by_organisationId", (q) => q.eq("organisationId", organisationId))
       .first(),
     ctx.db
-      .query("documents")
+      .query("submissions")
       .withIndex("by_organisationId_and_state", (q) => q.eq("organisationId", organisationId))
       .first(),
   ]);
@@ -83,19 +83,19 @@ async function factsOf(ctx: QueryCtx, organisationId: Id<"organisations">) {
     onboarding: organisation.onboarding,
     hasForm: form !== null,
     hasIntegration: integration !== null,
-    hasDocument: document !== null,
+    hasSubmission: submission !== null,
   };
 }
 
 /**
  * Where the Organisation is in the setup. Each step is read from a fact where a
- * fact exists: a Form, an Integration, a Document. Only "System skipped" and
+ * fact exists: a Form, an Integration, a Submission. Only "System skipped" and
  * "Input seen" are stored (`organisations.onboarding`), so a refresh, or another
  * Admin, sees the same step.
  *
- * - `setup`: the guided setup shows instead of Documents (Admins only).
+ * - `setup`: the guided setup shows instead of Submissions (Admins only).
  * - `step`: 1 Form, 2 System, 3 Input; `null` when the setup is over.
- * - `systemNotice`: Documents shows "No system connected yet".
+ * - `systemNotice`: Submissions shows "No system connected yet".
  * - `needsStart`: an Organisation from before the setup with no Form; the page
  *   calls `start` once so its steps are tracked from then on.
  */
@@ -114,7 +114,7 @@ export const state = orgQuery({
     }
 
     const systemDone = facts.hasIntegration || onboarding.systemSkippedAt !== undefined;
-    const inputDone = onboarding.inputDoneAt !== undefined || facts.hasDocument;
+    const inputDone = onboarding.inputDoneAt !== undefined || facts.hasSubmission;
     // No Form: step 1, unless the setup is over and the Forms were deleted since.
     if (!facts.hasForm) return inputDone ? over : { ...over, setup: true, step: 1 as const };
     if (!systemDone) return { ...over, setup: true, step: 2 as const };
@@ -135,7 +135,7 @@ export const start = orgMutation({
   },
 });
 
-/** The System step: "not now". Documents then shows a notice until an Integration exists. */
+/** The System step: "not now". Submissions then shows a notice until an Integration exists. */
 export const skipSystem = orgMutation({
   role: "admin",
   args: {},
@@ -149,7 +149,7 @@ export const skipSystem = orgMutation({
   },
 });
 
-/** The Input step: the Admin has seen how documents come in. Ends the setup. */
+/** The Input step: the Admin has seen how submissions come in. Ends the setup. */
 export const finishInput = orgMutation({
   role: "admin",
   args: {},

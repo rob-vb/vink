@@ -86,9 +86,9 @@ async function freshSignUp(t: Backend) {
 }
 
 async function upload(user: User, organisationSlug: string, formId: Id<"forms">, pages: number) {
-  const { key, url } = await user.mutation(api.documents.generateUploadUrl, { organisationSlug });
+  const { key, url } = await user.mutation(api.submissions.generateUploadUrl, { organisationSlug });
   putToUploadUrl(url, await pdfWithPages(pages));
-  await user.action(api.documents.create, {
+  await user.action(api.submissions.create, {
     organisationSlug,
     formId,
     key,
@@ -111,8 +111,8 @@ function usage(user: User, organisationSlug: string) {
   return user.query(api.items.usage, { organisationSlug });
 }
 
-async function documentCount(t: Backend) {
-  return await t.run(async (ctx) => (await ctx.db.query("documents").collect()).length);
+async function submissionCount(t: Backend) {
+  return await t.run(async (ctx) => (await ctx.db.query("submissions").collect()).length);
 }
 
 async function organisationId(t: Backend, slug: string) {
@@ -165,7 +165,7 @@ test("an invited Member gets no Free Items of their own", async () => {
   expect(await usage(cas, slug)).toMatchObject({ remaining: 20 });
 });
 
-test("a Document's Items are charged once, when Vink accepts its PDF", async () => {
+test("a Submission's Items are charged once, when Vink accepts its PDF", async () => {
   const t = newBackend();
   const { user, slug, formId } = await freshSignUp(t);
 
@@ -180,12 +180,12 @@ test("a PDF that doesn't fit the remaining Items is refused whole", async () => 
   const { user, slug, formId } = await freshSignUp(t);
   await upload(user, slug, formId, 17);
 
-  const { key, url } = await user.mutation(api.documents.generateUploadUrl, {
+  const { key, url } = await user.mutation(api.submissions.generateUploadUrl, {
     organisationSlug: slug,
   });
   putToUploadUrl(url, await pdfWithPages(8));
   const data = await refusal(
-    user.action(api.documents.create, { organisationSlug: slug, formId, key, filename: "8.pdf" }),
+    user.action(api.submissions.create, { organisationSlug: slug, formId, key, filename: "8.pdf" }),
   );
 
   expect(data).toEqual({
@@ -194,38 +194,38 @@ test("a PDF that doesn't fit the remaining Items is refused whole", async () => 
     remaining: 3,
     needed: 8,
   });
-  expect(await documentCount(t)).toBe(1);
+  expect(await submissionCount(t)).toBe(1);
   expect(fakePdfStore.objects.has(key)).toBe(false);
   expect(await usage(user, slug)).toMatchObject({ remaining: 3 });
 });
 
-test("with the Items gone, Documents already accepted can still be approved", async () => {
+test("with the Items gone, Submissions already accepted can still be approved", async () => {
   const t = newBackend();
   const { user, slug, formId } = await freshSignUp(t);
   await upload(user, slug, formId, 20);
   await t.finishAllScheduledFunctions(vi.runAllTimers);
-  const { documents } = await user.query(api.documents.list, {
+  const { submissions } = await user.query(api.submissions.list, {
     organisationSlug: slug,
     state: "needs_review",
   });
-  const documentId = documents[0].id;
+  const submissionId = submissions[0].id;
 
   await refusal(upload(user, slug, formId, 1));
   const [fieldValue] = (
-    await user.query(api.documents.get, { organisationSlug: slug, documentId })
+    await user.query(api.submissions.get, { organisationSlug: slug, submissionId })
   ).fieldValues;
   await user.mutation(api.review.check, { organisationSlug: slug, fieldValueId: fieldValue.id });
-  await user.mutation(api.review.approve, { organisationSlug: slug, documentId });
+  await user.mutation(api.review.approve, { organisationSlug: slug, submissionId });
 
   expect(
-    (await user.query(api.documents.get, { organisationSlug: slug, documentId })).state,
+    (await user.query(api.submissions.get, { organisationSlug: slug, submissionId })).state,
   ).toBe("approved");
 });
 
-test("a Form Proposal's sample is charged, and becoming the first Document costs nothing more", async () => {
+test("a Form Proposal's sample is charged, and becoming the first Submission costs nothing more", async () => {
   const t = newBackend();
   const { user, slug } = await signUp(t, "ann", "Kantoor Noord", { plan: null });
-  const { key, url } = await user.mutation(api.documents.generateUploadUrl, {
+  const { key, url } = await user.mutation(api.submissions.generateUploadUrl, {
     organisationSlug: slug,
   });
   putToUploadUrl(url, await pdfWithPages(4));
@@ -246,7 +246,7 @@ test("a Form Proposal's sample is charged, and becoming the first Document costs
   });
   await t.finishAllScheduledFunctions(vi.runAllTimers);
 
-  expect(await documentCount(t)).toBe(1);
+  expect(await submissionCount(t)).toBe(1);
   expect(await usage(user, slug)).toMatchObject({ remaining: 16 });
 });
 
@@ -255,7 +255,7 @@ test("a sample that doesn't fit is refused whole and leaves no Form Proposal", a
   const { user, slug } = await signUp(t, "ann", "Kantoor Noord", { plan: null });
   const oid = await organisationId(t, slug);
   await t.mutation(internal.items.setFreeItems, { organisationId: oid, freeItems: 2 });
-  const { key, url } = await user.mutation(api.documents.generateUploadUrl, {
+  const { key, url } = await user.mutation(api.submissions.generateUploadUrl, {
     organisationSlug: slug,
   });
   putToUploadUrl(url, await pdfWithPages(4));
@@ -282,17 +282,17 @@ test("a retry after Extraction Failed and a Change Form cost no Items", async ()
   fakePipeline.failTimes("read", 10);
   await upload(user, slug, formId, 2);
   await t.finishAllScheduledFunctions(vi.runAllTimers);
-  const documentId = await t.run(async (ctx) => (await ctx.db.query("documents").first())!._id);
-  expect((await user.query(api.documents.get, { organisationSlug: slug, documentId })).state).toBe(
+  const submissionId = await t.run(async (ctx) => (await ctx.db.query("submissions").first())!._id);
+  expect((await user.query(api.submissions.get, { organisationSlug: slug, submissionId })).state).toBe(
     "extraction_failed",
   );
 
   fakePipeline.failing.clear();
-  await user.mutation(api.extraction.retry, { organisationSlug: slug, documentId });
+  await user.mutation(api.extraction.retry, { organisationSlug: slug, submissionId });
   await t.finishAllScheduledFunctions(vi.runAllTimers);
   await user.mutation(api.changeForm.changeForm, {
     organisationSlug: slug,
-    documentId,
+    submissionId,
     formId: otherFormId,
   });
   await t.finishAllScheduledFunctions(vi.runAllTimers);
@@ -384,7 +384,7 @@ test("the internal unlimited Plan never refuses and never shows a count", async 
 
   for (let i = 0; i < 3; i++) await upload(user, slug, formId, 20);
 
-  expect(await documentCount(t)).toBe(3);
+  expect(await submissionCount(t)).toBe(3);
   expect(await usage(user, slug)).toMatchObject({
     plan: "internal_unlimited",
     unlimited: true,
@@ -460,7 +460,7 @@ test("several PDFs uploaded at once: a refused one never blocks the others", asy
     "You have 6 items left; this PDF needs 9.",
     "created",
   ]);
-  expect(await documentCount(t)).toBe(3);
+  expect(await submissionCount(t)).toBe(3);
   expect(await usage(user, slug)).toMatchObject({ remaining: 4 });
 });
 

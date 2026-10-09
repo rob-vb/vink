@@ -72,15 +72,15 @@ async function acme(t: Backend) {
   });
   fakePipeline.replay(clean);
   const upload = async () => {
-    const { key, url } = await ann.user.mutation(api.documents.generateUploadUrl, { organisationSlug });
+    const { key, url } = await ann.user.mutation(api.submissions.generateUploadUrl, { organisationSlug });
     putToUploadUrl(url, await pdfWithPages(1));
-    await ann.user.action(api.documents.create, { organisationSlug, formId, key, filename: "werkorder.pdf" });
+    await ann.user.action(api.submissions.create, { organisationSlug, formId, key, filename: "werkorder.pdf" });
     await t.finishAllScheduledFunctions(vi.runAllTimers);
-    const documentId = await t.run(
-      async (ctx) => (await ctx.db.query("documents").order("desc").first())!._id,
+    const submissionId = await t.run(
+      async (ctx) => (await ctx.db.query("submissions").order("desc").first())!._id,
     );
-    const on = { organisationSlug, documentId };
-    return { key, on, read: () => ann.user.query(api.documents.get, on) };
+    const on = { organisationSlug, submissionId };
+    return { key, on, read: () => ann.user.query(api.submissions.get, on) };
   };
   return { ...ann, organisationSlug, formId, upload };
 }
@@ -92,14 +92,14 @@ async function daysLater(t: Backend, days: number) {
   await t.finishAllScheduledFunctions(vi.runAllTimers);
 }
 
-async function stored(t: Backend, documentId: Id<"documents">) {
+async function stored(t: Backend, submissionId: Id<"submissions">) {
   return await t.run(async (ctx) => ({
-    readings: (await ctx.db.query("readings").collect()).filter((r) => r.documentId === documentId).length,
-    fieldValues: (await ctx.db.query("fieldValues").collect()).filter((f) => f.documentId === documentId).length,
+    readings: (await ctx.db.query("readings").collect()).filter((r) => r.submissionId === submissionId).length,
+    fieldValues: (await ctx.db.query("fieldValues").collect()).filter((f) => f.submissionId === submissionId).length,
   }));
 }
 
-test("a Document approved without an Integration keeps its data for 30 days after Approval, then only its metadata stays", async () => {
+test("a Submission approved without an Integration keeps its data for 30 days after Approval, then only its metadata stays", async () => {
   const t = newBackend();
   const { user, upload } = await acme(t);
   const { key, on, read } = await upload();
@@ -107,26 +107,26 @@ test("a Document approved without an Integration keeps its data for 30 days afte
 
   await daysLater(t, 29);
   expect(fakePdfStore.objects.has(key)).toBe(true);
-  expect(await stored(t, on.documentId)).toEqual({ readings: 1, fieldValues: 1 });
+  expect(await stored(t, on.submissionId)).toEqual({ readings: 1, fieldValues: 1 });
 
   await daysLater(t, 2);
   expect(fakePdfStore.objects.has(key)).toBe(false);
-  expect(await stored(t, on.documentId)).toEqual({ readings: 0, fieldValues: 0 });
-  const document = await read();
-  expect(document).toMatchObject({
+  expect(await stored(t, on.submissionId)).toEqual({ readings: 0, fieldValues: 0 });
+  const submission = await read();
+  expect(submission).toMatchObject({
     filename: "werkorder.pdf",
     state: "approved",
     dataDeleted: true,
     fieldValues: [],
     approval: { mode: "manual" },
   });
-  expect(document.history.map((h) => h.event)).toEqual([
+  expect(submission.history.map((h) => h.event)).toEqual([
     "uploaded",
     "extracted",
     "approved",
     "data_deleted",
   ]);
-  await expect(user.mutation(api.documents.pdfUrl, on)).rejects.toThrow("The PDF was deleted");
+  await expect(user.mutation(api.submissions.pdfUrl, on)).rejects.toThrow("The PDF was deleted");
 });
 
 test("with an Integration, the days count from the last successful Delivery, using the Organisation's setting; the Delivery log stays", async () => {
@@ -158,7 +158,7 @@ test("with an Integration, the days count from the last successful Delivery, usi
   expect(delivery.attempts).toHaveLength(2);
 });
 
-test("a Document that never gets Approval goes after 90 days, leaving a deleted record", async () => {
+test("a Submission that never gets Approval goes after 90 days, leaving a deleted record", async () => {
   const t = newBackend();
   const { user, organisationSlug, upload } = await acme(t);
   fakePipeline.replay({ ...clean, matches: { license_plate: { path: "vehicle.license_plate", probability: 0.4 } } });
@@ -170,11 +170,11 @@ test("a Document that never gets Approval goes after 90 days, leaving a deleted 
   await daysLater(t, 2);
   expect(fakePdfStore.objects.has(key)).toBe(false);
   expect(await read()).toMatchObject({ state: "deleted", dataDeleted: true });
-  const { counts } = await user.query(api.documents.list, { organisationSlug, state: "needs_review" });
+  const { counts } = await user.query(api.submissions.list, { organisationSlug, state: "needs_review" });
   expect(counts.needs_review).toBe(0);
 });
 
-test("a Rejected Document's data goes 30 days after Reject, and it can no longer be reopened", async () => {
+test("a Rejected Submission's data goes 30 days after Reject, and it can no longer be reopened", async () => {
   const t = newBackend();
   const { user, upload } = await acme(t);
   const { key, on, read } = await upload();
@@ -199,7 +199,7 @@ test("a Rejected Document's data goes 30 days after Reject, and it can no longer
 test("an unsaved Form Proposal goes after 7 days, with its PDF and Reading", async () => {
   const t = newBackend();
   const { user, organisationSlug } = await acme(t);
-  const { key, url } = await user.mutation(api.documents.generateUploadUrl, { organisationSlug });
+  const { key, url } = await user.mutation(api.submissions.generateUploadUrl, { organisationSlug });
   putToUploadUrl(url, await pdfWithPages(1));
   const { proposalId } = await user.action(api.formProposals.create, {
     organisationSlug,
@@ -323,13 +323,13 @@ test("a retention above 365 days, set before the maximum, counts as 365 and is c
   expect(stored).toBe(365);
 });
 
-test("an upload that never became a Document is deleted after 24 hours; used uploads stay", async () => {
+test("an upload that never became a Submission is deleted after 24 hours; used uploads stay", async () => {
   const t = newBackend();
   const { user, organisationSlug, upload } = await acme(t);
-  const orphan = await user.mutation(api.documents.generateUploadUrl, { organisationSlug });
+  const orphan = await user.mutation(api.submissions.generateUploadUrl, { organisationSlug });
   putToUploadUrl(orphan.url, await pdfWithPages(1));
-  const document = await upload();
-  const sample = await user.mutation(api.documents.generateUploadUrl, { organisationSlug });
+  const submission = await upload();
+  const sample = await user.mutation(api.submissions.generateUploadUrl, { organisationSlug });
   putToUploadUrl(sample.url, await pdfWithPages(1));
   await user.action(api.formProposals.create, { organisationSlug, key: sample.key, filename: "voorbeeld.pdf" });
   await t.finishAllScheduledFunctions(vi.runAllTimers);
@@ -337,13 +337,13 @@ test("an upload that never became a Document is deleted after 24 hours; used upl
   vi.setSystemTime(Date.now() + 23 * 60 * 60 * 1000);
   await t.mutation(internal.retention.run, {});
   expect(fakePdfStore.objects.has(orphan.key)).toBe(true);
-  const fresh = await user.mutation(api.documents.generateUploadUrl, { organisationSlug });
+  const fresh = await user.mutation(api.submissions.generateUploadUrl, { organisationSlug });
   putToUploadUrl(fresh.url, await pdfWithPages(1));
 
   vi.setSystemTime(Date.now() + 2 * 60 * 60 * 1000);
   await t.mutation(internal.retention.run, {});
   expect(fakePdfStore.objects.has(orphan.key)).toBe(false);
   expect(fakePdfStore.objects.has(fresh.key)).toBe(true);
-  expect(fakePdfStore.objects.has(document.key)).toBe(true);
+  expect(fakePdfStore.objects.has(submission.key)).toBe(true);
   expect(fakePdfStore.objects.has(sample.key)).toBe(true);
 });

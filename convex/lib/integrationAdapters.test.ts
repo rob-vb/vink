@@ -18,7 +18,7 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 
-const envelope = { event: "document.approved", delivery_id: "dlv_1", test: false } as unknown as Envelope;
+const envelope = { event: "submission.approved", delivery_id: "dlv_1", test: false } as unknown as Envelope;
 
 async function webhook(): Promise<Integration> {
   return {

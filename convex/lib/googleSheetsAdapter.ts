@@ -1,4 +1,4 @@
-// The Google Sheets adapter: adds a Document's rows (lib/rows.ts, ADR 0009)
+// The Google Sheets adapter: adds a Submission's rows (lib/rows.ts, ADR 0009)
 // to the Integration's sheet, a new Field's column just before `approved_at`.
 // A Delivery whose `delivery_id` is already in the sheet adds nothing, so a
 // retry after a lost answer, or a re-send, doesn't write its rows twice.

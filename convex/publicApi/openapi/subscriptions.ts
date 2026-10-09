@@ -10,10 +10,10 @@ const exampleSubscription = {
 };
 
 const exampleEnvelope = {
-  event: "document.approved",
+  event: "submission.approved",
   delivery_id: "test_3f2a7c1e-9b4d-4e8a-a1f0-6c5d2b7e9a10",
   test: true,
-  document: { id: "test", filename: "example.pdf", uploaded_at: "2026-10-06T09:00:00.000Z" },
+  submission: { id: "test", filename: "example.pdf", uploaded_at: "2026-10-06T09:00:00.000Z" },
   form: { id: "k17c9z1fx3q8d2v0n6e5w4t8hs7bm2ra", version: 3 },
   approval: { mode: "manual", by: null, at: "2026-10-06T09:00:00.000Z" },
   data: {
@@ -53,7 +53,7 @@ export const subscriptions: OpenApiPart = {
         operationId: "createSubscription",
         summary: "Subscribe to Approvals",
         description:
-          "From now on, every Approval of a Document of this Form is POSTed to `url` as an envelope, the same one every Webhook gets: with retries, a log in Vink and the `X-Vink-Signature` header. Vink makes a Webhook for it, named after the API Key and attached to the Form, so the Form's Field keys are locked while the Subscription is active. It ends when you unsubscribe, when the API Key is revoked or when an Admin deletes that Webhook.",
+          "From now on, every Approval of a Submission of this Form is POSTed to `url` as an envelope, the same one every Webhook gets: with retries, a log in Vink and the `X-Vink-Signature` header. Vink makes a Webhook for it, named after the API Key and attached to the Form, so the Form's Field keys are locked while the Subscription is active. It ends when you unsubscribe, when the API Key is revoked or when an Admin deletes that Webhook.",
         tags: ["Subscriptions"],
         requestBody: {
           required: true,
@@ -214,16 +214,16 @@ export const subscriptions: OpenApiPart = {
     },
     Envelope: {
       type: "object",
-      required: ["event", "delivery_id", "test", "document", "form", "approval", "data"],
+      required: ["event", "delivery_id", "test", "submission", "form", "approval", "data"],
       description: "What every Webhook receives on an Approval, signed with `X-Vink-Signature`.",
       properties: {
-        event: { type: "string", enum: ["document.approved"] },
+        event: { type: "string", enum: ["submission.approved"] },
         delivery_id: {
           type: "string",
-          description: "The same on every retry and re-send of one Delivery: de-duplicate on it. `test_…` in a test; `doc_<document id>` when read with Get a Document.",
+          description: "The same on every retry and re-send of one Delivery: de-duplicate on it. `test_…` in a test; `sub_<submission id>` when read with Get a Submission.",
         },
         test: { type: "boolean", description: "`true` for a test-send or a sample." },
-        document: {
+        submission: {
           type: "object",
           required: ["id", "filename", "uploaded_at"],
           properties: {
@@ -237,7 +237,7 @@ export const subscriptions: OpenApiPart = {
           required: ["id", "version"],
           properties: {
             id: { type: "string" },
-            version: { type: "integer", description: "The Form Version the Document was read with." },
+            version: { type: "integer", description: "The Form Version the Submission was read with." },
           },
         },
         approval: {

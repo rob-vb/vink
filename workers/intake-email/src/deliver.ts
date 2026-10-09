@@ -3,7 +3,7 @@
 // outcome is certain: storing failed before Vink was called, or Vink answered 404.
 // Once Vink was called, Vink removes what it did not accept (`intake.receive`);
 // the Worker never removes then, because a lost answer may hide a committed mail
-// whose Documents point at these very keys.
+// whose Submissions point at these very keys.
 import type { Plan } from "./map";
 
 export type Delivery = {

@@ -92,13 +92,13 @@ async function extracted(recording: Recording, required: string[] = []) {
   const t = newBackend();
   const acme = await acmeWithWorkOrderForm(t, required);
   fakePipeline.replay(recording);
-  const documentId = await uploadAndExtract(t, acme.user, acme.slug, acme.formId, 2);
-  const document = await acme.user.query(api.documents.get, {
+  const submissionId = await uploadAndExtract(t, acme.user, acme.slug, acme.formId, 2);
+  const submission = await acme.user.query(api.submissions.get, {
     organisationSlug: acme.slug,
-    documentId: documentId!,
+    submissionId: submissionId!,
   });
-  const fieldValue = (key: string) => document.fieldValues.find((f) => f.key === key)!;
-  return { t, ...acme, document, fieldValue };
+  const fieldValue = (key: string) => submission.fieldValues.find((f) => f.key === key)!;
+  return { t, ...acme, submission, fieldValue };
 }
 
 test("Verify runs after Fill as one request for every filled value, and asks support only for values on text-layer pages", async () => {
@@ -241,18 +241,18 @@ test("a value can be Needs Review for several reasons at once", async () => {
   ]);
 });
 
-test("a Document is Jev-verified when Verify succeeds", async () => {
-  const { document } = await extracted(workOrder);
+test("a Submission is Jev-verified when Verify succeeds", async () => {
+  const { submission } = await extracted(workOrder);
 
-  expect(document.jevVerified).toBe(true);
+  expect(submission.jevVerified).toBe(true);
 });
 
 test("when Verify fails the Extraction still succeeds, unverified, with Match as the only signal", async () => {
   fakePipeline.failOnce("verify");
-  const { document, fieldValue } = await extracted(workOrder);
+  const { submission, fieldValue } = await extracted(workOrder);
 
-  expect(document.state).toBe("needs_review");
-  expect(document.jevVerified).toBe(false);
+  expect(submission.state).toBe("needs_review");
+  expect(submission.jevVerified).toBe(false);
   expect(fieldValue("order_number")).toMatchObject({
     confidence: 0.95,
     lowestSignal: "match",
@@ -261,8 +261,8 @@ test("when Verify fails the Extraction still succeeds, unverified, with Match as
   expect(fakePipeline.calls.filter((c) => c.step === "verify")).toHaveLength(1);
 });
 
-test("changing the Review Threshold leaves finished Documents alone, and the next Extraction uses it", async () => {
-  const { t, user, slug, formId, document: first } = await extracted({
+test("changing the Review Threshold leaves finished Submissions alone, and the next Extraction uses it", async () => {
+  const { t, user, slug, formId, submission: first } = await extracted({
     ...workOrder,
     verifications: { ...workOrder.verifications, mileage_km: { fit: 0.85, support: 1 } },
   });
@@ -276,15 +276,15 @@ test("changing the Review Threshold leaves finished Documents alone, and the nex
   });
   const second = await uploadAndExtract(t, user, slug, formId, 2);
 
-  const firstNow = await user.query(api.documents.get, {
+  const firstNow = await user.query(api.submissions.get, {
     organisationSlug: slug,
-    documentId: first.id,
+    submissionId: first.id,
   });
   expect(firstNow.reviewThreshold).toBe(0.8);
   expect(firstNow.fieldValues.find((f) => f.key === "mileage_km")!.reviewReasons).toEqual([]);
-  const secondNow = await user.query(api.documents.get, {
+  const secondNow = await user.query(api.submissions.get, {
     organisationSlug: slug,
-    documentId: second!,
+    submissionId: second!,
   });
   expect(secondNow.reviewThreshold).toBe(0.9);
   expect(secondNow.fieldValues.find((f) => f.key === "mileage_km")!.reviewReasons).toEqual([

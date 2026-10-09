@@ -9,22 +9,22 @@ const ZOOMS = [0.75, 1, 1.25, 1.5, 2, 3];
 
 /**
  * A faithful copy of the app's PDF pane
- * (app/app/o/[slug]/documents/[documentId]/pdf-pane.tsx): page n/N and zoom,
+ * (app/app/o/[slug]/submissions/[submissionId]/pdf-pane.tsx): page n/N and zoom,
  * one page at a time. It shows the demo's paper pages instead of a PDF,
  * because react-pdf would need real PDF files. Update both.
  */
 export function DemoPdfPane({
-  documentId,
+  submissionId,
   page,
   onPageChange,
   labels,
 }: {
-  documentId: DemoPdfId;
+  submissionId: DemoPdfId;
   page: number;
   onPageChange: (page: number) => void;
   labels: { previous: string; next: string; zoomIn: string; zoomOut: string };
 }) {
-  const pages = demoPages[documentId];
+  const pages = demoPages[submissionId];
   const pageCount = pages.length;
   const [zoom, setZoom] = useState(1);
   const frame = useRef<HTMLDivElement>(null);

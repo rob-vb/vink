@@ -2,11 +2,11 @@
 
 import { useLocale } from "next-intl";
 import { useState } from "react";
-import type { ListedState } from "@/components/documents/labels";
-import type { ReviewFilter } from "@/components/documents/review-view";
-import type { DemoDocumentId } from "./demo-papers";
-import { DemoDocumentsScreen, DemoLabels, DemoReviewScreen, type ReviewHandlers } from "./demo-screens";
-import { demoReducer, initialDocuments, type DemoAction, type Locale } from "./demo-state";
+import type { ListedState } from "@/components/submissions/labels";
+import type { ReviewFilter } from "@/components/submissions/review-view";
+import type { DemoSubmissionId } from "./demo-papers";
+import { DemoSubmissionsScreen, DemoLabels, DemoReviewScreen, type ReviewHandlers } from "./demo-screens";
+import { demoReducer, initialSubmissions, type DemoAction, type Locale } from "./demo-state";
 
 /*
  * The demo's screens frozen in one state, for the Features page's pictures.
@@ -34,27 +34,27 @@ const inert: ReviewHandlers = {
 // A fixed moment, so the pictures render the same on the server and in the browser.
 const AT = Date.UTC(2026, 8, 30, 6, 20);
 
-function useDocuments(steps: DemoAction[]) {
+function useSubmissions(steps: DemoAction[]) {
   const locale = useLocale() as Locale;
-  const [documents] = useState(() => steps.reduce(demoReducer, initialDocuments(locale)));
-  return documents;
+  const [submissions] = useState(() => steps.reduce(demoReducer, initialSubmissions(locale)));
+  return submissions;
 }
 
-/** One demo Document's review screen. */
+/** One demo Submission's review screen. */
 export function ReviewStill({
-  documentId,
+  submissionId,
   selected = null,
   filter = "all",
 }: {
-  documentId: DemoDocumentId;
+  submissionId: DemoSubmissionId;
   selected?: string | null;
   filter?: ReviewFilter;
 }) {
-  const documents = useDocuments([]);
-  const found = documents.find((d) => d.id === documentId)!;
+  const submissions = useSubmissions([]);
+  const found = submissions.find((d) => d.id === submissionId)!;
   // Own ids, so the picture's inputs never share an id with the live demo's.
   const own = (id: string) => `still-${id}`;
-  const document = {
+  const submission = {
     ...found,
     fieldValues: found.fieldValues.map((f) => ({ ...f, id: own(f.id) })),
     lists: found.lists.map((l) => ({
@@ -63,11 +63,11 @@ export function ReviewStill({
     })),
   };
   selected = selected === null ? null : own(selected);
-  const page = document.fieldValues.find((f) => f.id === selected)?.pages[0] ?? 1;
+  const page = submission.fieldValues.find((f) => f.id === selected)?.pages[0] ?? 1;
   return (
     <DemoLabels>
       <DemoReviewScreen
-        document={document}
+        submission={submission}
         page={page}
         selected={selected}
         filter={filter}
@@ -80,16 +80,16 @@ export function ReviewStill({
   );
 }
 
-/** The Documents page on one tab; the invoice already approved by hand next to the Auto-Send receipt. */
-export function DocumentsStill({ tab }: { tab: ListedState }) {
-  const documents = useDocuments([
-    { type: "check", documentId: "invoice", fieldValueId: "invoice.vat_amount", at: AT },
-    { type: "approve", documentId: "invoice", at: AT },
+/** The Submissions page on one tab; the invoice already approved by hand next to the Auto-Send receipt. */
+export function SubmissionsStill({ tab }: { tab: ListedState }) {
+  const submissions = useSubmissions([
+    { type: "check", submissionId: "invoice", fieldValueId: "invoice.vat_amount", at: AT },
+    { type: "approve", submissionId: "invoice", at: AT },
   ]);
   return (
     <DemoLabels>
-      <DemoDocumentsScreen
-        documents={documents}
+      <DemoSubmissionsScreen
+        submissions={submissions}
         tab={tab}
         onTabChange={nothing}
         onOpen={nothing}

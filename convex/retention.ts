@@ -1,10 +1,10 @@
 // Retention (spec, Retention): a daily cleanup deletes data, R2 objects
 // included, and keeps metadata, history and Delivery logs. It also deletes
-// uploads that never became a Document, and forgets contact-form rate limits.
+// uploads that never became a Submission, and forgets contact-form rate limits.
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { internalMutation, type MutationCtx } from "./_generated/server";
-import { moveTo } from "./lib/documentStates";
+import { moveTo } from "./lib/submissionStates";
 import { pdfStore } from "./lib/pdfStore";
 import { forgetOldContactRequests } from "./contact";
 import { deleteProposal } from "./formProposals";
@@ -20,10 +20,10 @@ const ORPHAN_UPLOAD_HOURS = 24;
 // Per rule and Organisation in one run; a full batch runs the cleanup again.
 const BATCH = 50;
 
-async function logged(ctx: MutationCtx, document: Doc<"documents">, detail: string) {
-  await ctx.db.insert("documentEvents", {
-    organisationId: document.organisationId,
-    documentId: document._id,
+async function logged(ctx: MutationCtx, submission: Doc<"submissions">, detail: string) {
+  await ctx.db.insert("submissionEvents", {
+    organisationId: submission.organisationId,
+    submissionId: submission._id,
     event: "data_deleted",
     detail,
     by: "vink",
@@ -40,36 +40,36 @@ async function cleanOrganisation(ctx: MutationCtx, organisation: Doc<"organisati
   // Approved: N days after the last successful Delivery (or the Approval, or
   // the last attempt when every Delivery failed).
   const sent = await ctx.db
-    .query("documents")
+    .query("submissions")
     .withIndex("by_organisationId_and_retentionClockAt", (q) =>
       q.eq("organisationId", organisationId).gt("retentionClockAt", 0).lt("retentionClockAt", now - days * DAY),
     )
     .take(BATCH);
-  for (const document of sent) {
-    await deleteData(ctx, document);
-    await logged(ctx, document, `Kept ${days} days after it was sent`);
+  for (const submission of sent) {
+    await deleteData(ctx, submission);
+    await logged(ctx, submission, `Kept ${days} days after it was sent`);
   }
   full ||= sent.length === BATCH;
 
   // Never approved: 90 days after upload.
   for (const state of ["extracting", "needs_review", "extraction_failed", "no_form"] as const) {
     const stale = await ctx.db
-      .query("documents")
+      .query("submissions")
       .withIndex("by_organisationId_and_state", (q) =>
         q.eq("organisationId", organisationId).eq("state", state).lt("_creationTime", now - NEVER_APPROVED_DAYS * DAY),
       )
       .take(BATCH);
-    for (const document of stale) {
-      await deleteData(ctx, document);
-      await moveTo(ctx, document, "deleted");
-      await logged(ctx, document, `Not approved within ${NEVER_APPROVED_DAYS} days`);
+    for (const submission of stale) {
+      await deleteData(ctx, submission);
+      await moveTo(ctx, submission, "deleted");
+      await logged(ctx, submission, `Not approved within ${NEVER_APPROVED_DAYS} days`);
     }
     full ||= stale.length === BATCH;
   }
 
   // Rejected: 30 days after Reject.
   const rejected = await ctx.db
-    .query("documents")
+    .query("submissions")
     .withIndex("by_organisationId_and_state", (q) =>
       q.eq("organisationId", organisationId).eq("state", "rejected"),
     )
@@ -77,9 +77,9 @@ async function cleanOrganisation(ctx: MutationCtx, organisation: Doc<"organisati
   const due = rejected
     .filter((d) => d.dataDeletedAt === undefined && d.rejection!.at < now - REJECTED_DAYS * DAY)
     .slice(0, BATCH);
-  for (const document of due) {
-    await deleteData(ctx, document);
-    await logged(ctx, document, `Rejected ${REJECTED_DAYS} days ago`);
+  for (const submission of due) {
+    await deleteData(ctx, submission);
+    await logged(ctx, submission, `Rejected ${REJECTED_DAYS} days ago`);
   }
   full ||= due.length === BATCH;
 
@@ -96,7 +96,7 @@ async function cleanOrganisation(ctx: MutationCtx, organisation: Doc<"organisati
   return full;
 }
 
-/** Deletes uploaded PDFs that never became a Document or a Form Proposal sample. */
+/** Deletes uploaded PDFs that never became a Submission or a Form Proposal sample. */
 async function cleanOrphanUploads(ctx: MutationCtx, now: number) {
   const orphans = await ctx.db
     .query("uploads")

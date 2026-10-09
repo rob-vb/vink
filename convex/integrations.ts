@@ -12,8 +12,8 @@ import {
 } from "./_generated/server";
 import { failOpenDeliveries } from "./deliveries";
 import { accountProviderOf, refreshTokenKeeper, sendAlone } from "./lib/accounts";
-import { formOf } from "./lib/documentForm";
-import { documentPayload } from "./lib/documentPayload";
+import { formOf } from "./lib/submissionForm";
+import { submissionPayload } from "./lib/submissionPayload";
 import { orgAction, orgMutation, orgQuery } from "./lib/functions";
 import { isWebhook, sendTo } from "./lib/integrationAdapters";
 import { signState } from "./lib/oauthState";
@@ -377,7 +377,7 @@ async function linkOf(ctx: QueryCtx, integrationId: Id<"integrations">, formId: 
   return links.find((l) => l.integrationId === integrationId) ?? null;
 }
 
-/** From now on, Approvals of this Form's Documents send to it. Earlier ones aren't sent. */
+/** From now on, Approvals of this Form's Submissions send to it. Earlier ones aren't sent. */
 export const attach = orgMutation({
   role: "admin",
   args: { integrationId: v.id("integrations"), formId: v.id("forms") },
@@ -419,7 +419,7 @@ export async function hasIntegrations(ctx: QueryCtx, formId: Id<"forms">) {
 
 /**
  * A test envelope with dummy data for the Form's current Form Version: what a
- * test-send without a Document sends, and the public API's sample.
+ * test-send without a Submission sends, and the public API's sample.
  */
 export async function dummyEnvelope(ctx: QueryCtx, form: Doc<"forms">, mode: "examples" | "empty") {
   const now = Date.now();
@@ -430,7 +430,7 @@ export async function dummyEnvelope(ctx: QueryCtx, form: Doc<"forms">, mode: "ex
   return envelopeOf({
     deliveryId: `test_${crypto.randomUUID()}`,
     test: true,
-    document: { id: "test", filename: "example.pdf", uploadedAt: now },
+    submission: { id: "test", filename: "example.pdf", uploadedAt: now },
     form: { id: form._id, version: form.version },
     approval: { mode: "manual", by: null, at: now },
     data: dummyPayload(formVersion.fields, mode),
@@ -443,34 +443,34 @@ export const testSendInput = internalQuery({
     integrationId: v.id("integrations"),
     formId: v.id("forms"),
     mode: v.union(v.literal("examples"), v.literal("empty")),
-    documentId: v.optional(v.id("documents")),
+    submissionId: v.optional(v.id("submissions")),
   },
-  handler: async (ctx, { organisationId, integrationId, formId, mode, documentId }) => {
+  handler: async (ctx, { organisationId, integrationId, formId, mode, submissionId }) => {
     const integration = await ownIntegration(ctx, organisationId, integrationId);
     const form = await ownForm(ctx, organisationId, formId);
     const now = Date.now();
     let envelope;
     let approverEmail = null;
-    if (documentId) {
-      const document = await ctx.db.get(documentId);
-      if (document === null || document.formId !== formId || document.dataDeletedAt !== undefined) {
+    if (submissionId) {
+      const submission = await ctx.db.get(submissionId);
+      if (submission === null || submission.formId !== formId || submission.dataDeletedAt !== undefined) {
         throw new ConvexError("Choose an Approved Submission of this Form");
       }
       // Unchecked values never leave Vink, not even in a test.
-      if (document.state !== "approved") {
+      if (submission.state !== "approved") {
         throw new ConvexError("Only an Approved Submission can be test-sent");
       }
       envelope = envelopeOf({
         deliveryId: `test_${crypto.randomUUID()}`,
         test: true,
-        document: { id: document._id, filename: document.filename, uploadedAt: document._creationTime },
-        form: { id: formId, version: formOf(document).formVersion },
-        approval: document.approval
-          ? { mode: document.approval.mode, by: document.approval.by, at: document.approval.at }
+        submission: { id: submission._id, filename: submission.filename, uploadedAt: submission._creationTime },
+        form: { id: formId, version: formOf(submission).formVersion },
+        approval: submission.approval
+          ? { mode: submission.approval.mode, by: submission.approval.by, at: submission.approval.at }
           : { mode: "manual", by: null, at: now },
-        data: await documentPayload(ctx, document),
+        data: await submissionPayload(ctx, submission),
       });
-      approverEmail = document.approval?.byEmail ?? null;
+      approverEmail = submission.approval?.byEmail ?? null;
     } else {
       envelope = await dummyEnvelope(ctx, form, mode);
     }
@@ -486,7 +486,7 @@ export const testSend = orgAction({
     integrationId: v.id("integrations"),
     formId: v.id("forms"),
     mode: v.union(v.literal("examples"), v.literal("empty")),
-    documentId: v.optional(v.id("documents")),
+    submissionId: v.optional(v.id("submissions")),
   },
   handler: async (
     ctx,
@@ -508,14 +508,14 @@ export const testSend = orgAction({
   },
 });
 
-/** Approved Documents of a Form, with their data, that a test-send can use; newest first. */
-export const testDocuments = orgQuery({
+/** Approved Submissions of a Form, with their data, that a test-send can use; newest first. */
+export const testSubmissions = orgQuery({
   role: "admin",
   args: { formId: v.id("forms") },
   handler: async (ctx, { formId }) => {
     await ownForm(ctx, ctx.organisationId, formId);
     const approved = await ctx.db
-      .query("documents")
+      .query("submissions")
       .withIndex("by_organisationId_and_state", (q) =>
         q.eq("organisationId", ctx.organisationId).eq("state", "approved"),
       )

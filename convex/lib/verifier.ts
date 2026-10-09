@@ -1,5 +1,5 @@
 "use node";
-// Verify (ADR 0003): Jev checks every filled value of a Document in one
+// Verify (ADR 0003): Jev checks every filled value of a Submission in one
 // request. Fit: does the value fit its Field and the rest of the Document?
 // Support: does its pages' text layer hold it? Asked only when there is one.
 import { TypeSafeClient, noul } from "@typesafe-ai/sdk";

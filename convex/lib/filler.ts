@@ -4,7 +4,7 @@
 import { complete, models, parseJsonObject } from "./models";
 import type { FilledValue, FillRequest, Filler, FlatField } from "./pipeline";
 
-const PROMPT = `You get, for every Field, the text Match picked as its source on the Document. Write each Field's value from its source, in the form the Field's type and description ask for.
+const PROMPT = `You get, for every Field, the text Match picked as its source on the Submission. Write each Field's value from its source, in the form the Field's type and description ask for.
 
 - A source can be several values of one object, as \`key: value\` lines: take from them what the Field asks for and leave the rest (e.g. brand and model together, without size or article number). When the source holds only part of what the Field asks for (a model without its brand), write that part.
 - Write only what the source says. Normalising is allowed: an ISO code from "658.08 EUR", a brand written out in full from a common abbreviation ("B&D" → "Black & Decker"), a size formatted as the description shows, an IBAN without spaces. Never invent a value that isn't in the source; write null then.

@@ -1,4 +1,4 @@
-// The adapter boundary to Cloudflare R2 (EU jurisdiction), where Documents'
+// The adapter boundary to Cloudflare R2 (EU jurisdiction), where Submissions'
 // files live (a PDF, an image or an email's parts; the name is from when it
 // was always a PDF). Tests replace this module with a fake (see test.setup.ts).
 import { R2 } from "@convex-dev/r2";

@@ -3,7 +3,7 @@
 import type { FlatField, ListField, ListMatch, Match, Reading } from "./pipeline";
 import { readingLeaves } from "./reading";
 
-// Fewer than this share of the required Fields matched means the Document
+// Fewer than this share of the required Fields matched means the Submission
 // was probably uploaded against the wrong Form.
 const DEFAULT_CUTOFF = 0.5;
 

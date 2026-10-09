@@ -1,6 +1,6 @@
 "use node";
-// Read (ADR 0003, ADR 0010): the vision model reads a Document into a Reading.
-// The Reader is picked by the Document's kind, never by a model:
+// Read (ADR 0003, ADR 0010): the vision model reads a Submission into a Reading.
+// The Reader is picked by the Submission's kind, never by a model:
 //   pdf   the PDF, which it sees as page images, plus pdf-inspector's per-page markdown
 //   image the image alone: no text layer, so Verify checks no value against the text
 //   email subject, sender, date and body as text (page 1), its attachments as
@@ -11,37 +11,37 @@ import { complete, models, parseJsonObject } from "./models";
 import { filesOf, type PageText, type Reader, type ReaderInput, type Reading } from "./pipeline";
 import { readThinking, thinkingFor } from "./readThinking";
 
-const ASK = "Describe everything this Document says as one clean JSON object, so that a program can pick any fact out of it.";
+const ASK = "Describe everything this Submission says as one clean JSON object, so that a program can pick any fact out of it.";
 
-const PDF_DOCUMENT =
-  "The Document is a PDF that may bundle several papers about the same job (an invoice, a work order, handwritten forms). You get the page images and the text layer per page (when a page has one).";
+const PDF_SUBMISSION =
+  "The Submission is a PDF that may bundle several papers about the same job (an invoice, a work order, handwritten forms). You get the page images and the text layer per page (when a page has one).";
 
-const IMAGE_DOCUMENT =
-  "The Document is a photo or scan of one paper or of a few papers about the same job (an invoice, a work order, a handwritten form, a note). You get the image, which is page 1; it has no text layer, so read the image itself. Handwriting is common: read it carefully.";
+const IMAGE_SUBMISSION =
+  "The Submission is a photo or scan of one paper or of a few papers about the same job (an invoice, a work order, a handwritten form, a note). You get the image, which is page 1; it has no text layer, so read the image itself. Handwriting is common: read it carefully.";
 
-const EMAIL_DOCUMENT =
-  "The Document is one email. You get its sender, date, subject and body as text (page 1), and its attachments (PDFs and photos) as files, after the text; the page list below says which pages are the email and which are each attachment's. Describe what the email is about (e.g. a complaint, an order, a question) and what each attachment adds to it, as facts about the same real-world things.";
+const EMAIL_SUBMISSION =
+  "The Submission is one email. You get its sender, date, subject and body as text (page 1), and its attachments (PDFs and photos) as files, after the text; the page list below says which pages are the email and which are each attachment's. Describe what the email is about (e.g. a complaint, an order, a question) and what each attachment adds to it, as facts about the same real-world things.";
 
 const RULES = `- **Model the real world, not the paper.** One object per real thing: the supplier, the customer, each delivery, each invoice line, the totals. When several papers record the same thing, write it once and merge what they say. Keep conflicting readings side by side (e.g. \`"quantity": "6"\` and \`"quantityAlt": "8"\`, or a \`conflicts\` note), never pick silently.
 - **The papers in the bundle** go in \`papers\`, one object each with its type and its own numbers and dates; the leading paper (the invoice, or else the reservation or work order the others belong to) first.
 - **Handwriting next to print.** When a handwritten value is also printed elsewhere in the bundle (the part that was fitted and its invoice line, an order number on the delivery note), it is one thing: read the handwriting in the light of the print, write the printed value, and keep the handwritten one beside it (\`name\` and \`nameAsHandwritten\`) when they differ. When two papers show the same value differently, keep both (\`serial\` and \`serialAlt\`).
 - **Arrays of objects** for anything that repeats (deliveries, line items). Only put something in an array of events if it actually happened: a meter reading taken on a part that wasn't replaced is a measurement, not a replacement.
-- **Your own keys**, descriptive and in English (\`invoiceNumber\`, \`fitted.serial\`, \`removed.meterReading\`). Values as written on the Document (no reformatting), except that you may split a combined text into parts.
-- **Keys that say what the value is on their own**, without needing their neighbours: \`taxableAmount\`, \`vatAmount\` and \`totalInclVat\` in a VAT breakdown, never a bare \`amount\` or \`total\`; numbers and dates by their kind (\`invoiceNumber\`, \`reservationNumber\`, \`workOrderNumber\`, \`invoiceDate\`), never a bare \`number\`, \`documentNumber\` or \`date\`.
-- **Name a value by what the Document says it is.** An address belongs to whoever it is printed for (\`supplier.address\`, \`customer.address\`); write where the work was done only when the Document says so (e.g. "Werkadres", "Location of service").
+- **Your own keys**, descriptive and in English (\`invoiceNumber\`, \`fitted.serial\`, \`removed.meterReading\`). Values as written on the Submission (no reformatting), except that you may split a combined text into parts.
+- **Keys that say what the value is on their own**, without needing their neighbours: \`taxableAmount\`, \`vatAmount\` and \`totalInclVat\` in a VAT breakdown, never a bare \`amount\` or \`total\`; numbers and dates by their kind (\`invoiceNumber\`, \`reservationNumber\`, \`workOrderNumber\`, \`invoiceDate\`), never a bare \`number\`, \`submissionNumber\` or \`date\`.
+- **Name a value by what the Submission says it is.** An address belongs to whoever it is printed for (\`supplier.address\`, \`customer.address\`); write where the work was done only when the Submission says so (e.g. "Werkadres", "Location of service").
 - Add \`"_pages": [..]\` to every object: the pages its facts came from.
 - Skip running prose (terms and conditions, email boilerplate).
 - Never guess what you can't read; write what you see and add \`"_unsure": ["key", …]\` to that object.
 
 Answer with the JSON object only.`;
 
-const promptOf = (document: string) => `${ASK} ${document}\n\n${RULES}`;
+const promptOf = (submission: string) => `${ASK} ${submission}\n\n${RULES}`;
 
 // The PDF prompt is the one benchmarked in tickets 26-40: keep its words.
 const PROMPTS = {
-  pdf: promptOf(PDF_DOCUMENT),
-  image: promptOf(IMAGE_DOCUMENT),
-  email: promptOf(EMAIL_DOCUMENT),
+  pdf: promptOf(PDF_SUBMISSION),
+  image: promptOf(IMAGE_SUBMISSION),
+  email: promptOf(EMAIL_SUBMISSION),
 };
 
 /** The markdown of every page that has a text layer (a scan has none), and the page count. */

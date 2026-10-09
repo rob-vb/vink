@@ -1,9 +1,9 @@
-import type { FieldValueType, Value } from "@/components/documents/field-row-view";
-import type { ReviewReason, Signal } from "@/components/documents/labels";
-import type { DemoDocumentId, DemoPdfId, DemoPhotoId } from "./demo-papers";
+import type { FieldValueType, Value } from "@/components/submissions/field-row-view";
+import type { ReviewReason, Signal } from "@/components/submissions/labels";
+import type { DemoSubmissionId, DemoPdfId, DemoPhotoId } from "./demo-papers";
 
 /*
- * The demo's eight Documents: hand-written values and confidences, not
+ * The demo's eight Submissions: hand-written values and confidences, not
  * pipeline output. Six wait in Needs Review (a complaint email with a photo, a
  * damage claim email with a PDF form and two photos, and a photographed work
  * order among them); the receipt was approved by Auto-Send; a newsletter is in
@@ -39,7 +39,7 @@ export type SeedList = {
   entries: Array<Record<string, { value: Value; readText: string; confidence: number; reasons?: ReviewReason[] }>>;
 };
 
-/** An email Document: the email's headers and body, and its attachments (each a drawn photo or drawn PDF pages). */
+/** An email Submission: the email's headers and body, and its attachments (each a drawn photo or drawn PDF pages). */
 export type SeedEmail = {
   from: string;
   /** ISO, so the pane shows it like the app does. */
@@ -58,14 +58,14 @@ export function inLocale<T extends Value>(value: T | Words, locale: "en" | "nl")
   return value !== null && typeof value === "object" ? (value[locale] as T) : value;
 }
 
-export type SeedDocument = {
-  id: DemoDocumentId;
+export type SeedSubmission = {
+  id: DemoSubmissionId;
   /** An email's name is its subject. */
   filename: string;
   /** A PDF unless said otherwise. */
   kind?: "email" | "image";
   email?: SeedEmail;
-  /** The picture of a photo Document, described for the alt text. */
+  /** The picture of a photo Submission, described for the alt text. */
   photoAlt?: Words;
   /** Vink's pick of the Form for input that came without one: its probability. The history shows "Form picked". */
   routed?: number;
@@ -100,7 +100,7 @@ export const CLAIM_ITEMS: Array<[string, string, string, string, number]> = [
 /** A Dutch amount as typed ("1.150,00") as a number. */
 const amount = (typed: string) => Number(typed.replace(/\./g, "").replace(",", "."));
 
-export const seedDocuments: SeedDocument[] = [
+export const seedSubmissions: SeedSubmission[] = [
   {
     id: "complaint",
     filename: "Espressomachine lekt (ORD-3318)",

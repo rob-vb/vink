@@ -1,4 +1,4 @@
-// The Router (ADR 0010, step 5): a Document that came without a Form is read,
+// The Router (ADR 0010, step 5): a Submission that came without a Form is read,
 // Jev picks a Form among the Organisation's, and the fit check gates the pick.
 // Reader, Router (Jev), Matcher, Filler and Verifier are the fakes of test.setup.ts.
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
@@ -103,12 +103,12 @@ async function acme(t: Backend, forms: Array<"invoice" | "complaint">) {
 
 let uploads = 0;
 
-/** An accepted Document with no Form (charged on accept), then the pipeline runs. */
+/** An accepted Submission with no Form (charged on accept), then the pipeline runs. */
 async function arrivesWithoutForm(t: Backend, organisationId: Id<"organisations">, recording: Recording) {
   fakePipeline.replay(recording);
   const key = `org/input-${++uploads}.pdf`;
   fakePdfStore.objects.set(key, await pdfWithPages(1));
-  const documentId = await t.mutation(internal.documents.insert, {
+  const submissionId = await t.mutation(internal.submissions.insert, {
     organisationId,
     key,
     filename: "input.pdf",
@@ -117,16 +117,16 @@ async function arrivesWithoutForm(t: Backend, organisationId: Id<"organisations"
     uploaderEmail: "ann@example.com",
   });
   await settle(t);
-  return documentId;
+  return submissionId;
 }
 
 const used = async (org: Awaited<ReturnType<typeof acme>>) =>
   (await org.user.query(api.items.usage, { organisationSlug: org.slug })).used;
 
-const read = (org: Awaited<ReturnType<typeof acme>>, documentId: Id<"documents">) =>
-  org.user.query(api.documents.get, { organisationSlug: org.slug, documentId });
+const read = (org: Awaited<ReturnType<typeof acme>>, submissionId: Id<"submissions">) =>
+  org.user.query(api.submissions.get, { organisationSlug: org.slug, submissionId });
 
-test("with two Forms, Jev routes each Document to its own Form and the Items are charged once each", async () => {
+test("with two Forms, Jev routes each Submission to its own Form and the Items are charged once each", async () => {
   const t = newBackend();
   const org = await acme(t, ["invoice", "complaint"]);
 
@@ -166,13 +166,13 @@ test("with two Forms, input that no Form is made for goes to No Form, with its R
   const t = newBackend();
   const org = await acme(t, ["invoice", "complaint"]);
 
-  const documentId = await arrivesWithoutForm(t, org.organisationId, postcard);
+  const submissionId = await arrivesWithoutForm(t, org.organisationId, postcard);
 
-  const document = await read(org, documentId);
-  expect(document).toMatchObject({ state: "no_form", formId: null, formVersion: null, formName: "" });
-  expect(document.history.map((h) => h.event)).toEqual(["uploaded", "no_form"]);
-  expect(document.history[1].detail).toBe("No Form fits");
-  expect(document.history[1].info).toEqual({ code: "no_fit" });
+  const submission = await read(org, submissionId);
+  expect(submission).toMatchObject({ state: "no_form", formId: null, formVersion: null, formName: "" });
+  expect(submission.history.map((h) => h.event)).toEqual(["uploaded", "no_form"]);
+  expect(submission.history[1].detail).toBe("No Form fits");
+  expect(submission.history[1].info).toEqual({ code: "no_fit" });
   // Jev found none, so nothing was matched, filled or verified.
   expect(steps()).toEqual(["read", "route"]);
   const stored = await t.run(async (ctx) => await ctx.db.query("readings").collect());
@@ -181,18 +181,18 @@ test("with two Forms, input that no Form is made for goes to No Form, with its R
   expect(await used(org)).toBe(1);
 });
 
-test("a Form Jev picks that fails the fit check is not kept: the Document goes to No Form", async () => {
+test("a Form Jev picks that fails the fit check is not kept: the Submission goes to No Form", async () => {
   const t = newBackend();
   const org = await acme(t, ["invoice", "complaint"]);
 
   // Jev picks the Invoice Form for a postcard, but no required Field matches.
-  const documentId = await arrivesWithoutForm(t, org.organisationId, { ...postcard, route: "Invoice" });
+  const submissionId = await arrivesWithoutForm(t, org.organisationId, { ...postcard, route: "Invoice" });
 
-  const document = await read(org, documentId);
-  expect(document).toMatchObject({ state: "no_form", formId: null, doesNotFit: false });
-  expect(document.history.map((h) => h.event)).toEqual(["uploaded", "no_form"]);
-  expect(document.history[1].detail).toBe("Does not fit Invoice");
-  expect(document.history[1].info).toEqual({ code: "no_fit", form: "Invoice" });
+  const submission = await read(org, submissionId);
+  expect(submission).toMatchObject({ state: "no_form", formId: null, doesNotFit: false });
+  expect(submission.history.map((h) => h.event)).toEqual(["uploaded", "no_form"]);
+  expect(submission.history[1].detail).toBe("Does not fit Invoice");
+  expect(submission.history[1].info).toEqual({ code: "no_fit", form: "Invoice" });
   // Nothing was matched, so there was nothing to fill or verify.
   expect(steps()).toEqual(["read", "route", "match"]);
   const values = await t.run(async (ctx) => await ctx.db.query("fieldValues").collect());
@@ -214,24 +214,24 @@ test("with one Form, input that does not fit goes to No Form, and input that fit
   expect(await used(org)).toBe(2);
 });
 
-test("an Organisation with no Forms puts the Document in No Form, charged, without asking Jev", async () => {
+test("an Organisation with no Forms puts the Submission in No Form, charged, without asking Jev", async () => {
   const t = newBackend();
   const org = await acme(t, []);
 
-  const documentId = await arrivesWithoutForm(t, org.organisationId, invoice);
+  const submissionId = await arrivesWithoutForm(t, org.organisationId, invoice);
 
-  expect(await read(org, documentId)).toMatchObject({ state: "no_form", formId: null });
+  expect(await read(org, submissionId)).toMatchObject({ state: "no_form", formId: null });
   expect(steps()).toEqual(["read"]);
   expect(await used(org)).toBe(1);
 });
 
-test("a Document that arrives with a Form skips the Router", async () => {
+test("a Submission that arrives with a Form skips the Router", async () => {
   const t = newBackend();
   const org = await acme(t, ["invoice", "complaint"]);
   fakePipeline.replay({ ...invoice, route: "Complaint" });
   fakePdfStore.objects.set("org/with-form.pdf", await pdfWithPages(1));
 
-  const documentId = await t.mutation(internal.documents.insert, {
+  const submissionId = await t.mutation(internal.submissions.insert, {
     organisationId: org.organisationId,
     formId: org.ids.invoice,
     key: "org/with-form.pdf",
@@ -242,86 +242,86 @@ test("a Document that arrives with a Form skips the Router", async () => {
   });
   await settle(t);
 
-  expect(await read(org, documentId)).toMatchObject({ state: "needs_review", formName: "Invoice" });
+  expect(await read(org, submissionId)).toMatchObject({ state: "needs_review", formName: "Invoice" });
   expect(steps()).not.toContain("route");
 });
 
-test("the No Form list shows the Documents with no Form, and its tab counts them", async () => {
+test("the No Form list shows the Submissions with no Form, and its tab counts them", async () => {
   const t = newBackend();
   const org = await acme(t, ["invoice"]);
   await arrivesWithoutForm(t, org.organisationId, invoice);
   const lost = await arrivesWithoutForm(t, org.organisationId, postcard);
 
-  const noForm = await org.user.query(api.documents.list, { organisationSlug: org.slug, state: "no_form" });
+  const noForm = await org.user.query(api.submissions.list, { organisationSlug: org.slug, state: "no_form" });
 
   expect(noForm.counts).toMatchObject({ needs_review: 1, no_form: 1 });
-  expect(noForm.documents).toEqual([
+  expect(noForm.submissions).toEqual([
     expect.objectContaining({ id: lost, state: "no_form", formName: "", formVersion: null }),
   ]);
-  const other = await org.user.query(api.documents.list, { organisationSlug: org.slug, state: "needs_review" });
-  expect(other.documents.map((d) => d.formName)).toEqual(["Invoice"]);
+  const other = await org.user.query(api.submissions.list, { organisationSlug: org.slug, state: "needs_review" });
+  expect(other.submissions.map((d) => d.formName)).toEqual(["Invoice"]);
 });
 
-test("a No Form Document can be rejected and reopened back into No Form", async () => {
+test("a No Form Submission can be rejected and reopened back into No Form", async () => {
   const t = newBackend();
   const org = await acme(t, ["invoice"]);
-  const documentId = await arrivesWithoutForm(t, org.organisationId, postcard);
-  const on = { organisationSlug: org.slug, documentId };
+  const submissionId = await arrivesWithoutForm(t, org.organisationId, postcard);
+  const on = { organisationSlug: org.slug, submissionId };
 
   await org.user.mutation(api.rejection.reject, { ...on, reason: "Spam" });
-  expect((await read(org, documentId)).state).toBe("rejected");
+  expect((await read(org, submissionId)).state).toBe("rejected");
   await org.user.mutation(api.rejection.reopen, on);
 
-  expect(await read(org, documentId)).toMatchObject({ state: "no_form", formId: null });
-  const { counts } = await org.user.query(api.documents.list, { organisationSlug: org.slug, state: "no_form" });
+  expect(await read(org, submissionId)).toMatchObject({ state: "no_form", formId: null });
+  const { counts } = await org.user.query(api.submissions.list, { organisationSlug: org.slug, state: "no_form" });
   expect(counts).toMatchObject({ no_form: 1, rejected: 0 });
 });
 
-test("a No Form Document is never approved, and the public API reads it as no_form without a Form", async () => {
+test("a No Form Submission is never approved, and the public API reads it as no_form without a Form", async () => {
   const t = newBackend();
   const org = await acme(t, ["invoice"]);
-  const documentId = await arrivesWithoutForm(t, org.organisationId, postcard);
+  const submissionId = await arrivesWithoutForm(t, org.organisationId, postcard);
 
   await expect(
-    org.user.mutation(api.review.approve, { organisationSlug: org.slug, documentId }),
+    org.user.mutation(api.review.approve, { organisationSlug: org.slug, submissionId }),
   ).rejects.toThrow("can't be reviewed");
 
-  const answer = await t.query(internal.publicApi.documentRead.read, {
+  const answer = await t.query(internal.publicApi.submissionRead.read, {
     organisationId: org.organisationId,
-    documentId,
+    submissionId,
   });
   expect(answer).toMatchObject({ form_id: null, state: "no_form", payload: null });
 });
 
-test("a Document in No Form is deleted after 90 days like any never-approved Document", async () => {
+test("a Submission in No Form is deleted after 90 days like any never-approved Submission", async () => {
   const t = newBackend();
   const org = await acme(t, ["invoice"]);
-  const documentId = await arrivesWithoutForm(t, org.organisationId, postcard);
+  const submissionId = await arrivesWithoutForm(t, org.organisationId, postcard);
 
   vi.setSystemTime(Date.now() + 91 * 24 * 3600 * 1000);
   await t.mutation(internal.retention.run, {});
 
-  expect((await read(org, documentId)).state).toBe("deleted");
+  expect((await read(org, submissionId)).state).toBe("deleted");
 });
 
 test("a failed Router is retried from the stored Reading: no new Read, no new charge", async () => {
   const t = newBackend();
   const org = await acme(t, ["invoice", "complaint"]);
   fakePipeline.failTimes("route", 4);
-  const documentId = await arrivesWithoutForm(t, org.organisationId, invoice);
-  expect((await read(org, documentId)).state).toBe("extraction_failed");
+  const submissionId = await arrivesWithoutForm(t, org.organisationId, invoice);
+  expect((await read(org, submissionId)).state).toBe("extraction_failed");
   expect(await used(org)).toBe(1);
   fakePipeline.calls = [];
 
-  await org.user.mutation(api.extraction.retry, { organisationSlug: org.slug, documentId });
+  await org.user.mutation(api.extraction.retry, { organisationSlug: org.slug, submissionId });
   await settle(t);
 
   expect(steps()).toEqual(["route", "match", "fill", "verify"]);
-  expect(await read(org, documentId)).toMatchObject({ state: "needs_review", formName: "Invoice" });
+  expect(await read(org, submissionId)).toMatchObject({ state: "needs_review", formName: "Invoice" });
   expect(await used(org)).toBe(1);
 });
 
-test("a Document the Router routed never Auto-Sends, and one that came with the same Form does", async () => {
+test("a Submission the Router routed never Auto-Sends, and one that came with the same Form does", async () => {
   const t = newBackend();
   const org = await acme(t, ["invoice"]);
   await org.user.mutation(api.forms.updateSettings, {
@@ -334,7 +334,7 @@ test("a Document the Router routed never Auto-Sends, and one that came with the 
   const routed = await arrivesWithoutForm(t, org.organisationId, invoice);
   fakePipeline.replay(invoice);
   fakePdfStore.objects.set("org/with-form-auto.pdf", await pdfWithPages(1));
-  const given = await t.mutation(internal.documents.insert, {
+  const given = await t.mutation(internal.submissions.insert, {
     organisationId: org.organisationId,
     formId: org.ids.invoice,
     key: "org/with-form-auto.pdf",
@@ -350,7 +350,7 @@ test("a Document the Router routed never Auto-Sends, and one that came with the 
   expect(await read(org, given)).toMatchObject({ state: "approved", approval: { mode: "auto" } });
 });
 
-test("a routed Document that matches no Field of a Form without required Fields goes to No Form", async () => {
+test("a routed Submission that matches no Field of a Form without required Fields goes to No Form", async () => {
   const t = newBackend();
   const org = await acme(t, []);
   const { formId } = await org.user.mutation(api.forms.create, {
@@ -372,7 +372,7 @@ test("a routed Document that matches no Field of a Form without required Fields 
   expect(await read(org, something)).toMatchObject({ state: "needs_review", formId });
 });
 
-test("a Document that arrives with a Form keeps the plain fit check: no matched Field is not a No Form", async () => {
+test("a Submission that arrives with a Form keeps the plain fit check: no matched Field is not a No Form", async () => {
   const t = newBackend();
   const org = await acme(t, []);
   const { formId } = await org.user.mutation(api.forms.create, {
@@ -383,7 +383,7 @@ test("a Document that arrives with a Form keeps the plain fit check: no matched 
   fakePipeline.replay(postcard);
   fakePdfStore.objects.set("org/notes.pdf", await pdfWithPages(1));
 
-  const documentId = await t.mutation(internal.documents.insert, {
+  const submissionId = await t.mutation(internal.submissions.insert, {
     organisationId: org.organisationId,
     formId,
     key: "org/notes.pdf",
@@ -394,24 +394,24 @@ test("a Document that arrives with a Form keeps the plain fit check: no matched 
   });
   await settle(t);
 
-  expect(await read(org, documentId)).toMatchObject({ state: "needs_review", formId, doesNotFit: false });
+  expect(await read(org, submissionId)).toMatchObject({ state: "needs_review", formId, doesNotFit: false });
 });
 
 test("a Reading with no values goes to No Form without asking Jev", async () => {
   const t = newBackend();
   const org = await acme(t, ["invoice", "complaint"]);
 
-  const documentId = await arrivesWithoutForm(t, org.organisationId, {
+  const submissionId = await arrivesWithoutForm(t, org.organisationId, {
     reading: { page: { text: "", _pages: [1] } },
     matches: {},
     fills: {},
     route: "Invoice",
   });
 
-  const document = await read(org, documentId);
-  expect(document).toMatchObject({ state: "no_form", formId: null });
-  expect(document.history[1].detail).toBe("Nothing could be read");
-  expect(document.history[1].info).toEqual({ code: "nothing_read" });
+  const submission = await read(org, submissionId);
+  expect(submission).toMatchObject({ state: "no_form", formId: null });
+  expect(submission.history[1].detail).toBe("Nothing could be read");
+  expect(submission.history[1].info).toEqual({ code: "nothing_read" });
   expect(steps()).toEqual(["read"]);
   expect(await used(org)).toBe(1);
 });

@@ -119,7 +119,7 @@ async function klachten(t: Backend) {
     ann.user.query(api.formProposals.get, { organisationSlug: ann.slug, proposalId });
   /** What the sample dialog does for a file: get an upload URL, PUT the bytes, create the proposal. */
   const sample = async (filename: string, bytes: Uint8Array) => {
-    const { key, url } = await ann.user.mutation(api.documents.generateUploadUrl, { organisationSlug: ann.slug });
+    const { key, url } = await ann.user.mutation(api.submissions.generateUploadUrl, { organisationSlug: ann.slug });
     putToUploadUrl(url, bytes);
     const { proposalId } = await ann.user.action(api.formProposals.create, {
       organisationSlug: ann.slug,
@@ -130,7 +130,7 @@ async function klachten(t: Backend) {
   };
   const rows = {
     proposals: () => t.run(async (ctx) => await ctx.db.query("formProposals").collect()),
-    documents: () => t.run(async (ctx) => await ctx.db.query("documents").collect()),
+    submissions: () => t.run(async (ctx) => await ctx.db.query("submissions").collect()),
     forms: () => t.run(async (ctx) => await ctx.db.query("forms").collect()),
   };
   return { ...ann, used, read, sample, rows };
@@ -177,7 +177,7 @@ test("the bytes decide the kind: PNG bytes named .pdf are a photo sample", async
   expect(await org.rows.proposals()).toMatchObject([{ kind: "image", mimeType: "image/png" }]);
 });
 
-test("a photo sample becomes the Form's first Document from the stored Reading, without a second Read or a second charge", async () => {
+test("a photo sample becomes the Form's first Submission from the stored Reading, without a second Read or a second charge", async () => {
   const t = newBackend();
   const org = await klachten(t);
   fakePipeline.replay(complaint);
@@ -185,7 +185,7 @@ test("a photo sample becomes the Form's first Document from the stored Reading, 
   await settle(t);
   fakePipeline.calls = [];
 
-  const { formId, documentId } = await org.user.mutation(api.formProposals.save, {
+  const { formId, submissionId } = await org.user.mutation(api.formProposals.save, {
     organisationSlug: org.slug,
     proposalId,
     name: "Klacht",
@@ -195,8 +195,8 @@ test("a photo sample becomes the Form's first Document from the stored Reading, 
   await settle(t);
 
   expect(formId).toBeTruthy();
-  const [document] = await org.rows.documents();
-  expect(document).toMatchObject({ _id: documentId, kind: "image", mimeType: "image/jpeg", formId, state: "needs_review" });
+  const [submission] = await org.rows.submissions();
+  expect(submission).toMatchObject({ _id: submissionId, kind: "image", mimeType: "image/jpeg", formId, state: "needs_review" });
   expect(fakePipeline.calls.map((c) => c.step)).toEqual(["match", "fill", "verify"]);
   expect(await org.used()).toBe(1);
 });
@@ -276,7 +276,7 @@ test("an .eml file is a sample: its text and PDF attachment cost 1 + the PDF's p
   expect(fakePdfStore.objects.size).toBe(0);
 });
 
-test("an email sample becomes the Form's first Document, attachments included, at no second charge", async () => {
+test("an email sample becomes the Form's first Submission, attachments included, at no second charge", async () => {
   const t = newBackend();
   const org = await klachten(t);
   fakePipeline.replay(complaint);
@@ -292,9 +292,9 @@ test("an email sample becomes the Form's first Document, attachments included, a
   });
   await settle(t);
 
-  const [document] = await org.rows.documents();
-  expect(document).toMatchObject({ kind: "email", state: "needs_review" });
-  expect(document.attachmentKeys).toEqual([`${document.key}/1`]);
+  const [submission] = await org.rows.submissions();
+  expect(submission).toMatchObject({ kind: "email", state: "needs_review" });
+  expect(submission.attachmentKeys).toEqual([`${submission.key}/1`]);
   expect(fakePdfStore.objects.size).toBe(2);
   expect(await org.used()).toBe(2);
 });
@@ -381,16 +381,16 @@ test("a described Form is saved with the kept Fields and the Admin's words; ther
   ).rejects.toThrow("This proposal has no sample to process");
   expect(await org.rows.forms()).toEqual([]);
 
-  const { formId, documentId } = await org.user.mutation(api.formProposals.save, {
+  const { formId, submissionId } = await org.user.mutation(api.formProposals.save, {
     organisationSlug: org.slug, proposalId, name: "Klacht", description, fields, processSample: false,
   });
 
-  expect(documentId).toBeNull();
+  expect(submissionId).toBeNull();
   const form = await org.user.query(api.forms.get, { organisationSlug: org.slug, formId });
   expect(form).toMatchObject({ name: "Klacht", description, version: 1 });
   expect(form.fields.map((f) => f.key)).toEqual(["subject", "customer_number"]);
   expect(await org.rows.proposals()).toEqual([]);
-  expect(await org.rows.documents()).toEqual([]);
+  expect(await org.rows.submissions()).toEqual([]);
   expect(await org.used()).toBe(0);
 });
 

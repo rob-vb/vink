@@ -15,7 +15,7 @@ export type Params = Record<string, string>;
 
 export type ApiRoute = {
   method: Method;
-  // From the root, with `{name}` for a parameter: `/v1/forms/{form_id}/documents`.
+  // From the root, with `{name}` for a parameter: `/v1/forms/{form_id}/submissions`.
   path: string;
   run: (ctx: ActionCtx, request: Request, params: Params) => Promise<Response>;
 };

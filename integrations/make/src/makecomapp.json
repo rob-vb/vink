@@ -19,47 +19,47 @@
             }
         },
         "webhook": {
-            "approvedDocuments": {
-                "label": "Approved Documents",
+            "approvedSubmissions": {
+                "label": "Approved Submissions",
                 "webhookType": "web",
                 "connection": "vink",
                 "codeFiles": {
-                    "communication": "webhooks/approved-documents/approved-documents.communication.iml.json",
-                    "params": "webhooks/approved-documents/approved-documents.params.iml.json",
-                    "attach": "webhooks/approved-documents/approved-documents.attach.iml.json",
-                    "detach": "webhooks/approved-documents/approved-documents.detach.iml.json",
+                    "communication": "webhooks/approved-submissions/approved-submissions.communication.iml.json",
+                    "params": "webhooks/approved-submissions/approved-submissions.params.iml.json",
+                    "attach": "webhooks/approved-submissions/approved-submissions.attach.iml.json",
+                    "detach": "webhooks/approved-submissions/approved-submissions.detach.iml.json",
                     "update": null,
                     "requiredScope": null
                 }
             }
         },
         "module": {
-            "watchApprovedDocuments": {
-                "label": "Watch approved Documents",
-                "description": "Triggers when a Document of the chosen Form is approved in Vink.",
+            "watchApprovedSubmissions": {
+                "label": "Watch approved Submissions",
+                "description": "Triggers when a Submission of the chosen Form is approved in Vink.",
                 "moduleType": "instant_trigger",
                 "connection": "vink",
-                "webhook": "approvedDocuments",
+                "webhook": "approvedSubmissions",
                 "codeFiles": {
-                    "communication": "modules/watch-approved-documents/watch-approved-documents.communication.iml.json",
-                    "staticParams": "modules/watch-approved-documents/watch-approved-documents.static-params.iml.json",
-                    "mappableParams": "modules/watch-approved-documents/watch-approved-documents.mappable-params.iml.json",
-                    "interface": "modules/watch-approved-documents/watch-approved-documents.interface.iml.json",
-                    "samples": "modules/watch-approved-documents/watch-approved-documents.samples.iml.json"
+                    "communication": "modules/watch-approved-submissions/watch-approved-submissions.communication.iml.json",
+                    "staticParams": "modules/watch-approved-submissions/watch-approved-submissions.static-params.iml.json",
+                    "mappableParams": "modules/watch-approved-submissions/watch-approved-submissions.mappable-params.iml.json",
+                    "interface": "modules/watch-approved-submissions/watch-approved-submissions.interface.iml.json",
+                    "samples": "modules/watch-approved-submissions/watch-approved-submissions.samples.iml.json"
                 }
             },
-            "sendDocument": {
-                "label": "Send in a Document",
+            "sendSubmission": {
+                "label": "Send in a Submission",
                 "description": "Sends a PDF to a Form in Vink, which reads it into the Form's Fields.",
                 "moduleType": "action",
                 "actionCrud": "create",
                 "connection": "vink",
                 "codeFiles": {
-                    "communication": "modules/send-document/send-document.communication.iml.json",
-                    "staticParams": "modules/send-document/send-document.static-params.iml.json",
-                    "mappableParams": "modules/send-document/send-document.mappable-params.iml.json",
-                    "interface": "modules/send-document/send-document.interface.iml.json",
-                    "samples": "modules/send-document/send-document.samples.iml.json",
+                    "communication": "modules/send-submission/send-submission.communication.iml.json",
+                    "staticParams": "modules/send-submission/send-submission.static-params.iml.json",
+                    "mappableParams": "modules/send-submission/send-submission.mappable-params.iml.json",
+                    "interface": "modules/send-submission/send-submission.interface.iml.json",
+                    "samples": "modules/send-submission/send-submission.samples.iml.json",
                     "scope": null
                 }
             },
@@ -130,18 +130,18 @@
                 ],
                 "webhook": [
                     {
-                        "local": "approvedDocuments",
+                        "local": "approvedSubmissions",
                         "remote": "vink-fsvhks"
                     }
                 ],
                 "module": [
                     {
-                        "local": "watchApprovedDocuments",
-                        "remote": "watchApprovedDocuments"
+                        "local": "watchApprovedSubmissions",
+                        "remote": "watchApprovedSubmissions"
                     },
                     {
-                        "local": "sendDocument",
-                        "remote": "sendDocument"
+                        "local": "sendSubmission",
+                        "remote": "sendSubmission"
                     },
                     {
                         "local": "makeApiCall",

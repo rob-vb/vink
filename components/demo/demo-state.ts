@@ -1,13 +1,13 @@
-import type { FieldValueData, Value } from "@/components/documents/field-row-view";
-import type { EmailData } from "@/components/documents/email-pane-view";
-import type { DocumentEvent, DocumentState, ReviewReason } from "@/components/documents/labels";
-import type { ListData } from "@/components/documents/list-group-view";
+import type { FieldValueData, Value } from "@/components/submissions/field-row-view";
+import type { EmailData } from "@/components/submissions/email-pane-view";
+import type { SubmissionEvent, SubmissionState, ReviewReason } from "@/components/submissions/labels";
+import type { ListData } from "@/components/submissions/list-group-view";
 import type { EventInfo } from "@/convex/lib/eventInfo";
-import { DEMO_USER, inLocale, seedDocuments, type SeedField } from "./demo-data";
-import { demoPages, type DemoDocumentId, type DemoPdfId, type DemoPhotoId } from "./demo-papers";
+import { DEMO_USER, inLocale, seedSubmissions, type SeedField } from "./demo-data";
+import { demoPages, type DemoSubmissionId, type DemoPdfId, type DemoPhotoId } from "./demo-papers";
 
 /*
- * The demo's Documents and what the visitor did to them. The rules follow the
+ * The demo's Submissions and what the visitor did to them. The rules follow the
  * app's backend (convex/review.ts, convex/lib/reviewState.ts): a flagged value
  * stops needing review once it is checked or corrected, Undo brings back what
  * was read, and Approval needs nothing left to review.
@@ -20,7 +20,7 @@ export type DemoFieldValue = FieldValueData & { extracted: Value; reasons: Revie
 export type DemoList = ListData<DemoFieldValue> & { reasons: ReviewReason[]; page: number };
 
 export type DemoEvent = {
-  event: DocumentEvent;
+  event: SubmissionEvent;
   detail: string | null;
   info?: EventInfo | null;
   by: string;
@@ -33,24 +33,24 @@ export type DemoPhoto = { id: DemoPhotoId; alt: string };
 /** What an email attachment shows: a drawn photo, or a PDF's drawn pages. */
 export type DemoAttachment = { photo: DemoPhoto } | { pdf: DemoPdfId };
 
-export type DemoDocument = {
-  id: DemoDocumentId;
+export type DemoSubmission = {
+  id: DemoSubmissionId;
   filename: string;
   /** Picks the pane: the PDF pane, the email pane or the image pane. */
   kind: "pdf" | "email" | "image";
-  /** An email Document's email; what its attachments show is `attachmentViews`, in order. */
+  /** An email Submission's email; what its attachments show is `attachmentViews`, in order. */
   email: EmailData | null;
   attachmentViews: DemoAttachment[];
-  /** A photo Document's picture. */
+  /** A photo Submission's picture. */
   photo: DemoPhoto | null;
   /** The history's "Form picked" detail, when Vink picked the Form. */
   routed: EventInfo | null;
-  /** The history's "No Form fits" detail, for a Document in No Form. */
+  /** The history's "No Form fits" detail, for a Submission in No Form. */
   noFormInfo: EventInfo | null;
   formName: string;
   uploadedBy: string;
   minutesAgo: number;
-  state: DocumentState;
+  state: SubmissionState;
   pageCount: number;
   approval: { mode: "auto" | "manual"; by: string | null; at: number | null } | null;
   fieldValues: DemoFieldValue[];
@@ -88,8 +88,8 @@ function fieldValue(
   };
 }
 
-export function initialDocuments(locale: Locale): DemoDocument[] {
-  return seedDocuments.map((seed) => ({
+export function initialSubmissions(locale: Locale): DemoSubmission[] {
+  return seedSubmissions.map((seed) => ({
     id: seed.id,
     filename: seed.filename,
     formName: seed.form[locale],
@@ -122,7 +122,7 @@ export function initialDocuments(locale: Locale): DemoDocument[] {
         : { code: "routed", form: seed.form[locale], percent: Math.round(seed.routed * 100) },
     noFormInfo: seed.noForm ? { code: "no_fit", form: seed.noForm[locale] } : null,
     state: seed.noForm ? "no_form" : seed.autoSent ? "approved" : "needs_review",
-    // Like the app: an email or a photo is one page; its attachments are pages of the email, not of the Document.
+    // Like the app: an email or a photo is one page; its attachments are pages of the email, not of the Submission.
     pageCount: (seed.kind ?? "pdf") === "pdf" ? demoPages[seed.id as DemoPdfId].length : 1,
     approval: seed.autoSent ? { mode: "auto", by: null, at: null } : null,
     fieldValues: seed.fields.map((f) =>
@@ -169,10 +169,10 @@ export function initialDocuments(locale: Locale): DemoDocument[] {
 }
 
 /** Values in Needs Review, plus Lists whose completeness isn't confirmed. */
-export function needsReviewCount(document: DemoDocument) {
+export function needsReviewCount(submission: DemoSubmission) {
   return (
-    document.fieldValues.filter((f) => f.needsReview).length +
-    document.lists.reduce(
+    submission.fieldValues.filter((f) => f.needsReview).length +
+    submission.lists.reduce(
       (n, list) =>
         n +
         (list.needsReview ? 1 : 0) +
@@ -185,8 +185,8 @@ export function needsReviewCount(document: DemoDocument) {
 }
 
 /** Every value Vink read across the demo, for the closing card. */
-export function valuesRead(documents: DemoDocument[]) {
-  return documents.reduce(
+export function valuesRead(submissions: DemoSubmission[]) {
+  return submissions.reduce(
     (n, d) =>
       n +
       d.fieldValues.length +
@@ -196,42 +196,42 @@ export function valuesRead(documents: DemoDocument[]) {
 }
 
 export type DemoAction =
-  | { type: "correct"; documentId: DemoDocumentId; fieldValueId: string; value: Value; at: number }
-  | { type: "check"; documentId: DemoDocumentId; fieldValueId: string; at: number }
-  | { type: "undo"; documentId: DemoDocumentId; fieldValueId: string }
-  | { type: "confirmEntries"; documentId: DemoDocumentId; listKey: string; at: number }
-  | { type: "undoConfirmEntries"; documentId: DemoDocumentId; listKey: string; at: number }
-  | { type: "removeEntry"; documentId: DemoDocumentId; listKey: string; entry: number; at: number }
-  | { type: "restoreEntry"; documentId: DemoDocumentId; listKey: string; entry: number; at: number }
-  | { type: "addEntry"; documentId: DemoDocumentId; listKey: string; at: number }
-  | { type: "approve"; documentId: DemoDocumentId; at: number }
+  | { type: "correct"; submissionId: DemoSubmissionId; fieldValueId: string; value: Value; at: number }
+  | { type: "check"; submissionId: DemoSubmissionId; fieldValueId: string; at: number }
+  | { type: "undo"; submissionId: DemoSubmissionId; fieldValueId: string }
+  | { type: "confirmEntries"; submissionId: DemoSubmissionId; listKey: string; at: number }
+  | { type: "undoConfirmEntries"; submissionId: DemoSubmissionId; listKey: string; at: number }
+  | { type: "removeEntry"; submissionId: DemoSubmissionId; listKey: string; entry: number; at: number }
+  | { type: "restoreEntry"; submissionId: DemoSubmissionId; listKey: string; entry: number; at: number }
+  | { type: "addEntry"; submissionId: DemoSubmissionId; listKey: string; at: number }
+  | { type: "approve"; submissionId: DemoSubmissionId; at: number }
   | { type: "reset"; locale: Locale };
 
 function mapFieldValues(
-  document: DemoDocument,
+  submission: DemoSubmission,
   id: string,
   change: (f: DemoFieldValue) => DemoFieldValue,
-): DemoDocument {
+): DemoSubmission {
   const apply = (f: DemoFieldValue) => (f.id === id ? change(f) : f);
   return {
-    ...document,
-    fieldValues: document.fieldValues.map(apply),
-    lists: document.lists.map((list) => ({
+    ...submission,
+    fieldValues: submission.fieldValues.map(apply),
+    lists: submission.lists.map((list) => ({
       ...list,
       entries: list.entries.map((e) => ({ ...e, fieldValues: e.fieldValues.map(apply) })),
     })),
   };
 }
 
-function findFieldValue(document: DemoDocument, id: string) {
+function findFieldValue(submission: DemoSubmission, id: string) {
   return (
-    document.fieldValues.find((f) => f.id === id) ??
-    document.lists.flatMap((l) => l.entries.flatMap((e) => e.fieldValues)).find((f) => f.id === id)
+    submission.fieldValues.find((f) => f.id === id) ??
+    submission.lists.flatMap((l) => l.entries.flatMap((e) => e.fieldValues)).find((f) => f.id === id)
   );
 }
 
-function mapList(document: DemoDocument, key: string, change: (l: DemoList) => DemoList): DemoDocument {
-  return { ...document, lists: document.lists.map((l) => (l.key === key ? change(l) : l)) };
+function mapList(submission: DemoSubmission, key: string, change: (l: DemoList) => DemoList): DemoSubmission {
+  return { ...submission, lists: submission.lists.map((l) => (l.key === key ? change(l) : l)) };
 }
 
 function withListState(list: DemoList): DemoList {
@@ -245,20 +245,20 @@ function withListState(list: DemoList): DemoList {
   };
 }
 
-function log(document: DemoDocument, event: DocumentEvent, at: number, detail: string | null = null) {
-  return { ...document, events: [...document.events, { event, detail, by: DEMO_USER, at }] };
+function log(submission: DemoSubmission, event: SubmissionEvent, at: number, detail: string | null = null) {
+  return { ...submission, events: [...submission.events, { event, detail, by: DEMO_USER, at }] };
 }
 
-function reduceDocument(document: DemoDocument, action: Exclude<DemoAction, { type: "reset" }>): DemoDocument {
-  // Like the app: once approved, nothing on a Document changes.
-  if (document.state !== "needs_review") return document;
-  const list = "listKey" in action ? document.lists.find((l) => l.key === action.listKey) : undefined;
+function reduceSubmission(submission: DemoSubmission, action: Exclude<DemoAction, { type: "reset" }>): DemoSubmission {
+  // Like the app: once approved, nothing on a Submission changes.
+  if (submission.state !== "needs_review") return submission;
+  const list = "listKey" in action ? submission.lists.find((l) => l.key === action.listKey) : undefined;
   const listLabel = list?.label ?? null;
   switch (action.type) {
     case "correct": {
-      const label = findFieldValue(document, action.fieldValueId)?.label ?? null;
+      const label = findFieldValue(submission, action.fieldValueId)?.label ?? null;
       return log(
-        mapFieldValues(document, action.fieldValueId, (f) => ({
+        mapFieldValues(submission, action.fieldValueId, (f) => ({
           ...f,
           value: action.value,
           needsReview: false,
@@ -270,13 +270,13 @@ function reduceDocument(document: DemoDocument, action: Exclude<DemoAction, { ty
       );
     }
     case "check":
-      return mapFieldValues(document, action.fieldValueId, (f) => ({
+      return mapFieldValues(submission, action.fieldValueId, (f) => ({
         ...f,
         needsReview: false,
         review: { state: "checked", by: DEMO_USER, at: action.at },
       }));
     case "undo":
-      return mapFieldValues(document, action.fieldValueId, (f) => ({
+      return mapFieldValues(submission, action.fieldValueId, (f) => ({
         ...f,
         value: f.extracted,
         needsReview: f.reasons.length > 0,
@@ -284,7 +284,7 @@ function reduceDocument(document: DemoDocument, action: Exclude<DemoAction, { ty
       }));
     case "confirmEntries":
       return log(
-        mapList(document, action.listKey, (l) =>
+        mapList(submission, action.listKey, (l) =>
           withListState({ ...l, complete: { by: DEMO_USER, at: action.at } }),
         ),
         "entries_confirmed",
@@ -293,7 +293,7 @@ function reduceDocument(document: DemoDocument, action: Exclude<DemoAction, { ty
       );
     case "undoConfirmEntries":
       return log(
-        mapList(document, action.listKey, (l) => withListState({ ...l, complete: null })),
+        mapList(submission, action.listKey, (l) => withListState({ ...l, complete: null })),
         "entries_unconfirmed",
         action.at,
         listLabel,
@@ -301,7 +301,7 @@ function reduceDocument(document: DemoDocument, action: Exclude<DemoAction, { ty
     case "removeEntry":
     case "restoreEntry":
       return log(
-        mapList(document, action.listKey, (l) =>
+        mapList(submission, action.listKey, (l) =>
           withListState({
             ...l,
             entries: l.entries.map((e) =>
@@ -315,7 +315,7 @@ function reduceDocument(document: DemoDocument, action: Exclude<DemoAction, { ty
       );
     case "addEntry":
       return log(
-        mapList(document, action.listKey, (l) => {
+        mapList(submission, action.listKey, (l) => {
           const entry = l.entries.length;
           const template = l.entries[0]?.fieldValues ?? [];
           return withListState({
@@ -328,7 +328,7 @@ function reduceDocument(document: DemoDocument, action: Exclude<DemoAction, { ty
                 added: true,
                 fieldValues: template.map((f) => ({
                   ...f,
-                  id: `${document.id}.${l.key}[${entry}].${f.key}`,
+                  id: `${submission.id}.${l.key}[${entry}].${f.key}`,
                   value: null,
                   extracted: null,
                   readText: null,
@@ -347,16 +347,16 @@ function reduceDocument(document: DemoDocument, action: Exclude<DemoAction, { ty
         `${listLabel} #${(list?.entries.length ?? 0) + 1}`,
       );
     case "approve":
-      if (needsReviewCount(document) > 0) return document;
+      if (needsReviewCount(submission) > 0) return submission;
       return log(
-        { ...document, state: "approved", approval: { mode: "manual", by: DEMO_USER, at: action.at } },
+        { ...submission, state: "approved", approval: { mode: "manual", by: DEMO_USER, at: action.at } },
         "approved",
         action.at,
       );
   }
 }
 
-export function demoReducer(documents: DemoDocument[], action: DemoAction): DemoDocument[] {
-  if (action.type === "reset") return initialDocuments(action.locale);
-  return documents.map((d) => (d.id === action.documentId ? reduceDocument(d, action) : d));
+export function demoReducer(submissions: DemoSubmission[], action: DemoAction): DemoSubmission[] {
+  if (action.type === "reset") return initialSubmissions(action.locale);
+  return submissions.map((d) => (d.id === action.submissionId ? reduceSubmission(d, action) : d));
 }

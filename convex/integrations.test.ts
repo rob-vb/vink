@@ -322,7 +322,7 @@ test("a test-send posts the test envelope with example data, signed like a real 
   });
   expectSignedBy(secret, request);
   expect(JSON.parse(request.body)).toMatchObject({
-    event: "document.approved",
+    event: "submission.approved",
     test: true,
     form: { id: formId, version: 1 },
     data: {
@@ -347,7 +347,7 @@ test("a test-send can leave optional values empty, to show null and []", async (
   });
 });
 
-test("a test-send with an Approved Document sends that Document's Payload, corrections included", async () => {
+test("a test-send with an Approved Submission sends that Submission's Payload, corrections included", async () => {
   const t = newBackend();
   const { user, organisationSlug, formId, create } = await acme(t);
   const { integrationId } = await create();
@@ -360,34 +360,34 @@ test("a test-send with an Approved Document sends that Document's Payload, corre
     fills: { license_plate: "NWA30E", mileage_km: 9899 },
   };
   fakePipeline.replay(recording);
-  const documentId = (await uploadAndExtract(t, user, organisationSlug, formId)) as Id<"documents">;
-  const document = await user.query(api.documents.get, { organisationSlug, documentId });
+  const submissionId = (await uploadAndExtract(t, user, organisationSlug, formId)) as Id<"submissions">;
+  const submission = await user.query(api.submissions.get, { organisationSlug, submissionId });
   await user.mutation(api.review.correct, {
     organisationSlug,
-    fieldValueId: document.fieldValues[1].id,
+    fieldValueId: submission.fieldValues[1].id,
     value: 9800,
   });
-  await user.mutation(api.review.approve, { organisationSlug, documentId });
+  await user.mutation(api.review.approve, { organisationSlug, submissionId });
 
-  expect(await user.query(api.integrations.testDocuments, { organisationSlug, formId })).toEqual([
-    { id: documentId, filename: "werkorder.pdf", state: "approved" },
+  expect(await user.query(api.integrations.testSubmissions, { organisationSlug, formId })).toEqual([
+    { id: submissionId, filename: "werkorder.pdf", state: "approved" },
   ]);
   await user.action(api.integrations.testSend, {
     organisationSlug,
     integrationId,
     formId,
     mode: "examples",
-    documentId,
+    submissionId,
   });
 
   expect(JSON.parse(fakeHttp.requests[0].body)).toMatchObject({
     test: true,
-    document: { id: documentId, filename: "werkorder.pdf" },
+    submission: { id: submissionId, filename: "werkorder.pdf" },
     data: { license_plate: "NWA30E", mileage_km: 9800, tyre_changes: [] },
   });
 });
 
-test("a Document still in Needs Review is never test-sent: unchecked data doesn't leave", async () => {
+test("a Submission still in Needs Review is never test-sent: unchecked data doesn't leave", async () => {
   const t = newBackend();
   const { user, organisationSlug, formId, create } = await acme(t);
   const { integrationId } = await create();
@@ -396,16 +396,16 @@ test("a Document still in Needs Review is never test-sent: unchecked data doesn'
     matches: { license_plate: { path: "vehicle.license_plate", probability: 0.4 } },
     fills: { license_plate: "NWA30E" },
   });
-  const documentId = (await uploadAndExtract(t, user, organisationSlug, formId)) as Id<"documents">;
+  const submissionId = (await uploadAndExtract(t, user, organisationSlug, formId)) as Id<"submissions">;
 
-  expect(await user.query(api.integrations.testDocuments, { organisationSlug, formId })).toEqual([]);
+  expect(await user.query(api.integrations.testSubmissions, { organisationSlug, formId })).toEqual([]);
   await expect(
     user.action(api.integrations.testSend, {
       organisationSlug,
       integrationId,
       formId,
       mode: "examples",
-      documentId,
+      submissionId,
     }),
   ).rejects.toThrow("Only an Approved Submission can be test-sent");
   expect(fakeHttp.requests).toEqual([]);

@@ -3,10 +3,10 @@
 // "Two ways to connect it" and the Developers page both show it.
 
 export const sampleEnvelope = {
-  event: "document.approved",
+  event: "submission.approved",
   delivery_id: "dlv_3f6c2a1e-8b4d-4e2f-9a71-5c0d8e7b2f14",
   test: false,
-  document: {
+  submission: {
     id: "k97d4m2x8q1v6c3n5b0e7h9r2t4w8a1f",
     filename: "invoice-F-2026-0418.pdf",
     uploaded_at: "2026-09-30T08:12:04.000Z",

@@ -9,10 +9,10 @@ import { internalMutation, internalQuery, type ActionCtx, type MutationCtx, type
 import { deleteAuthRows } from "./auth";
 import { deleteProposal } from "./formProposals";
 import { orgAction, userAction, userQuery } from "./lib/functions";
-import { removeDocumentFiles } from "./lib/documentFiles";
+import { removeSubmissionFiles } from "./lib/submissionFiles";
 import { pdfStore } from "./lib/pdfStore";
 
-// Documents per purge run: each takes its Readings, Values, Deliveries and history along.
+// Submissions per purge run: each takes its Readings, Values, Deliveries and history along.
 const BATCH = 10;
 
 /** The name the Admin must type matches, ignoring outer spaces. */
@@ -84,22 +84,22 @@ function formsOf(ctx: QueryCtx, organisationId: Id<"organisations">) {
 
 async function deleteChildren(
   ctx: MutationCtx,
-  table: "readings" | "fieldValues" | "listValues" | "deliveries" | "documentEvents",
-  documentId: Id<"documents">,
+  table: "readings" | "fieldValues" | "listValues" | "deliveries" | "submissionEvents",
+  submissionId: Id<"submissions">,
 ) {
   const rows = await ctx.db
     .query(table)
-    .withIndex("by_documentId", (q) => q.eq("documentId", documentId))
+    .withIndex("by_submissionId", (q) => q.eq("submissionId", submissionId))
     .collect();
   for (const row of rows) await ctx.db.delete(row._id);
 }
 
-async function removeDocument(ctx: MutationCtx, document: Doc<"documents">) {
-  if (document.dataDeletedAt === undefined) await removeDocumentFiles(ctx, document);
-  for (const table of ["readings", "fieldValues", "listValues", "deliveries", "documentEvents"] as const) {
-    await deleteChildren(ctx, table, document._id);
+async function removeSubmission(ctx: MutationCtx, submission: Doc<"submissions">) {
+  if (submission.dataDeletedAt === undefined) await removeSubmissionFiles(ctx, submission);
+  for (const table of ["readings", "fieldValues", "listValues", "deliveries", "submissionEvents"] as const) {
+    await deleteChildren(ctx, table, submission._id);
   }
-  await ctx.db.delete(document._id);
+  await ctx.db.delete(submission._id);
 }
 
 async function removeForm(ctx: MutationCtx, form: Doc<"forms">) {
@@ -138,12 +138,12 @@ export const purge = internalMutation({
   handler: async (ctx, { organisationId }) => {
     const again = () => ctx.scheduler.runAfter(0, internal.deletion.purge, { organisationId });
 
-    const documents = await ctx.db
-      .query("documents")
+    const submissions = await ctx.db
+      .query("submissions")
       .withIndex("by_organisationId_and_state", (q) => q.eq("organisationId", organisationId))
       .take(BATCH);
-    for (const document of documents) await removeDocument(ctx, document);
-    if (documents.length > 0) return void (await again());
+    for (const submission of submissions) await removeSubmission(ctx, submission);
+    if (submissions.length > 0) return void (await again());
 
     const proposals = await ctx.db
       .query("formProposals")
@@ -180,7 +180,7 @@ export const purge = internalMutation({
       for (const row of rows) await ctx.db.delete(row._id);
     }
     const counts = await ctx.db
-      .query("documentCounts")
+      .query("submissionCounts")
       .withIndex("by_organisationId_and_state", (q) => q.eq("organisationId", organisationId))
       .collect();
     for (const row of counts) await ctx.db.delete(row._id);

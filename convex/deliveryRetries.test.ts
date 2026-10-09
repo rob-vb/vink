@@ -81,17 +81,17 @@ async function acme(t: Backend) {
   return { ...ann, organisationSlug, formId, integrationId };
 }
 
-/** An approved Document of the Form; the first attempt has been made. */
+/** An approved Submission of the Form; the first attempt has been made. */
 async function approve(t: Backend, acmeOrg: Awaited<ReturnType<typeof acme>>) {
   const { user, organisationSlug, formId } = acmeOrg;
   fakePipeline.replay(workOrder);
-  const documentId = (await uploadAndExtract(t, user, organisationSlug, formId)) as Id<"documents">;
+  const submissionId = (await uploadAndExtract(t, user, organisationSlug, formId)) as Id<"submissions">;
   vi.setSystemTime(APPROVED_AT);
-  await user.mutation(api.review.approve, { organisationSlug, documentId });
+  await user.mutation(api.review.approve, { organisationSlug, submissionId });
   await after(t, 0);
   const delivery = async () =>
-    (await user.query(api.documents.get, { organisationSlug, documentId })).deliveries[0];
-  return { documentId, delivery };
+    (await user.query(api.submissions.get, { organisationSlug, submissionId })).deliveries[0];
+  return { submissionId, delivery };
 }
 
 async function attachedAndApproved(t: Backend) {
@@ -279,7 +279,7 @@ test.each(["detach", "remove"] as const)(
   },
 );
 
-test("attaching an Integration later sends nothing for Documents approved before", async () => {
+test("attaching an Integration later sends nothing for Submissions approved before", async () => {
   const t = newBackend();
   const acmeOrg = await acme(t);
   const { delivery } = await approve(t, acmeOrg);

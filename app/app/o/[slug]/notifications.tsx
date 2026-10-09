@@ -27,10 +27,10 @@ export function Notifications({ organisationSlug }: { organisationSlug: string }
   function text(english: string) {
     const match = english.match(deliveryFailed);
     if (!match) return english;
-    const [, document, integration] = match;
+    const [, submission, integration] = match;
     return t("deliveryFailed", {
-      // "A Document" is the fallback stored in older notifications, "A Submission" in newer ones.
-      document: document === "A Document" || document === "A Submission" ? t("aDocument") : document,
+      // "A Submission" is the fallback stored when the Submission is gone.
+      submission: submission === "A Submission" ? t("aSubmission") : submission,
       integration,
     });
   }
@@ -70,7 +70,7 @@ export function Notifications({ organisationSlug }: { organisationSlug: string }
             {notifications.map((n) => (
               <li key={n.id} className="border-b last:border-b-0">
                 <Link
-                  href={n.documentId ? `/app/o/${organisationSlug}/documents/${n.documentId}` : "#"}
+                  href={n.submissionId ? `/app/o/${organisationSlug}/submissions/${n.submissionId}` : "#"}
                   className="flex gap-2 px-3 py-2 text-sm hover:bg-muted"
                 >
                   <span

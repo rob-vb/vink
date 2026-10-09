@@ -121,24 +121,24 @@ async function connected(t: Backend) {
 
 async function approve(t: Backend, ctx: Awaited<ReturnType<typeof connected>>) {
   fakePipeline.replay(tyreService);
-  const documentId = (await uploadAndExtract(t, ctx.user, ctx.organisationSlug, ctx.formId, 2))!;
-  await ctx.user.mutation(api.review.approve, { organisationSlug: ctx.organisationSlug, documentId });
+  const submissionId = (await uploadAndExtract(t, ctx.user, ctx.organisationSlug, ctx.formId, 2))!;
+  await ctx.user.mutation(api.review.approve, { organisationSlug: ctx.organisationSlug, submissionId });
   await t.finishAllScheduledFunctions(vi.runAllTimers);
-  return documentId;
+  return submissionId;
 }
 
-async function deliveryOf(t: Backend, ctx: Awaited<ReturnType<typeof connected>>, documentId: Id<"documents">) {
-  const { deliveries } = await ctx.user.query(api.documents.get, {
+async function deliveryOf(t: Backend, ctx: Awaited<ReturnType<typeof connected>>, submissionId: Id<"submissions">) {
+  const { deliveries } = await ctx.user.query(api.submissions.get, {
     organisationSlug: ctx.organisationSlug,
-    documentId,
+    submissionId,
   });
   expect(deliveries).toHaveLength(1);
   return deliveries[0];
 }
 
-async function deliveryRow(t: Backend, documentId: Id<"documents">) {
+async function deliveryRow(t: Backend, submissionId: Id<"submissions">) {
   return await t.run(
-    async (ctx) => await ctx.db.query("deliveries").withIndex("by_documentId", (q) => q.eq("documentId", documentId)).unique(),
+    async (ctx) => await ctx.db.query("deliveries").withIndex("by_submissionId", (q) => q.eq("submissionId", submissionId)).unique(),
   );
 }
 
@@ -173,7 +173,7 @@ test("connecting makes a workbook with a table of the header row, lists its link
   const ann = await connected(t);
   expect(fakeMicrosoft.onlyWorkbook()).toEqual({
     title: "Tyre log",
-    header: ["document", "approved_at", "approved_by", "delivery_id"],
+    header: ["submission", "approved_at", "approved_by", "delivery_id"],
     rows: [],
   });
   expect(fakeMicrosoft.redirectUris).toEqual(["https://vink.page/api/integrations/microsoft/callback"]);
@@ -181,7 +181,7 @@ test("connecting makes a workbook with a table of the header row, lists its link
   expect(listed).toMatchObject({
     name: "Tyre log",
     kind: "excel",
-    url: "https://acme-my.sharepoint.com/personal/ann/Documents/Tyre%20log.xlsx",
+    url: "https://acme-my.sharepoint.com/personal/ann/Submissions/Tyre%20log.xlsx",
     headers: [],
     needsReconnect: false,
   });
@@ -247,13 +247,13 @@ test("sign-in without the files scope connects nothing", async () => {
 test("an Approval adds a row per tyre change to the table, the second List as an empty cell", async () => {
   const t = newBackend();
   const ann = await connected(t);
-  const documentId = await approve(t, ann);
+  const submissionId = await approve(t, ann);
 
-  const delivery = await deliveryOf(t, ann, documentId);
+  const delivery = await deliveryOf(t, ann, submissionId);
   expect(delivery).toMatchObject({ state: "delivered", attempts: [{ status: 200, body: "2 rows added to the workbook" }] });
   const workbook = fakeMicrosoft.onlyWorkbook();
   expect(workbook.header).toEqual([
-    "document",
+    "submission",
     "license_plate",
     "tyre_changes.position",
     "tyre_changes.tread_depth_mm",
@@ -311,7 +311,7 @@ test("a workbook in the old column order keeps it: values go by name, a new Fiel
   // The table as Vink made it before: Vink's columns first, then the Fields.
   const [stored] = fakeMicrosoft.workbooks.values();
   stored.rows = [
-    ["document", "approved_at", "approved_by", "delivery_id", "license_plate", "tyre_changes.position", "tyre_changes.tread_depth_mm"],
+    ["submission", "approved_at", "approved_by", "delivery_id", "license_plate", "tyre_changes.position", "tyre_changes.tread_depth_mm"],
     ["old.pdf", "2026-10-01T08:00:00.000Z", "ann@example.com", "dlv_old", "OLD1", "1L", 5],
   ];
   // The first write lands, but its answer never arrives: the retry must find delivery_id by name.
@@ -322,13 +322,13 @@ test("a workbook in the old column order keeps it: values go by name, a new Fiel
     const { MicrosoftFailure } = await import("./lib/microsoft");
     throw new MicrosoftFailure(null, "Microsoft didn't answer within 15 s");
   };
-  const documentId = await approve(t, ann);
-  const { deliveryId, attempts } = await deliveryOf(t, ann, documentId);
+  const submissionId = await approve(t, ann);
+  const { deliveryId, attempts } = await deliveryOf(t, ann, submissionId);
   expect(attempts.at(-1)?.body).toBe("Already in the workbook: no rows added");
 
   const workbook = fakeMicrosoft.onlyWorkbook();
   expect(workbook.header).toEqual([
-    "document",
+    "submission",
     "rims",
     "approved_at",
     "approved_by",
@@ -358,10 +358,10 @@ test("two Deliveries at once write one after the other: a new Field's column is 
   fakePipeline.replay(tyreService);
   const first = (await uploadAndExtract(t, ann.user, ann.organisationSlug, ann.formId, 2))!;
   const second = (await uploadAndExtract(t, ann.user, ann.organisationSlug, ann.formId, 2))!;
-  await ann.user.mutation(api.review.approve, { organisationSlug: ann.organisationSlug, documentId: first });
+  await ann.user.mutation(api.review.approve, { organisationSlug: ann.organisationSlug, submissionId: first });
   // The second Delivery's attempt starts while the first is between reading the header and writing.
   fakeMicrosoft.afterRead = async () => {
-    await ann.user.mutation(api.review.approve, { organisationSlug: ann.organisationSlug, documentId: second });
+    await ann.user.mutation(api.review.approve, { organisationSlug: ann.organisationSlug, submissionId: second });
     const { _id } = (await deliveryRow(t, second))!;
     await t.action(internal.deliveries.attempt, { id: _id });
   };
@@ -379,9 +379,9 @@ test("Microsoft's rate limits and 5xx are retried", async () => {
   const t = newBackend();
   const ann = await connected(t);
   fakeMicrosoft.answer({ status: 429, retryAfter: "30" }, { status: 504 });
-  const documentId = await approve(t, ann);
+  const submissionId = await approve(t, ann);
 
-  const delivery = await deliveryOf(t, ann, documentId);
+  const delivery = await deliveryOf(t, ann, submissionId);
   expect(delivery.state).toBe("delivered");
   expect(delivery.attempts.map((a) => a.status)).toEqual([429, 504, 200]);
   expect(fakeMicrosoft.onlyWorkbook().rows).toHaveLength(2);
@@ -391,9 +391,9 @@ test("a write Microsoft refuses fails the Delivery with a clear reason", async (
   const t = newBackend();
   const ann = await connected(t);
   fakeMicrosoft.answer({ status: 403 });
-  const documentId = await approve(t, ann);
+  const submissionId = await approve(t, ann);
 
-  const delivery = await deliveryOf(t, ann, documentId);
+  const delivery = await deliveryOf(t, ann, submissionId);
   expect(delivery).toMatchObject({ state: "failed", failureReason: "Microsoft refused the write (403)" });
   expect(delivery.attempts).toHaveLength(1);
 });
@@ -402,8 +402,8 @@ test("a deleted workbook fails the Delivery at once", async () => {
   const t = newBackend();
   const ann = await connected(t);
   fakeMicrosoft.answer({ status: 404 });
-  const documentId = await approve(t, ann);
-  expect(await deliveryOf(t, ann, documentId)).toMatchObject({
+  const submissionId = await approve(t, ann);
+  expect(await deliveryOf(t, ann, submissionId)).toMatchObject({
     state: "failed",
     failureReason: "The workbook is gone: it, or its Vink table, was deleted",
   });
@@ -413,9 +413,9 @@ test("access the Microsoft account lost fails the Delivery at once as access exp
   const t = newBackend();
   const ann = await connected(t);
   fakeMicrosoft.revoked.add("ann");
-  const documentId = await approve(t, ann);
+  const submissionId = await approve(t, ann);
 
-  const delivery = await deliveryOf(t, ann, documentId);
+  const delivery = await deliveryOf(t, ann, submissionId);
   expect(delivery).toMatchObject({ state: "failed", failureReason: ACCESS_EXPIRED });
   expect(delivery.attempts).toHaveLength(1);
   const notifications = await ann.user.query(api.notifications.list, { organisationSlug: ann.organisationSlug });
@@ -433,9 +433,9 @@ test("rows that reached the workbook before an answer got lost aren't added agai
     const { MicrosoftFailure } = await import("./lib/microsoft");
     throw new MicrosoftFailure(null, "Microsoft didn't answer within 15 s");
   };
-  const documentId = await approve(t, ann);
+  const submissionId = await approve(t, ann);
 
-  const delivery = await deliveryOf(t, ann, documentId);
+  const delivery = await deliveryOf(t, ann, submissionId);
   expect(delivery.state).toBe("delivered");
   expect(delivery.attempts.map((a) => a.body ?? a.error)).toEqual([
     "Microsoft didn't answer within 15 s",
@@ -506,8 +506,8 @@ test("after Reconnect, a re-send writes to the same workbook and skips rows alre
   const [listed] = await ann.user.query(api.integrations.list, { organisationSlug: ann.organisationSlug });
   expect(listed).toMatchObject({ needsReconnect: false, url: expect.stringMatching(/Tyre%20log\.xlsx$/) });
 
-  for (const documentId of [first, second]) {
-    const failed = await deliveryOf(t, ann, documentId);
+  for (const submissionId of [first, second]) {
+    const failed = await deliveryOf(t, ann, submissionId);
     await ann.user.mutation(api.deliveries.resend, { organisationSlug: ann.organisationSlug, id: failed.id });
   }
   await t.finishAllScheduledFunctions(vi.runAllTimers);

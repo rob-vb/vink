@@ -7,7 +7,7 @@ import { CLAIM_ITEMS } from "./demo-data";
 const hand = Caveat({ subsets: ["latin"], weight: ["500", "600"], preload: false });
 
 /*
- * The demo Documents' pages, drawn in HTML. They are paper: fixed light
+ * The demo Submissions' pages, drawn in HTML. They are paper: fixed light
  * colours that stay light in dark mode, like a real PDF. Every page is laid
  * out at PAPER_WIDTH and scaled to fit by the PDF pane.
  */
@@ -455,7 +455,7 @@ export const invoicePages = {
   smit: HandwrittenInvoicePage,
 } as const;
 
-/** Each PDF demo Document's pages, in order. */
+/** Each PDF demo Submission's pages, in order. */
 export const demoPages = {
   invoice: [InvoicePage],
   claim: [ClaimFormPage],
@@ -470,7 +470,7 @@ export type DemoPdfId = keyof typeof demoPages;
  * The demo's photos, drawn as SVG so they scale with the image pane's zoom: a
  * leaking espresso machine (the complaint email's attachment), wet laminate and
  * a stained kitchen cabinet (the damage claim email's), and a handwritten work
- * order on a table (a photo Document).
+ * order on a table (a photo Submission).
  */
 
 function MachinePhoto({ alt }: { alt: string }) {
@@ -602,7 +602,7 @@ function CabinetPhoto({ alt }: { alt: string }) {
   );
 }
 
-/** The photos of the demo's photo Documents and email attachments. */
+/** The photos of the demo's photo Submissions and email attachments. */
 export const demoPhotos = {
   complaint: MachinePhoto,
   claimFloor: FloorPhoto,
@@ -612,7 +612,7 @@ export const demoPhotos = {
 
 export type DemoPhotoId = keyof typeof demoPhotos;
 
-/** The demo's Documents that are emails (drawn by the email pane, not here). */
+/** The demo's Submissions that are emails (drawn by the email pane, not here). */
 export type DemoEmailId = "complaint" | "claim" | "newsletter";
 
-export type DemoDocumentId = DemoPdfId | DemoPhotoId | DemoEmailId;
+export type DemoSubmissionId = DemoPdfId | DemoPhotoId | DemoEmailId;

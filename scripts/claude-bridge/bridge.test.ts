@@ -34,7 +34,7 @@ test("a completion with a PDF runs Claude Code on that PDF and returns its answe
   const response = await bridge(
     complete({
       model: "claude-haiku-4-5@20251001",
-      prompt: "Describe this Document.",
+      prompt: "Describe this Submission.",
       pdf: Buffer.from("%PDF-1.7 invoice").toString("base64"),
     }),
   );
@@ -54,7 +54,7 @@ test("a completion with a PDF runs Claude Code on that PDF and returns its answe
   expect(args).toContain("--strict-mcp-config");
   expect(args[args.indexOf("--setting-sources") + 1]).toBe("");
   expect(args.at(-1)).toContain("document.pdf");
-  expect(args.at(-1)).toContain("Describe this Document.");
+  expect(args.at(-1)).toContain("Describe this Submission.");
 });
 
 test("a request without the secret is refused and runs nothing", async () => {

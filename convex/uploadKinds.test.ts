@@ -74,36 +74,36 @@ const png = () => new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a
 const heic = () =>
   new Uint8Array([0, 0, 0, 24, ...new TextEncoder().encode("ftypheic"), 0, 0, 0, 0, ...new TextEncoder().encode("mif1")]);
 
-/** What the upload dialog does for a file: get an upload URL, PUT the bytes, create the Document. */
+/** What the upload dialog does for a file: get an upload URL, PUT the bytes, create the Submission. */
 async function upload(org: Org, filename: string, bytes: Uint8Array, formId?: Id<"forms">) {
-  const { key, url } = await org.user.mutation(api.documents.generateUploadUrl, { organisationSlug: org.slug });
+  const { key, url } = await org.user.mutation(api.submissions.generateUploadUrl, { organisationSlug: org.slug });
   putToUploadUrl(url, bytes);
-  await org.user.action(api.documents.create, { organisationSlug: org.slug, formId, key, filename });
+  await org.user.action(api.submissions.create, { organisationSlug: org.slug, formId, key, filename });
   return key;
 }
 
-const documents = (t: Backend) => t.run(async (ctx) => await ctx.db.query("documents").collect());
+const submissions = (t: Backend) => t.run(async (ctx) => await ctx.db.query("submissions").collect());
 const used = async (org: Org) => (await org.user.query(api.items.usage, { organisationSlug: org.slug })).used;
 
 test.each([
   ["scan.jpg", jpeg(), "image/jpeg"],
   ["scan.png", png(), "image/png"],
   ["IMG_0042.HEIC", heic(), "image/heic"],
-])("a photo (%s) without a Form is an image Document of 1 Item, and the Router picks the Form", async (name, bytes, mimeType) => {
+])("a photo (%s) without a Form is an image Submission of 1 Item, and the Router picks the Form", async (name, bytes, mimeType) => {
   const t = newBackend();
   const org = await hoekstra(t);
   fakePipeline.replay(invoice);
 
   const key = await upload(org, name, bytes);
 
-  const [document] = await documents(t);
-  expect(document).toMatchObject({ kind: "image", mimeType, filename: name, key, pageCount: 1, state: "extracting" });
-  expect(document.formId).toBeUndefined();
+  const [submission] = await submissions(t);
+  expect(submission).toMatchObject({ kind: "image", mimeType, filename: name, key, pageCount: 1, state: "extracting" });
+  expect(submission.formId).toBeUndefined();
   expect(await used(org)).toBe(1);
   await settle(t);
   expect(fakePipeline.reads).toEqual([{ kind: "image", bytes, mimeType }]);
   expect(fakePipeline.calls.map((c) => c.step)).toContain("route");
-  expect(await t.run(async (ctx) => (await ctx.db.get(document._id))!.formId)).toBe(org.formId);
+  expect(await t.run(async (ctx) => (await ctx.db.get(submission._id))!.formId)).toBe(org.formId);
 });
 
 test("a photo with a chosen Form skips the Router", async () => {
@@ -114,8 +114,8 @@ test("a photo with a chosen Form skips the Router", async () => {
   await upload(org, "bon.jpg", jpeg(), org.formId);
   await settle(t);
 
-  const [document] = await documents(t);
-  expect(document).toMatchObject({ kind: "image", formId: org.formId, state: "needs_review" });
+  const [submission] = await submissions(t);
+  expect(submission).toMatchObject({ kind: "image", formId: org.formId, state: "needs_review" });
   expect(fakePipeline.calls.map((c) => c.step)).not.toContain("route");
 });
 
@@ -126,17 +126,17 @@ test("the bytes decide the kind, not the file name: PNG bytes named .pdf are a P
 
   await upload(org, "scan.pdf", png(), org.formId);
 
-  expect(await documents(t)).toMatchObject([{ kind: "image", mimeType: "image/png", filename: "scan.pdf" }]);
+  expect(await submissions(t)).toMatchObject([{ kind: "image", mimeType: "image/png", filename: "scan.pdf" }]);
 });
 
-test("a PDF without a Form is still a PDF Document of its pages", async () => {
+test("a PDF without a Form is still a PDF Submission of its pages", async () => {
   const t = newBackend();
   const org = await hoekstra(t);
   fakePipeline.replay(invoice);
 
   await upload(org, "factuur.pdf", await pdfWithPages(3));
 
-  expect(await documents(t)).toMatchObject([{ kind: "pdf", mimeType: "application/pdf", pageCount: 3 }]);
+  expect(await submissions(t)).toMatchObject([{ kind: "pdf", mimeType: "application/pdf", pageCount: 3 }]);
   expect(await used(org)).toBe(3);
 });
 
@@ -148,7 +148,7 @@ test("an image over 10 MB is refused, and nothing is stored or charged", async (
 
   await expect(upload(org, "huge.jpg", big)).rejects.toThrow("The image is larger than 10 MB.");
 
-  expect(await documents(t)).toEqual([]);
+  expect(await submissions(t)).toEqual([]);
   expect(fakePdfStore.objects.size).toBe(0);
   expect(await used(org)).toBe(0);
 });
@@ -169,31 +169,31 @@ test("a file that is none of PDF, JPG, PNG, HEIC or an email is unsupported, and
     "This file isn't a PDF Vink can read.",
   );
 
-  expect(await documents(t)).toEqual([]);
+  expect(await submissions(t)).toEqual([]);
   expect(fakePdfStore.objects.size).toBe(0);
 });
 
-test("pasted email text becomes an email Document of 1 Item, written by the server, and the Router picks the Form", async () => {
+test("pasted email text becomes an email Submission of 1 Item, written by the server, and the Router picks the Form", async () => {
   const t = newBackend();
   const org = await hoekstra(t);
   fakePipeline.replay(invoice);
 
-  await org.user.action(api.documents.createEmail, {
+  await org.user.action(api.submissions.createEmail, {
     organisationSlug: org.slug,
     subject: "Factuur F2026-0412",
     body: "Goedemiddag, het totaal is 151,25 euro.",
   });
 
-  const [document] = await documents(t);
-  expect(document).toMatchObject({
+  const [submission] = await submissions(t);
+  expect(submission).toMatchObject({
     kind: "email",
     mimeType: "application/json",
     filename: "Factuur F2026-0412",
     pageCount: 1,
     state: "extracting",
   });
-  expect(document.key.startsWith(`${document.organisationId}/`)).toBe(true);
-  expect(JSON.parse(new TextDecoder().decode(fakePdfStore.objects.get(document.key)))).toEqual({
+  expect(submission.key.startsWith(`${submission.organisationId}/`)).toBe(true);
+  expect(JSON.parse(new TextDecoder().decode(fakePdfStore.objects.get(submission.key)))).toEqual({
     subject: "Factuur F2026-0412",
     from: "",
     date: "",
@@ -210,12 +210,12 @@ test("pasted email text needs no subject, and none is not an email", async () =>
   const t = newBackend();
   const org = await hoekstra(t);
 
-  await org.user.action(api.documents.createEmail, { organisationSlug: org.slug, formId: org.formId, body: "Totaal 12 euro" });
+  await org.user.action(api.submissions.createEmail, { organisationSlug: org.slug, formId: org.formId, body: "Totaal 12 euro" });
   await expect(
-    org.user.action(api.documents.createEmail, { organisationSlug: org.slug, body: "  \n " }),
+    org.user.action(api.submissions.createEmail, { organisationSlug: org.slug, body: "  \n " }),
   ).rejects.toThrow("This email has no text and no attachments.");
 
-  expect(await documents(t)).toMatchObject([{ kind: "email", filename: "Email", formId: org.formId }]);
+  expect(await submissions(t)).toMatchObject([{ kind: "email", filename: "Email", formId: org.formId }]);
   expect(await used(org)).toBe(1);
 });
 
@@ -224,10 +224,10 @@ test("pasted email text over 200 KB is refused", async () => {
   const org = await hoekstra(t);
 
   await expect(
-    org.user.action(api.documents.createEmail, { organisationSlug: org.slug, body: "x".repeat(200 * 1024 + 1) }),
+    org.user.action(api.submissions.createEmail, { organisationSlug: org.slug, body: "x".repeat(200 * 1024 + 1) }),
   ).rejects.toThrow("The email text is longer than 200 KB.");
 
-  expect(await documents(t)).toEqual([]);
+  expect(await submissions(t)).toEqual([]);
   expect(fakePdfStore.objects.size).toBe(0);
 });
 
@@ -273,27 +273,27 @@ async function eml(parts: { pdfPages?: number; docx?: boolean; body?: string }) 
   return new TextEncoder().encode(lines.join("\r\n") + "\r\n");
 }
 
-test("an .eml file becomes one email Document: its text and PDF attachment, charged as 1 + the PDF's pages", async () => {
+test("an .eml file becomes one email Submission: its text and PDF attachment, charged as 1 + the PDF's pages", async () => {
   const t = newBackend();
   const org = await hoekstra(t);
   fakePipeline.replay(invoice);
 
   const rawKey = await upload(org, "mail.eml", await eml({ pdfPages: 2, docx: true }));
 
-  const [document] = await documents(t);
-  expect(document).toMatchObject({ kind: "email", mimeType: "application/json", filename: "Factuur oktober" });
-  expect(document.key).not.toBe(rawKey);
-  const stored = JSON.parse(new TextDecoder().decode(fakePdfStore.objects.get(document.key)));
+  const [submission] = await submissions(t);
+  expect(submission).toMatchObject({ kind: "email", mimeType: "application/json", filename: "Factuur oktober" });
+  expect(submission.key).not.toBe(rawKey);
+  const stored = JSON.parse(new TextDecoder().decode(fakePdfStore.objects.get(submission.key)));
   expect(stored).toMatchObject({
     subject: "Factuur oktober",
     from: "Bakkerij De Wït <info@dewit.example>",
     date: "2026-10-06T07:00:00.000Z",
     body: "Het totaal is € 151,25.",
     // The Word file is not read.
-    attachments: [{ filename: "factuur.pdf", mimeType: "application/pdf", key: `${document.key}/1` }],
+    attachments: [{ filename: "factuur.pdf", mimeType: "application/pdf", key: `${submission.key}/1` }],
   });
-  expect(document.attachmentKeys).toEqual([`${document.key}/1`]);
-  expect(fakePdfStore.types.get(`${document.key}/1`)).toBe("application/pdf");
+  expect(submission.attachmentKeys).toEqual([`${submission.key}/1`]);
+  expect(fakePdfStore.types.get(`${submission.key}/1`)).toBe("application/pdf");
   // The raw upload is gone; the email and its attachment remain.
   expect(fakePdfStore.objects.has(rawKey)).toBe(false);
   expect(fakePdfStore.objects.size).toBe(2);
@@ -316,7 +316,7 @@ test("an email that does not fit the Items left is refused whole: nothing is sto
     data: { code: "out_of_items", remaining: 2, needed: 4 },
   });
 
-  expect(await documents(t)).toHaveLength(1);
+  expect(await submissions(t)).toHaveLength(1);
   expect(fakePdfStore.objects.size).toBe(before);
   expect(await used(org)).toBe(18);
 });

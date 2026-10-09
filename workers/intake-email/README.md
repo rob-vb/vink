@@ -6,7 +6,7 @@ attachments in the app's EU R2 bucket under `intake/…`, and calls Vink's Conve
 HTTP action `POST /intake/email` with the whole mail: subject, date, text
 (text/plain, else the HTML as text) and the attachment list. The Worker does not
 know which kind of address it is: the token tells Vink. All decisions (which
-Form or the Router, one Document or several, page limits, Items quota, Recent
+Form or the Router, one Submission or several, page limits, Items quota, Recent
 emails, Admin alerts) live in `convex/intake.ts`. The Worker never replies to
 the sender.
 

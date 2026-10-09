@@ -82,21 +82,21 @@ describe("dummy data for a test-send", () => {
   });
 });
 
-test("the envelope wraps the Payload with the Delivery, Document, Form and Approval, dates as ISO strings", () => {
+test("the envelope wraps the Payload with the Delivery, Submission, Form and Approval, dates as ISO strings", () => {
   expect(
     envelopeOf({
       deliveryId: "dlv_1",
       test: false,
-      document: { id: "doc1", filename: "werkorder.pdf", uploadedAt: Date.parse("2026-09-24T10:00:00Z") },
+      submission: { id: "doc1", filename: "werkorder.pdf", uploadedAt: Date.parse("2026-09-24T10:00:00Z") },
       form: { id: "form1", version: 3 },
       approval: { mode: "manual", by: "user1", at: Date.parse("2026-09-24T11:00:00Z") },
       data: { license_plate: "NWA30E" },
     }),
   ).toEqual({
-    event: "document.approved",
+    event: "submission.approved",
     delivery_id: "dlv_1",
     test: false,
-    document: { id: "doc1", filename: "werkorder.pdf", uploaded_at: "2026-09-24T10:00:00.000Z" },
+    submission: { id: "doc1", filename: "werkorder.pdf", uploaded_at: "2026-09-24T10:00:00.000Z" },
     form: { id: "form1", version: 3 },
     approval: { mode: "manual", by: "user1", at: "2026-09-24T11:00:00.000Z" },
     data: { license_plate: "NWA30E" },

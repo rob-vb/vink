@@ -8,24 +8,24 @@ import { Button } from "@/components/ui/button";
 import { cn } from "cn";
 
 /**
- * The app's top bar with Documents active, as in app/app/o/[slug]/layout.tsx
+ * The app's top bar with Submissions active, as in app/app/o/[slug]/layout.tsx
  * and nav-links.tsx (update both), plus the "Demo data" badge. Only
- * Documents does something here; the rest of the app needs an account.
+ * Submissions does something here; the rest of the app needs an account.
  */
 export function DemoAppFrame({
   organisation,
   nav,
   demoData,
   startOver,
-  onDocuments,
+  onSubmissions,
   onStartOver,
   children,
 }: {
   organisation: string;
-  nav: { documents: string; forms: string; integrations: string; members: string };
+  nav: { submissions: string; forms: string; integrations: string; members: string };
   demoData: string;
   startOver: string;
-  onDocuments: () => void;
+  onSubmissions: () => void;
   onStartOver: () => void;
   children: ReactNode;
 }) {
@@ -46,10 +46,10 @@ export function DemoAppFrame({
           <button
             type="button"
             aria-current="page"
-            onClick={onDocuments}
+            onClick={onSubmissions}
             className={cn(link, "cursor-pointer font-medium text-foreground after:opacity-100")}
           >
-            {nav.documents}
+            {nav.submissions}
           </button>
           <span className={link}>{nav.forms}</span>
           <span className={link}>{nav.integrations}</span>

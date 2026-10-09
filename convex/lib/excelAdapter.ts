@@ -1,4 +1,4 @@
-// The Excel adapter: adds a Document's rows (lib/rows.ts, ADR 0009) to the
+// The Excel adapter: adds a Submission's rows (lib/rows.ts, ADR 0009) to the
 // table of the Integration's workbook, a new Field's column just before
 // `approved_at`. A Delivery whose `delivery_id` is already in the table adds
 // nothing, so a retry after a lost answer, or a re-send, doesn't write its

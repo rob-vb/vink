@@ -7,14 +7,14 @@ import { complete, models, parseJsonObject } from "./models";
 import { filesOf, type ProposedField, type Proposer, type ReaderInput } from "./pipeline";
 
 // The rules for one Field, shared by a sample's prompt and a description's.
-const FIELD_RULES = `- "label": the term as printed on the Document, in its language (e.g. "Leverdatum").
+const FIELD_RULES = `- "label": the term as printed on the Submission, in its language (e.g. "Leverdatum").
 - "key": English snake_case from the meaning (e.g. "delivery_date").
 - "description": English, with the printed terms as synonyms (e.g. "Date the goods were delivered (Leverdatum, Afleverdatum)").
 - "type": text, number (amounts and measures), date, boolean (ticks), choice or list. Use "choice" only when the options are printed on the paper (pre-printed boxes or a list), never from one filled-in value; give them as "options". Use "list" for repeated objects (one entry per delivery note line, per invoice line), with their "fields" (never lists themselves).`;
 
-const PROMPT = `You design a data-entry Form from one sample Document. You get the PDF, its text layer, and the Reading: a JSON description of everything the Document says, with English keys.
+const PROMPT = `You design a data-entry Form from one sample Submission. You get the PDF, its text layer, and the Reading: a JSON description of everything the Submission says, with English keys.
 
-Propose one Field per piece of data in the Reading. List everything, and set "ticked" on the Fields that serve the Document's purpose; leave things like bank details, phone numbers and page footers unticked.
+Propose one Field per piece of data in the Reading. List everything, and set "ticked" on the Fields that serve the Submission's purpose; leave things like bank details, phone numbers and page footers unticked.
 
 ${FIELD_RULES}
 
@@ -63,10 +63,10 @@ function toField(p: Proposed, list: boolean): ProposedField["field"] | null {
 // "Describe in words": no sample, so no Reading and no files; the Admin's text is all there is.
 const DESCRIBE_PROMPT = `You design a data-entry Form from a description. An Admin wrote what kind of document it is and which data they need from it. You have no sample.
 
-Propose one Field per piece of data the description names or clearly implies, and set "ticked" on them. You may add a few more Fields that documents of this kind usually carry, with "ticked" left false. Never invent Fields that have nothing to do with the description. If the description is not about a document or data to capture, answer {"fields": []}.
+Propose one Field per piece of data the description names or clearly implies, and set "ticked" on them. You may add a few more Fields that documents of this kind usually carry, with "ticked" left false. Never invent Fields that have nothing to do with the description. If the description is not about a submission or data to capture, answer {"fields": []}.
 
 ${FIELD_RULES.replace(
-  "the term as printed on the Document, in its language",
+  "the term as printed on the Submission, in its language",
   "the term as the Admin would say it, in the description's language",
 ).replace(
   "only when the options are printed on the paper (pre-printed boxes or a list), never from one filled-in value",

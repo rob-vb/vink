@@ -104,7 +104,7 @@ test("a PDF is sent as application/pdf with its text layer, and Verify checks th
   expect(textLayer).toMatch(/^# Text layer\n\n## Page 1\n\nFactuur F-2024-001/);
   // The PDF prompt is the benchmarked one.
   expect(prompt).toContain(
-    "Describe everything this Document says as one clean JSON object, so that a program can pick any fact out of it. The Document is a PDF that may bundle several papers about the same job (an invoice, a work order, handwritten forms). You get the page images and the text layer per page (when a page has one).\n\n- **Model the real world, not the paper.**",
+    "Describe everything this Submission says as one clean JSON object, so that a program can pick any fact out of it. The Submission is a PDF that may bundle several papers about the same job (an invoice, a work order, handwritten forms). You get the page images and the text layer per page (when a page has one).\n\n- **Model the real world, not the paper.**",
   );
   expect(read.textLayer.map((p) => p.page)).toEqual([1]);
   expect(request.config.thinkingConfig.thinkingLevel).toBe("MEDIUM");
@@ -132,7 +132,7 @@ test("an image is sent with its own MIME type, has no text layer, and Verify ski
   const request = lastRequest();
   expect(filesIn(request)).toEqual([{ mimeType: "image/heic", data: base64(photo) }]);
   expect(textsIn(request)[0]).toContain("(no text layer: read the image)");
-  expect(textsIn(request)[1]).toContain("The Document is a photo or scan");
+  expect(textsIn(request)[1]).toContain("The Submission is a photo or scan");
   // Handwriting is likely on a photo.
   expect(request.config.thinkingConfig.thinkingLevel).toBe("HIGH");
   expect(read).toEqual({ reading: { workOrder: { number: "WB-2217", _pages: [1] } }, textLayer: [] });
@@ -179,7 +179,7 @@ test("an email's subject, sender, date and body go in as text, and its body is p
   expect(textLayer).toContain("## Page 1 (the email)\n\nSubject: Klacht over levering 4410\nFrom: Anouk de Wit");
   expect(textLayer).toContain("Date: Tue, 6 Oct 2026 09:12:00 +0200");
   expect(textLayer).toContain("De levering van gisteren was onvolledig.");
-  expect(prompt).toContain("The Document is one email.");
+  expect(prompt).toContain("The Submission is one email.");
   expect(request.config.thinkingConfig.thinkingLevel).toBe("MEDIUM");
   expect(read.textLayer).toEqual([
     { page: 1, text: expect.stringContaining("De levering van gisteren was onvolledig.") },

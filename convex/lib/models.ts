@@ -141,13 +141,13 @@ async function viaBridge(url: string, { model: pinned, files = [], texts, jsonSc
 }
 
 async function viaVertex({ model, files = [], texts, maxTokens, thinking, jsonSchema }: Completion) {
-  const document = files.map(({ bytes, mimeType }) => ({
+  const submission = files.map(({ bytes, mimeType }) => ({
     inlineData: { mimeType, data: Buffer.from(bytes).toString("base64") },
   }));
   // Streamed, so a long Read isn't cut off by Node's 5-minute wait for a first byte.
   const stream = await vertex().models.generateContentStream({
     model,
-    contents: [{ role: "user", parts: [...document, ...texts.map((text) => ({ text }))] }],
+    contents: [{ role: "user", parts: [...submission, ...texts.map((text) => ({ text }))] }],
     config: {
       maxOutputTokens: maxTokens,
       thinkingConfig: { thinkingLevel: thinking ?? ThinkingLevel.LOW },

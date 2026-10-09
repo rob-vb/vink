@@ -1,5 +1,5 @@
 // Vink's Power Automate custom connector, built from the /v1 OpenAPI 3.1
-// document (convex/publicApi/openapi). Power Automate imports Swagger 2.0
+// submission (convex/publicApi/openapi). Power Automate imports Swagger 2.0
 // only, so this converts the operations the connector uses and adds
 // Microsoft's extensions: the webhook trigger, the Form dropdown and the
 // trigger's outputs from the Form's schema. `generate.ts` writes the files.
@@ -8,17 +8,17 @@ import type { Operation, Parameter, Response, Schema } from "../../convex/public
 
 type Json = Record<string, unknown>;
 
-/** The operations in the connector, by operationId, with what Power Automate needs beyond the API document. */
+/** The operations in the connector, by operationId, with what Power Automate needs beyond the API submission. */
 const OPERATIONS: Record<string, { summary?: string; description?: string; extra?: Json }> = {
   createSubscription: {
-    summary: "When a Document is approved",
+    summary: "When a Submission is approved",
     description:
-      "Starts the flow every time a Document of the Form is approved in Vink. The outputs are the Form's Fields, under Data.",
-    extra: { "x-ms-trigger": "single", "x-ms-trigger-hint": "To see it work, approve a Document of this Form in Vink." },
+      "Starts the flow every time a Submission of the Form is approved in Vink. The outputs are the Form's Fields, under Data.",
+    extra: { "x-ms-trigger": "single", "x-ms-trigger-hint": "To see it work, approve a Submission of this Form in Vink." },
   },
   deleteSubscription: { extra: { "x-ms-visibility": "internal" } },
-  sendDocument: {
-    summary: "Send in a Document",
+  sendSubmission: {
+    summary: "Send in a Submission",
     description:
       "Sends a PDF or a photo to a Form in Vink, as if it was uploaded in the app. Vink reads it; it is approved later, in Vink or by Auto-Send.",
     extra: { "x-ms-visibility": "important" },
@@ -44,7 +44,7 @@ const SUMMARIES: Record<string, Json> = {
   form_id: formDropdown,
   filename: {
     "x-ms-summary": "File name",
-    description: "The name the Document shows in Vink, for example the attachment's name. Without it: document.pdf, or .jpg, .png or .heic for a photo.",
+    description: "The name the Submission shows in Vink, for example the attachment's name. Without it: document.pdf, or .jpg, .png or .heic for a photo.",
   },
   id: { "x-ms-summary": "Subscription ID" },
 };
@@ -190,7 +190,7 @@ export function buildConnector() {
   // The trigger's outputs: the envelope Vink POSTs to the callback URL, with
   // the picked Form's Fields from its schema.
   paths["/subscriptions"]["x-ms-notification-content"] = {
-    description: "The envelope of the approved Document.",
+    description: "The envelope of the approved Submission.",
     schema: {
       type: "object",
       "x-ms-dynamic-schema": {
@@ -215,7 +215,7 @@ export function buildConnector() {
     info: {
       title: "Vink",
       description:
-        "Vink reads PDFs into the Fields of your Forms. Start a flow when a Document is approved, and send PDFs in to be read.",
+        "Vink reads PDFs into the Fields of your Forms. Start a flow when a Submission is approved, and send PDFs in to be read.",
       version: "1.0",
       contact: { name: "Vink", url: "https://vink.page/developers" },
     },

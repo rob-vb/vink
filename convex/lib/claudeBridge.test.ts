@@ -52,7 +52,7 @@ test("Read sends the PDF and its text layer to the bridge and returns the Readin
   expect(sent[0].body.model).toBe("claude-opus-5");
   expect(Buffer.from(sent[0].body.pdf as string, "base64").equals(Buffer.from(pdf))).toBe(true);
   expect(sent[0].body.prompt).toContain(textLayer[0].text.slice(0, 40));
-  expect(sent[0].body.prompt).toContain("Describe everything this Document says");
+  expect(sent[0].body.prompt).toContain("Describe everything this Submission says");
   expect(used).toEqual([{ model: "claude-opus-5", inputTokens: 1200, outputTokens: 300 }]);
 });
 

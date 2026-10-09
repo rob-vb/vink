@@ -1,0 +1,12 @@
+[
+    {
+        "name": "id",
+        "type": "text",
+        "label": "Submission ID"
+    },
+    {
+        "name": "state",
+        "type": "text",
+        "label": "State"
+    }
+]

@@ -84,12 +84,12 @@ async function reviewing(recording: Recording = tyreReport, listRequired = false
     ],
   });
   fakePipeline.replay(recording);
-  const documentId = (await uploadAndExtract(t, ann.user, ann.slug, formId, 2))!;
+  const submissionId = (await uploadAndExtract(t, ann.user, ann.slug, formId, 2))!;
   const organisationSlug = ann.slug;
-  const read = () => ann.user.query(api.documents.get, { organisationSlug, documentId });
+  const read = () => ann.user.query(api.submissions.get, { organisationSlug, submissionId });
   const list = async () => (await read()).lists[0];
-  const on = { organisationSlug, documentId, listKey: "tyre_changes" };
-  return { t, ...ann, documentId, read, list, on };
+  const on = { organisationSlug, submissionId, listKey: "tyre_changes" };
+  return { t, ...ann, submissionId, read, list, on };
 }
 
 test("a List Field's entries each list a Field Value per sub-Field, and its completeness and sub-Fields count towards Needs Review", async () => {
@@ -115,10 +115,10 @@ test("\"Entries are complete\" clears the completeness Needs Review, records who
     needsReview: false,
     complete: { by: "ann@example.com", at: Date.parse("2026-09-24T10:00:00Z") },
   });
-  const document = await read();
-  expect(document.needsReviewCount).toBe(4);
-  expect(document.userTouched).toBe(true);
-  expect(document.history.map((h) => h.event)).toContain("entries_confirmed");
+  const submission = await read();
+  expect(submission.needsReviewCount).toBe(4);
+  expect(submission.userTouched).toBe(true);
+  expect(submission.history.map((h) => h.event)).toContain("entries_confirmed");
 
   await user.mutation(api.review.undoConfirmEntries, on);
 
@@ -188,7 +188,7 @@ test("a required List Field with no entries left is Needs Review, and can't be c
 
 test("Approval waits for the List's completeness and its sub-Fields, then goes through", async () => {
   const { user, on, read, list } = await reviewing();
-  await expect(user.mutation(api.review.approve, { organisationSlug: on.organisationSlug, documentId: on.documentId })).rejects.toThrow("5 values still need review");
+  await expect(user.mutation(api.review.approve, { organisationSlug: on.organisationSlug, submissionId: on.submissionId })).rejects.toThrow("5 values still need review");
 
   await user.mutation(api.review.confirmEntries, on);
   const [first, second] = (await list()).entries.map((e) => e.fieldValues);
@@ -203,7 +203,7 @@ test("Approval waits for the List's completeness and its sub-Fields, then goes t
     fieldValueId: second[0].id,
     value: "2R1",
   });
-  await user.mutation(api.review.approve, { organisationSlug: on.organisationSlug, documentId: on.documentId });
+  await user.mutation(api.review.approve, { organisationSlug: on.organisationSlug, submissionId: on.submissionId });
 
   expect((await read()).state).toBe("approved");
   await expect(user.mutation(api.review.addEntry, on)).rejects.toThrow("This Submission is approved");

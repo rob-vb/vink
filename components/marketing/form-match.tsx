@@ -216,7 +216,7 @@ function Payload({ invoice }: { invoice: Invoice }) {
       <pre className="overflow-x-auto px-4 py-3.5 font-mono text-[11.5px] leading-relaxed" tabIndex={0}>
         <code>
           {"{\n"}
-          {pair("  ", "event", <span className="text-[#f4d58d]">&quot;document.approved&quot;</span>)}
+          {pair("  ", "event", <span className="text-[#f4d58d]">&quot;submission.approved&quot;</span>)}
           <span className="text-[#7f8ea6]">{"  …\n"}</span>
           {"  "}
           <span className={keyClass}>&quot;data&quot;</span>

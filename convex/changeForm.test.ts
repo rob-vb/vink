@@ -85,15 +85,15 @@ async function acme(t: Backend) {
 }
 
 async function uploadTo(t: Backend, user: Awaited<ReturnType<typeof acme>>["user"], organisationSlug: string, formId: Id<"forms">) {
-  const { key, url } = await user.mutation(api.documents.generateUploadUrl, { organisationSlug });
+  const { key, url } = await user.mutation(api.submissions.generateUploadUrl, { organisationSlug });
   putToUploadUrl(url, await pdfWithPages(1));
-  await user.action(api.documents.create, { organisationSlug, formId, key, filename: "factuur.pdf" });
+  await user.action(api.submissions.create, { organisationSlug, formId, key, filename: "factuur.pdf" });
   await t.finishAllScheduledFunctions(vi.runAllTimers);
-  const documentId = await t.run(
-    async (ctx) => (await ctx.db.query("documents").order("desc").first())!._id,
+  const submissionId = await t.run(
+    async (ctx) => (await ctx.db.query("submissions").order("desc").first())!._id,
   );
-  const on = { organisationSlug, documentId };
-  return { documentId, on, read: () => user.query(api.documents.get, on) };
+  const on = { organisationSlug, submissionId };
+  return { submissionId, on, read: () => user.query(api.submissions.get, on) };
 }
 
 async function uploadedAgainstWorkOrder(recording: Recording = invoice) {
@@ -104,13 +104,13 @@ async function uploadedAgainstWorkOrder(recording: Recording = invoice) {
   return { t, ...acmeOrg, ...upload };
 }
 
-test("a Document is flagged \"Does not fit this Form\" when fewer than half of the required Fields matched", async () => {
+test("a Submission is flagged \"Does not fit this Form\" when fewer than half of the required Fields matched", async () => {
   const { read } = await uploadedAgainstWorkOrder();
 
   expect((await read()).doesNotFit).toBe(true);
 });
 
-test("a Document isn't flagged when at least half of the required Fields matched", async () => {
+test("a Submission isn't flagged when at least half of the required Fields matched", async () => {
   const { read } = await uploadedAgainstWorkOrder({
     ...invoice,
     matches: { ...invoice.matches, mileage_km: { path: "vehicle.license_plate", probability: 0.3 } },
@@ -119,7 +119,7 @@ test("a Document isn't flagged when at least half of the required Fields matched
   expect((await read()).doesNotFit).toBe(false);
 });
 
-test("a Document is flagged when its Reading is empty", async () => {
+test("a Submission is flagged when its Reading is empty", async () => {
   const { read } = await uploadedAgainstWorkOrder({ reading: {}, matches: {}, fills: {} });
 
   expect((await read()).doesNotFit).toBe(true);
@@ -153,21 +153,21 @@ test("Change Form drops the old values and corrections and runs Match, Fill and 
   await t.finishAllScheduledFunctions(vi.runAllTimers);
 
   expect(fakePipeline.calls.map((c) => c.step)).toEqual(["match", "fill", "verify"]);
-  const document = await read();
-  expect(document).toMatchObject({
+  const submission = await read();
+  expect(submission).toMatchObject({
     state: "needs_review",
     formName: "Invoice",
     formVersion: 1,
     doesNotFit: false,
     userTouched: true,
   });
-  expect(document.fieldValues.map((f) => [f.key, f.value, f.review])).toEqual([
+  expect(submission.fieldValues.map((f) => [f.key, f.value, f.review])).toEqual([
     ["supplier_name", "Vianor", null],
     ["total_incl_vat", 293.82, null],
   ]);
-  expect(document.history.map((h) => h.event)).toContain("form_changed");
-  expect(document.history.find((h) => h.event === "form_changed")!.detail).toBe("Work order → Invoice");
-  expect(document.history.find((h) => h.event === "form_changed")!.info).toEqual({
+  expect(submission.history.map((h) => h.event)).toContain("form_changed");
+  expect(submission.history.find((h) => h.event === "form_changed")!.detail).toBe("Work order → Invoice");
+  expect(submission.history.find((h) => h.event === "form_changed")!.info).toEqual({
     code: "form_changed",
     from: "Work order",
     to: "Invoice",
@@ -208,7 +208,7 @@ test("Change Form is refused after Approval", async () => {
   ).rejects.toThrow("This Submission is approved");
 });
 
-test("a Document can't be moved to its own Form or another Organisation's", async () => {
+test("a Submission can't be moved to its own Form or another Organisation's", async () => {
   const { t, user, on, workOrderForm } = await uploadedAgainstWorkOrder();
   const eve = await signUp(t, "eve", "Evil Corp");
   const { formId: eveForm } = await eve.user.mutation(api.forms.create, {
@@ -225,7 +225,7 @@ test("a Document can't be moved to its own Form or another Organisation's", asyn
   );
 });
 
-// A Document in No Form (ADR 0010): it arrived with no Form and Jev found none.
+// A Submission in No Form (ADR 0010): it arrived with no Form and Jev found none.
 async function inNoForm() {
   const t = newBackend();
   const ann = await signUp(t, "ann", "Acme Fleet", { plan: null });
@@ -247,7 +247,7 @@ async function inNoForm() {
   fakePipeline.replay({ ...invoice, route: null });
   fakePdfStore.objects.set("org/post.pdf", await pdfWithPages(1));
   const organisationId = await t.run(async (ctx) => (await ctx.db.query("organisations").first())!._id);
-  const documentId = await t.mutation(internal.documents.insert, {
+  const submissionId = await t.mutation(internal.submissions.insert, {
     organisationId,
     key: "org/post.pdf",
     filename: "post.pdf",
@@ -256,14 +256,14 @@ async function inNoForm() {
     uploaderEmail: "ann@example.com",
   });
   await t.finishAllScheduledFunctions(vi.runAllTimers);
-  const on = { organisationSlug: ann.slug, documentId };
-  const read = () => ann.user.query(api.documents.get, on);
+  const on = { organisationSlug: ann.slug, submissionId };
+  const read = () => ann.user.query(api.submissions.get, on);
   const used = async () => (await ann.user.query(api.items.usage, { organisationSlug: ann.slug })).used;
   expect((await read()).state).toBe("no_form");
   return { t, user: ann.user, on, read, used, forms };
 }
 
-test("a Document in No Form moves to a Form: Match, Fill and Verify run on the stored Reading, with no new Read and no new charge", async () => {
+test("a Submission in No Form moves to a Form: Match, Fill and Verify run on the stored Reading, with no new Read and no new charge", async () => {
   const { t, user, on, read, used, forms } = await inNoForm();
   expect(await used()).toBe(1);
   expect(await user.query(api.changeForm.impact, on)).toEqual({ corrections: 0 });
@@ -274,31 +274,31 @@ test("a Document in No Form moves to a Form: Match, Fill and Verify run on the s
   await t.finishAllScheduledFunctions(vi.runAllTimers);
 
   expect(fakePipeline.calls.map((c) => c.step)).toEqual(["match", "fill", "verify"]);
-  const document = await read();
-  expect(document).toMatchObject({
+  const submission = await read();
+  expect(submission).toMatchObject({
     state: "needs_review",
     formName: "Invoice",
     formId: forms.Invoice,
     formVersion: 1,
     doesNotFit: false,
   });
-  expect(document.fieldValues.map((f) => [f.key, f.value])).toEqual([
+  expect(submission.fieldValues.map((f) => [f.key, f.value])).toEqual([
     ["supplier_name", "Vianor"],
     ["total_incl_vat", 293.82],
   ]);
-  expect(document.history.map((h) => h.event)).toEqual(["uploaded", "no_form", "form_changed", "extracted"]);
-  expect(document.history.find((h) => h.event === "form_changed")!.detail).toBe("No Form → Invoice");
-  expect(document.history.find((h) => h.event === "form_changed")!.info).toEqual({
+  expect(submission.history.map((h) => h.event)).toEqual(["uploaded", "no_form", "form_changed", "extracted"]);
+  expect(submission.history.find((h) => h.event === "form_changed")!.detail).toBe("No Form → Invoice");
+  expect(submission.history.find((h) => h.event === "form_changed")!.info).toEqual({
     code: "form_changed",
     from: null,
     to: "Invoice",
   });
   expect(await used()).toBe(1);
-  const { counts } = await user.query(api.documents.list, { organisationSlug: on.organisationSlug, state: "no_form" });
+  const { counts } = await user.query(api.submissions.list, { organisationSlug: on.organisationSlug, state: "no_form" });
   expect(counts).toMatchObject({ no_form: 0, needs_review: 1, extracting: 0 });
 });
 
-test("a Document moved out of No Form to a Form it does not fit is flagged, as on any Form", async () => {
+test("a Submission moved out of No Form to a Form it does not fit is flagged, as on any Form", async () => {
   const { t, user, on, read, used, forms } = await inNoForm();
 
   await user.mutation(api.changeForm.changeForm, { ...on, formId: forms["Work order"] });

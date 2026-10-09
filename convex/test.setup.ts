@@ -147,27 +147,27 @@ export async function uploadAndExtract(
   formId: Id<"forms">,
   pages = 1,
 ) {
-  const { key, url } = await user.mutation(api.documents.generateUploadUrl, {
+  const { key, url } = await user.mutation(api.submissions.generateUploadUrl, {
     organisationSlug,
   });
   putToUploadUrl(url, await pdfWithPages(pages));
-  await user.action(api.documents.create, {
+  await user.action(api.submissions.create, {
     organisationSlug,
     formId,
     key,
     filename: "werkorder.pdf",
   });
   await t.finishAllScheduledFunctions(vi.runAllTimers);
-  const { documents } = await user.query(api.documents.list, {
+  const { submissions } = await user.query(api.submissions.list, {
     organisationSlug,
     state: "needs_review",
   });
-  return documents[0]?.id;
+  return submissions[0]?.id;
 }
 
 /**
  * What the Extraction's Reader, Matcher, Filler and Verifier answer for one
- * Document: recorded from a real run (see fixtures/), or written by hand.
+ * Submission: recorded from a real run (see fixtures/), or written by hand.
  */
 export type Recording = {
   reading: Reading;
@@ -189,7 +189,7 @@ export type Recording = {
   /** The name of the Form Jev picks in the Router; `null`, or left out, for none. */
   route?: string | null;
   /**
-   * Jev's call on whether an email is one Document or several, with its
+   * Jev's call on whether an email is one Submission or several, with its
    * probability; left out, it is a sure `apart`.
    */
   split?: SplitDecision;
@@ -328,7 +328,7 @@ export const fakeProposer: Proposer = {
 };
 
 export const fakeVerifier: Verifier = {
-  async verify(_document, requests) {
+  async verify(_submission, requests) {
     const withSupport = requests.filter((r) => r.pageText !== null);
     fakePipeline.calls.push({
       step: "verify",
@@ -596,7 +596,7 @@ export const fakeMicrosoft = {
       driveId: `drive-${owner}`,
       itemId,
       tableId: "{00000000-0001-0000-0100-000000000000}",
-      url: `https://acme-my.sharepoint.com/personal/${owner}/Documents/${encodeURIComponent(title)}.xlsx`,
+      url: `https://acme-my.sharepoint.com/personal/${owner}/Submissions/${encodeURIComponent(title)}.xlsx`,
     };
   },
   async read(token: string, workbook: { itemId: string }, column: string) {

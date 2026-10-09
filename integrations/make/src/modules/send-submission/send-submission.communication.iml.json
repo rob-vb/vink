@@ -1,0 +1,17 @@
+{
+    "url": "/forms/{{parameters.form_id}}/submissions",
+    "method": "POST",
+    "type": "multipart/form-data",
+    "body": {
+        "file": {
+            "value": "{{parameters.file_data}}",
+            "options": {
+                "filename": "{{parameters.file_name}}",
+                "contentType": "application/pdf"
+            }
+        }
+    },
+    "response": {
+        "output": "{{body}}"
+    }
+}

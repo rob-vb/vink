@@ -12,7 +12,7 @@ import { googleAccount } from "./lib/accounts";
 import { orgAction } from "./lib/functions";
 import { google } from "./lib/google";
 import { readState, signState } from "./lib/oauthState";
-import { DOCUMENT_COLUMNS } from "./lib/rows";
+import { SUBMISSION_COLUMNS } from "./lib/rows";
 import { encryptSecret } from "./lib/secrets";
 
 /** Google's consent page for a new Google Sheets Integration called `name`. */
@@ -55,7 +55,7 @@ export const connect = orgAction({
     }
     const refreshToken = await googleAccount.exchangeCode(code);
     if (refreshToken === null) return { result: "no_access" };
-    const sheet = await google.createSheet(await google.accessToken(refreshToken), claims.name, DOCUMENT_COLUMNS);
+    const sheet = await google.createSheet(await google.accessToken(refreshToken), claims.name, SUBMISSION_COLUMNS);
     await ctx.runMutation(internal.googleSheets.insert, {
       organisationId: ctx.organisationId,
       name: claims.name,

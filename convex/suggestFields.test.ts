@@ -98,7 +98,7 @@ async function suggested(t: Backend, recording: Recording = secondSupplier) {
     ],
   });
   fakePipeline.replay(recording);
-  const { key, url } = await ann.user.mutation(api.documents.generateUploadUrl, { organisationSlug });
+  const { key, url } = await ann.user.mutation(api.submissions.generateUploadUrl, { organisationSlug });
   putToUploadUrl(url, await pdfWithPages(1));
   const { proposalId } = await ann.user.action(api.formProposals.create, {
     organisationSlug,
@@ -155,11 +155,11 @@ test("when the Form already places everything, nothing is proposed", async () =>
   expect(fakePipeline.calls.map((c) => c.step)).toEqual(["read", "match"]);
 });
 
-test("saving the kept suggestions creates a new Form Version and leaves existing Documents on theirs", async () => {
+test("saving the kept suggestions creates a new Form Version and leaves existing Submissions on theirs", async () => {
   const t = newBackend();
   const { user, organisationSlug, formId, key, proposalId, read } = await suggested(t);
   fakePipeline.replay(secondSupplier);
-  const documentId = (await uploadAndExtract(t, user, organisationSlug, formId)) as Id<"documents">;
+  const submissionId = (await uploadAndExtract(t, user, organisationSlug, formId)) as Id<"submissions">;
   const form = await user.query(api.forms.get, { organisationSlug, formId });
   const kept = (await read()).fields.filter((f) => f.ticked).map((f) => f.field);
 
@@ -179,7 +179,7 @@ test("saving the kept suggestions creates a new Form Version and leaves existing
     "purchase_order_number",
   ]);
   expect(
-    (await user.query(api.documents.get, { organisationSlug, documentId })).formVersion,
+    (await user.query(api.submissions.get, { organisationSlug, submissionId })).formVersion,
   ).toBe(1);
   expect(fakePdfStore.objects.has(key)).toBe(false);
   await expect(read()).rejects.toThrow("Form Proposal not found");

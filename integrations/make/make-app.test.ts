@@ -94,7 +94,7 @@ describe("requests", () => {
       return operation!.operationId;
     });
     expect(new Set(called)).toEqual(
-      new Set(["listForms", "sendDocument", "createSubscription", "deleteSubscription", "getFormSample"]),
+      new Set(["listForms", "sendSubmission", "createSubscription", "deleteSubscription", "getFormSample"]),
     );
   });
 

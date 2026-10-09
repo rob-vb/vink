@@ -1,11 +1,11 @@
 // Read by kind (ADR 0010, step 4): the Extraction and the Form Proposal pick
-// the Reader's input from the stored Document's kind. Reader, Matcher, Filler,
+// the Reader's input from the stored Submission's kind. Reader, Matcher, Filler,
 // Verifier (Jev) and Proposer are the fakes of test.setup.ts; lib/readers.test.ts
 // runs the real Reader against a fake Vertex.
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
-import { createDocument } from "./documents";
+import { createSubmission } from "./submissions";
 import { startProposal } from "./formProposals";
 import type { StoredEmail } from "./lib/readerInput";
 import {
@@ -66,14 +66,14 @@ async function withComplaintForm(t: Backend) {
   return { ...ann, formId, organisationId };
 }
 
-/** A Document of a kind, as the intake of that kind will leave it: its file stored, Extraction started. */
-async function documentOf(
+/** A Submission of a kind, as the intake of that kind will leave it: its file stored, Extraction started. */
+async function submissionOf(
   t: Backend,
   { formId, organisationId }: { formId: Id<"forms">; organisationId: Id<"organisations"> },
   stored: { key: string; kind: "pdf" | "email" | "image"; mimeType: string; pageCount: number },
 ) {
   return await t.run(async (ctx) =>
-    createDocument(ctx, {
+    createSubmission(ctx, {
       organisationId,
       formId,
       filename: "input",
@@ -98,14 +98,14 @@ const complaintRecording: Recording = {
 
 const verifyCall = () => fakePipeline.calls.find((c) => c.step === "verify");
 
-test("a PDF Document is read as a PDF with its stored page count, as before", async () => {
+test("a PDF Submission is read as a PDF with its stored page count, as before", async () => {
   const t = newBackend();
   const org = await withComplaintForm(t);
   const pdf = await pdfWithPages(2);
   fakePdfStore.objects.set("org/a.pdf", pdf);
   fakePipeline.replay({ ...complaintRecording, textLayer: [{ page: 1, text: "Klacht over levering 4410" }] });
 
-  const documentId = await documentOf(t, org, {
+  const submissionId = await submissionOf(t, org, {
     key: "org/a.pdf",
     kind: "pdf",
     mimeType: "application/pdf",
@@ -115,12 +115,12 @@ test("a PDF Document is read as a PDF with its stored page count, as before", as
 
   expect(fakePipeline.reads).toEqual([{ kind: "pdf", bytes: pdf, pageCount: 2 }]);
   expect(verifyCall()).toMatchObject({ supportAskedFor: ["subject"] });
-  expect((await org.user.query(api.documents.get, { organisationSlug: org.slug, documentId })).state).toBe(
+  expect((await org.user.query(api.submissions.get, { organisationSlug: org.slug, submissionId })).state).toBe(
     "needs_review",
   );
 });
 
-test("an image Document is read as an image with its MIME type, and Verify asks for no support", async () => {
+test("an image Submission is read as an image with its MIME type, and Verify asks for no support", async () => {
   const t = newBackend();
   const org = await withComplaintForm(t);
   const photo = bytes("jpeg bytes");
@@ -128,7 +128,7 @@ test("an image Document is read as an image with its MIME type, and Verify asks 
   // An image has no text layer.
   fakePipeline.replay(complaintRecording);
 
-  const documentId = await documentOf(t, org, {
+  const submissionId = await submissionOf(t, org, {
     key: "org/foto.jpg",
     kind: "image",
     mimeType: "image/jpeg",
@@ -138,15 +138,15 @@ test("an image Document is read as an image with its MIME type, and Verify asks 
 
   expect(fakePipeline.reads).toEqual([{ kind: "image", bytes: photo, mimeType: "image/jpeg" }]);
   expect(verifyCall()).toMatchObject({ fields: ["subject", "work_order_number"], supportAskedFor: [] });
-  const document = await org.user.query(api.documents.get, { organisationSlug: org.slug, documentId });
-  expect(document.state).toBe("needs_review");
-  expect(document.fieldValues).toMatchObject([
+  const submission = await org.user.query(api.submissions.get, { organisationSlug: org.slug, submissionId });
+  expect(submission.state).toBe("needs_review");
+  expect(submission.fieldValues).toMatchObject([
     { key: "subject", value: "Klacht over levering 4410", signals: { fit: 1, support: null } },
     { key: "work_order_number", value: "WB-2217", signals: { fit: 1, support: null } },
   ]);
 });
 
-test("an email Document is read with its headers, body and attachments, and Verify uses the body as one page", async () => {
+test("an email Submission is read with its headers, body and attachments, and Verify uses the body as one page", async () => {
   const t = newBackend();
   const org = await withComplaintForm(t);
   const photo = bytes("jpeg bytes");
@@ -164,7 +164,7 @@ test("an email Document is read with its headers, body and attachments, and Veri
     textLayer: [{ page: 1, text: "Subject: Klacht over levering 4410\n\nDe levering van gisteren was onvolledig." }],
   });
 
-  const documentId = await documentOf(t, org, {
+  const submissionId = await submissionOf(t, org, {
     key: `${org.organisationId}/mail-1`,
     kind: "email",
     mimeType: "application/json",
@@ -184,8 +184,8 @@ test("an email Document is read with its headers, body and attachments, and Veri
   ]);
   // The subject comes from the body page; the number read off the photo has no text to check.
   expect(verifyCall()).toMatchObject({ supportAskedFor: ["subject"] });
-  const document = await org.user.query(api.documents.get, { organisationSlug: org.slug, documentId });
-  expect(document.fieldValues).toMatchObject([
+  const submission = await org.user.query(api.submissions.get, { organisationSlug: org.slug, submissionId });
+  expect(submission.fieldValues).toMatchObject([
     { key: "subject", pages: [1], signals: { support: 1 } },
     { key: "work_order_number", pages: [2], signals: { support: null } },
   ]);
@@ -196,7 +196,7 @@ test("an input whose file is missing is a failed Read: Extraction Failed, with n
   const org = await withComplaintForm(t);
   fakePipeline.replay(complaintRecording);
 
-  const documentId = await documentOf(t, org, {
+  const submissionId = await submissionOf(t, org, {
     key: `${org.organisationId}/gone`,
     kind: "email",
     mimeType: "application/json",
@@ -204,16 +204,16 @@ test("an input whose file is missing is a failed Read: Extraction Failed, with n
   });
   await settle(t);
 
-  const document = await org.user.query(api.documents.get, { organisationSlug: org.slug, documentId });
-  expect(document.state).toBe("extraction_failed");
+  const submission = await org.user.query(api.submissions.get, { organisationSlug: org.slug, submissionId });
+  expect(submission.state).toBe("extraction_failed");
   expect(fakePipeline.reads).toEqual([]);
   // The screen gets a code, never the technical error (that goes to the logs).
-  expect(document.failure).toBe("unreadable");
-  expect(await t.run(async (ctx) => (await ctx.db.get(documentId))!.extractionError)).toBe("unreadable");
+  expect(submission.failure).toBe("unreadable");
+  expect(await t.run(async (ctx) => (await ctx.db.get(submissionId))!.extractionError)).toBe("unreadable");
 });
 
-/** An email Document whose stored file is `file`, with the extra files in `files`; Extraction settled. */
-async function emailDocumentWith(
+/** An email Submission whose stored file is `file`, with the extra files in `files`; Extraction settled. */
+async function emailSubmissionWith(
   t: Backend,
   org: Awaited<ReturnType<typeof withComplaintForm>>,
   file: unknown,
@@ -224,23 +224,23 @@ async function emailDocumentWith(
   for (const [k, v] of Object.entries(files)) fakePdfStore.objects.set(k, v);
   fakePipeline.replay(complaintRecording);
   const read = vi.spyOn(fakePdfStore, "read");
-  // The technical reason goes to the logs only; the Document keeps a code.
+  // The technical reason goes to the logs only; the Submission keeps a code.
   const logged = vi.spyOn(console, "error").mockImplementation(() => {});
-  const documentId = await documentOf(t, org, { key, kind: "email", mimeType: "application/json", pageCount: 1 });
+  const submissionId = await submissionOf(t, org, { key, kind: "email", mimeType: "application/json", pageCount: 1 });
   await settle(t);
-  const document = await org.user.query(api.documents.get, { organisationSlug: org.slug, documentId });
-  const code = await t.run(async (ctx) => (await ctx.db.get(documentId))!.extractionError);
+  const submission = await org.user.query(api.submissions.get, { organisationSlug: org.slug, submissionId });
+  const code = await t.run(async (ctx) => (await ctx.db.get(submissionId))!.extractionError);
   const error = logged.mock.calls.map((c) => c.join(" ")).join("\n");
   logged.mockRestore();
-  if (document.state === "extraction_failed") {
+  if (submission.state === "extraction_failed") {
     expect(code).toBe("unreadable");
-    expect(document.failure).toBe("unreadable");
-    expect(JSON.stringify(document)).not.toContain(error);
+    expect(submission.failure).toBe("unreadable");
+    expect(JSON.stringify(submission)).not.toContain(error);
   }
   const calls = read.mock.calls.map(([called]) => called);
   read.mockRestore();
   const readsOf = (k: string) => calls.filter((called) => called === k).length;
-  return { document, error, readsOf, key };
+  return { submission, error, readsOf, key };
 }
 
 const validEmail = (attachments: unknown[] = []) => ({
@@ -256,11 +256,11 @@ test("a stored email whose attachment points at another Organisation's file is r
   const org = await withComplaintForm(t);
   const forged = validEmail([{ filename: "x.jpg", mimeType: "image/jpeg", key: "otherorganisation/secret.jpg" }]);
 
-  const { document, error, readsOf } = await emailDocumentWith(t, org, forged, {
+  const { submission, error, readsOf } = await emailSubmissionWith(t, org, forged, {
     "otherorganisation/secret.jpg": bytes("another Organisation's photo"),
   });
 
-  expect(document.state).toBe("extraction_failed");
+  expect(submission.state).toBe("extraction_failed");
   expect(error).toContain("not its own");
   expect(readsOf("otherorganisation/secret.jpg")).toBe(0);
   expect(fakePipeline.reads).toEqual([]);
@@ -270,9 +270,9 @@ test("a stored email under another Organisation's prefix is refused", async () =
   const t = newBackend();
   const org = await withComplaintForm(t);
 
-  const { document, error } = await emailDocumentWith(t, org, validEmail(), {}, { key: "otherorganisation/mail-x" });
+  const { submission, error } = await emailSubmissionWith(t, org, validEmail(), {}, { key: "otherorganisation/mail-x" });
 
-  expect(document.state).toBe("extraction_failed");
+  expect(submission.state).toBe("extraction_failed");
   expect(error).toContain("not this Organisation's");
 });
 
@@ -295,9 +295,9 @@ test.each([
   const org = await withComplaintForm(t);
   const text = JSON.stringify(file).replaceAll("ORG", org.organisationId);
 
-  const { document, error, readsOf, key } = await emailDocumentWith(t, org, typeof file === "string" ? file : text);
+  const { submission, error, readsOf, key } = await emailSubmissionWith(t, org, typeof file === "string" ? file : text);
 
-  expect(document.state).toBe("extraction_failed");
+  expect(submission.state).toBe("extraction_failed");
   expect(error).toContain(expected);
   expect(readsOf(key)).toBe(1);
   expect(fakePipeline.reads).toEqual([]);
@@ -313,36 +313,36 @@ test("attachments over 12 MB together fail at once; a missing attachment file to
     { filename: "b.pdf", mimeType: "application/pdf", key: `${prefix}/2` },
   ]);
 
-  const over = await emailDocumentWith(t, org, email, { [`${prefix}/1`]: big, [`${prefix}/2`]: big });
-  expect(over.document.state).toBe("extraction_failed");
+  const over = await emailSubmissionWith(t, org, email, { [`${prefix}/1`]: big, [`${prefix}/2`]: big });
+  expect(over.submission.state).toBe("extraction_failed");
   expect(over.error).toContain("larger than 12 MB together");
   expect(over.readsOf(`${prefix}/2`)).toBe(1);
 
   fakePdfStore.objects.clear();
   fakePipeline.reset();
-  const missing = await emailDocumentWith(t, org, email, { [`${prefix}/1`]: bytes("pdf") }, { key: `${prefix}-2` });
-  expect(missing.document.state).toBe("extraction_failed");
+  const missing = await emailSubmissionWith(t, org, email, { [`${prefix}/1`]: bytes("pdf") }, { key: `${prefix}-2` });
+  expect(missing.submission.state).toBe("extraction_failed");
 });
 
-test("an image Document with an unsupported type fails at once", async () => {
+test("an image Submission with an unsupported type fails at once", async () => {
   const t = newBackend();
   const org = await withComplaintForm(t);
   fakePdfStore.objects.set("org/x.bmp", bytes("bmp"));
   fakePipeline.replay(complaintRecording);
 
-  const documentId = await documentOf(t, org, { key: "org/x.bmp", kind: "image", mimeType: "image/bmp", pageCount: 1 });
+  const submissionId = await submissionOf(t, org, { key: "org/x.bmp", kind: "image", mimeType: "image/bmp", pageCount: 1 });
   await settle(t);
 
-  const document = await org.user.query(api.documents.get, { organisationSlug: org.slug, documentId });
-  expect(document.state).toBe("extraction_failed");
-  expect(await t.run(async (ctx) => (await ctx.db.get(documentId))!.extractionError)).toBe("unreadable");
+  const submission = await org.user.query(api.submissions.get, { organisationSlug: org.slug, submissionId });
+  expect(submission.state).toBe("extraction_failed");
+  expect(await t.run(async (ctx) => (await ctx.db.get(submissionId))!.extractionError)).toBe("unreadable");
 });
 
 test("the stored JSON cannot change the kind the Reader gets", async () => {
   const t = newBackend();
   const org = await withComplaintForm(t);
 
-  await emailDocumentWith(t, org, { ...validEmail(), kind: "pdf", bytes: "x", pageCount: 99 });
+  await emailSubmissionWith(t, org, { ...validEmail(), kind: "pdf", bytes: "x", pageCount: 99 });
 
   expect(fakePipeline.reads).toHaveLength(1);
   expect(fakePipeline.reads[0]).toMatchObject({ kind: "email", attachments: [] });
