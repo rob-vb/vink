@@ -178,7 +178,7 @@
       "description": "The terms for using Vink: plans, payment, cancelling, your data, processing, liability, security and subprocessors."
     },
     "title": "Terms",
-    "updated": "Last updated: 8 October 2026",
+    "updated": "Last updated: 9 October 2026",
     "intro": "These terms apply to all use of Vink. With an account you accept them on behalf of your organisation. After the terms, you'll find how we handle your data.",
     "sections": {
       "parties": {
@@ -204,12 +204,12 @@
         ]
       },
       "plans": {
-        "title": "Free pages, plans and Top-ups",
+        "title": "Free items, plans and Top-ups",
         "body": [
-          "The first organisation you create gets 20 free pages. They need no payment, and they don't expire.",
-          "A plan gives a number of pages per month. With annual billing you also get the pages per month. Unused pages lapse at the end of each month. The plans, prices and what counts as a page are on the <pricing>Pricing</pricing> page.",
-          "A Top-up gives 100 extra pages and needs a plan. A Top-up lasts until your pages renew, at the end of the current month, and then lapses.",
-          "Doesn't a new PDF fit in your remaining pages? Then Vink refuses it at upload.",
+          "The first organisation you create gets 20 free items. They need no payment, and they don't expire.",
+          "A plan gives a number of items per month. With annual billing you also get the items per month. Unused items lapse at the end of each month. The plans, prices and what counts as an item are on the <pricing>Pricing</pricing> page.",
+          "A Top-up gives 100 extra items and needs a plan. A Top-up lasts until your items renew, at the end of the current month, and then lapses.",
+          "Doesn't a new upload fit in your remaining items? Then Vink refuses it.",
           "With a Custom plan we make our own agreements on volume, price, paying by invoice and a service level. We put those in writing. What they don't cover, these terms do."
         ]
       },
@@ -218,15 +218,15 @@
         "body": [
           "All prices are in euros and exclude VAT. VAT is added where it applies.",
           "You pay in advance, monthly or annually, through Stripe. A plan renews automatically for the same period until you cancel.",
-          "If a payment fails, Stripe tries again a few times. If it still fails, your plan stops. Your organisation then keeps only the free pages it has left.",
+          "If a payment fails, Stripe tries again a few times. If it still fails, your plan stops. Your organisation then keeps only the free items it has left.",
           "We may change our prices. We email you at least 30 days before a new price applies to you. A new price applies from your next period. If you don't want it, you can cancel before that date.",
-          "Amounts paid are not refunded, also not when you stop early or don't use your pages. This doesn't apply where these terms or the law say otherwise."
+          "Amounts paid are not refunded, also not when you stop early or don't use your items. This doesn't apply where these terms or the law say otherwise."
         ]
       },
       "cancel": {
         "title": "Cancelling and ending",
         "body": [
-          "An Admin can cancel the plan at any time in the app, under Settings. The plan then runs to the end of the current month or year. After that you pay nothing more, and you can carry on with the free pages you have left.",
+          "An Admin can cancel the plan at any time in the app, under Settings. The plan then runs to the end of the current month or year. After that you pay nothing more, and you can carry on with the free items you have left.",
           "You can delete your account yourself in the app, from the account menu. An Admin can delete the whole organisation under Settings, in the Danger Zone. Everything is then gone at once, except what the law requires us to keep, such as invoices. Doesn't that work? Email <mail></mail> and we delete it within 30 days.",
           "We may block your access or end the agreement if you don't pay, or if you breach these terms seriously or repeatedly. Where possible, we warn you first.",
           "Vink may refuse a sign-up, and may end or suspend an account at its own discretion, for example when use conflicts with the law, these terms, or Vink's interests. If Vink ends an account through no fault of yours, we refund the amount you paid in advance for unused periods of your plan and for unused Top-ups.",
@@ -254,7 +254,7 @@
           "Your documents, the values read and your forms remain yours. You give Vink only the right to use them to provide the service.",
           "Vink doesn't train AI models with your documents. The parties we use are listed under <subprocessors>Subprocessors</subprocessors>, with what they receive. TypeSafe may keep logs under its own terms.",
           "How long we keep your data and how you delete it is under <retention>How long we keep it</retention>. Keep your own copy of what you want to keep, for example through an Integration.",
-          "We may use usage figures to improve Vink, such as the number of pages. They contain no document content and no personal data."
+          "We may use usage figures to improve Vink, such as the number of items. They contain no document content and no personal data."
         ]
       },
       "processing": {

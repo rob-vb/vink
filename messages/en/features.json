@@ -9,7 +9,7 @@
     "lede": "This is how Vink takes over the retyping. Watch one Submission go through, then open each step.",
     "startFree": "Start free",
     "tryDemo": "Try the demo",
-    "note": "20 free pages. No credit card."
+    "note": "20 free items. No credit card."
   },
   "video": {
     "caption": "One PDF in, clean data out.",
@@ -147,7 +147,7 @@
   },
   "plans": {
     "title": "Every plan includes everything.",
-    "text": "You only choose how many pages. Start with 20 free pages, no credit card.",
+    "text": "You only choose how many items. An item is a PDF page, an email or a photo. Start with 20 free items, no credit card.",
     "includes": [
       "Unlimited users",
       "All Forms and Fields",
@@ -157,7 +157,7 @@
     "link": "See pricing"
   },
   "close": {
-    "title": "Stop retyping. Start with 20 pages.",
+    "title": "Stop retyping. Start with 20 free items.",
     "text": "No credit card.",
     "customer": "Already a customer?",
     "login": "Log in",

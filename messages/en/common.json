@@ -19,7 +19,7 @@
   },
   "cta": {
     "startFree": "Start free",
-    "freeNote": "20 free pages. No credit card."
+    "freeNote": "20 free items. No credit card."
   },
   "trust": {
     "anyPdf": "Even scanned and handwritten",
@@ -27,7 +27,7 @@
     "approval": "Nothing is sent without your approval"
   },
   "closing": {
-    "title": "Stop retyping. Start with 20 pages.",
+    "title": "Stop retyping. Start with 20 free items.",
     "customer": "Already a customer?",
     "logIn": "Log in"
   },
@@ -57,7 +57,7 @@
     "systemPlaceholder": "For example Exact Online, AFAS, a spreadsheet or your own database",
     "documents": "What should Vink read?",
     "documentsPlaceholder": "For example purchase invoices and claim forms",
-    "pagesPerMonth": "Roughly how many pages a month?",
+    "pagesPerMonth": "Roughly how many PDF pages, emails and photos a month?",
     "pagesChoose": "Choose a rough number",
     "pages": {
       "under300": "Fewer than 300",

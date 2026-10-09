@@ -1,16 +1,16 @@
 {
   "meta": {
     "title": "Prijzen",
-    "description": "Elk abonnement van Vink bevat alles: onbeperkt gebruikers, alle formulieren en velden, controle en webhooks. Je kiest hoeveel pagina's. Vanaf €49 per maand, 20 pagina's gratis."
+    "description": "Elk abonnement van Vink bevat alles: onbeperkt gebruikers, alle formulieren en velden, controle en webhooks. Je kiest hoeveel items. Vanaf €49 per maand, 20 items gratis."
   },
   "og": {
-    "title": "Elk abonnement bevat alles. Je kiest alleen hoeveel pagina's.",
-    "alt": "Prijzen van Vink. Elk abonnement bevat alles. Je kiest alleen hoeveel pagina's."
+    "title": "Elk abonnement bevat alles. Je kiest alleen hoeveel items.",
+    "alt": "Prijzen van Vink. Elk abonnement bevat alles. Je kiest alleen hoeveel items."
   },
   "header": {
     "eyebrow": "Prijzen",
-    "title": "Elk abonnement bevat alles. Je kiest alleen hoeveel pagina's.",
-    "subtitle": "Prijzen in euro, excl. btw. + btw waar van toepassing."
+    "title": "Elk abonnement bevat alles. Je kiest alleen hoeveel items.",
+    "subtitle": "Een item is een pdf-pagina, een e-mail of een foto. Prijzen in euro, excl. btw. + btw waar van toepassing."
   },
   "billing": {
     "label": "Facturering",
@@ -22,8 +22,8 @@
     "perMonth": "/maand",
     "billedMonthly": "maandelijks gefactureerd",
     "billedAnnually": "{total} per jaar gefactureerd",
-    "pages": "{count} pagina's per maand",
-    "perPage": "{price} per pagina",
+    "pages": "{count} items per maand",
+    "perPage": "{price} per item",
     "popular": "Meest gekozen",
     "cta": "Gratis starten",
     "vat": "excl. btw"
@@ -33,13 +33,13 @@
     "team": "Voor een team dat elk uur nieuwe post verwerkt.",
     "business": "Voor afdelingen met een vaste stroom papierwerk."
   },
-  "free": "Begin met 20 gratis pagina's. Geen creditcard nodig.",
+  "free": "Begin met 20 gratis items. Geen creditcard nodig.",
   "custom": {
     "name": "Custom",
-    "title": "Meer dan 3.000 pagina's per maand nodig?",
+    "title": "Meer dan 3.000 items per maand nodig?",
     "body": "Vanaf {price} per maand, jaarlijks gefactureerd. Een volumeprijs, eigen voorwaarden en een serviceniveau dat we met je afspreken.",
     "chips": {
-      "volume": "3.000+ pagina's per maand",
+      "volume": "3.000+ items per maand",
       "invoice": "Betalen op factuur",
       "terms": "Eigen voorwaarden",
       "sla": "SLA"
@@ -69,19 +69,19 @@
     "title": "Vragen over prijzen",
     "users": {
       "q": "Betalen we per gebruiker?",
-      "a": "Nee. Elk abonnement heeft onbeperkt gebruikers. Je betaalt voor pagina's, niet voor plekken."
+      "a": "Nee. Elk abonnement heeft onbeperkt gebruikers. Je betaalt voor items, niet voor plekken."
     },
     "page": {
-      "q": "Wat is een pagina?",
-      "a": "Eén pagina van een PDF. Vink telt de pagina's van een inzending één keer: wanneer Vink de inzending accepteert om te lezen. Opnieuw proberen na een mislukte lezing is gratis. Een inzending naar een ander formulier verplaatsen is ook gratis."
+      "q": "Wat is een item?",
+      "a": "Eén pdf-pagina, één e-mail of één foto is één item. Een pdf van 10 pagina's telt dus als 10 items. Bij een e-mail telt de tekst als 1 item, elke bijgevoegde pdf telt zijn pagina's en elke foto telt 1. Een korte begeleidende tekst bij bijlagen en kleine handtekeningafbeeldingen zijn gratis. Vink telt een item één keer, wanneer Vink het leest. Opnieuw proberen na een mislukte lezing is gratis. Een inzending naar een ander formulier verplaatsen is ook gratis."
     },
     "runOut": {
-      "q": "Wat gebeurt er als onze pagina's op zijn?",
-      "a": "Een nieuwe PDF die niet in je resterende pagina's past, wordt bij het uploaden geweigerd, met een duidelijke melding. Alles wat al geüpload is blijft werken. Je kunt upgraden, of een aanvulling nemen van €10 per 100 pagina's die geldt tot het einde van de lopende maand."
+      "q": "Wat gebeurt er als onze items op zijn?",
+      "a": "Een nieuwe upload die niet in je resterende items past, wordt geweigerd, met een duidelijke melding. Alles wat al geüpload is blijft werken. Je kunt upgraden, of een aanvulling nemen van €10 per 100 items die geldt tot het einde van de lopende maand."
     },
     "rollover": {
-      "q": "Schuiven ongebruikte pagina's door?",
-      "a": "Nee. Je pagina's worden elke maand vernieuwd, ook bij een jaarabonnement, en ongebruikte pagina's vervallen."
+      "q": "Schuiven ongebruikte items door?",
+      "a": "Nee. Je items worden elke maand vernieuwd, ook bij een jaarabonnement, en ongebruikte items vervallen."
     },
     "vat": {
       "q": "Zijn de prijzen inclusief of exclusief btw?",
@@ -89,7 +89,7 @@
     },
     "cancel": {
       "q": "Kunnen we opzeggen?",
-      "a": "Ja, je kunt op elk moment opzeggen. Je abonnement loopt dan door tot het einde van de lopende maand of het lopende jaar. Daarna betaal je niets meer. De 20 gratis pagina's vragen geen creditcard en verlopen niet."
+      "a": "Ja, je kunt op elk moment opzeggen. Je abonnement loopt dan door tot het einde van de lopende maand of het lopende jaar. Daarna betaal je niets meer. De 20 gratis items vragen geen creditcard en verlopen niet."
     },
     "intake": {
       "q": "Hoe komt je papierwerk binnen?",
@@ -98,6 +98,6 @@
   },
   "jsonld": {
     "description": "Vink leest PDF's, getypt, gescand of handgeschreven, en maakt er schone JSON van voor jouw systemen. Mensen controleren alleen de waarden waar Vink twijfelt.",
-    "offer": "{count} pagina's per maand, maandelijks gefactureerd, excl. btw"
+    "offer": "{count} items per maand, maandelijks gefactureerd, excl. btw"
   }
 }

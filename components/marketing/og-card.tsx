@@ -94,8 +94,8 @@ export async function ogCard({ title, eyebrow, locale }: { title: string; eyebro
           </div>
           <div style={{ display: "flex", gap: 36, fontSize: 24, color: "#5B6577" }}>
             {(locale === "nl"
-              ? ["Opgeslagen in de EU", "20 gratis pagina's", "Niets verstuurd zonder jouw akkoord"]
-              : ["Stored in the EU", "20 free pages", "Nothing sent without your approval"]
+              ? ["Opgeslagen in de EU", "20 gratis items", "Niets verstuurd zonder jouw akkoord"]
+              : ["Stored in the EU", "20 free items", "Nothing sent without your approval"]
             ).map((item) => (
               <div key={item} style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <div style={{ width: 10, height: 10, borderRadius: 10, background: "#2BC016" }} />

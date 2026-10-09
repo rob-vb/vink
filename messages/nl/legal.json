@@ -178,7 +178,7 @@
       "description": "De voorwaarden voor het gebruik van Vink: abonnementen, betalen, opzeggen, je data, verwerking, aansprakelijkheid, beveiliging en subverwerkers."
     },
     "title": "Voorwaarden",
-    "updated": "Laatst bijgewerkt: 8 oktober 2026",
+    "updated": "Laatst bijgewerkt: 9 oktober 2026",
     "intro": "Deze voorwaarden gelden voor elk gebruik van Vink. Met een account ga je er namens je organisatie mee akkoord. Na de voorwaarden staat hoe we met je data omgaan.",
     "sections": {
       "parties": {
@@ -204,12 +204,12 @@
         ]
       },
       "plans": {
-        "title": "Gratis pagina's, abonnementen en Top-ups",
+        "title": "Gratis items, abonnementen en Top-ups",
         "body": [
-          "De eerste organisatie die je maakt, krijgt 20 gratis pagina's. Daarvoor is geen betaling nodig, en ze verlopen niet.",
-          "Een abonnement geeft een aantal pagina's per maand. Ook bij een jaarabonnement krijg je de pagina's per maand. Ongebruikte pagina's vervallen aan het einde van elke maand. De abonnementen, prijzen en wat als pagina telt, staan op de pagina <pricing>Prijzen</pricing>.",
-          "Een Top-up geeft 100 extra pagina's en kan alleen bij een abonnement. Een Top-up geldt tot je pagina's worden vernieuwd, aan het einde van de lopende maand, en vervalt daarna.",
-          "Past een nieuwe PDF niet in je resterende pagina's? Dan weigert Vink die bij het uploaden.",
+          "De eerste organisatie die je maakt, krijgt 20 gratis items. Daarvoor is geen betaling nodig, en ze verlopen niet.",
+          "Een abonnement geeft een aantal items per maand. Ook bij een jaarabonnement krijg je de items per maand. Ongebruikte items vervallen aan het einde van elke maand. De abonnementen, prijzen en wat als item telt, staan op de pagina <pricing>Prijzen</pricing>.",
+          "Een Top-up geeft 100 extra items en kan alleen bij een abonnement. Een Top-up geldt tot je items worden vernieuwd, aan het einde van de lopende maand, en vervalt daarna.",
+          "Past een nieuwe upload niet in je resterende items? Dan weigert Vink die.",
           "Met een Custom-abonnement maken we eigen afspraken over volume, prijs, betalen op factuur en een serviceniveau. Die afspraken leggen we schriftelijk vast. Wat daarin niet staat, regelen deze voorwaarden."
         ]
       },
@@ -218,15 +218,15 @@
         "body": [
           "Alle prijzen zijn in euro en exclusief btw. Btw komt erbij waar die geldt.",
           "Je betaalt vooraf, per maand of per jaar, via Stripe. Een abonnement verlengt automatisch met dezelfde periode, tot je opzegt.",
-          "Lukt een betaling niet? Dan probeert Stripe het nog een paar keer. Lukt het daarna nog niet, dan stopt je abonnement. Je organisatie houdt dan alleen de gratis pagina's die nog over zijn.",
+          "Lukt een betaling niet? Dan probeert Stripe het nog een paar keer. Lukt het daarna nog niet, dan stopt je abonnement. Je organisatie houdt dan alleen de gratis items die nog over zijn.",
           "We kunnen de prijzen aanpassen. We mailen je minstens 30 dagen voordat een nieuwe prijs voor je geldt. Een nieuwe prijs geldt vanaf je volgende periode. Wil je die prijs niet, dan kun je vóór die datum opzeggen.",
-          "Betaalde bedragen krijg je niet terug, ook niet als je eerder stopt of pagina's niet gebruikt. Dit geldt niet als deze voorwaarden of de wet iets anders zeggen."
+          "Betaalde bedragen krijg je niet terug, ook niet als je eerder stopt of items niet gebruikt. Dit geldt niet als deze voorwaarden of de wet iets anders zeggen."
         ]
       },
       "cancel": {
         "title": "Opzeggen en stoppen",
         "body": [
-          "Een Admin kan het abonnement op elk moment opzeggen in de app, bij Instellingen. Het abonnement loopt dan door tot het einde van de lopende maand of het lopende jaar. Daarna betaal je niets meer, en kun je verder met de gratis pagina's die nog over zijn.",
+          "Een Admin kan het abonnement op elk moment opzeggen in de app, bij Instellingen. Het abonnement loopt dan door tot het einde van de lopende maand of het lopende jaar. Daarna betaal je niets meer, en kun je verder met de gratis items die nog over zijn.",
           "Je kunt je account zelf verwijderen in de app, via het accountmenu. Een Admin kan de hele organisatie verwijderen bij Instellingen, onder Danger Zone. Alles is dan direct weg, behalve wat we volgens de wet moeten bewaren, zoals facturen. Lukt het niet? Mail <mail></mail>, dan verwijderen we het binnen 30 dagen.",
           "We mogen je toegang blokkeren of de overeenkomst beëindigen als je niet betaalt, of als je deze voorwaarden ernstig of herhaald overtreedt. Waar dat kan, waarschuwen we je eerst.",
           "Vink mag een aanmelding weigeren, en een account naar eigen inzicht beëindigen of opschorten, bijvoorbeeld als het gebruik in strijd is met de wet, met deze voorwaarden of met de belangen van Vink. Beëindigt Vink een account zonder dat je iets te verwijten valt, dan betalen we het bedrag terug dat je vooruit betaalde voor ongebruikte periodes van je abonnement en voor ongebruikte Top-ups.",
@@ -254,7 +254,7 @@
           "Je documenten, de gelezen waarden en je formulieren blijven van jou. Je geeft Vink alleen het recht om ze te gebruiken om de dienst te leveren.",
           "Vink traint geen AI-modellen met je documenten. De partijen die we inzetten, staan bij <subprocessors>Subverwerkers</subprocessors>, met wat ze ontvangen. TypeSafe mag daarbij logs bewaren onder zijn eigen voorwaarden.",
           "Hoe lang we je data bewaren en hoe je die verwijdert, staat bij <retention>Hoe lang we het bewaren</retention>. Bewaar zelf een kopie van wat je wilt houden, bijvoorbeeld via een koppeling.",
-          "We mogen gebruikscijfers zonder inhoud gebruiken om Vink te verbeteren, zoals het aantal pagina's. Daarin staan geen inhoud van documenten en geen persoonsgegevens."
+          "We mogen gebruikscijfers zonder inhoud gebruiken om Vink te verbeteren, zoals het aantal items. Daarin staan geen inhoud van documenten en geen persoonsgegevens."
         ]
       },
       "processing": {

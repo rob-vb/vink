@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "Vink: AI document data extraction for operations teams",
-    "description": "Stop retyping PDFs. Vink reads invoices, claim forms and work orders, even handwritten ones, and puts the data in your system. 20 free pages."
+    "description": "Stop retyping PDFs. Vink reads invoices, claim forms and work orders, even handwritten ones, and puts the data in your system. 20 free items."
   },
   "og": {
     "title": "Paper. Vink. Done.",
@@ -166,15 +166,15 @@
   },
   "pricing": {
     "title": "Every plan includes everything.",
-    "subtitle": "You only choose how many pages. Prices excl. VAT.",
+    "subtitle": "You only choose how many items. An item is a PDF page, an email or a photo. Prices excl. VAT.",
     "perMonth": "/mo",
     "from": "from",
-    "pages": "{count} pages",
-    "customPages": "{count}+ pages",
-    "perPage": "{price} per page",
+    "pages": "{count} items",
+    "customPages": "{count}+ items",
+    "perPage": "{price} per item",
     "customNote": "Volume price, payment by invoice",
     "popular": "Most popular",
-    "free": "Start with 20 free pages. No credit card.",
+    "free": "Start with 20 free items. No credit card.",
     "link": "See pricing"
   },
   "faq": {
@@ -185,7 +185,7 @@
     },
     "messy": {
       "q": "Our paperwork is messy, or handwritten.",
-      "a": "Try it on your own papers. The first 20 pages are free, no credit card needed."
+      "a": "Try it on your own papers. The first 20 items are free, no credit card needed."
     },
     "developer": {
       "q": "We don't have a developer.",

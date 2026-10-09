@@ -1,16 +1,16 @@
 {
   "meta": {
     "title": "Pricing",
-    "description": "Every Vink plan includes everything: unlimited users, all Forms and Fields, review and webhooks. Choose how many pages. From €49 a month, 20 free pages to start."
+    "description": "Every Vink plan includes everything: unlimited users, all Forms and Fields, review and webhooks. Choose how many items. From €49 a month, 20 free items to start."
   },
   "og": {
-    "title": "Every plan includes everything. You only choose how many pages.",
-    "alt": "Vink pricing. Every plan includes everything. You only choose how many pages."
+    "title": "Every plan includes everything. You only choose how many items.",
+    "alt": "Vink pricing. Every plan includes everything. You only choose how many items."
   },
   "header": {
     "eyebrow": "Pricing",
-    "title": "Every plan includes everything. You only choose how many pages.",
-    "subtitle": "Prices in EUR, excl. VAT. + VAT where applicable."
+    "title": "Every plan includes everything. You only choose how many items.",
+    "subtitle": "An item is a PDF page, an email or a photo. Prices in EUR, excl. VAT. + VAT where applicable."
   },
   "billing": {
     "label": "Billing",
@@ -22,8 +22,8 @@
     "perMonth": "/month",
     "billedMonthly": "billed monthly",
     "billedAnnually": "{total} billed annually",
-    "pages": "{count} pages a month",
-    "perPage": "{price} per page",
+    "pages": "{count} items a month",
+    "perPage": "{price} per item",
     "popular": "Most popular",
     "cta": "Start free",
     "vat": "excl. VAT"
@@ -33,13 +33,13 @@
     "team": "For a team that processes new mail every hour.",
     "business": "For departments with a steady stream of paperwork."
   },
-  "free": "Start with 20 free pages. No credit card.",
+  "free": "Start with 20 free items. No credit card.",
   "custom": {
     "name": "Custom",
-    "title": "Need more than 3,000 pages a month?",
+    "title": "Need more than 3,000 items a month?",
     "body": "From {price} a month, billed annually. A volume price, custom terms and a service level agreed with you.",
     "chips": {
-      "volume": "3,000+ pages a month",
+      "volume": "3,000+ items a month",
       "invoice": "Payment by invoice",
       "terms": "Custom terms",
       "sla": "SLA"
@@ -69,19 +69,19 @@
     "title": "Questions about pricing",
     "users": {
       "q": "Do you charge per user?",
-      "a": "No. Every plan has unlimited users. You pay for pages, not seats."
+      "a": "No. Every plan has unlimited users. You pay for items, not seats."
     },
     "page": {
-      "q": "What is a page?",
-      "a": "One page of a PDF. A Submission counts its pages once, when Vink accepts it for reading. Retries after a failed read are free. Moving a Submission to another Form is free too."
+      "q": "What is an item?",
+      "a": "One PDF page, one email or one photo is one item. So a 10-page PDF counts as 10 items. In an email, the text counts as 1 item, each attached PDF counts its pages and each photo counts 1. A short cover note for attachments and small signature images are free. Vink counts an item once, when it reads it. Retries after a failed read are free. Moving a Submission to another Form is free too."
     },
     "runOut": {
-      "q": "What happens when our pages run out?",
-      "a": "A new PDF that doesn't fit your remaining pages is refused at upload, with a clear message. Everything already uploaded keeps working. You can upgrade, or add a top-up of €10 per 100 pages that lasts until the end of the current month."
+      "q": "What happens when our items run out?",
+      "a": "A new upload that doesn't fit your remaining items is refused, with a clear message. Everything already uploaded keeps working. You can upgrade, or add a top-up of €10 per 100 items that lasts until the end of the current month."
     },
     "rollover": {
-      "q": "Do unused pages roll over?",
-      "a": "No. Your pages renew every month, also on annual billing, and unused pages expire."
+      "q": "Do unused items roll over?",
+      "a": "No. Your items renew every month, also on annual billing, and unused items expire."
     },
     "vat": {
       "q": "Are prices with or without VAT?",
@@ -89,7 +89,7 @@
     },
     "cancel": {
       "q": "Can we cancel?",
-      "a": "Yes, you can cancel at any time. Your plan then runs until the end of the current month or year. After that, you pay nothing more. The 20 free pages need no card and have no end date."
+      "a": "Yes, you can cancel at any time. Your plan then runs until the end of the current month or year. After that, you pay nothing more. The 20 free items need no card and have no end date."
     },
     "intake": {
       "q": "How does your paperwork get in?",
@@ -98,6 +98,6 @@
   },
   "jsonld": {
     "description": "Vink reads PDFs, typed, scanned or handwritten, and turns them into clean JSON for your systems. People only check the values Vink isn't sure about.",
-    "offer": "{count} pages a month, billed monthly, excl. VAT"
+    "offer": "{count} items a month, billed monthly, excl. VAT"
   }
 }

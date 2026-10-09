@@ -9,7 +9,7 @@
     "lede": "Zo neemt Vink het overtikken over. Kijk hoe één Inzending erdoorheen gaat, en open daarna elke stap.",
     "startFree": "Gratis starten",
     "tryDemo": "Probeer de demo",
-    "note": "20 gratis pagina's. Geen creditcard."
+    "note": "20 gratis items. Geen creditcard."
   },
   "video": {
     "caption": "Eén PDF erin, schone data eruit.",
@@ -147,7 +147,7 @@
   },
   "plans": {
     "title": "Elk abonnement bevat alles.",
-    "text": "Je kiest alleen hoeveel pagina's. Begin met 20 gratis pagina's, zonder creditcard.",
+    "text": "Je kiest alleen hoeveel items. Een item is een pdf-pagina, een e-mail of een foto. Begin met 20 gratis items, zonder creditcard.",
     "includes": [
       "Onbeperkt gebruikers",
       "Alle Formulieren en velden",
@@ -157,7 +157,7 @@
     "link": "Bekijk de prijzen"
   },
   "close": {
-    "title": "Stop met overtikken. Begin met 20 pagina's.",
+    "title": "Stop met overtikken. Begin met 20 gratis items.",
     "text": "Geen creditcard.",
     "customer": "Al klant?",
     "login": "Inloggen",
