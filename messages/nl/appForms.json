@@ -127,7 +127,7 @@
     "deriveKey": "Afleiden van label",
     "type": "Type",
     "description": "Omschrijving",
-    "descriptionPlaceholder": "Andere woorden die op het papier kunnen staan, bijv. leverdatum, Lieferdatum, date de livraison",
+    "descriptionPlaceholder": "Andere woorden die op het papier kunnen staan, bijv. factuurdatum, Rechnungsdatum, date de facturation",
     "descriptionHelp": "Optioneel. Synoniemen en andere talen helpen Vink dit Veld te vinden op documenten met andere bewoordingen.",
     "required": "Verplicht",
     "requiredList": "Een Document zonder minstens één regel moet altijd gecontroleerd worden voordat het wordt verstuurd.",
@@ -141,7 +141,7 @@
     "removeOption": "Optie {number} verwijderen",
     "addOption": "Optie toevoegen",
     "subFields": "Subvelden",
-    "subFieldsDescription": "Een Lijst bevat één regel per item op het document, bijvoorbeeld per pakbonregel of per factuurregel. Elke regel heeft deze subvelden.",
+    "subFieldsDescription": "Een Lijst bevat één regel per item op het document, bijvoorbeeld per bestelregel of per factuurregel. Elke regel heeft deze subvelden.",
     "subFieldsCount": "Deze Lijst heeft er {count}; selecteer er een in de lijst met Velden om hem te bewerken.",
     "addSubField": "Subveld toevoegen"
   },
