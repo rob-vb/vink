@@ -1,6 +1,8 @@
-// Change Form: before Approval, move a Document to another Form. Its values
-// and corrections for the old Form are dropped, and Match, Fill and Verify run
-// again on the stored Reading (a full Extraction when there is none).
+// Change Form: before Approval, move a Document to another Form, also out of
+// No Form (ADR 0010). Its values and corrections for the old Form are dropped,
+// and Match, Fill and Verify run again on the stored Reading (a full Extraction
+// when there is none). Its Items were charged when it was accepted, so a move
+// charges nothing.
 import { ConvexError, v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import type { QueryCtx } from "./_generated/server";
@@ -18,7 +20,11 @@ async function changeable(
     throw new ConvexError("Document not found");
   }
   if (document.state === "approved") throw new ConvexError("This Document is approved");
-  if (document.state !== "needs_review" && document.state !== "extraction_failed") {
+  if (
+    document.state !== "needs_review" &&
+    document.state !== "extraction_failed" &&
+    document.state !== "no_form"
+  ) {
     throw new ConvexError("This Document's Form can't be changed now");
   }
   return document;
@@ -46,7 +52,7 @@ export const changeForm = orgMutation({
       throw new ConvexError("Form not found");
     }
     if (formId === document.formId) throw new ConvexError("The Document is already on this Form");
-    const oldForm = await ctx.db.get(document.formId);
+    const oldForm = document.formId === undefined ? null : await ctx.db.get(document.formId);
 
     for (const table of ["fieldValues", "listValues"] as const) {
       const rows = await ctx.db
@@ -70,7 +76,8 @@ export const changeForm = orgMutation({
       organisationId: ctx.organisationId,
       documentId,
       event: "form_changed",
-      detail: `${oldForm?.name ?? "?"} → ${form.name}`,
+      detail: `${oldForm?.name ?? "No Form"} → ${form.name}`,
+      info: { code: "form_changed", from: oldForm?.name ?? null, to: form.name },
       by: ctx.userId,
       byEmail: identity?.email?.toLowerCase() ?? "",
       at: Date.now(),

@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { mkdtempSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { copyFileSync, cpSync, mkdtempSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { beforeEach, expect, test } from "vitest";
@@ -13,7 +13,7 @@ import {
   fakeVerifier,
   type Recording,
 } from "../../convex/test.setup";
-import { evaluate } from "./harness";
+import { evaluate, loadInput, parseEml } from "./harness";
 
 const invoiceForm = {
   name: "invoice",
@@ -191,4 +191,129 @@ test("Verify gets the fixture Form's name and description, as it does in the app
   await evaluate({ fixturesDir, adapters: { ...metered, verifier }, prices, threshold: 0.8 });
 
   expect(seen).toEqual([{ formName: "invoice", formDescription: "Supplier invoices for fleet repairs" }]);
+});
+
+// --- one fixture per kind (ADR 0010, step 4) ---
+
+/** A fixtures folder with one of the committed synthetic Documents and its Form. */
+function fixturesWith(document: string, form: string) {
+  const root = mkdtempSync(join(tmpdir(), "eval-kind-"));
+  mkdirSync(join(root, "forms"));
+  cpSync(join("fixtures/forms", `${form}.json`), join(root, "forms", `${form}.json`));
+  cpSync(join("fixtures/documents", document), join(root, "documents", document), { recursive: true });
+  return root;
+}
+
+test("a PDF fixture is read as a PDF with the page count from its expected.json", async () => {
+  fakePipeline.replay(invoiceRecording);
+
+  await evaluate({ fixturesDir: fixturesWithInvoice(), adapters: metered, prices, threshold: 0.8 });
+
+  expect(fakePipeline.reads).toEqual([{ kind: "pdf", bytes: expect.any(Uint8Array), pageCount: 1 }]);
+});
+
+test("the photo of a handwritten work order is read as an image, and its Verify has no text to check against", async () => {
+  fakePipeline.replay({
+    reading: { workOrder: { number: "4821", _pages: [1] }, customer: { name: "J. Hofman", _pages: [1] } },
+    matches: {
+      workOrderNumber: { path: "workOrder.number", probability: 0.95 },
+      customerName: { path: "customer.name", probability: 0.9 },
+    },
+    fills: { workOrderNumber: "4821", customerName: "J. Hofman" },
+  });
+
+  const report = await evaluate({
+    fixturesDir: fixturesWith("synthetic-workorder-photo-001", "work-order"),
+    adapters: metered,
+    prices,
+    threshold: 0.8,
+  });
+
+  expect(report.failures).toEqual([]);
+  expect(fakePipeline.reads).toEqual([
+    { kind: "image", bytes: expect.any(Uint8Array), mimeType: "image/jpeg" },
+  ]);
+  expect(fakePipeline.calls).toContainEqual({
+    step: "verify",
+    fields: ["workOrderNumber", "customerName"],
+    supportAskedFor: [],
+  });
+  expect(report.documents[0].score.values).toMatchObject({ right: 2 });
+});
+
+test("the complaint email is read as an email with its headers and body, and its text is the one page of source text", async () => {
+  fakePipeline.replay({
+    reading: { complaint: { orderNumber: "KB-20417", _pages: [1] } },
+    textLayer: [{ page: 1, text: "Op 21 september 2026 heb ik een broodsnijmachine BS-300 gekocht (bestelnummer KB-20417)" }],
+    matches: { orderNumber: { path: "complaint.orderNumber", probability: 0.97 } },
+    fills: { orderNumber: "KB-20417" },
+  });
+
+  const report = await evaluate({
+    fixturesDir: fixturesWith("synthetic-complaint-email-001", "complaint"),
+    adapters: metered,
+    prices,
+    threshold: 0.8,
+  });
+
+  expect(report.failures).toEqual([]);
+  expect(fakePipeline.reads).toEqual([
+    {
+      kind: "email",
+      subject: "Klacht broodsnijmachine BS-300, bestelling KB-20417",
+      from: "Anouk de Wit <anouk.dewit@bakkerij-dewit.example>",
+      date: "Tue, 6 Oct 2026 09:12:00 +0200",
+      body: expect.stringContaining("bestelnummer KB-20417"),
+      attachments: [],
+    },
+  ]);
+  expect(fakePipeline.calls).toContainEqual({ step: "verify", fields: ["orderNumber"], supportAskedFor: ["orderNumber"] });
+  expect(report.documents[0].score.values).toMatchObject({ right: 1 });
+});
+
+test("every committed synthetic fixture loads, and its expected.json names only fields of its Form", () => {
+  const forms: Record<string, string> = {
+    "synthetic-workorder-photo-001": "work-order",
+    "synthetic-complaint-email-001": "complaint",
+  };
+  for (const [document, form] of Object.entries(forms)) {
+    const expected = JSON.parse(readFileSync(join("fixtures/documents", document, "expected.json"), "utf8"));
+    const fields = JSON.parse(readFileSync(join("fixtures/forms", `${form}.json`), "utf8")).fields as Array<{ name: string }>;
+    expect(expected.form).toBe(form);
+    expect(Object.keys(expected.fieldValues).sort()).toEqual(fields.map((f) => f.name).sort());
+    expect(() => loadInput(join("fixtures/documents", document), expected.pages)).not.toThrow();
+  }
+});
+
+test("an email fixture can bring its attachments in an attachments folder; a Reading is stored per email", async () => {
+  const fixturesDir = fixturesWith("synthetic-complaint-email-001", "complaint");
+  const dir = join(fixturesDir, "documents/synthetic-complaint-email-001");
+  mkdirSync(join(dir, "attachments"));
+  copyFileSync("fixtures/documents/synthetic-workorder-photo-001/document.jpg", join(dir, "attachments/werkbon.jpg"));
+
+  expect(loadInput(dir, 1)).toMatchObject({
+    kind: "email",
+    attachments: [{ filename: "werkbon.jpg", mimeType: "image/jpeg", bytes: expect.any(Uint8Array) }],
+  });
+
+  const readingsDir = mkdtempSync(join(tmpdir(), "readings-"));
+  fakePipeline.replay({ reading: { complaint: { orderNumber: "KB-20417" } }, matches: {}, fills: {} });
+  await evaluate({ fixturesDir, adapters: metered, prices, threshold: 0.8, readingsDir });
+  await evaluate({ fixturesDir, adapters: metered, prices, threshold: 0.8, readingsDir });
+  // The second run reused the stored Reading.
+  expect(fakePipeline.reads).toHaveLength(1);
+});
+
+test("parseEml reads a plain-text mail, and refuses a multipart or encoded one with the reason", () => {
+  const mail = "Subject: Hallo\r\nFrom: a@b.example\r\nDate: Tue, 6 Oct 2026 09:12:00 +0200\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\nRegel een.\r\n\r\nRegel twee.\r\n";
+  expect(parseEml(mail)).toEqual({
+    subject: "Hallo",
+    from: "a@b.example",
+    date: "Tue, 6 Oct 2026 09:12:00 +0200",
+    body: "Regel een.\n\nRegel twee.",
+  });
+  expect(() => parseEml("Subject: x\nFrom: a\nDate: d\nContent-Type: multipart/mixed; boundary=b\n\nbody")).toThrow(
+    "Only a plain-text, 7bit or 8bit .eml is supported",
+  );
+  expect(() => parseEml("From: a\nDate: d\n\nbody")).toThrow("The .eml has no subject header");
 });

@@ -3,7 +3,7 @@
 import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { PAPER_WIDTH, demoPages, type DemoDocumentId } from "./demo-papers";
+import { PAPER_WIDTH, demoPages, type DemoPdfId } from "./demo-papers";
 
 const ZOOMS = [0.75, 1, 1.25, 1.5, 2, 3];
 
@@ -19,7 +19,7 @@ export function DemoPdfPane({
   onPageChange,
   labels,
 }: {
-  documentId: DemoDocumentId;
+  documentId: DemoPdfId;
   page: number;
   onPageChange: (page: number) => void;
   labels: { previous: string; next: string; zoomIn: string; zoomOut: string };

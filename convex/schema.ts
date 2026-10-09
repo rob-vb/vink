@@ -1,5 +1,6 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
+import { eventInfo, splitInfo } from "./lib/eventInfo";
 
 export const role = v.union(v.literal("admin"), v.literal("member"));
 
@@ -47,11 +48,17 @@ export const field = v.union(
   }),
 );
 
+// What a Document is (ADR 0010). Stored with its real MIME type, since the file
+// is no longer always a PDF.
+export const inputKind = v.union(v.literal("pdf"), v.literal("email"), v.literal("image"));
+
 export const documentState = v.union(
   v.literal("extracting"),
   v.literal("needs_review"),
   v.literal("approved"),
   v.literal("extraction_failed"),
+  // Read, but no Form fits (ADR 0010): it has no Field Values and is never approved.
+  v.literal("no_form"),
   v.literal("rejected"),
   v.literal("deleted"),
 );
@@ -86,6 +93,26 @@ export const planName = v.union(
   v.literal("internal_unlimited"),
 );
 
+// An Organisation's Plan and Items. The same shape sits under `items` and, until
+// the narrow step, under its old name `pages` (see organisations below).
+const itemsState = v.object({
+  // `null`: no Plan, only Free Items.
+  plan: v.union(planName, v.null()),
+  // Items per period, and how many of them this period has used.
+  allowance: v.number(),
+  allowanceUsed: v.number(),
+  // When the period ends: the allowance renews and Top-ups expire.
+  // `null` without a period (no Plan, or internal unlimited).
+  periodEndsAt: v.union(v.number(), v.null()),
+  // The day of the month periods end on, so a period ending on the 31st
+  // ends on the 28th in February and on the 31st again in March.
+  anchorDay: v.optional(v.number()),
+  topUp: v.number(),
+  free: v.number(),
+  // Every Item charged this period (without a period: ever), for the 80% warning.
+  used: v.number(),
+});
+
 export const billingInterval = v.union(v.literal("monthly"), v.literal("annual"));
 
 // Every table except `organisations` itself carries an indexed `organisationId`.
@@ -97,35 +124,33 @@ export default defineSchema({
     // (or its Approval, with no Integration). 30 when unset.
     retentionDays: v.optional(v.number()),
     // The user who created it, so only a user's first Organisation gets Free
-    // Pages. Unset for Organisations created before Plans.
+    // Items. Unset for Organisations created before Plans.
     createdBy: v.optional(v.string()),
-    // Its Plan and Pages (see pages.ts). Unset for Organisations created
+    // Its Plan and Items (see items.ts). Unset for Organisations created
     // before Plans, which count as the internal unlimited Plan.
-    pages: v.optional(
+    items: v.optional(itemsState),
+    // The Page → Item rename (ADR 0010), widen step: Organisations from before
+    // it still hold this under the old name until `items:backfillItems` has
+    // run. items.ts reads `items ?? pages` and every write moves it to `items`.
+    // TODO(narrow, after `items:backfillItems` ran on dev AND prod): remove
+    // this field and the `by_periodEndsAt` index, and the fallbacks in items.ts.
+    pages: v.optional(itemsState),
+    // The setup after sign-up (onboarding.ts): Form, System, Input. Unset for
+    // Organisations from before it, which count as set up. The steps themselves
+    // are derived from facts (Forms, Integrations, Documents); this only holds
+    // what a fact can't show: the System step was skipped, the Input step was seen.
+    onboarding: v.optional(
       v.object({
-        // `null`: no Plan, only Free Pages.
-        plan: v.union(planName, v.null()),
-        // Pages per period, and how many of them this period has used.
-        allowance: v.number(),
-        allowanceUsed: v.number(),
-        // When the period ends: the allowance renews and Top-ups expire.
-        // `null` without a period (no Plan, or internal unlimited).
-        periodEndsAt: v.union(v.number(), v.null()),
-        // The day of the month periods end on, so a period ending on the 31st
-        // ends on the 28th in February and on the 31st again in March.
-        anchorDay: v.optional(v.number()),
-        topUp: v.number(),
-        free: v.number(),
-        // Every Page charged this period (without a period: ever), for the 80% warning.
-        used: v.number(),
+        systemSkippedAt: v.optional(v.number()),
+        inputDoneAt: v.optional(v.number()),
       }),
     ),
     // Its Stripe Customer, made at its first Checkout (see billing.ts).
     stripeCustomerId: v.optional(v.string()),
     // When billing.ts last read its Subscriptions from Stripe, ms (billingState.ts).
     billingSyncedAt: v.optional(v.number()),
-    // Its Stripe Subscription as the last webhook left it, for the Pages card.
-    // Unset without one; the Plan itself lives in `pages`.
+    // Its Stripe Subscription as the last webhook left it, for the Items card.
+    // Unset without one; the Plan itself lives in `items`.
     subscription: v.optional(
       v.object({
         id: v.string(),
@@ -138,6 +163,8 @@ export default defineSchema({
   })
     .index("by_slug", ["slug"])
     .index("by_createdBy", ["createdBy"])
+    .index("by_itemsPeriodEndsAt", ["items.periodEndsAt"])
+    // Narrow step: remove with `pages` (see above).
     .index("by_periodEndsAt", ["pages.periodEndsAt"])
     .index("by_stripeCustomerId", ["stripeCustomerId"]),
 
@@ -145,7 +172,9 @@ export default defineSchema({
   topUpPayments: defineTable({
     organisationId: v.id("organisations"),
     checkoutSessionId: v.string(),
-    pages: v.number(),
+    items: v.optional(v.number()),
+    // Old name of `items`; TODO(narrow): remove after `items:backfillItems` ran on prod.
+    pages: v.optional(v.number()),
   })
     .index("by_checkoutSessionId", ["checkoutSessionId"])
     .index("by_organisationId", ["organisationId"]),
@@ -195,13 +224,25 @@ export default defineSchema({
     savedBy: v.string(),
   }).index("by_formId_and_number", ["formId", "number"]),
 
-  // Fields proposed from one sample PDF, before they are a Form (Version).
+  // Fields proposed from one sample (a PDF, a photo or an email) or from the
+  // Admin's description in words, before they are a Form (Version).
   formProposals: defineTable({
     organisationId: v.id("organisations"),
     createdBy: v.string(),
     createdByEmail: v.string(),
-    // The sample's PDF in R2, like `documents.key`.
-    key: v.string(),
+    // The sample's file in R2, like `documents.key`. Unset for a description:
+    // it has no sample (and no Reading, and no Items are charged).
+    key: v.optional(v.string()),
+    // An email sample's attachments, stored under `${key}/…` like a Document's.
+    attachmentKeys: v.optional(v.array(v.string())),
+    // "Describe in words": what the document is and which data the Admin needs.
+    description: v.optional(v.string()),
+    // Its kind and MIME type, like a Document's. Widen step: unset on samples
+    // from before kinds; they read as a PDF (lib/inputLimits.ts kindOf).
+    // TODO(narrow, after `documents:backfillInputKind` ran on dev AND prod): make both required.
+    kind: v.optional(inputKind),
+    mimeType: v.optional(v.string()),
+    // A description's first words; its `pageCount` is 0.
     filename: v.string(),
     pageCount: v.number(),
     // For "Suggest Fields from PDF": the Form being extended.
@@ -219,23 +260,37 @@ export default defineSchema({
     fields: v.optional(v.array(v.object({ field, ticked: v.boolean() }))),
   }).index("by_organisationId", ["organisationId"]),
 
-  // A Form's Intake Address: `<token>@<INBOUND_DOMAIN>`. At most one per Form;
-  // replacing it deletes the row, so the old token stops at once.
+  // "Describe in words" quota: the creation times of the Organisation's descriptions
+  // from the last 24 hours (at most MAX_DESCRIPTIONS_PER_DAY). Kept apart from
+  // formProposals, because a discard or a save deletes those rows.
+  descriptionQuotas: defineTable({
+    organisationId: v.id("organisations"),
+    times: v.array(v.number()),
+  }).index("by_organisationId", ["organisationId"]),
+
+  // An Intake Address: `<token>@<INBOUND_DOMAIN>`. At most one per Form and one
+  // per Organisation (the row without a `formId`; its mail goes through the
+  // Router, ADR 0010). Replacing it deletes the row, so the old token stops at once.
   intakeAddresses: defineTable({
     organisationId: v.id("organisations"),
-    formId: v.id("forms"),
+    formId: v.optional(v.id("forms")),
     token: v.string(),
     // The last "Emails to [Form] are being refused" mail to its Admins: at most one a day.
+    outOfItemsAlertAt: v.optional(v.number()),
+    // Old name of `outOfItemsAlertAt`; TODO(narrow): remove after `items:backfillItems` ran on prod.
     outOfPagesAlertAt: v.optional(v.number()),
   })
     .index("by_token", ["token"])
-    .index("by_formId", ["formId"]),
+    .index("by_formId", ["formId"])
+    // The Organisation's own address is the one with `formId` unset.
+    .index("by_organisationId_and_formId", ["organisationId", "formId"]),
 
-  // "Recent emails": what happened to each email sent to a Form's Intake
-  // Address, per attachment. The last 50 per Form are kept.
+  // "Recent emails": what happened to each email sent to an Intake Address,
+  // per part (its text, each attachment). The last 50 per address are kept.
   intakeEmails: defineTable({
     organisationId: v.id("organisations"),
-    formId: v.id("forms"),
+    // Unset for an email sent to the Organisation Intake Address.
+    formId: v.optional(v.id("forms")),
     from: v.string(),
     receivedAt: v.number(),
     attachments: v.array(
@@ -246,17 +301,38 @@ export default defineSchema({
         reason: v.union(v.string(), v.null()),
       }),
     ),
-  }).index("by_formId", ["formId"]),
+  })
+    .index("by_formId", ["formId"])
+    .index("by_organisationId_and_formId", ["organisationId", "formId"]),
 
-  // A PDF processed against the Form Version that was current at upload.
+  // A Document (a PDF, for now) processed against the Form Version that was current at upload.
   documents: defineTable({
     organisationId: v.id("organisations"),
-    formId: v.id("forms"),
-    formVersion: v.number(),
-    // The PDF's key in R2 (see lib/pdfStore.ts), prefixed with the Organisation.
+    // Unset while a Document that came without a Form is Extracting before the
+    // Router has picked one, and in No Form (ADR 0010). Widened only: every
+    // Document from before keeps its Form.
+    formId: v.optional(v.id("forms")),
+    formVersion: v.optional(v.number()),
+    // The file's key in R2 (see lib/pdfStore.ts), prefixed with the Organisation.
     key: v.string(),
+    // Its kind and the real MIME type of the stored file. Widen step: unset on
+    // Documents from before kinds, which are PDFs (lib/inputLimits.ts reads a
+    // missing one as "pdf" / "application/pdf") until `documents:backfillInputKind` has run.
+    // TODO(narrow, after `documents:backfillInputKind` ran on dev AND prod): make both required.
+    kind: v.optional(inputKind),
+    mimeType: v.optional(v.string()),
     filename: v.string(),
+    // A PDF's pages. For other kinds the number of Items is itemCountOf's to say.
     pageCount: v.number(),
+    // An email Document's attachments, stored as files of their own (see
+    // `StoredEmail` in lib/readerInput.ts); removed together with `key`.
+    attachmentKeys: v.optional(v.array(v.string())),
+    // Why Vink split an email it was unsure about into this Document and its
+    // siblings (convex/intake.ts). It keeps Auto-Send off: a user looks first.
+    // `splitInfo` is the structured reason; `splitReason` is the English text
+    // older Documents were written with.
+    splitReason: v.optional(v.string()),
+    splitInfo: v.optional(splitInfo),
     uploadedBy: v.string(),
     // Copied from the uploader at upload time, for the Document list.
     uploaderEmail: v.string(),
@@ -274,7 +350,11 @@ export default defineSchema({
         byEmail: v.string(),
         at: v.number(),
         reason: v.union(v.string(), v.null()),
-        priorState: v.union(v.literal("needs_review"), v.literal("extraction_failed")),
+        priorState: v.union(
+          v.literal("needs_review"),
+          v.literal("extraction_failed"),
+          v.literal("no_form"),
+        ),
       }),
     ),
     // When its PDF, Reading and Field Values were deleted; only metadata is left.
@@ -502,11 +582,21 @@ export default defineSchema({
       v.literal("rejected"),
       v.literal("reopened"),
       v.literal("form_changed"),
+      // The Router picked the Form, or found none (ADR 0010).
+      v.literal("routed"),
+      v.literal("no_form"),
+      // An email became several Documents and Vink was unsure it should (ADR 0010).
+      v.literal("mail_split"),
       v.literal("data_deleted"),
       v.literal("deleted"),
     ),
-    // What it was about, e.g. the corrected Field's label.
+    // What it was about, e.g. the corrected Field's label. Events from before
+    // `info` keep their English text here, and Vink's routing events still fill
+    // it as a fallback.
     detail: v.optional(v.string()),
+    // The same as a code with parameters, which the screens write in the
+    // user's language (lib/eventInfo.ts).
+    info: v.optional(eventInfo),
     // The user's id, or `vink` for what Vink did itself.
     by: v.string(),
     // Copied from the user at the time, like `documents.uploaderEmail`.

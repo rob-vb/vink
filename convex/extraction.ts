@@ -3,14 +3,19 @@
 import { Workpool } from "@convex-dev/workpool";
 import { ConvexError, v } from "convex/values";
 import { components, internal } from "./_generated/api";
-import type { DataModel, Id } from "./_generated/dataModel";
-import { internalMutation, internalQuery, type MutationCtx } from "./_generated/server";
+import type { DataModel, Doc, Id } from "./_generated/dataModel";
+import { internalMutation, internalQuery, type MutationCtx, type QueryCtx } from "./_generated/server";
 import { confidenceOf, reviewReasonsOf } from "./lib/confidence";
 import { createDeliveries } from "./deliveries";
+import { formOf } from "./lib/documentForm";
+import type { EventInfo } from "./lib/eventInfo";
+import { failureCodeOf } from "./lib/failure";
 import { moveTo } from "./lib/documentStates";
 import { orgMutation } from "./lib/functions";
+import { kindOf, mimeTypeOf } from "./lib/inputLimits";
 import { openReviews } from "./review";
-import type { FlatField, ListField } from "./lib/pipeline";
+import { MAX_ROUTABLE_FORMS } from "./lib/matchPlan";
+import type { FlatField, ListField, RoutableForm } from "./lib/pipeline";
 
 // Every model-heavy background run shares it: Extractions and Form Proposals.
 export const extractionPool = new Workpool(components.extractionPool, {
@@ -36,22 +41,40 @@ export const completed = extractionPool.defineOnComplete<DataModel, typeof compl
   context: completedContext,
   handler: async (ctx, { context: { documentId }, result }) => {
     if (result.kind === "success") return;
-    const document = await ctx.db.get(documentId);
-    if (document === null || document.state !== "extracting") return;
-    await ctx.db.patch(documentId, {
-      // Enough to diagnose; a full stack trace means nothing to a user.
-      extractionError: result.kind === "failed" ? result.error.slice(0, 300) : "canceled",
-    });
-    await moveTo(ctx, document, "extraction_failed");
-    await ctx.db.insert("documentEvents", {
-      organisationId: document.organisationId,
-      documentId,
-      event: "extraction_failed",
-      by: "vink",
-      byEmail: "Vink",
-      at: Date.now(),
-    });
+    await markFailed(ctx, documentId, result.kind === "failed" ? result.error : "canceled", false);
   },
+});
+
+async function markFailed(
+  ctx: MutationCtx,
+  documentId: Id<"documents">,
+  error: string,
+  unreadable: boolean,
+) {
+  const document = await ctx.db.get(documentId);
+  if (document === null || document.state !== "extracting") return;
+  // The technical error is for the logs; the Document keeps a code the review
+  // screen turns into a friendly message (lib/failure.ts).
+  console.error(`Extraction of document ${documentId} failed: ${error.slice(0, 1000)}`);
+  await ctx.db.patch(documentId, { extractionError: failureCodeOf(unreadable) });
+  await moveTo(ctx, document, "extraction_failed");
+  await ctx.db.insert("documentEvents", {
+    organisationId: document.organisationId,
+    documentId,
+    event: "extraction_failed",
+    by: "vink",
+    byEmail: "Vink",
+    at: Date.now(),
+  });
+}
+
+/**
+ * An input that cannot be read and never will be (lib/readerInput.ts
+ * UnreadableInput): Extraction Failed at once, with no retries from the pool.
+ */
+export const failUnreadable = internalMutation({
+  args: { documentId: v.id("documents"), error: v.string() },
+  handler: async (ctx, { documentId, error }) => await markFailed(ctx, documentId, error, true),
 });
 
 /** Starts a failed Extraction again. It resumes at Match when a Reading is stored. */
@@ -80,33 +103,136 @@ export const retry = orgMutation({
   },
 });
 
-/** What the Extraction works on: the PDF, the Form's Fields and any stored Reading. */
+/** A Form's name, description and Fields at one Form Version. */
+async function formFields(ctx: QueryCtx, formId: Id<"forms">, number: number) {
+  const form = (await ctx.db.get(formId))!;
+  const formVersion = (await ctx.db
+    .query("formVersions")
+    .withIndex("by_formId_and_number", (q) => q.eq("formId", formId).eq("number", number))
+    .unique())!;
+  return {
+    formName: form.name,
+    formDescription: form.description ?? null,
+    fields: formVersion.fields.filter((f): f is FlatField => f.type !== "list"),
+    lists: formVersion.fields.filter((f): f is ListField => f.type === "list"),
+  };
+}
+
+/**
+ * What the Extraction works on: the file, the Form's Fields and any stored
+ * Reading. A Document without a Form (ADR 0010) has no Fields yet; it gets
+ * `routableForms`, the Organisation's Forms for the Router, and `null` otherwise.
+ */
 export const input = internalQuery({
   args: { documentId: v.id("documents") },
   handler: async (ctx, { documentId }) => {
     const document = (await ctx.db.get(documentId))!;
-    const form = (await ctx.db.get(document.formId))!;
-    const formVersion = (await ctx.db
-      .query("formVersions")
-      .withIndex("by_formId_and_number", (q) =>
-        q.eq("formId", document.formId).eq("number", document.formVersion),
-      )
-      .unique())!;
+    const form =
+      document.formId === undefined
+        ? { formName: "", formDescription: null, fields: [], lists: [] }
+        : await formFields(ctx, document.formId, formOf(document).formVersion);
+    const routableForms =
+      document.formId === undefined ? await routableFormsOf(ctx, document.organisationId) : null;
     const reading = await ctx.db
       .query("readings")
       .withIndex("by_documentId", (q) => q.eq("documentId", documentId))
       .unique();
     return {
-      pdfKey: document.key,
-      formName: form.name,
-      formDescription: form.description ?? null,
-      fields: formVersion.fields.filter((f): f is FlatField => f.type !== "list"),
-      lists: formVersion.fields.filter((f): f is ListField => f.type === "list"),
+      organisationId: document.organisationId,
+      fileKey: document.key,
+      // A Document from before kinds is a PDF (lib/inputLimits.ts).
+      kind: kindOf(document),
+      mimeType: mimeTypeOf(document),
+      pageCount: document.pageCount,
+      ...form,
+      routableForms,
       readingJson: reading?.json ?? null,
       textLayer: reading?.textLayer ?? [],
     };
   },
 });
+
+async function routableFormsOf(ctx: QueryCtx, organisationId: Id<"organisations">) {
+  const forms = await ctx.db
+    .query("forms")
+    .withIndex("by_organisationId", (q) => q.eq("organisationId", organisationId))
+    .take(MAX_ROUTABLE_FORMS);
+  const routable: RoutableForm[] = [];
+  for (const form of forms) {
+    const { fields, lists } = await formFields(ctx, form._id, form.version);
+    routable.push({
+      id: form._id,
+      name: form.name,
+      description: form.description ?? null,
+      fields: [...fields, ...lists].map((f) => f.label),
+    });
+  }
+  return routable;
+}
+
+/** The Fields of the Form the Router picked, at its current Form Version. */
+export const routedForm = internalQuery({
+  args: { formId: v.id("forms") },
+  handler: async (ctx, { formId }) => {
+    const form = (await ctx.db.get(formId))!;
+    return { formVersion: form.version, ...(await formFields(ctx, formId, form.version)) };
+  },
+});
+
+/**
+ * A Document that came without a Form and that the Router (or the fit check
+ * after it) found none for: it keeps its Reading and its Items, and waits in
+ * No Form to be moved to a Form or rejected (ADR 0010).
+ */
+export const noForm = internalMutation({
+  args: { documentId: v.id("documents"), reason: v.union(v.literal("no_forms"), v.literal("nothing_read"), v.literal("no_fit")) },
+  handler: async (ctx, { documentId, reason }) => {
+    const document = (await ctx.db.get(documentId))!;
+    if (document.state !== "extracting") return;
+    await putInNoForm(ctx, document, { code: reason });
+  },
+});
+
+/** The English text kept beside a routing event's code, for a screen that does not know the code yet. */
+function routingText(info: EventInfo): string {
+  switch (info.code) {
+    case "no_forms":
+      return "The Organisation has no Forms";
+    case "nothing_read":
+      return "Nothing could be read";
+    case "no_fit":
+      return info.form === undefined ? "No Form fits" : `Does not fit ${info.form}`;
+    case "routed":
+      return `${info.form} (${info.percent}%)`;
+    default:
+      return "";
+  }
+}
+
+async function putInNoForm(
+  ctx: MutationCtx,
+  document: Doc<"documents">,
+  info: Extract<EventInfo, { code: "no_forms" | "nothing_read" | "no_fit" }>,
+) {
+  await ctx.db.patch(document._id, {
+    formId: undefined,
+    formVersion: undefined,
+    doesNotFit: undefined,
+    jevVerified: undefined,
+    reviewThreshold: undefined,
+  });
+  await moveTo(ctx, document, "no_form");
+  await ctx.db.insert("documentEvents", {
+    organisationId: document.organisationId,
+    documentId: document._id,
+    event: "no_form",
+    detail: routingText(info),
+    info,
+    by: "vink",
+    byEmail: "Vink",
+    at: Date.now(),
+  });
+}
 
 export const saveReading = internalMutation({
   args: {
@@ -134,6 +260,14 @@ export const saveReading = internalMutation({
 export const finish = internalMutation({
   args: {
     documentId: v.id("documents"),
+    /**
+     * For a Document that came without a Form: the Form the Router picked, the
+     * Form Version its Fields were matched against, and Jev's probability.
+     * The fit check then gates the pick (ADR 0010).
+     */
+    routed: v.optional(
+      v.object({ formId: v.id("forms"), formVersion: v.number(), probability: v.number() }),
+    ),
     jevVerified: v.boolean(),
     doesNotFit: v.boolean(),
     lists: v.array(
@@ -165,12 +299,40 @@ export const finish = internalMutation({
       }),
     ),
   },
-  handler: async (ctx, { documentId, jevVerified, doesNotFit, lists, fieldValues }) => {
-    const document = (await ctx.db.get(documentId))!;
+  handler: async (ctx, { documentId, routed, jevVerified, doesNotFit, lists, fieldValues }) => {
+    let document = (await ctx.db.get(documentId))!;
     // A run that comes late (the Document moved on) changes nothing, so it
     // never overwrites a user's corrections.
     if (document.state !== "extracting") return;
-    const { reviewThreshold } = (await ctx.db.get(document.formId))!;
+    if (document.formId === undefined) {
+      if (routed === undefined) throw new ConvexError("A Document without a Form needs the Router's pick");
+      const picked = (await ctx.db.get(routed.formId))!;
+      // The fit check gates Jev's pick: a Document that does not fit it has no Form.
+      // Too, when no Field matched at all: a Form with no required Fields would
+      // otherwise fit every input. (A Document that came with a Form keeps the
+      // plain fit check.)
+      const nothingMatched =
+        fieldValues.every((f) => f.sourcePath === null) && lists.every((l) => l.sourcePath === null);
+      if (doesNotFit || nothingMatched) {
+        await putInNoForm(ctx, document, { code: "no_fit", form: picked.name });
+        return;
+      }
+      await ctx.db.patch(documentId, { formId: routed.formId, formVersion: routed.formVersion });
+      document = { ...document, formId: routed.formId, formVersion: routed.formVersion };
+      const routedInfo = { code: "routed" as const, form: picked.name, percent: Math.round(routed.probability * 100) };
+      await ctx.db.insert("documentEvents", {
+        organisationId: document.organisationId,
+        documentId,
+        event: "routed",
+        detail: routingText(routedInfo),
+        info: routedInfo,
+        by: "vink",
+        byEmail: "Vink",
+        at: Date.now(),
+      });
+    }
+    const { formId } = formOf(document);
+    const { reviewThreshold } = (await ctx.db.get(formId))!;
     for (const { required, entries, ...list } of lists) {
       await ctx.db.insert("listValues", {
         organisationId: document.organisationId,
@@ -218,9 +380,13 @@ export const finish = internalMutation({
     });
 
     // Auto-Send is evaluated here, once, right after the Extraction succeeds.
-    const form = (await ctx.db.get(document.formId))!;
+    const form = (await ctx.db.get(formId))!;
+    // A Form the Router picked never Auto-Sends in v1: the Document always goes
+    // to Needs Review, where the user can approve it. Reconsider with a
+    // probability threshold on the Router's pick after real Jev runs.
     const clean =
       form.autoSend &&
+      routed === undefined &&
       jevVerified &&
       !doesNotFit &&
       !document.userTouched &&

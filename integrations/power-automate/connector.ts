@@ -20,7 +20,7 @@ const OPERATIONS: Record<string, { summary?: string; description?: string; extra
   sendDocument: {
     summary: "Send in a Document",
     description:
-      "Sends a PDF to a Form in Vink, as if it was emailed to the Form's Intake Address. Vink reads it; it is approved later, in Vink or by Auto-Send.",
+      "Sends a PDF or a photo to a Form in Vink, as if it was uploaded in the app. Vink reads it; it is approved later, in Vink or by Auto-Send.",
     extra: { "x-ms-visibility": "important" },
   },
   listForms: { extra: { "x-ms-visibility": "internal" } },
@@ -44,7 +44,7 @@ const SUMMARIES: Record<string, Json> = {
   form_id: formDropdown,
   filename: {
     "x-ms-summary": "File name",
-    description: "The name the Document shows in Vink, for example the attachment's name. Without it: document.pdf.",
+    description: "The name the Document shows in Vink, for example the attachment's name. Without it: document.pdf, or .jpg, .png or .heic for a photo.",
   },
   id: { "x-ms-summary": "Subscription ID" },
 };
@@ -109,6 +109,21 @@ function toSwaggerResponse(response: Response | { $ref: string }): Json {
 function toSwaggerBody(operation: Operation): { consumes: string[]; parameter: Json } | null {
   const body = operation.requestBody;
   if (!body) return null;
+  // A file: Power Automate sends file content best as the raw body. It wins over an email's JSON,
+  // which the same operation also takes (Vink reads what the file is from its bytes).
+  if (body.content["application/octet-stream"]) {
+    return {
+      consumes: ["application/octet-stream"],
+      parameter: {
+        name: "file",
+        in: "body",
+        required: body.required ?? false,
+        description: "The file's content (a PDF or a JPG, PNG or HEIC photo), for example from an email attachment or a OneDrive file.",
+        "x-ms-summary": "File content",
+        schema: { type: "string", format: "binary" },
+      },
+    };
+  }
   const json = body.content["application/json"];
   if (json) {
     const schema = toSwaggerSchema(
@@ -121,20 +136,6 @@ function toSwaggerBody(operation: Operation): { consumes: string[]; parameter: J
     return {
       consumes: ["application/json"],
       parameter: { name: "body", in: "body", required: body.required ?? false, schema },
-    };
-  }
-  // A file: Power Automate sends file content best as the raw body.
-  if (body.content["application/octet-stream"]) {
-    return {
-      consumes: ["application/octet-stream"],
-      parameter: {
-        name: "file",
-        in: "body",
-        required: body.required ?? false,
-        description: "The PDF's file content, for example from an email attachment or a OneDrive file.",
-        "x-ms-summary": "File content",
-        schema: { type: "string", format: "binary" },
-      },
     };
   }
   throw new Error(`${operation.operationId}: no request body Power Automate can send`);

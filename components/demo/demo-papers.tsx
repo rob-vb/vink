@@ -407,7 +407,7 @@ export const invoicePages = {
   smit: HandwrittenInvoicePage,
 } as const;
 
-/** Each demo Document's pages, in order. */
+/** Each PDF demo Document's pages, in order. */
 export const demoPages = {
   invoice: [InvoicePage],
   delivery: [DeliveryPage1, DeliveryPage2],
@@ -416,4 +416,86 @@ export const demoPages = {
   receipt: [ReceiptPage],
 } as const;
 
-export type DemoDocumentId = keyof typeof demoPages;
+export type DemoPdfId = keyof typeof demoPages;
+
+/*
+ * The demo's photos, drawn as SVG so they scale with the image pane's zoom: a
+ * leaking espresso machine (the complaint email's attachment) and a handwritten work order
+ * on a table (a photo Document).
+ */
+
+function MachinePhoto({ alt }: { alt: string }) {
+  return (
+    <svg viewBox="0 0 400 300" role="img" aria-label={alt} className="block h-auto w-full">
+      <rect width="400" height="300" fill="#9A9B9D" />
+      <rect y="205" width="400" height="95" fill="#6E6F72" />
+      <rect y="200" width="400" height="8" fill="#85868A" />
+      <ellipse cx="215" cy="262" rx="150" ry="22" fill="#3F6F8F" opacity=".55" />
+      <ellipse cx="190" cy="258" rx="70" ry="9" fill="#9CC3DB" opacity=".5" />
+      <ellipse cx="190" cy="220" rx="125" ry="9" fill="#000" opacity=".22" />
+      <rect x="95" y="40" width="190" height="165" rx="10" fill="#8B1E1E" />
+      <rect x="95" y="40" width="190" height="26" rx="10" fill="#B9BCC2" />
+      <circle cx="140" cy="94" r="18" fill="#F2F0EA" />
+      <path d="M140 94 L151 84" stroke="#2B2E33" strokeWidth="2.5" />
+      <circle cx="225" cy="94" r="9" fill="#B9BCC2" />
+      <circle cx="252" cy="94" r="9" fill="#B9BCC2" />
+      <rect x="150" y="122" width="80" height="14" rx="3" fill="#B9BCC2" />
+      <path d="M160 136 H220 L214 150 H166 Z" fill="#6B7078" />
+      <rect x="222" y="143" width="62" height="9" rx="4" fill="#2B2E33" />
+      <rect x="168" y="162" width="44" height="26" rx="4" fill="#F2F0EA" />
+      <path d="M212 168 q14 1 12 12 q-2 6 -12 5" fill="none" stroke="#F2F0EA" strokeWidth="4" />
+      <rect x="120" y="190" width="140" height="15" rx="3" fill="#2B2E33" />
+      <path d="M130 195 H250 M130 200 H250" stroke="#6B7078" strokeWidth="1.5" strokeDasharray="6 4" />
+      <path d="M285 80 H312 V176" fill="none" stroke="#B9BCC2" strokeWidth="5" strokeLinejoin="round" />
+      <path d="M118 204 q-5 14 0 24 q5 -10 0 -24 Z" fill="#7DB4D6" />
+      <path d="M250 204 q-4 11 0 18 q4 -7 0 -18 Z" fill="#7DB4D6" />
+      <path d="M96 150 q-6 18 0 32 q6 -14 0 -32 Z" fill="#7DB4D6" opacity=".9" />
+    </svg>
+  );
+}
+
+function WorkOrderPhoto({ alt }: { alt: string }) {
+  return (
+    <svg viewBox="0 0 400 300" role="img" aria-label={alt} className="block h-auto w-full">
+      <rect width="400" height="300" fill="#7B6249" />
+      <g transform="rotate(-3 200 150)">
+        <rect x="55" y="22" width="290" height="258" fill="#FBF7EC" />
+        <rect x="55" y="22" width="290" height="258" fill="none" stroke="#D9DDE3" />
+        <text x="70" y="48" fontSize="13" fontWeight="700" fill="#1D2433">
+          WERKBON
+        </text>
+        <text x="332" y="48" fontSize="12" fontWeight="700" textAnchor="end" fill="#B91C1C">
+          0212
+        </text>
+        <line x1="70" y1="56" x2="330" y2="56" stroke="#D9DDE3" />
+        {[
+          ["Klant", "Café Het Anker", 92],
+          ["Datum", "30/9/26", 128],
+          ["Werk", "Kraan vervangen", 164],
+          ["Uren", "2,5 u", 200],
+          ["Materiaal", "mengkraan + slangen", 236],
+        ].map(([label, value, y]) => (
+          <g key={label}>
+            <text x="70" y={Number(y)} fontSize="9" fill="#6B7280">
+              {label}
+            </text>
+            <line x1="70" y1={Number(y) + 6} x2="330" y2={Number(y) + 6} stroke="#9CA3AF" strokeWidth=".6" />
+            <text x="118" y={Number(y) + 2} fontSize="22" fill="#1F3A8A" className={hand.className}>
+              {value}
+            </text>
+          </g>
+        ))}
+      </g>
+    </svg>
+  );
+}
+
+/** The photos of the demo's photo Documents and email attachments, by Document. */
+export const demoPhotos = { complaint: MachinePhoto, workorder: WorkOrderPhoto } as const;
+
+export type DemoPhotoId = keyof typeof demoPhotos;
+
+/** The demo's Documents that are emails (drawn by the email pane, not here). */
+export type DemoEmailId = "complaint" | "newsletter";
+
+export type DemoDocumentId = DemoPdfId | DemoPhotoId | DemoEmailId;

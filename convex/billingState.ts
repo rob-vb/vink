@@ -1,12 +1,12 @@
 // The database side of billing (billing.ts talks to Stripe). Stripe owns the
 // Subscription; each webhook hands its current state to `applySubscription`,
-// which sets the Organisation's Plan. Pages periods stay monthly, also on an
-// annual Subscription, and the `pages periods` cron renews them.
+// which sets the Organisation's Plan. Items periods stay monthly, also on an
+// annual Subscription, and the `item periods` cron renews them.
 import { v } from "convex/values";
 import { internalMutation, internalQuery, type QueryCtx } from "./_generated/server";
 import { billingInterval } from "./schema";
 import { allowanceOf, isLive } from "./lib/billing";
-import { nextPeriodEnd, pagesOf } from "./pages";
+import { itemsOf, itemsPatch, nextPeriodEnd } from "./items";
 
 const paidPlan = v.union(v.literal("starter"), v.literal("team"), v.literal("business"));
 
@@ -18,7 +18,7 @@ export const organisation = internalQuery({
     return {
       name: organisation.name,
       slug: organisation.slug,
-      plan: pagesOf(organisation).plan,
+      plan: itemsOf(organisation).plan,
       stripeCustomerId: organisation.stripeCustomerId ?? null,
       hasLiveSubscription:
         organisation.subscription !== undefined && isLive(organisation.subscription.status),
@@ -48,9 +48,9 @@ async function byCustomer(ctx: QueryCtx, customerId: string) {
 /**
  * Sets the Plan from the Customer's current Subscription (`null`: none that
  * still runs). Idempotent, so webhooks may come twice and in any order.
- * - a first Plan starts a monthly Pages period on the billing anchor's day;
- * - a change of Plan keeps the period and the Pages used, with the new allowance;
- * - no Subscription any more: back to Free Pages only; Top-ups lapse.
+ * - a first Plan starts a monthly Items period on the billing anchor's day;
+ * - a change of Plan keeps the period and the Items used, with the new allowance;
+ * - no Subscription any more: back to Free Items only; Top-ups lapse.
  */
 export const applySubscription = internalMutation({
   args: {
@@ -65,7 +65,7 @@ export const applySubscription = internalMutation({
         plan: paidPlan,
         interval: billingInterval,
         endsAt: v.union(v.number(), v.null()),
-        // The billing cycle anchor, ms: Pages periods end on its day of the month.
+        // The billing cycle anchor, ms: Items periods end on its day of the month.
         anchor: v.number(),
       }),
     ),
@@ -77,7 +77,7 @@ export const applySubscription = internalMutation({
       return;
     }
     if (listedAt < (organisation.billingSyncedAt ?? 0)) return;
-    const pages = pagesOf(organisation);
+    const items = itemsOf(organisation);
     if (subscription === null || !isLive(subscription.status)) {
       if (organisation.subscription === undefined) {
         await ctx.db.patch(organisation._id, { billingSyncedAt: listedAt });
@@ -86,8 +86,8 @@ export const applySubscription = internalMutation({
       await ctx.db.patch(organisation._id, {
         billingSyncedAt: listedAt,
         subscription: undefined,
-        pages: {
-          ...pages,
+        ...itemsPatch({
+          ...items,
           plan: null,
           allowance: 0,
           allowanceUsed: 0,
@@ -95,37 +95,39 @@ export const applySubscription = internalMutation({
           anchorDay: undefined,
           topUp: 0,
           used: 0,
-        },
+        }),
       });
       return;
     }
     const { plan, anchor, ...state } = subscription;
     const allowance = allowanceOf(plan);
-    const hadPaidPlan = organisation.subscription !== undefined && pages.periodEndsAt !== null;
+    const hadPaidPlan = organisation.subscription !== undefined && items.periodEndsAt !== null;
     const now = Date.now();
     const anchorDay = new Date(anchor).getUTCDate();
     await ctx.db.patch(organisation._id, {
       billingSyncedAt: listedAt,
       subscription: state,
-      pages: hadPaidPlan
-        ? { ...pages, plan, allowance }
-        : {
-            ...pages,
-            plan,
-            allowance,
-            allowanceUsed: 0,
-            used: 0,
-            periodEndsAt: nextPeriodEnd(anchor, now, anchorDay),
-            anchorDay,
-          },
+      ...itemsPatch(
+        hadPaidPlan
+          ? { ...items, plan, allowance }
+          : {
+              ...items,
+              plan,
+              allowance,
+              allowanceUsed: 0,
+              used: 0,
+              periodEndsAt: nextPeriodEnd(anchor, now, anchorDay),
+              anchorDay,
+            },
+      ),
     });
   },
 });
 
 /** Credits a paid Top-up Checkout once, however often its webhook arrives. */
 export const creditTopUp = internalMutation({
-  args: { customerId: v.string(), checkoutSessionId: v.string(), pages: v.number() },
-  handler: async (ctx, { customerId, checkoutSessionId, pages: added }) => {
+  args: { customerId: v.string(), checkoutSessionId: v.string(), items: v.number() },
+  handler: async (ctx, { customerId, checkoutSessionId, items: added }) => {
     const organisation = await byCustomer(ctx, customerId);
     // Not bought through Vink: nothing to credit. Throwing would only make
     // Stripe retry for days.
@@ -141,9 +143,9 @@ export const creditTopUp = internalMutation({
     await ctx.db.insert("topUpPayments", {
       organisationId: organisation._id,
       checkoutSessionId,
-      pages: added,
+      items: added,
     });
-    const pages = pagesOf(organisation);
-    await ctx.db.patch(organisation._id, { pages: { ...pages, topUp: pages.topUp + added } });
+    const items = itemsOf(organisation);
+    await ctx.db.patch(organisation._id, itemsPatch({ ...items, topUp: items.topUp + added }));
   },
 });

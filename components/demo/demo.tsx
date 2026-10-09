@@ -22,7 +22,7 @@ const stamp = () => Date.now();
 
 /**
  * The clickable demo (Interactive demo, variant D): the app's Documents page
- * and review screen with five demo Documents, all in the browser. Nothing is
+ * and review screen with eight demo Documents (PDFs, an email, a photo), all in the browser. Nothing is
  * sent anywhere. When Needs Review is empty, a card shows the visitor's time
  * and counts, then Start free.
  */
@@ -89,6 +89,7 @@ export function Demo() {
       if (pages.length > 0) setPage(pages[0]);
     },
     onFilterChange: setFilter,
+    onNoFormAction: () => toast.info(t("toast.noForm"), { toasterId: TOASTER }),
     onCorrect: (fieldValueId, value) => dispatch({ type: "correct", ...on(documentId), fieldValueId, value }),
     onCheck: (fieldValueId) => dispatch({ type: "check", ...on(documentId), fieldValueId }),
     onUndo: (fieldValueId) => dispatch({ type: "undo", documentId, fieldValueId }),

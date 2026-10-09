@@ -34,8 +34,12 @@ export function EmailInDialog({
   isAdmin: boolean;
 }) {
   const t = useTranslations("appDocuments");
-  const [formId, setFormId] = useState<Id<"forms"> | null>(forms[0]?.id ?? null);
-  const items = forms.map((f) => ({ value: f.id, label: f.name }));
+  // "organisation" is the Organisation Intake Address; the Forms' follow.
+  const [choice, setChoice] = useState<string>("organisation");
+  const items = [
+    { value: "organisation", label: t("emailIn.organisation") },
+    ...forms.map((f) => ({ value: f.id as string, label: f.name })),
+  ];
   return (
     <Dialog>
       <DialogTrigger
@@ -55,8 +59,8 @@ export function EmailInDialog({
           <FieldLabel htmlFor="email-in-form">{t("form")}</FieldLabel>
           <Select
             items={items}
-            value={formId}
-            onValueChange={(value) => setFormId(value as Id<"forms"> | null)}
+            value={choice}
+            onValueChange={(value) => setChoice(value ?? "organisation")}
           >
             <SelectTrigger id="email-in-form" className="w-full">
               <SelectValue placeholder={t("chooseForm")} />
@@ -70,9 +74,12 @@ export function EmailInDialog({
             </SelectContent>
           </Select>
         </Field>
-        {formId && (
-          <IntakePanel organisationSlug={organisationSlug} formId={formId} isAdmin={isAdmin} />
-        )}
+        <IntakePanel
+          key={choice}
+          organisationSlug={organisationSlug}
+          formId={choice === "organisation" ? null : (choice as Id<"forms">)}
+          isAdmin={isAdmin}
+        />
       </DialogContent>
     </Dialog>
   );

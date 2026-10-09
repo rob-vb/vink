@@ -2,15 +2,17 @@
 // removed List entries left out (lib/payload.ts builds the JSON).
 import type { Doc } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
+import { formOf } from "./documentForm";
 import { payloadOf } from "./payload";
 import type { FilledValue } from "./pipeline";
 import { liveEntries } from "./reviewState";
 
 export async function documentPayload(ctx: QueryCtx, document: Doc<"documents">) {
+  const { formId, formVersion: number } = formOf(document);
   const formVersion = (await ctx.db
     .query("formVersions")
     .withIndex("by_formId_and_number", (q) =>
-      q.eq("formId", document.formId).eq("number", document.formVersion),
+      q.eq("formId", formId).eq("number", number),
     )
     .unique())!;
   const fieldValues = await ctx.db

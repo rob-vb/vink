@@ -6,20 +6,26 @@ import { PDFDocument } from "pdf-lib";
 import { expect, vi } from "vitest";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
+import { itemsOf, itemsPatch } from "./items";
 import type {
   FilledValue,
   Filler,
   ListMatch,
   Match,
+  MailSummary,
   Matcher,
   PageText,
   ProposedField,
   Proposer,
   Reader,
+  ReaderInput,
   Reading,
+  Router,
+  Splitter,
   Verification,
   Verifier,
 } from "./lib/pipeline";
+import type { SplitDecision } from "./lib/mailPlan";
 import schema from "./schema";
 
 export const modules = import.meta.glob([
@@ -44,8 +50,8 @@ export function asUser(t: Backend, userId: string) {
 
 /**
  * A user signs up and gets their own Organisation; returns them and its slug.
- * The Organisation is put on the internal unlimited Plan so Pages never get in
- * a test's way; pass `plan: null` to keep what a real sign-up gets (Free Pages).
+ * The Organisation is put on the internal unlimited Plan so Items never get in
+ * a test's way; pass `plan: null` to keep what a real sign-up gets (Free Items).
  */
 export async function signUp(
   t: Backend,
@@ -63,9 +69,7 @@ export async function signUp(
         .query("organisations")
         .withIndex("by_slug", (q) => q.eq("slug", slug))
         .unique())!;
-      await ctx.db.patch(organisation._id, {
-        pages: { ...organisation.pages!, plan, periodEndsAt: null },
-      });
+      await ctx.db.patch(organisation._id, itemsPatch({ ...itemsOf(organisation), plan, periodEndsAt: null }));
     });
   }
   return { user, slug };
@@ -103,17 +107,21 @@ export async function addMembership(
  */
 export const fakePdfStore = {
   objects: new Map<string, Uint8Array>(),
+  /** The MIME type each `store` call was given, by key. */
+  types: new Map<string, string>(),
   async uploadUrl(key: string) {
     return `https://r2.test/upload/${key}`;
   },
-  async store(_ctx: unknown, key: string, bytes: Uint8Array) {
+  async store(_ctx: unknown, key: string, bytes: Uint8Array, mimeType: string) {
     fakePdfStore.objects.set(key, bytes);
+    fakePdfStore.types.set(key, mimeType);
   },
   async read(key: string) {
     return fakePdfStore.objects.get(key) ?? null;
   },
   async remove(_ctx: unknown, key: string) {
     fakePdfStore.objects.delete(key);
+    fakePdfStore.types.delete(key);
   },
   async viewUrl(key: string, expiresInSeconds: number) {
     return `https://r2.test/view/${key}?expires=${expiresInSeconds}`;
@@ -178,9 +186,16 @@ export type Recording = {
   verifications?: Record<string, { fit: number; support: number }>;
   /** What the Proposer suggests for a Form Proposal of this sample. */
   proposal?: ProposedField[];
+  /** The name of the Form Jev picks in the Router; `null`, or left out, for none. */
+  route?: string | null;
+  /**
+   * Jev's call on whether an email is one Document or several, with its
+   * probability; left out, it is a sure `apart`.
+   */
+  split?: SplitDecision;
 };
 
-type Step = "read" | "match" | "fill" | "verify" | "propose";
+type Step = "read" | "route" | "split" | "match" | "fill" | "verify" | "propose";
 
 /**
  * Stands in for the Extraction's adapters (lib/reader.ts, lib/matcher.ts,
@@ -190,12 +205,19 @@ type Step = "read" | "match" | "fill" | "verify" | "propose";
 export const fakePipeline = {
   recording: null as Recording | null,
   failing: new Map<Step, number>(),
+  /** What the Reader was given, per read. */
+  reads: [] as ReaderInput[],
+  /** What the Proposer was given as the sample, per propose. */
+  proposed: [] as ReaderInput[],
   calls: [] as Array<
     | { step: "read" }
+    | { step: "route"; forms: string[] }
+    | { step: "split"; mail: MailSummary }
     | { step: "match"; reading: Reading; fields: string[]; lists: string[] }
     | { step: "fill"; fields: string[] }
     | { step: "verify"; fields: string[]; supportAskedFor: string[] }
     | { step: "propose"; reading: Reading }
+    | { step: "describe"; description: string }
   >,
   replay(recording: Recording) {
     fakePipeline.recording = recording;
@@ -212,6 +234,8 @@ export const fakePipeline = {
     fakePipeline.recording = null;
     fakePipeline.failing.clear();
     fakePipeline.calls = [];
+    fakePipeline.reads = [];
+    fakePipeline.proposed = [];
   },
   failIfAsked(step: Step) {
     const left = fakePipeline.failing.get(step) ?? 0;
@@ -227,11 +251,29 @@ export const fakePipeline = {
 };
 
 export const fakeReader: Reader = {
-  async read() {
+  async read(input) {
     fakePipeline.calls.push({ step: "read" });
+    fakePipeline.reads.push(input);
     fakePipeline.failIfAsked("read");
     const { reading, textLayer = [] } = fakePipeline.played();
     return { reading, textLayer };
+  },
+};
+
+export const fakeRouter: Router = {
+  async route(_reading, forms) {
+    fakePipeline.calls.push({ step: "route", forms: forms.map((f) => f.name) });
+    fakePipeline.failIfAsked("route");
+    const { route = null } = fakePipeline.played();
+    return { formId: forms.find((f) => f.name === route)?.id ?? null, probability: route === null ? 1 : 0.9 };
+  },
+};
+
+export const fakeSplitter: Splitter = {
+  async split(mail) {
+    fakePipeline.calls.push({ step: "split", mail });
+    fakePipeline.failIfAsked("split");
+    return fakePipeline.recording?.split ?? { answer: "apart", probability: 0.95 };
   },
 };
 
@@ -271,8 +313,15 @@ export const fakeFiller: Filler = {
 };
 
 export const fakeProposer: Proposer = {
-  async propose({ reading }) {
+  async propose({ input, reading }) {
+    fakePipeline.proposed.push(input);
     fakePipeline.calls.push({ step: "propose", reading });
+    fakePipeline.failIfAsked("propose");
+    return fakePipeline.played().proposal ?? [];
+  },
+  async describe(description) {
+    fakePipeline.calls.push({ step: "describe", description });
+    // Fails with the Proposer's switch: it is the same model setup.
     fakePipeline.failIfAsked("propose");
     return fakePipeline.played().proposal ?? [];
   },

@@ -1,4 +1,4 @@
-import { custom, formatEuro, formatNumber, FREE_PAGES, plans } from "@/lib/plans";
+import { custom, formatEuro, formatNumber, FREE_ITEMS, plans } from "@/lib/plans";
 import { platforms, type Platform } from "@/lib/platforms";
 import { localeUrl } from "@/lib/seo";
 
@@ -40,12 +40,12 @@ export function GET() {
     "",
     "## Pricing (EUR, excl. VAT)",
     "",
-    `- Free start: ${FREE_PAGES} pages once, no credit card.`,
+    `- Free start: ${FREE_ITEMS} pages once, no credit card.`,
     ...plans.map(
       (plan) =>
-        `- ${plan.name}: ${formatNumber(plan.pages, "en")} pages/month, ${price(plan.monthly)}/month, or ${price(plan.annualMonthly)}/month billed annually.`,
+        `- ${plan.name}: ${formatNumber(plan.items, "en")} pages/month, ${price(plan.monthly)}/month, or ${price(plan.annualMonthly)}/month billed annually.`,
     ),
-    `- ${custom.name}: more than ${formatNumber(custom.fromPages, "en")} pages/month, payment by invoice, from ${price(custom.fromMonthly)}/month billed annually.`,
+    `- ${custom.name}: more than ${formatNumber(custom.fromItems, "en")} pages/month, payment by invoice, from ${price(custom.fromMonthly)}/month billed annually.`,
     "- Every plan includes everything: unlimited users, all Forms and Fields, review and Approval, webhook Integrations.",
     "- Integration service: Vink builds the connection to your system, from €950 per connection, excl. VAT.",
     "",

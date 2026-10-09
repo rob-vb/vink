@@ -21,7 +21,7 @@ import {
   planLookupKey,
   TOP_UP_CENTS,
   TOP_UP_LOOKUP_KEY,
-  TOP_UP_PAGES,
+  TOP_UP_ITEMS,
   type BillingInterval,
 } from "../convex/lib/billing";
 import { plans } from "../lib/plans";
@@ -71,6 +71,12 @@ async function product(key: string, name: string, description: string) {
       await stripe.products.update(existing.id, { tax_code: TAX_CODE });
       console.log(`Product ${name}: tax code set`);
     }
+    // Products are found by `metadata.vink`, so a renamed Product (Page → Item,
+    // ADR 0010) keeps its id, its Prices and its Subscriptions.
+    if (existing.name !== name || existing.description !== description) {
+      await stripe.products.update(existing.id, { name, description });
+      console.log(`Product ${name}: name and description set`);
+    }
     return existing.id;
   }
   const created = await stripe.products.create({
@@ -116,7 +122,7 @@ async function price(
 
 const planProducts: Stripe.BillingPortal.ConfigurationCreateParams.Features.SubscriptionUpdate.Product[] = [];
 for (const plan of plans) {
-  const productId = await product(plan.id, `Vink ${plan.name}`, `${plan.pages} pagina's per maand`);
+  const productId = await product(plan.id, `Vink ${plan.name}`, `${plan.items} items per maand`);
   planProducts.push({
     product: productId,
     prices: [
@@ -128,7 +134,7 @@ for (const plan of plans) {
 const topUpProduct = await product(
   "topup",
   "Vink Top-up",
-  `${TOP_UP_PAGES} extra pagina's, tot het einde van de periode`,
+  `${TOP_UP_ITEMS} extra items, tot het einde van de periode`,
 );
 await price(topUpProduct, TOP_UP_LOOKUP_KEY, TOP_UP_CENTS, null);
 

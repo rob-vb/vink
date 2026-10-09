@@ -34,12 +34,17 @@ async function scannedPagesOf(pdf: Uint8Array) {
 }
 
 /**
- * Read's thinking level for a PDF, and the pages that made it HIGH.
- * READER_THINKING, when set, overrides the rule (for benchmarks).
+ * Read's thinking level: HIGH when handwriting may be in the input (a scanned
+ * page, a photo), else MEDIUM. READER_THINKING, when set, overrides the rule
+ * (for benchmarks).
  */
+export function thinkingFor(handwritingPossible: boolean) {
+  const override = process.env.READER_THINKING as ThinkingLevel | undefined;
+  return override ?? (handwritingPossible ? ThinkingLevel.HIGH : ThinkingLevel.MEDIUM);
+}
+
+/** Read's thinking level for a PDF, and the pages that made it HIGH. */
 export async function readThinking(pdf: Uint8Array) {
   const scannedPages = await scannedPagesOf(pdf);
-  const override = process.env.READER_THINKING as ThinkingLevel | undefined;
-  const level = override ?? (scannedPages.length > 0 ? ThinkingLevel.HIGH : ThinkingLevel.MEDIUM);
-  return { level, scannedPages };
+  return { level: thinkingFor(scannedPages.length > 0), scannedPages };
 }

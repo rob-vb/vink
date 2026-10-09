@@ -1,11 +1,13 @@
 "use client";
 
-import { LoaderCircle, Mail, Upload } from "lucide-react";
+import { ArrowRightLeft, Ban, LoaderCircle, Mail, Upload } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo, useSyncExternalStore, type ReactNode } from "react";
 import { DocumentTableView, type DocumentRowData } from "@/components/documents/document-table-view";
 import { DocumentStateTabs, DocumentsHeading } from "@/components/documents/document-tabs";
+import { EmailPaneView } from "@/components/documents/email-pane-view";
 import { FieldRowView, type Value } from "@/components/documents/field-row-view";
+import { ImagePaneView } from "@/components/documents/image-pane-view";
 import {
   DocumentsLabelsProvider,
   documentsFormats,
@@ -19,21 +21,26 @@ import {
   DeliveriesSection,
   FieldsToolbar,
   HistorySection,
+  NoFormAlert,
   NothingLeftToReview,
   ReviewColumns,
   ReviewHeader,
   type ReviewFilter,
 } from "@/components/documents/review-view";
+import { paneFor } from "@/components/documents/review-panes";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DEMO_FORM_VERSION, DEMO_THRESHOLD } from "./demo-data";
+import { demoPhotos, type DemoPdfId } from "./demo-papers";
 import { DemoPdfPane } from "./demo-pdf-pane";
 import { needsReviewCount, type DemoDocument, type Locale } from "./demo-state";
 import { dutchLabels } from "@/components/documents/nl-labels";
 
 /*
  * The demo's two screens, built from the app's own parts in
- * components/documents. Only the PDF pane and the top bar are copies.
+ * components/documents. Only the PDF pane and the top bar are copies; the
+ * email and photo panes are the app's own (components/documents), with drawn
+ * photos in place of files.
  */
 
 // A fixed moment for the static render; the browser swaps in its own "now"
@@ -86,7 +93,7 @@ export function rowOf(document: DemoDocument, now: number): DocumentRowData {
     pageCount: document.pageCount,
     state: document.state,
     formName: document.formName,
-    formVersion: DEMO_FORM_VERSION,
+    formVersion: document.state === "no_form" ? null : DEMO_FORM_VERSION,
     uploadedBy: document.uploadedBy,
     uploadedAt: uploadedAt(document, now),
     rejection: null,
@@ -94,7 +101,7 @@ export function rowOf(document: DemoDocument, now: number): DocumentRowData {
   };
 }
 
-/** The Documents page: heading with its controls, the four tabs and the table. */
+/** The Documents page: heading with its controls, the five tabs and the table. */
 export function DemoDocumentsScreen({
   documents,
   tab,
@@ -106,7 +113,7 @@ export function DemoDocumentsScreen({
   tab: ListedState;
   onTabChange: (tab: ListedState) => void;
   onOpen: (id: string) => void;
-  /** Upload, Email in and Extracting: they need an account. */
+  /** Upload, Email in, Extracting, and No Form's Change Form and Reject: they need an account. */
   onAccountOnly: (what: "upload" | "extracting") => void;
 }) {
   const t = useTranslations("demo");
@@ -115,6 +122,7 @@ export function DemoDocumentsScreen({
   const labels = locale === "nl" ? dutchLabels : englishLabels;
   const counts = {
     needs_review: documents.filter((d) => d.state === "needs_review").length,
+    no_form: documents.filter((d) => d.state === "no_form").length,
     approved: documents.filter((d) => d.state === "approved").length,
     extraction_failed: 0,
     rejected: 0,
@@ -126,7 +134,7 @@ export function DemoDocumentsScreen({
       <DocumentsHeading
         actions={
           <>
-            <p className="text-sm text-muted-foreground tabular-nums">{t("heading.pagesLeft")}</p>
+            <p className="text-sm text-muted-foreground tabular-nums">{t("heading.itemsLeft")}</p>
             <Button variant="outline" onClick={() => onAccountOnly("extracting")}>
               <LoaderCircle className="text-muted-foreground" />
               {t("heading.extracting")}
@@ -172,6 +180,8 @@ export type ReviewHandlers = {
   onRestoreEntry: (listKey: string, entry: number) => void;
   onAddEntry: (listKey: string) => void;
   onApprove: (next: boolean) => void;
+  /** Change Form and Reject on a Document in No Form: they need an account. */
+  onNoFormAction: () => void;
 };
 
 /** The review screen, composed like app/app/o/[slug]/documents/[documentId]/review-screen.tsx. */
@@ -195,6 +205,8 @@ export function DemoReviewScreen({
 }) {
   const t = useTranslations("demo");
   const now = useDemoNow();
+  const locale = useLocale() as Locale;
+  const labelsOf = locale === "nl" ? dutchLabels : englishLabels;
   const reviewing = document.state === "needs_review";
   const left = needsReviewCount(document);
   const approval = approvalOf(document, now);
@@ -213,7 +225,12 @@ export function DemoReviewScreen({
   const start = uploadedAt(document, now);
   const history = [
     { event: "uploaded" as const, detail: null, by: document.uploadedBy, at: start },
-    { event: "extracted" as const, detail: null, by: "Vink", at: start + READ_SECONDS * 1000 },
+    ...(document.routed === null
+      ? []
+      : [{ event: "routed" as const, detail: null, info: document.routed, by: "Vink", at: start + (READ_SECONDS - 6) * 1000 }]),
+    document.noFormInfo === null
+      ? { event: "extracted" as const, detail: null, by: "Vink", at: start + READ_SECONDS * 1000 }
+      : { event: "no_form" as const, detail: null, info: document.noFormInfo, by: "Vink", at: start + READ_SECONDS * 1000 },
     ...(document.approval?.mode === "auto" && approval
       ? [{ event: "approved" as const, detail: null, by: "Vink", at: approval.at }]
       : []),
@@ -233,6 +250,23 @@ export function DemoReviewScreen({
         },
       ]
     : [];
+  const noForm = document.state === "no_form";
+  const pane = paneFor(document.kind);
+  // The selected value's read text, marked in an email body when it was read there (page 1).
+  const selectedValue = [...document.fieldValues, ...document.lists.flatMap((l) => l.entries.flatMap((e) => e.fieldValues))].find(
+    (f) => f.id === selected,
+  );
+  const highlight = selectedValue?.pages.includes(1) ? selectedValue.readText : null;
+  const paneLabels = {
+    previous: t("pane.previous"),
+    next: t("pane.next"),
+    zoomIn: t("pane.zoomIn"),
+    zoomOut: t("pane.zoomOut"),
+  };
+  const Photo = (photo: { id: keyof typeof demoPhotos; alt: string }) => {
+    const Drawn = demoPhotos[photo.id];
+    return <Drawn alt={photo.alt} />;
+  };
   const field = (fieldValue: (typeof rows)[number], manual = false) => (
     <FieldRowView
       key={fieldValue.id}
@@ -254,35 +288,74 @@ export function DemoReviewScreen({
         filename={document.filename}
         state={document.state}
         formName={document.formName}
-        formVersion={DEMO_FORM_VERSION}
+        formVersion={noForm ? null : DEMO_FORM_VERSION}
         pageCount={document.pageCount}
-        reviewThreshold={DEMO_THRESHOLD}
+        kind={pane}
+        reviewThreshold={noForm ? null : DEMO_THRESHOLD}
         onBack={handlers.onBack}
+        actions={
+          noForm && (
+            <>
+              <Button variant="outline" onClick={handlers.onNoFormAction}>
+                <ArrowRightLeft />
+                {t("noForm.changeForm")}
+              </Button>
+              <Button variant="outline" onClick={handlers.onNoFormAction}>
+                <Ban />
+                {t("noForm.reject")}
+              </Button>
+            </>
+          )
+        }
       />
+
+      {noForm && (
+        <NoFormAlert />
+      )}
 
       {approval && <ApprovalAlert approval={approval} />}
 
       <ReviewColumns
         pdf={
           <div className={paneClassName}>
-            <DemoPdfPane
-              documentId={document.id}
-              page={page}
-              onPageChange={handlers.onPageChange}
-              labels={{
-                previous: t("pane.previous"),
-                next: t("pane.next"),
-                zoomIn: t("pane.zoomIn"),
-                zoomOut: t("pane.zoomOut"),
-              }}
-            />
+            {pane === "email" && document.email ? (
+              <EmailPaneView
+                email={document.email}
+                page={page}
+                onPageChange={handlers.onPageChange}
+                highlight={highlight}
+                className="h-full"
+                renderAttachment={(index) => {
+                  const attachment = document.email!.attachments[index];
+                  const photo = document.attachmentPhotos[index];
+                  return (
+                    <ImagePaneView filename={attachment.filename} mimeType={attachment.mimeType}>
+                      {Photo(photo)}
+                    </ImagePaneView>
+                  );
+                }}
+              />
+            ) : pane === "image" && document.photo ? (
+              <ImagePaneView filename={document.filename} mimeType="image/jpeg" className="h-full">
+                {Photo(document.photo)}
+              </ImagePaneView>
+            ) : (
+              <DemoPdfPane
+                documentId={document.id as DemoPdfId}
+                page={page}
+                onPageChange={handlers.onPageChange}
+                labels={paneLabels}
+              />
+            )}
           </div>
         }
       >
         <FieldsToolbar filter={filter} onFilterChange={handlers.onFilterChange} left={left} />
 
         <div className="relative overflow-hidden rounded-lg border bg-card">
-          {rows.length === 0 && lists.length === 0 ? (
+          {noForm ? (
+            <p className="p-6 text-center text-sm text-muted-foreground">{labelsOf.review.noForm.empty}</p>
+          ) : rows.length === 0 && lists.length === 0 ? (
             <NothingLeftToReview />
           ) : (
             rows.map((fieldValue) => field(fieldValue))

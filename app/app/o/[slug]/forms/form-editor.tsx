@@ -88,10 +88,11 @@ type Props = {
   initial: Draft;
   settings?: React.ReactNode;
   /**
-   * From a Form Proposal: a new Form (saving can also process the sample), or
-   * with `form`, the Form extended by "Suggest Fields from PDF".
+   * From a Form Proposal: a new Form (saving can also process the sample, if
+   * it has one: a description in words has none), or with `form`, the Form
+   * extended by "Suggest Fields from PDF".
    */
-  proposal?: { id: Id<"formProposals">; filename: string };
+  proposal?: { id: Id<"formProposals">; filename: string; hasSample: boolean };
 };
 
 /**
@@ -236,7 +237,8 @@ export function FormEditor({ organisationSlug, form, initial, settings, proposal
           organisationSlug,
           proposalId: proposal.id,
           ...content,
-          processSample,
+          // A description has no sample to process.
+          processSample: proposal.hasSample && processSample,
         });
         setSaved(draft);
         toast.success(
@@ -526,7 +528,7 @@ export function FormEditor({ organisationSlug, form, initial, settings, proposal
                     onChange={(e) => setDraft({ ...draft, description: e.target.value })}
                   />
                 </Field>
-                {proposal && !form && (
+                {proposal?.hasSample && !form && (
                   <Field orientation="horizontal">
                     <Checkbox
                       id="process-sample"

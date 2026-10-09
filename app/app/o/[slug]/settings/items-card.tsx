@@ -10,7 +10,7 @@ import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle }
 import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
 import { api } from "@/convex/_generated/api";
-import { formatResetDate } from "../pages-usage";
+import { formatResetDate } from "../items-usage";
 import { PlanDialog } from "./plan-dialog";
 
 // Plan names are product names and stay as they are; only "Internal" is a word.
@@ -43,12 +43,12 @@ function useBillingRedirect() {
   return { busy, go };
 }
 
-/** The Organisation's Plan and the Pages it has left, with what an Admin can buy. */
-export function PagesCard({ organisationSlug }: { organisationSlug: string }) {
-  const t = useTranslations("appSettings.pages");
+/** The Organisation's Plan and the Items it has left, with what an Admin can buy. */
+export function ItemsCard({ organisationSlug }: { organisationSlug: string }) {
+  const t = useTranslations("appSettings.items");
   const tb = useTranslations("appSettings.billing");
   const locale = useLocale() as "nl" | "en";
-  const usage = useQuery(api.pages.usage, { organisationSlug });
+  const usage = useQuery(api.items.usage, { organisationSlug });
   const portal = useAction(api.billing.portal);
   const topUp = useAction(api.billing.topUp);
   const { busy, go } = useBillingRedirect();
@@ -134,14 +134,14 @@ export function PagesCard({ organisationSlug }: { organisationSlug: string }) {
               <dt className="text-muted-foreground">{t("period")}</dt>
               <dd className="tabular-nums">
                 {t("periodLeft", { left: usage.allowanceLeft, allowance: usage.allowance })}
-                {usage.topUpPages > 0 && t("topUp", { pages: usage.topUpPages })}
+                {usage.topUpItems > 0 && t("topUp", { items: usage.topUpItems })}
               </dd>
             </>
           )}
-          {usage.freePages > 0 && (
+          {usage.freeItems > 0 && (
             <>
               <dt className="text-muted-foreground">{t("free")}</dt>
-              <dd className="tabular-nums">{usage.freePages}</dd>
+              <dd className="tabular-nums">{usage.freeItems}</dd>
             </>
           )}
           {usage.resetsAt !== null && (
@@ -151,7 +151,7 @@ export function PagesCard({ organisationSlug }: { organisationSlug: string }) {
             </>
           )}
         </dl>
-        {usage.plan === null && usage.freePages === 0 && usage.remaining === 0 && (
+        {usage.plan === null && usage.freeItems === 0 && usage.remaining === 0 && (
           <p className="text-muted-foreground">{t("noneFree")}</p>
         )}
       </CardContent>

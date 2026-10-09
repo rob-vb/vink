@@ -301,7 +301,7 @@ test("every answer has exactly the Document schema's keys, its state is in the d
     expect(Document.required?.slice().sort()).toEqual(keys(Document));
     expect(Document.properties?.state.enum).toContain(body.state);
   }
-  expect(Document.properties?.state.enum).toEqual(["processing", "needs_review", "approved", "rejected", "failed", "deleted"]);
+  expect(Document.properties?.state.enum).toEqual(["processing", "needs_review", "approved", "rejected", "failed", "no_form", "deleted"]);
   const { body } = await org.read(approved);
   expect(Object.keys(body.payload).sort()).toEqual(keys(Envelope));
   expect(Document.properties?.payload).toEqual({

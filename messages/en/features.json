@@ -118,7 +118,7 @@
   "demo": {
     "eyebrow": "Try it · demo data",
     "title": "This morning's documents. Clear them.",
-    "text": "Five documents came in, and one was already approved automatically. Open the others, check what Vink flagged, and approve. This is the app itself, with demo data.",
+    "text": "Eight documents came in. One was already approved automatically and one fits no Form. Open the others, check what Vink flagged, and approve. This is the app itself, with demo data.",
     "hint": "Click a value to turn to its page. Works on your phone too."
   },
   "deliver": {

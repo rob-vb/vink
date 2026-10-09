@@ -4,6 +4,7 @@
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { internalQuery } from "../_generated/server";
+import { formOf } from "../lib/documentForm";
 import { documentPayload } from "../lib/documentPayload";
 import type { DocumentState } from "../lib/documentStates";
 import { envelopeOf } from "../lib/payload";
@@ -16,6 +17,7 @@ const wireState: Record<DocumentState, string> = {
   needs_review: "needs_review",
   approved: "approved",
   extraction_failed: "failed",
+  no_form: "no_form",
   rejected: "rejected",
   deleted: "deleted",
 };
@@ -33,7 +35,7 @@ export const read = internalQuery({
     const sendable = document.state === "approved" && approval !== undefined && document.dataDeletedAt === undefined;
     return {
       id: document._id,
-      form_id: document.formId,
+      form_id: document.formId ?? null,
       state: wireState[document.state],
       filename: document.filename,
       uploaded_at: iso(document._creationTime),
@@ -44,7 +46,7 @@ export const read = internalQuery({
             deliveryId: `doc_${document._id}`,
             test: false,
             document: { id: document._id, filename: document.filename, uploadedAt: document._creationTime },
-            form: { id: document.formId, version: document.formVersion },
+            form: { id: formOf(document).formId, version: formOf(document).formVersion },
             approval: { mode: approval.mode, by: approval.by, at: approval.at },
             data: await documentPayload(ctx, document),
           })

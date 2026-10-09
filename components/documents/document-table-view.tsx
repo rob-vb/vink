@@ -29,7 +29,7 @@ export type DocumentRowData = {
   pageCount: number;
   state: DocumentState;
   formName: string;
-  formVersion: number;
+  formVersion: number | null;
   uploadedBy: string;
   uploadedAt: number;
   rejection: { by: string; at: number; reason?: string | null } | null;
@@ -137,8 +137,10 @@ export function DocumentTableView({
                 )}
               </TableCell>
               <TableCell className="hidden sm:table-cell">
-                {document.formName}{" "}
-                <span className="text-muted-foreground">v{document.formVersion}</span>
+                {document.formName || <span className="text-muted-foreground">–</span>}
+                {document.formVersion !== null && (
+                  <span className="text-muted-foreground"> v{document.formVersion}</span>
+                )}
               </TableCell>
               <TableCell className="hidden text-right tabular-nums md:table-cell">
                 {document.pageCount}

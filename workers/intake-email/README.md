@@ -1,10 +1,14 @@
 # Intake email Worker
 
-Receives every email sent to a Form's Intake Address (`<token>@<intake domain>`),
-stores its PDF attachments in the app's EU R2 bucket under `intake/…`, and calls
-Vink's Convex HTTP action `POST /intake/email`. All decisions (which Form, page
-limits, Pages quota, Recent emails, Admin alerts) live in `convex/intake.ts`.
-The Worker never replies to the sender.
+Receives every email sent to a Form's or the Organisation's Intake Address
+(`<token>@<intake domain>`), stores its PDF and image (JPG, PNG, HEIC)
+attachments in the app's EU R2 bucket under `intake/…`, and calls Vink's Convex
+HTTP action `POST /intake/email` with the whole mail: subject, date, text
+(text/plain, else the HTML as text) and the attachment list. The Worker does not
+know which kind of address it is: the token tells Vink. All decisions (which
+Form or the Router, one Document or several, page limits, Items quota, Recent
+emails, Admin alerts) live in `convex/intake.ts`. The Worker never replies to
+the sender.
 
 ## Deploy (once the permanent intake domain is on Cloudflare)
 
@@ -26,9 +30,18 @@ until the permanent intake domain is live.
 ## Limits
 
 - 25 MiB per message (Email Routing's limit); larger mail is rejected.
-- 10 MiB per PDF attachment (`MAX_BYTES`, the same limit as `convex/lib/pdfLimits.ts`); a larger one is listed as `too_large` and shows as refused.
-- PDFs over 20 pages, unreadable PDFs and PDFs that don't fit the Organisation's
-  Pages are refused by Vink and removed from R2.
+- Copies of `convex/lib/inputLimits.ts` in `src/map.ts` (`map.test.ts` fails when
+  one drifts): 10 MiB per PDF (`too_large`) and per image (`image_too_large`),
+  12 MiB for all attachments of a mail together (`attachments_too_large`; they go
+  to the vision model in one request), at most 10 PDF and image attachments
+  (`too_many_attachments`), and 200 KiB of text (a longer text is not sent, with
+  `bodyTooLarge`). Any other file type is `unsupported_type`. Each shows as refused.
+- A small inline image (under 50 KiB, Content-Disposition inline or shown by the
+  HTML through `cid:`) is a signature logo or icon: the Worker drops it, so it is
+  not stored, not listed and not counted. A phone's inline photo is far larger
+  and stays. Vink does no such filtering itself.
+- PDFs over 20 pages, unreadable PDFs and mail that doesn't fit the Organisation's
+  Items are refused by Vink and removed from R2.
 - If Vink is unreachable, the Worker throws so the sending server retries later.
   PDFs stored for such an attempt stay in R2 until the orphan-upload cleanup.
 

@@ -1,6 +1,7 @@
 "use node";
 // One Form Proposal run: Read the sample (unless its Reading is stored), then
-// one Proposer call. Workpool retries the whole action.
+// one Proposer call. A description in words has no sample: just the Proposer's
+// text-only call. Workpool retries the whole action.
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { internalAction } from "./_generated/server";
@@ -10,6 +11,7 @@ import { matcher } from "./lib/matcher";
 import { matchRequests } from "./lib/matchPlan";
 import { proposer } from "./lib/proposer";
 import { reader } from "./lib/reader";
+import { readerInputOf, UnreadableInput } from "./lib/readerInput";
 import { readingLeaves, withoutPaths } from "./lib/reading";
 
 export const run = internalAction({
@@ -17,12 +19,36 @@ export const run = internalAction({
   handler: async (ctx, { proposalId }) => {
     const input = await ctx.runQuery(internal.formProposals.runInput, { proposalId });
     if (input === null) return;
-    const pdf = await pdfStore.read(input.key);
-    if (pdf === null) throw new Error(`No PDF stored under ${input.key}`);
+    if (input.description !== null) {
+      // Nothing is read, so nothing was charged (formProposals.createFromDescription).
+      const fields = await proposer.describe(input.description);
+      await ctx.runMutation(internal.formProposals.saveFields, { proposalId, fields });
+      return;
+    }
+    if (input.key === null) {
+      await ctx.runMutation(internal.formProposals.failUnreadable, {
+        proposalId,
+        error: "This proposal has no sample and no description",
+      });
+      return;
+    }
+    let sample;
+    try {
+      sample = await readerInputOf(
+        pdfStore,
+        { fileKey: input.key, kind: input.kind, mimeType: input.mimeType, pageCount: input.pageCount },
+        input.organisationId,
+      );
+    } catch (error) {
+      if (!(error instanceof UnreadableInput)) throw error;
+      // Trying again cannot help: fail now, not after the pool's retries.
+      await ctx.runMutation(internal.formProposals.failUnreadable, { proposalId, error: error.message });
+      return;
+    }
     let reading: Reading;
     let textLayer = input.textLayer;
     if (input.readingJson === null) {
-      const read = await reader.read(pdf);
+      const read = await reader.read(sample);
       reading = read.reading;
       textLayer = read.textLayer;
       await ctx.runMutation(internal.formProposals.saveReading, {
@@ -51,7 +77,7 @@ export const run = internalAction({
         return;
       }
     }
-    const fields = await proposer.propose({ pdf, reading, textLayer });
+    const fields = await proposer.propose({ input: sample, reading, textLayer });
     await ctx.runMutation(internal.formProposals.saveFields, { proposalId, fields });
   },
 });

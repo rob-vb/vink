@@ -2,7 +2,7 @@
 // Billing through Stripe: Checkout for a Plan or a Top-up, the Customer Portal
 // to change or cancel, and the webhook that turns Stripe's state into the
 // Organisation's Plan (billingState.ts). Vink is the seller; Stripe Tax works
-// out the VAT. Custom Plans stay by hand (pages.ts). See ADR 0007.
+// out the VAT. Custom Plans stay by hand (items.ts). See ADR 0007.
 import { ConvexError, v } from "convex/values";
 import type Stripe from "stripe";
 import { internal } from "./_generated/api";
@@ -16,7 +16,7 @@ import {
   TOP_UP_CHECKOUT_ID,
   TOP_UP_LOOKUP_KEY,
   TOP_UP_MAX_QUANTITY,
-  TOP_UP_PAGES,
+  TOP_UP_ITEMS,
 } from "./lib/billing";
 import { orgAction } from "./lib/functions";
 import { stripe, webhookEvent } from "./lib/stripe";
@@ -262,7 +262,7 @@ async function creditTopUp(ctx: ActionCtx, session: Stripe.Checkout.Session) {
   await ctx.runMutation(internal.billingState.creditTopUp, {
     customerId: idOf(session.customer!),
     checkoutSessionId: session.id,
-    pages: quantity * TOP_UP_PAGES,
+    items: quantity * TOP_UP_ITEMS,
   });
 }
 

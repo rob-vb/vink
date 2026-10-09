@@ -1,4 +1,5 @@
 import { expect, test } from "vitest";
+import { DESCRIPTION_EMPTY, DESCRIPTION_TOO_LONG, DESCRIPTIONS_PER_DAY_REACHED } from "@/convex/lib/formDescription";
 import { serverErrorText } from "./server-errors";
 
 test("translates a fixed message and a code", () => {
@@ -8,6 +9,12 @@ test("translates a fixed message and a code", () => {
 
 test("translates the size refusal every way in gives", () => {
   expect(serverErrorText("The PDF is larger than 10 MB.", "nl")).toBe("De pdf is groter dan 10 MB.");
+});
+
+test("translates the refusals of a described Form", () => {
+  expect(serverErrorText(DESCRIPTION_EMPTY, "nl")).not.toBe(DESCRIPTION_EMPTY);
+  expect(serverErrorText(DESCRIPTION_TOO_LONG, "nl")).not.toBe(DESCRIPTION_TOO_LONG);
+  expect(serverErrorText(DESCRIPTIONS_PER_DAY_REACHED, "nl")).not.toBe(DESCRIPTIONS_PER_DAY_REACHED);
 });
 
 test("translates a message with values in it", () => {

@@ -5,7 +5,7 @@ import { Ban, CircleAlert, RotateCcw, ShieldAlert, TriangleAlert } from "lucide-
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ResendButton } from "@/components/deliveries/delivery-log";
 import {
@@ -14,12 +14,17 @@ import {
   DeliveriesSection,
   FieldsToolbar,
   HistorySection,
+  NoFormAlert,
   NothingLeftToReview,
   ReviewColumns,
+  SplitAlert,
   ReviewHeader,
   type ReviewFilter,
 } from "@/components/documents/review-view";
+import { ImagePaneView } from "@/components/documents/image-pane-view";
+import { splitReasonText } from "@/components/documents/event-detail";
 import { useDocumentsLabels } from "@/components/documents/labels";
+import { paneFor } from "@/components/documents/review-panes";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -40,13 +45,21 @@ const PdfPane = dynamic(() => import("./pdf-pane"), {
   loading: () => <Skeleton className="h-full min-h-96 w-full" />,
 });
 
+// The email pane loads the stored email and draws its attachments in the PDF or image pane.
+const EmailPane = dynamic(() => import("./email-pane"), {
+  ssr: false,
+  loading: () => <Skeleton className="h-full min-h-96 w-full" />,
+});
+
 /**
- * The review screen (review-screen prototype, variant A): the PDF on the left
- * and the Form's Fields on the right, stacked on mobile. Updates live.
+ * The review screen (review-screen prototype, variant A): the source (PDF,
+ * email or photo, by the Document's kind) on the left and the Form's Fields on
+ * the right, stacked on mobile. Updates live.
  *
  * Its parts live in components/documents so the marketing demo (components/demo)
  * renders the same screen with demo data; the PDF pane is mirrored there by
- * components/demo/demo-pdf-pane.tsx. Update both.
+ * components/demo/demo-pdf-pane.tsx, the email and photo panes are shared
+ * (email-pane-view.tsx, image-pane-view.tsx). Update both.
  */
 export function ReviewScreen({
   organisationSlug,
@@ -59,10 +72,11 @@ export function ReviewScreen({
 }) {
   const t = useTranslations("appDocuments");
   const errorText = useErrorText();
-  const { format } = useDocumentsLabels();
+  const { format, labels } = useDocumentsLabels();
   const router = useRouter();
   const document = useQuery(api.documents.get, { organisationSlug, documentId });
   const pdfUrl = useMutation(api.documents.pdfUrl);
+  const attachmentUrlOf = useMutation(api.documents.attachmentUrl);
   const approve = useMutation(api.review.approve);
   const retry = useMutation(api.extraction.retry);
   const [url, setUrl] = useState<string | null>(null);
@@ -78,6 +92,11 @@ export function ReviewScreen({
     pdfUrl({ organisationSlug, documentId }).then(setUrl, () => setUrlFailed(true));
   }, [pdfUrl, organisationSlug, documentId, dataDeleted]);
 
+  const attachmentUrl = useCallback(
+    (index: number) => attachmentUrlOf({ organisationSlug, documentId, index }),
+    [attachmentUrlOf, organisationSlug, documentId],
+  );
+
   if (document === undefined) {
     return (
       <main className="grid flex-1 gap-4 p-4 md:grid-cols-2 md:p-6">
@@ -89,6 +108,15 @@ export function ReviewScreen({
 
   const threshold = document.reviewThreshold ?? 0.8;
   const reviewing = document.state === "needs_review";
+  const noForm = document.state === "no_form";
+  const splitReason = splitReasonText(document, labels);
+  const pane = paneFor(document.kind);
+  // The selected value's read text, to mark in an email body when it was read there (page 1).
+  const selectedValue = [
+    ...document.fieldValues,
+    ...document.lists.flatMap((l) => l.entries.flatMap((e) => e.fieldValues)),
+  ].find((f) => f.id === selected);
+  const highlight = selectedValue?.pages.includes(1) ? selectedValue.readText : null;
   // Delete now; a Rejected Document has it in its Rejected notice.
   const deletable =
     isAdmin && !document.dataDeleted && document.state !== "rejected" && document.state !== "deleted";
@@ -136,6 +164,7 @@ export function ReviewScreen({
         formName={document.formName}
         formVersion={document.formVersion}
         pageCount={document.pageCount}
+        kind={pane}
         reviewThreshold={document.reviewThreshold === null ? null : threshold}
         backHref={`/app/o/${organisationSlug}`}
         badges={
@@ -151,9 +180,9 @@ export function ReviewScreen({
           )
         }
         actions={
-          (reviewing || document.state === "extraction_failed" || deletable) && (
+          (reviewing || noForm || document.state === "extraction_failed" || deletable) && (
             <>
-              {(reviewing || document.state === "extraction_failed") && (
+              {(reviewing || noForm || document.state === "extraction_failed") && (
                 <>
                   <ChangeFormButton
                     organisationSlug={organisationSlug}
@@ -179,6 +208,10 @@ export function ReviewScreen({
           )
         }
       />
+
+      {splitReason && <SplitAlert reason={splitReason} />}
+
+      {noForm && <NoFormAlert />}
 
       {reviewing && document.doesNotFit && (
         <Alert className="border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
@@ -243,12 +276,7 @@ export function ReviewScreen({
           <CircleAlert />
           <AlertTitle>{t("review.failedTitle")}</AlertTitle>
           <AlertDescription>
-            <p>{t("review.failedText")}</p>
-            {document.extractionError && (
-              <p className="line-clamp-2 font-mono text-xs break-all opacity-80">
-                {document.extractionError}
-              </p>
-            )}
+            <p>{t(document.failure === "unreadable" ? "review.failedUnreadable" : "review.failedText")}</p>
             <Button
               size="sm"
               className="mt-2"
@@ -290,7 +318,24 @@ export function ReviewScreen({
                 {t("review.pdfDeleted")}
               </div>
             ) : url ? (
-              <PdfPane url={url} pageCount={document.pageCount} page={page} onPageChange={setPage} />
+              pane === "email" ? (
+                <EmailPane
+                  url={url}
+                  page={page}
+                  onPageChange={setPage}
+                  highlight={highlight}
+                  attachmentUrl={attachmentUrl}
+                />
+              ) : pane === "image" ? (
+                <ImagePaneView
+                  url={url}
+                  filename={document.filename}
+                  mimeType={document.mimeType}
+                  className="h-full"
+                />
+              ) : (
+                <PdfPane url={url} pageCount={document.pageCount} page={page} onPageChange={setPage} />
+              )
             ) : urlFailed ? (
               <div className="flex h-full items-center justify-center rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
                 {t("review.pdfFailed")}
@@ -317,6 +362,8 @@ export function ReviewScreen({
                 <Skeleton key={i} className="h-12" />
               ))}
             </div>
+          ) : noForm ? (
+            <p className="p-6 text-center text-sm text-muted-foreground">{labels.review.noForm.empty}</p>
           ) : rows.length === 0 && lists.length === 0 ? (
             <NothingLeftToReview />
           ) : (

@@ -1,17 +1,37 @@
-// Form Proposals: an Admin uploads one sample PDF, Vink reads it and
-// proposes Fields, and the Admin saves the ones they keep as a Form Version.
+// Form Proposals: an Admin gives one sample (a PDF, a photo or an email) or
+// describes the document in words, Vink proposes Fields, and the Admin saves
+// the ones they keep as a Form Version.
 import { ConvexError, v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { DataModel, Doc, Id } from "./_generated/dataModel";
-import { internalMutation, internalQuery, type MutationCtx, type QueryCtx } from "./_generated/server";
-import { checkUpload, claimUpload, createDocument } from "./documents";
+import {
+  type ActionCtx,
+  internalMutation,
+  internalQuery,
+  type MutationCtx,
+  type QueryCtx,
+} from "./_generated/server";
+import { checkEmail, checkFile, checkIssued, claimUpload, createDocument } from "./documents";
 import { extractionPool } from "./extraction";
 import { insertForm, saveVersion } from "./forms";
+import { removeDocumentFiles } from "./lib/documentFiles";
+import { failureCodeOf, failureOf } from "./lib/failure";
+import {
+  DESCRIPTION_EMPTY,
+  DESCRIPTION_WINDOW_MS,
+  DESCRIPTION_TOO_LONG,
+  DESCRIPTIONS_PER_DAY_REACHED,
+  descriptionTitle,
+  MAX_DESCRIPTION_CHARS,
+  MAX_DESCRIPTIONS_PER_DAY,
+} from "./lib/formDescription";
 import { orgAction, orgMutation, orgQuery } from "./lib/functions";
 import { pdfStore } from "./lib/pdfStore";
-import { chargePages } from "./pages";
+import { chargeItems } from "./items";
+import { kindOf, mimeTypeOf } from "./lib/inputLimits";
+import { EMAIL_MIME_TYPE, emailFilename, storeEmail } from "./lib/storedEmail";
 import type { FlatField, ListField } from "./lib/pipeline";
-import { field } from "./schema";
+import { field, inputKind } from "./schema";
 
 async function ownProposal(
   ctx: QueryCtx,
@@ -43,29 +63,64 @@ export const completed = extractionPool.defineOnComplete<DataModel, typeof compl
     if (result.kind === "success") return;
     const proposal = await ctx.db.get(proposalId);
     if (proposal === null || (proposal.state !== "reading" && proposal.state !== "proposing")) return;
-    await ctx.db.patch(proposalId, {
-      state: "failed",
-      error: result.kind === "failed" ? result.error.slice(0, 300) : "canceled",
-    });
+    // The technical error is for the logs; the proposal keeps a code the screen turns into a friendly message (lib/failure.ts).
+    console.error(
+      `Form Proposal ${proposalId} failed: ${(result.kind === "failed" ? result.error : "canceled").slice(0, 1000)}`,
+    );
+    await ctx.db.patch(proposalId, { state: "failed", error: failureCodeOf(false) });
   },
 });
 
-/** Step 2 of a sample upload (step 1 is `documents.generateUploadUrl`). */
+/** A sample that cannot be read and never will be (lib/readerInput.ts UnreadableInput): failed at once. */
+export const failUnreadable = internalMutation({
+  args: { proposalId: v.id("formProposals"), error: v.string() },
+  handler: async (ctx, { proposalId, error }) => {
+    const proposal = await ctx.db.get(proposalId);
+    if (proposal === null || (proposal.state !== "reading" && proposal.state !== "proposing")) return;
+    console.error(`Form Proposal ${proposalId} failed: ${error.slice(0, 1000)}`);
+    await ctx.db.patch(proposalId, { state: "failed", error: failureCodeOf(true) });
+  },
+});
+
+type Sample = {
+  organisationId: Id<"organisations">;
+  createdBy: string;
+  createdByEmail: string;
+  formId?: Id<"forms">;
+};
+
+/** Step 2 of a sample upload (step 1 is `documents.generateUploadUrl`): a PDF, a JPG/PNG/HEIC photo or an .eml email. */
 export const create = orgAction({
   role: "admin",
   args: { key: v.string(), filename: v.string(), formId: v.optional(v.id("forms")) },
   handler: async (ctx, { key, filename, formId }): Promise<{ proposalId: Id<"formProposals"> }> => {
-    const pageCount = await checkUpload(ctx, ctx.organisationId, key);
+    await checkIssued(ctx, ctx.organisationId, key);
     const identity = (await ctx.auth.getUserIdentity())!;
+    const sample: Sample = {
+      organisationId: ctx.organisationId,
+      createdBy: ctx.userId,
+      createdByEmail: identity.email?.toLowerCase() ?? "",
+      formId,
+    };
+    const bytes = await pdfStore.read(key);
+    if (bytes === null) throw new ConvexError("The upload didn't arrive. Try again.");
     try {
+      // The same checks and byte sniffing as a Document's upload (documents.ts checkFile).
+      const checked = await checkFile(bytes, filename);
+      if (checked.kind === "email") {
+        const { subject, from, date, body, attachments } = checked.email;
+        const proposal = await proposeFromEmail(ctx, sample, { subject, from, date, body, attachments }, key);
+        await pdfStore.remove(ctx, key);
+        return proposal;
+      }
       return await ctx.runMutation(internal.formProposals.insert, {
-        organisationId: ctx.organisationId,
-        createdBy: ctx.userId,
-        createdByEmail: identity.email?.toLowerCase() ?? "",
+        ...sample,
         key,
         filename,
-        pageCount,
-        formId,
+        pageCount: checked.pageCount,
+        kind: checked.kind,
+        mimeType: checked.mimeType,
+        items: checked.items,
       });
     } catch (error) {
       await pdfStore.remove(ctx, key);
@@ -74,28 +129,143 @@ export const create = orgAction({
   },
 });
 
+/** A pasted email as the sample: its text becomes the email the Reader reads. */
+export const createFromEmail = orgAction({
+  role: "admin",
+  args: { subject: v.optional(v.string()), body: v.string(), formId: v.optional(v.id("forms")) },
+  handler: async (ctx, { subject = "", body, formId }): Promise<{ proposalId: Id<"formProposals"> }> => {
+    const identity = (await ctx.auth.getUserIdentity())!;
+    return await proposeFromEmail(
+      ctx,
+      {
+        organisationId: ctx.organisationId,
+        createdBy: ctx.userId,
+        createdByEmail: identity.email?.toLowerCase() ?? "",
+        formId,
+      },
+      // The sender is not known from pasted text.
+      { subject: subject.trim(), from: "", date: "", body, attachments: [] },
+    );
+  },
+});
+
+/**
+ * An email sample: checked and stored like an email Document (documents.ts
+ * checkEmail, lib/storedEmail.ts), charged as itemCountOf says. A refused
+ * email leaves nothing behind.
+ */
+async function proposeFromEmail(
+  ctx: ActionCtx,
+  sample: Sample,
+  email: {
+    subject: string;
+    from: string;
+    date: string;
+    body: string;
+    attachments: Array<{ filename: string; bytes: Uint8Array }>;
+  },
+  uploadKey?: string,
+): Promise<{ proposalId: Id<"formProposals"> }> {
+  const { body, parts, items } = await checkEmail(email);
+  const stored = await storeEmail(ctx, sample.organisationId, { ...email, body }, parts);
+  try {
+    return await ctx.runMutation(internal.formProposals.insert, {
+      ...sample,
+      key: stored.key,
+      attachmentKeys: stored.attachmentKeys,
+      filename: emailFilename(email.subject, email.from),
+      // The email's own page: the body (see Verify in lib/reader.ts).
+      pageCount: 1,
+      kind: "email",
+      mimeType: EMAIL_MIME_TYPE,
+      items,
+      ...(uploadKey === undefined ? {} : { uploadKey }),
+    });
+  } catch (error) {
+    for (const key of [stored.key, ...stored.attachmentKeys]) await pdfStore.remove(ctx, key);
+    throw error;
+  }
+}
+
 export const insert = internalMutation({
   args: {
     organisationId: v.id("organisations"),
     createdBy: v.string(),
     createdByEmail: v.string(),
     key: v.string(),
+    attachmentKeys: v.optional(v.array(v.string())),
     filename: v.string(),
     pageCount: v.number(),
+    kind: inputKind,
+    mimeType: v.string(),
+    /** What the sample costs: its Items (itemCountOf). */
+    items: v.number(),
+    /** The upload an email sample came from, which is no longer an orphan once the proposal exists. */
+    uploadKey: v.optional(v.string()),
     formId: v.optional(v.id("forms")),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, { items, uploadKey, ...args }) => {
     if (args.formId) {
       const form = await ctx.db.get(args.formId);
       if (form === null || form.organisationId !== args.organisationId) {
         throw new ConvexError("Form not found");
       }
     }
-    // The sample is read like a Document, so its Pages count now; saving it
+    // The sample is read like a Document, so its Items count now; saving it
     // as the Form's first Document later costs nothing more.
-    await chargePages(ctx, args.organisationId, args.pageCount);
+    await chargeItems(ctx, args.organisationId, items);
     const proposalId = await ctx.db.insert("formProposals", { ...args, state: "reading" });
-    await claimUpload(ctx, args.key);
+    await claimUpload(ctx, uploadKey ?? args.key);
+    await startProposal(ctx, proposalId);
+    return { proposalId };
+  },
+});
+
+/**
+ * Takes one of the Organisation's "Describe in words" slots for the last 24
+ * hours (MAX_DESCRIPTIONS_PER_DAY). The times live in descriptionQuotas, not in
+ * the proposal rows, so a discard or a save does not free a slot.
+ */
+async function takeDescriptionSlot(ctx: MutationCtx, organisationId: Id<"organisations">) {
+  const now = Date.now();
+  const quota = await ctx.db
+    .query("descriptionQuotas")
+    .withIndex("by_organisationId", (q) => q.eq("organisationId", organisationId))
+    .unique();
+  const recent = (quota?.times ?? []).filter((time) => time > now - DESCRIPTION_WINDOW_MS);
+  if (recent.length >= MAX_DESCRIPTIONS_PER_DAY) throw new ConvexError(DESCRIPTIONS_PER_DAY_REACHED);
+  recent.push(now);
+  if (quota) await ctx.db.patch(quota._id, { times: recent });
+  else await ctx.db.insert("descriptionQuotas", { organisationId, times: recent });
+}
+
+/**
+ * "Describe in words": the Admin writes what the document is and which data
+ * they need, and the Proposer proposes Fields from that text alone. There is no
+ * sample and no Reading, so nothing is read and NO ITEMS ARE CHARGED: the Items
+ * pay for reading input, and a description is not input. (A new Form only; to
+ * add Fields to an existing Form, give a sample.) Like every proposal it is
+ * deleted after 7 days when unsaved (retention.ts).
+ */
+export const createFromDescription = orgMutation({
+  role: "admin",
+  args: { description: v.string() },
+  handler: async (ctx, { description }): Promise<{ proposalId: Id<"formProposals"> }> => {
+    const text = description.trim();
+    if (text === "") throw new ConvexError(DESCRIPTION_EMPTY);
+    if (text.length > MAX_DESCRIPTION_CHARS) throw new ConvexError(DESCRIPTION_TOO_LONG);
+    await takeDescriptionSlot(ctx, ctx.organisationId);
+    const identity = (await ctx.auth.getUserIdentity())!;
+    const proposalId = await ctx.db.insert("formProposals", {
+      organisationId: ctx.organisationId,
+      createdBy: ctx.userId,
+      createdByEmail: identity.email?.toLowerCase() ?? "",
+      description: text,
+      filename: descriptionTitle(text),
+      pageCount: 0,
+      // Straight to proposing: there is nothing to read.
+      state: "proposing",
+    });
     await startProposal(ctx, proposalId);
     return { proposalId };
   },
@@ -110,9 +280,14 @@ export const get = orgQuery({
       id: proposal._id,
       filename: proposal.filename,
       pageCount: proposal.pageCount,
+      kind: kindOf(proposal),
+      // A description has no sample: the screen then shows no reading step and no "process sample" choice.
+      hasSample: proposal.key !== undefined,
+      description: proposal.description ?? null,
       formId: proposal.formId ?? null,
       state: proposal.state,
-      error: proposal.error ?? null,
+      // A code, never the server's error text (lib/failure.ts).
+      failure: failureOf(proposal.error),
       fields: proposal.fields ?? [],
       createdAt: proposal._creationTime,
     };
@@ -126,16 +301,19 @@ export const retry = orgMutation({
     const proposal = await ownProposal(ctx, ctx.organisationId, proposalId);
     if (proposal.state !== "failed") throw new ConvexError("Only a failed proposal can be retried");
     await ctx.db.patch(proposalId, {
-      state: proposal.readingJson ? "proposing" : "reading",
+      // A description is never read: a retry proposes again.
+      state: proposal.readingJson || proposal.key === undefined ? "proposing" : "reading",
       error: undefined,
     });
     await startProposal(ctx, proposalId);
   },
 });
 
-/** Deletes a Form Proposal and its sample's PDF and Reading. */
+/** Deletes a Form Proposal and its sample's file (an email's attachments too) and Reading. */
 export async function deleteProposal(ctx: MutationCtx, proposal: Doc<"formProposals">) {
-  await pdfStore.remove(ctx, proposal.key);
+  if (proposal.key !== undefined) {
+    await removeDocumentFiles(ctx, { key: proposal.key, attachmentKeys: proposal.attachmentKeys });
+  }
   await ctx.db.delete(proposal._id);
 }
 
@@ -166,6 +344,9 @@ export const save = orgMutation({
     if (proposal.state !== "ready" || proposal.formId) {
       throw new ConvexError("This proposal can't be saved as a new Form");
     }
+    if (processSample && proposal.key === undefined) {
+      throw new ConvexError("This proposal has no sample to process");
+    }
     const { formId } = await insertForm(ctx, {
       organisationId: ctx.organisationId,
       name,
@@ -180,7 +361,10 @@ export const save = orgMutation({
     const documentId = await createDocument(ctx, {
       organisationId: ctx.organisationId,
       formId,
-      key: proposal.key,
+      key: proposal.key!,
+      attachmentKeys: proposal.attachmentKeys,
+      kind: kindOf(proposal),
+      mimeType: mimeTypeOf(proposal),
       filename: proposal.filename,
       pageCount: proposal.pageCount,
       uploadedBy: proposal.createdBy,
@@ -237,7 +421,12 @@ export const runInput = internalQuery({
       : null;
     const current = formVersion?.fields ?? [];
     return {
-      key: proposal.key,
+      organisationId: proposal.organisationId,
+      key: proposal.key ?? null,
+      description: proposal.description ?? null,
+      kind: kindOf(proposal),
+      mimeType: mimeTypeOf(proposal),
+      pageCount: proposal.pageCount,
       readingJson: proposal.readingJson ?? null,
       textLayer: proposal.textLayer ?? [],
       extends: form !== null,

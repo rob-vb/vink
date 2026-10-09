@@ -5,6 +5,7 @@ import { getOrganisation } from "./organisation";
 import { OrganisationSwitcher } from "./organisation-switcher";
 import { NavLinks } from "./nav-links";
 import { Notifications } from "./notifications";
+import { SetupBar } from "./setup-bar";
 import { UserMenu } from "./user-menu";
 
 // The header is mirrored in components/demo/demo-app-frame.tsx (the marketing
@@ -34,6 +35,7 @@ export default async function OrganisationLayout({
           <UserMenu organisationSlug={slug} isAdmin={organisation.role === "admin"} />
         </div>
       </header>
+      {organisation.role === "admin" && <SetupBar organisationSlug={slug} />}
       {children}
     </div>
   );

@@ -9,6 +9,9 @@ const TOKEN_CAP = 64_000;
 // Jev takes at most this many criteria per Choice, `none` included.
 export const MAX_CRITERIA = 255;
 
+// The Router (ADR 0010) offers Jev the Organisation's Forms and `none`: at most this many Forms.
+export const MAX_ROUTABLE_FORMS = MAX_CRITERIA - 1;
+
 // Of a Choice's criteria, at most this many are objects (see reading.sourceAt).
 export const MAX_OBJECTS = 60;
 
@@ -20,6 +23,17 @@ const CRITERIA_CHARS_PER_TOKEN = 1.5;
 const OVERHEAD_TOKENS = 1_000;
 
 const criterion = (text: string) => text.length + 10;
+
+/** Jev's cap on a request's tokens; MATCH_TOKEN_CAP lowers it for tests. */
+export const tokenCap = () => Number(process.env.MATCH_TOKEN_CAP ?? TOKEN_CAP);
+
+/** A rough upper bound of a request's tokens: the state's characters, the criteria's, and the overhead. */
+export function estimateTokens(stateChars: number, criteriaChars: number) {
+  return stateChars / READING_CHARS_PER_TOKEN + criteriaChars / CRITERIA_CHARS_PER_TOKEN + OVERHEAD_TOKENS;
+}
+
+/** The characters a criterion costs: its text and a fixed share for its key. */
+export const criterionChars = criterion;
 
 /** A rough upper bound of the tokens each Choice adds: its criteria. */
 function choiceTokens(reading: Reading) {
@@ -34,7 +48,7 @@ function choiceTokens(reading: Reading) {
     .slice(0, MAX_CRITERIA)
     .reduce((sum, array) => sum + criterion(`${array.path} ${array.keys.join(", ")}`), 0);
   return {
-    base: JSON.stringify(reading).length / READING_CHARS_PER_TOKEN + OVERHEAD_TOKENS,
+    base: estimateTokens(JSON.stringify(reading).length, 0),
     field: leafChars / CRITERIA_CHARS_PER_TOKEN,
     list: arrayChars / CRITERIA_CHARS_PER_TOKEN,
   };
@@ -54,7 +68,7 @@ function pack<T>(items: T[], perItem: number, room: number) {
  * requests as the cap needs.
  */
 export function matchRequests(reading: Reading, fields: FlatField[], lists: ListField[]) {
-  const cap = Number(process.env.MATCH_TOKEN_CAP ?? TOKEN_CAP);
+  const cap = tokenCap();
   const tokens = choiceTokens(reading);
   const room = cap - tokens.base;
   if (tokens.base + fields.length * tokens.field + lists.length * tokens.list <= cap) {

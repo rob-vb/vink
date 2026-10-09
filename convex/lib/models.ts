@@ -2,6 +2,7 @@
 // Which outside models an Extraction uses, pinned. Each can be overridden per
 // deployment (`npx convex env set`) when a new version has been benchmarked.
 import { FinishReason, GoogleGenAI, ThinkingLevel } from "@google/genai";
+import type { InputFile } from "./pipeline";
 import { usage } from "./usage";
 
 export const models = {
@@ -77,10 +78,10 @@ export function parseJsonObject(text: string): Record<string, unknown> {
   return parsed;
 }
 
-/** One prompt to a model: the PDF (if any), then the texts in order. */
+/** One prompt to a model: the files (if any: a PDF, an image, an email's attachments), then the texts in order. */
 export type Completion = {
   model: string;
-  pdf?: Uint8Array;
+  files?: InputFile[];
   texts: string[];
   maxTokens: number;
   /** How hard the model thinks; LOW when left out. */
@@ -106,13 +107,18 @@ export async function complete(completion: Completion): Promise<string> {
  * The Claude model the bridge runs for a step: the pinned one when it's Claude,
  * else Opus for the vision steps and Haiku for Fill, as benchmarked in ticket 26.
  */
-function bridgeModel(model: string, pdf: Uint8Array | undefined) {
+function bridgeModel(model: string, files: InputFile[]) {
   if (model.startsWith("claude")) return model;
-  return pdf ? "claude-opus-5" : "claude-haiku-4-5@20251001";
+  return files.length > 0 ? "claude-opus-5" : "claude-haiku-4-5@20251001";
 }
 
-async function viaBridge(url: string, { model: pinned, pdf, texts, jsonSchema }: Completion) {
-  const model = bridgeModel(pinned, pdf);
+async function viaBridge(url: string, { model: pinned, files = [], texts, jsonSchema }: Completion) {
+  // The bridge hands Claude Code one PDF to read; images and emails go to Vertex only.
+  if (files.length > 1 || (files[0] && files[0].mimeType !== "application/pdf")) {
+    throw new Error("The Claude bridge reads a single PDF only");
+  }
+  const pdf = files[0]?.bytes;
+  const model = bridgeModel(pinned, files);
   const response = await fetch(`${url}/complete`, {
     method: "POST",
     headers: {
@@ -134,10 +140,10 @@ async function viaBridge(url: string, { model: pinned, pdf, texts, jsonSchema }:
   return { model, text, ...usage };
 }
 
-async function viaVertex({ model, pdf, texts, maxTokens, thinking, jsonSchema }: Completion) {
-  const document = pdf
-    ? [{ inlineData: { mimeType: "application/pdf", data: Buffer.from(pdf).toString("base64") } }]
-    : [];
+async function viaVertex({ model, files = [], texts, maxTokens, thinking, jsonSchema }: Completion) {
+  const document = files.map(({ bytes, mimeType }) => ({
+    inlineData: { mimeType, data: Buffer.from(bytes).toString("base64") },
+  }));
   // Streamed, so a long Read isn't cut off by Node's 5-minute wait for a first byte.
   const stream = await vertex().models.generateContentStream({
     model,

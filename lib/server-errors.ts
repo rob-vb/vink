@@ -20,6 +20,15 @@ const dutch: Record<string, string> = {
   // Why an emailed attachment was skipped (convex/intake.ts); the 25 MB one is
   // still in emails recorded before the limit became 10 MB.
   "Not a PDF.": "Geen pdf.",
+  "Vink reads PDFs, photos (JPG, PNG, HEIC) and the email text; this file type isn't supported.":
+    "Vink leest pdf's, foto's (JPG, PNG, HEIC) en de tekst van de e-mail; dit bestandstype wordt niet ondersteund.",
+  "The image is larger than 10 MB.": "De afbeelding is groter dan 10 MB.",
+  "The email text is longer than 200 KB.": "De tekst van de e-mail is langer dan 200 KB.",
+  "Vink reads up to 10 attachments per email.": "Vink leest maximaal 10 bijlagen per e-mail.",
+  "The attachments of this email are larger than 12 MB together.":
+    "De bijlagen van deze e-mail zijn samen groter dan 12 MB.",
+  "This email has no text and no attachments.": "Deze e-mail heeft geen tekst en geen bijlagen.",
+  "Cover note, not read": "Begeleidende tekst, niet gelezen",
   "The attachment is larger than 25 MB.": "De bijlage is groter dan 25 MB.",
 
   // Not found
@@ -57,6 +66,11 @@ const dutch: Record<string, string> = {
   "Only a failed proposal can be retried": "Alleen een mislukt voorstel kan opnieuw worden geprobeerd",
   "This proposal can't be saved as a new Form": "Dit voorstel kan niet als nieuw Formulier worden opgeslagen",
   "This proposal doesn't extend a Form": "Dit voorstel vult geen bestaand Formulier aan",
+  "This proposal has no sample to process": "Dit voorstel heeft geen voorbeeld om te verwerken",
+  "Describe the document and the data you need first.": "Beschrijf eerst het document en de gegevens die je nodig hebt.",
+  "The description is longer than 2000 characters.": "De beschrijving is langer dan 2000 tekens.",
+  "Your Organisation has described 20 Forms in the last 24 hours. Try again later.":
+    "Jullie organisatie heeft de afgelopen 24 uur al 20 Formulieren beschreven. Probeer het later opnieuw.",
 
   // Integrations and Deliveries
   "An Integration needs a name": "Een Koppeling heeft een naam nodig",

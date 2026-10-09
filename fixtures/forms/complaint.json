@@ -1,0 +1,13 @@
+{
+  "name": "complaint",
+  "description": "A customer complaint about a product, sent by email.",
+  "fields": [
+    { "name": "customerName", "type": "string", "description": "Name of the person who complains" },
+    { "name": "companyName", "type": "string", "description": "Company of the person who complains" },
+    { "name": "customerEmail", "type": "string", "description": "Email address of the person who complains" },
+    { "name": "complaintDate", "type": "date", "description": "Date the complaint was sent (ISO yyyy-mm-dd)" },
+    { "name": "orderNumber", "type": "string", "description": "Order number the complaint is about" },
+    { "name": "purchaseDate", "type": "date", "description": "Date the product was bought (ISO yyyy-mm-dd)" },
+    { "name": "product", "type": "string", "description": "Product the complaint is about" }
+  ]
+}

@@ -1,3 +1,6 @@
 # Real Documents may contain personal data (licence plates, names) — never commit them.
 inbox/
-documents/
+timing/documents/
+# ...except the synthetic ones: invented names, made for the eval (see README.md).
+documents/*
+!documents/synthetic-*/

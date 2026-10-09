@@ -100,7 +100,7 @@ Use a Vink Organisation with a Form and an API Key (Organisation settings → AP
 5. Delete the webhook in Make: the Webhook in Vink is gone.
 6. Second scenario → **Send in a Document**: e.g. an HTTP "Get a file" of a PDF, then this
    module with a Form. The Document shows in Vink with the API Key's name as its source.
-   Send a PNG, a 21-page PDF, and use an organisation without Pages: each fails with Vink's
+   Send a PNG, a 21-page PDF, and use an organisation without Items: each fails with Vink's
    message.
 7. Delete the Subscription's Webhook in Vink first, then delete the webhook in Make: Make
    removes it without an error.
@@ -117,7 +117,7 @@ Subscription ended with the key, so delete the webhook in Make anyway.
 Before the request (see Make's "App review" prerequisites):
 
 - Test scenarios for both modules, plus one scenario that ends in an API error, shared with
-  Make's QA, with a test API Key that has Pages. The review form asks for their links.
+  Make's QA, with a test API Key that has Items. The review form asks for their links.
 - The universal module `makeApiCall` ("Make an API call", a path relative to Base) is there,
   as Make requires.
 - Every module is set to visible in Make. From the shell (Make's SDK Apps API; a read right

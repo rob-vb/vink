@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, CircleCheck } from "lucide-react";
+import { ArrowLeft, CircleCheck, FileQuestion, Split } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { DeliveryRow, type DeliveryView } from "@/components/deliveries/delivery-row";
@@ -8,6 +8,8 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import type { EventInfo } from "@/convex/lib/eventInfo";
+import { eventDetailText } from "./event-detail";
 import { useDocumentsLabels, type DocumentEvent, type DocumentState } from "./labels";
 
 /*
@@ -18,13 +20,14 @@ import { useDocumentsLabels, type DocumentEvent, type DocumentState } from "./la
 
 export type ReviewFilter = "all" | "needs_review";
 
-/** "← Documents", the filename with its state, and "Form vN · N pages · Review Threshold". */
+/** "← Documents", the filename with its state, and "Form vN · N pages · Review Threshold" ("email" or "photo" where a PDF has its pages). */
 export function ReviewHeader({
   filename,
   state,
   formName,
   formVersion,
   pageCount,
+  kind,
   reviewThreshold,
   backHref,
   onBack,
@@ -34,8 +37,10 @@ export function ReviewHeader({
   filename: string;
   state: DocumentState;
   formName: string;
-  formVersion: number;
+  formVersion: number | null;
   pageCount: number;
+  /** An email or a photo is one unit, so it shows its kind and not "1 page". Missing: a PDF. */
+  kind?: "pdf" | "email" | "image";
   reviewThreshold: number | null;
   backHref?: string;
   onBack?: () => void;
@@ -72,7 +77,8 @@ export function ReviewHeader({
           {badges}
         </div>
         <p className="text-sm text-muted-foreground">
-          {formName} v{formVersion} · {pageCount} {t.pageCount(pageCount)}
+          {formVersion === null ? "" : `${formName} v${formVersion} · `}
+          {kind === "email" || kind === "image" ? t.kinds[kind] : `${pageCount} ${t.pageCount(pageCount)}`}
           {reviewThreshold !== null && (
             <>
               {" "}
@@ -103,7 +109,33 @@ export function ApprovalAlert({
   );
 }
 
-/** The PDF on the left and the Fields on the right, stacked below `lg`. */
+/** A Document in No Form: no Form fits it. `actions` are Change Form and Reject. */
+export function NoFormAlert() {
+  const { labels } = useDocumentsLabels();
+  return (
+    <Alert className="border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+      <FileQuestion />
+      <AlertTitle>{labels.review.noForm.title}</AlertTitle>
+      <AlertDescription className="text-amber-900/80 dark:text-amber-200/80">
+        <p>{labels.review.noForm.text}</p>
+      </AlertDescription>
+    </Alert>
+  );
+}
+
+/** Why Vink split an email it was unsure about, on each Document it made. */
+export function SplitAlert({ reason }: { reason: string }) {
+  const { labels } = useDocumentsLabels();
+  return (
+    <Alert>
+      <Split />
+      <AlertTitle>{labels.review.split.title}</AlertTitle>
+      <AlertDescription>{labels.review.split.text(reason)}</AlertDescription>
+    </Alert>
+  );
+}
+
+/** The source (PDF, email or photo) on the left and the Fields on the right, stacked below `lg`. */
 export function ReviewColumns({ pdf, children }: { pdf: ReactNode; children: ReactNode }) {
   return (
     <div className="grid flex-1 items-start gap-4 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
@@ -209,7 +241,7 @@ export function DeliveriesSection<D extends DeliveryView & { integrationName: st
 export function HistorySection({
   history,
 }: {
-  history: Array<{ event: DocumentEvent; detail: string | null; by: string; at: number }>;
+  history: Array<{ event: DocumentEvent; detail: string | null; info?: EventInfo | null; by: string; at: number }>;
 }) {
   const { labels, format } = useDocumentsLabels();
   return (
@@ -218,21 +250,24 @@ export function HistorySection({
         {labels.review.history}
       </h2>
       <ol className="grid gap-2 text-sm">
-        {history.map((entry, i) => (
-          <li key={i} className="flex flex-wrap justify-between gap-x-4">
-            <span>
-              {labels.review.events[entry.event]}
-              {entry.detail && <span className="text-muted-foreground"> · {entry.detail}</span>}
-              <span className="text-muted-foreground"> · {entry.by}</span>
-            </span>
-            <time
-              className="text-muted-foreground tabular-nums"
-              dateTime={new Date(entry.at).toISOString()}
-            >
-              {format.dateTime(entry.at)}
-            </time>
-          </li>
-        ))}
+        {history.map((entry, i) => {
+          const detail = eventDetailText(entry, labels);
+          return (
+            <li key={i} className="flex flex-wrap justify-between gap-x-4">
+              <span>
+                {labels.review.events[entry.event]}
+                {detail && <span className="text-muted-foreground"> · {detail}</span>}
+                <span className="text-muted-foreground"> · {entry.by}</span>
+              </span>
+              <time
+                className="text-muted-foreground tabular-nums"
+                dateTime={new Date(entry.at).toISOString()}
+              >
+                {format.dateTime(entry.at)}
+              </time>
+            </li>
+          );
+        })}
       </ol>
     </section>
   );

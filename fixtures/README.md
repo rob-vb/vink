@@ -2,7 +2,7 @@
 
 Test document set for the extraction benchmark (see `.scratch/vink-v1/issues/03-test-document-set.md`).
 
-Real Documents contain personal data, so `inbox/` and `documents/` are git-ignored. Only Form definitions and this README are committed.
+Real Documents contain personal data, so `inbox/` and `documents/` are git-ignored. Form definitions, this README and the synthetic Documents (`documents/synthetic-*`, invented names) are committed.
 
 ## Layout
 
@@ -11,9 +11,12 @@ fixtures/
   inbox/                        # drop PDFs + ground-truth CSV here (scp/rsync)
   forms/<form>.json             # Form definition
   documents/<form>-NNN/
-    document.pdf
+    document.pdf                # or document.jpg|jpeg|png|heic, or document.eml
+    attachments/                # an email's PDF/image attachments, optional
     expected.json               # ground truth
 ```
+
+The harness picks the Reader's input by the file: `document.pdf` is a PDF (its `pages` in `expected.json` is the page count), an image file is an image, and `document.eml` is an email. The `.eml` is plain text: `Subject`, `From` and `Date` headers, a blank line, then the body as UTF-8 (no multipart or encoded mails; use `attachments/`). For an image or an email, `pages` is 1.
 
 ## Form definition — `forms/<form>.json`
 
@@ -56,6 +59,15 @@ Ground truth is not written up front. The benchmark run produces Field Values; t
 | invoice-001 | invoice | 1 | digital: NL invoice |
 
 `expected.json` now exists for every Document (2026-09-23, from the benchmark in ticket 07). It lists `verified` paths (confirmed or corrected by the user), `unverified` paths (model output the user accepted without checking) and `unknown` paths (the user couldn't judge; left out of scoring). Scripts are on branch `prototype/extraction-benchmark`.
+
+Synthetic Documents (2026-10-08, ADR 0010 step 4), true by construction:
+
+| Document | Form | Kind |
+|---|---|---|
+| synthetic-complaint-email-001 | complaint | email: a Dutch complaint about a bread slicer, plain text |
+| synthetic-workorder-photo-001 | work-order | image: photo of a handwritten work order (werkbon), with a materials List |
+
+The photo was drawn on the box: an SVG with jittered italic type for the handwriting, then laid crooked on a desk with shading and noise (sharp, one-off; nothing of it is in the repo). The PDF invoice case is `invoice-001`.
 
 Five Documents is a starter set for a qualitative first benchmark; confidence calibration needs 30–50.
 

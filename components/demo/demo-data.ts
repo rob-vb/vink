@@ -1,11 +1,13 @@
 import type { FieldValueType, Value } from "@/components/documents/field-row-view";
 import type { ReviewReason, Signal } from "@/components/documents/labels";
-import type { DemoDocumentId } from "./demo-papers";
+import type { DemoDocumentId, DemoPhotoId } from "./demo-papers";
 
 /*
- * The demo's five Documents: hand-written values and confidences, not
- * pipeline output. Four wait in Needs Review; the receipt was approved by
- * Auto-Send. Demo companies only (Kantoor Noord, Hoekstra, Van Dijk, Het Anker).
+ * The demo's eight Documents: hand-written values and confidences, not
+ * pipeline output. Six wait in Needs Review (a complaint email with a photo and
+ * a photographed work order among them); the receipt was approved by
+ * Auto-Send; a newsletter is in No Form, because no Form fits it. Demo
+ * companies only (Kantoor Noord, Hoekstra, Van Dijk, Het Anker).
  */
 
 type Words = { en: string; nl: string };
@@ -15,8 +17,9 @@ export type SeedField = {
   label: Words;
   type: FieldValueType;
   required?: boolean;
-  value: Value;
-  readText: string | null;
+  /** A value in both languages (`Words`) is one Vink wrote itself, e.g. what it saw in a photo; a value read off a paper is that paper's own words. */
+  value: Value | Words;
+  readText: string | Words | null;
   page: number;
   confidence: number;
   lowestSignal: Signal;
@@ -33,9 +36,34 @@ export type SeedList = {
   entries: Array<Record<string, { value: Value; readText: string; confidence: number }>>;
 };
 
+/** An email Document: the email's headers and body, and its attachments (each a drawn photo). */
+export type SeedEmail = {
+  from: string;
+  /** ISO, so the pane shows it like the app does. */
+  date: string;
+  /** The read text of every value read on the body appears in it word for word, in both languages. */
+  body: Words;
+  attachments: Array<{ filename: string; mimeType: string; photo: DemoPhotoId; alt: Words }>;
+};
+
+/** A seed value in the visitor's language; a plain value is the same in both. */
+export function inLocale<T extends Value>(value: T | Words, locale: "en" | "nl"): T {
+  return value !== null && typeof value === "object" ? (value[locale] as T) : value;
+}
+
 export type SeedDocument = {
   id: DemoDocumentId;
+  /** An email's name is its subject. */
   filename: string;
+  /** A PDF unless said otherwise. */
+  kind?: "email" | "image";
+  email?: SeedEmail;
+  /** The picture of a photo Document, described for the alt text. */
+  photoAlt?: Words;
+  /** Vink's pick of the Form for input that came without one: its probability. The history shows "Form picked". */
+  routed?: number;
+  /** In No Form, because the Router's pick (this Form) did not fit: the history says "Does not fit …". */
+  noForm?: Words;
   form: Words;
   uploadedBy: Words;
   /** How long before the visitor arrived it came in. */
@@ -52,6 +80,42 @@ export const DEMO_USER = "demo@kantoornoord.nl";
 
 export const seedDocuments: SeedDocument[] = [
   {
+    id: "complaint",
+    filename: "Espressomachine lekt (ORD-3318)",
+    kind: "email",
+    form: { en: "Complaints", nl: "Klachten" },
+    uploadedBy: { en: "email from sanne@hetanker.nl", nl: "e-mail van sanne@hetanker.nl" },
+    minutesAgo: 2,
+    routed: 0.94,
+    email: {
+      from: "Sanne de Vries <sanne@hetanker.nl>",
+      date: "2026-09-30T06:18:00Z",
+      body: {
+        en: "Hello,\n\nOn 21-09-2026 we bought the espresso machine Lumo E2 (order ORD-3318). After one week it started to leak: every morning there is a puddle under the machine. I attached a photo.\n\nCan you repair it or send a replacement? Our terrace is open and we cannot serve coffee without it.\n\nKind regards,\nSanne de Vries\nCafé Het Anker",
+        nl: "Goedemiddag,\n\nOp 21-09-2026 hebben we de espressomachine Lumo E2 gekocht (bestelling ORD-3318). Na een week begon hij te lekken: elke ochtend staat er een plas water onder de machine. Ik heb een foto bijgevoegd.\n\nKunnen jullie hem repareren of een vervangende sturen? Ons terras is open en zonder machine kunnen we geen koffie schenken.\n\nMet vriendelijke groet,\nSanne de Vries\nCafé Het Anker",
+      },
+      attachments: [
+        {
+          filename: "espressomachine-lekt.jpg",
+          mimeType: "image/jpeg",
+          photo: "complaint",
+          alt: {
+            en: "Photo of an espresso machine on a counter with a puddle of water under it",
+            nl: "Foto van een espressomachine op een aanrecht met een plas water eronder",
+          },
+        },
+      ],
+    },
+    fields: [
+      { key: "name", label: { en: "Name", nl: "Naam" }, type: "text", required: true, value: "Sanne de Vries", readText: "Sanne de Vries", page: 1, confidence: 0.96, lowestSignal: "support" },
+      { key: "customer", label: { en: "Customer", nl: "Klant" }, type: "text", value: "Café Het Anker", readText: "Café Het Anker", page: 1, confidence: 0.95, lowestSignal: "match" },
+      { key: "order_number", label: { en: "Order number", nl: "Bestelnummer" }, type: "text", required: true, value: "ORD-3318", readText: "ORD-3318", page: 1, confidence: 0.78, lowestSignal: "fit", reasons: ["below_threshold"] },
+      { key: "order_date", label: { en: "Order date", nl: "Besteldatum" }, type: "date", value: "2026-09-21", readText: "21-09-2026", page: 1, confidence: 0.94, lowestSignal: "fit" },
+      { key: "product", label: { en: "Product", nl: "Product" }, type: "text", value: "Lumo E2", readText: "Lumo E2", page: 1, confidence: 0.91, lowestSignal: "support" },
+      { key: "problem", label: { en: "Problem seen", nl: "Probleem op de foto" }, type: "text", value: { en: "Puddle under the machine", nl: "Plas water onder de machine" }, readText: { en: "Puddle under the machine", nl: "Plas water onder de machine" }, page: 2, confidence: 0.74, lowestSignal: "support", reasons: ["below_threshold"] },
+    ],
+  },
+  {
     id: "invoice",
     filename: "invoice-F-2026-0418.pdf",
     form: { en: "Invoices", nl: "Facturen" },
@@ -64,6 +128,26 @@ export const seedDocuments: SeedDocument[] = [
       { key: "total_excl_vat", label: { en: "Total excl. VAT", nl: "Totaal excl. btw" }, type: "number", value: 1240, readText: "1.240,00", page: 1, confidence: 0.95, lowestSignal: "support" },
       { key: "vat_amount", label: { en: "VAT amount", nl: "Btw-bedrag" }, type: "number", value: 260.4, readText: "260,40", page: 1, confidence: 0.62, lowestSignal: "match", reasons: ["below_threshold"] },
       { key: "iban", label: { en: "IBAN", nl: "IBAN" }, type: "text", value: "NL91ABNA0417164300", readText: "NL91 ABNA 0417 1643 00", page: 1, confidence: 0.93, lowestSignal: "fit" },
+    ],
+  },
+  {
+    id: "workorder",
+    filename: "werkbon-0212.jpg",
+    kind: "image",
+    form: { en: "Work orders", nl: "Werkbonnen" },
+    uploadedBy: { en: "sem@kantoornoord.nl", nl: "sem@kantoornoord.nl" },
+    minutesAgo: 6,
+    routed: 0.91,
+    photoAlt: {
+      en: "Photo of a handwritten work order on a wooden table",
+      nl: "Foto van een handgeschreven werkbon op een houten tafel",
+    },
+    fields: [
+      { key: "customer", label: { en: "Customer", nl: "Klant" }, type: "text", required: true, value: "Café Het Anker", readText: "Café Het Anker", page: 1, confidence: 0.93, lowestSignal: "match" },
+      { key: "work_date", label: { en: "Date", nl: "Datum" }, type: "date", value: "2026-09-30", readText: "30/9/26", page: 1, confidence: 0.9, lowestSignal: "fit" },
+      { key: "work", label: { en: "Work done", nl: "Uitgevoerd werk" }, type: "text", value: "Kraan vervangen", readText: "Kraan vervangen", page: 1, confidence: 0.88, lowestSignal: "support" },
+      { key: "hours", label: { en: "Hours", nl: "Uren" }, type: "number", value: 2.5, readText: "2,5 u", page: 1, confidence: 0.64, lowestSignal: "fit", reasons: ["unsure"] },
+      { key: "materials", label: { en: "Materials", nl: "Materiaal" }, type: "text", value: "mengkraan + slangen", readText: "mengkraan + slangen", page: 1, confidence: 0.86, lowestSignal: "support" },
     ],
   },
   {
@@ -140,5 +224,24 @@ export const seedDocuments: SeedDocument[] = [
       { key: "vat", label: { en: "VAT", nl: "Btw" }, type: "number", value: 2.02, readText: "2,02", page: 1, confidence: 0.93, lowestSignal: "fit" },
       { key: "payment", label: { en: "Payment", nl: "Betaling" }, type: "text", value: "PIN", readText: "PIN", page: 1, confidence: 0.91, lowestSignal: "match" },
     ],
+  },
+  {
+    id: "newsletter",
+    filename: "Herfstacties Groothandel Bakker",
+    kind: "email",
+    form: { en: "", nl: "" },
+    uploadedBy: { en: "email from news@groothandelbakker.nl", nl: "e-mail van news@groothandelbakker.nl" },
+    minutesAgo: 12,
+    noForm: { en: "Invoices", nl: "Facturen" },
+    email: {
+      from: "Groothandel Bakker <news@groothandelbakker.nl>",
+      date: "2026-09-30T05:55:00Z",
+      body: {
+        en: "Autumn offers at Groothandel Bakker\n\nThis week: paper cups 250 ml at 8% off, and free delivery on orders over 150 euro.\n\nSee all offers on our website. You receive this newsletter because you are a customer.",
+        nl: "Herfstacties bij Groothandel Bakker\n\nDeze week: koffiebekers 250 ml met 8% korting, en gratis bezorging bij bestellingen boven 150 euro.\n\nBekijk alle acties op onze website. Je ontvangt deze nieuwsbrief omdat je klant bent.",
+      },
+      attachments: [],
+    },
+    fields: [],
   },
 ];

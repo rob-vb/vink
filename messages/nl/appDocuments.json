@@ -6,34 +6,48 @@
   "form": "Formulier",
   "list": {
     "welcome": "Welkom bij {organisation}",
-    "adminIntro": "Maak een Formulier voor elke soort document die je ontvangt, en Vink vult het in vanuit je pdf's.",
-    "memberIntro": "Een Admin maakt eerst een Formulier voor elke soort document die je ontvangt. Daarna kun je hier pdf's uploaden.",
+    "adminIntro": "Maak een Formulier voor elke soort document die je ontvangt, en Vink vult het in vanuit wat je ontvangt.",
+    "memberIntro": "Een Admin maakt eerst een Formulier voor elke soort document die je ontvangt. Daarna kun je hier bestanden uploaden.",
     "goToForms": "Naar Formulieren",
-    "extracting": "Wordt gelezen"
+    "extracting": "Wordt gelezen",
+    "noSystem": {
+      "title": "Nog geen systeem gekoppeld",
+      "description": "Goedgekeurde Documenten blijven in Vink. Koppel een systeem om ze door te sturen.",
+      "action": "Systeem koppelen"
+    }
   },
   "emailIn": {
     "button": "Per e-mail",
     "title": "Documenten per e-mail insturen",
-    "description": "Elk Formulier kan een eigen e-mailadres hebben. Pdf's die je daarheen stuurt, worden Documenten van dat Formulier."
+    "description": "De Organisatie heeft een e-mailadres, en elk Formulier kan er ook een hebben. Post aan het adres van de Organisatie gaat naar het Formulier dat past; post aan het adres van een Formulier gaat naar dat Formulier.",
+    "organisation": "Alle Formulieren (Vink kiest het Formulier)"
   },
   "upload": {
-    "button": "PDF's uploaden",
-    "title": "PDF's uploaden",
-    "description": "Elke pdf wordt een eigen Document. Vink vult het Formulier dat je kiest vanuit alle pagina's.",
-    "pdfs": "PDF's",
-    "drop": "Sleep pdf's hierheen, of <browse>kies bestanden</browse>",
-    "limit": "Maximaal 10 MB en 20 pagina's per pdf",
-    "notPdf": "Geen pdf.",
-    "tooLarge": "Groter dan 10 MB. Vink neemt pdf's tot 10 MB aan.",
-    "failed": "We konden deze pdf niet uploaden. Probeer het opnieuw.",
-    "outOfPages": "Je hebt nog {remaining} {remaining, plural, one {pagina} other {pagina's}}; deze pdf heeft er {needed}.",
-    "uploaded": "{count, plural, one {# pdf geüpload} other {# pdf's geüpload}}",
+    "button": "Uploaden",
+    "title": "Documenten uploaden",
+    "description": "Elk bestand en elke e-mail wordt een eigen Document. Vink vult het Formulier dat je kiest, of kiest zelf het Formulier.",
+    "files": "Bestanden",
+    "drop": "Sleep bestanden hierheen, of <browse>kies bestanden</browse>",
+    "limit": "Pdf, JPG, PNG, HEIC of een .eml-mail, maximaal 10 MB per bestand. Een pdf mag maximaal 20 pagina's hebben.",
+    "notSupported": "Dit bestand leest Vink niet. Kies een pdf, JPG, PNG, HEIC of .eml.",
+    "tooLarge": "Groter dan 10 MB. Vink neemt bestanden tot 10 MB aan.",
+    "failed": "We konden dit bestand niet uploaden. Probeer het opnieuw.",
+    "emailFailed": "We konden deze e-mail niet uploaden. Probeer het opnieuw.",
+    "outOfItems": "Je hebt nog {remaining} {remaining, plural, one {item} other {items}}; hiervoor zijn er {needed} nodig.",
+    "uploaded": "{count, plural, one {# document geüpload} other {# documenten geüpload}}",
     "readingNow": "Vink leest ze nu.",
     "view": "Bekijken",
     "close": "Sluiten",
-    "submit": "{count, plural, =0 {Uploaden} =1 {Uploaden} other {# pdf's uploaden}}",
+    "submit": "{count, plural, =0 {Uploaden} =1 {Uploaden} other {# bestanden uploaden}}",
+    "submitEmail": "E-mail toevoegen",
     "remove": "{filename} verwijderen",
-    "progress": "Uploadvoortgang"
+    "progress": "Uploadvoortgang",
+    "tabFiles": "Bestanden",
+    "tabEmail": "E-mailtekst",
+    "emailSubject": "Onderwerp (niet verplicht)",
+    "emailBody": "E-mailtekst",
+    "emailPlaceholder": "Plak hier de tekst van de e-mail",
+    "emailTooLarge": "De tekst is langer dan 200 KB. Stuur een kortere tekst."
   },
   "extracting": {
     "metaTitle": "Wordt gelezen · Vink",
@@ -54,22 +68,23 @@
     "rejected": "Afgewezen",
     "rejectedAndDeleted": "Afgewezen en verwijderd",
     "rejectedBy": "Door {name}, {date}",
-    "gone": "De pdf en de gegevens zijn weg; alleen dit record en de geschiedenis blijven bewaard.",
+    "gone": "Het bestand en de gegevens zijn weg; alleen dit record en de geschiedenis blijven bewaard.",
     "failedTitle": "Vink kon dit Document niet lezen",
-    "failedText": "Vink heeft het vier keer geprobeerd. Meestal is dit een tijdelijke storing, dus probeer het opnieuw. Als er al een Reading is opgeslagen, gaat de nieuwe poging daar verder en wordt de pdf niet opnieuw gelezen.",
+    "failedText": "Vink heeft het vier keer geprobeerd. Meestal is dit een tijdelijke storing, dus probeer het opnieuw. Als er al een Reading is opgeslagen, gaat de nieuwe poging daar verder en wordt het bestand niet opnieuw gelezen.",
+    "failedUnreadable": "Dit bestand is niet bruikbaar: het is beschadigd of van een type dat Vink niet leest. Een nieuwe poging helpt niet. Upload het opnieuw of wijs het af.",
     "retry": "Opnieuw proberen",
     "dataDeleted": "Gegevens verwijderd",
-    "dataDeletedBy": "De pdf, wat Vink las en de waarden zijn op {date} verwijderd door {name}. Alleen dit record, de geschiedenis en het leveringslog blijven bewaard.",
-    "dataDeletedRetention": "De pdf, wat Vink las en de waarden zijn op {date} verwijderd volgens de bewaartermijn van de Organisatie. Alleen dit record, de geschiedenis en het leveringslog blijven bewaard.",
-    "pdfDeleted": "De pdf is verwijderd.",
-    "pdfFailed": "De pdf kon niet worden geladen.",
+    "dataDeletedBy": "Het bestand, wat Vink las en de waarden zijn op {date} verwijderd door {name}. Alleen dit record, de geschiedenis en het leveringslog blijven bewaard.",
+    "dataDeletedRetention": "Het bestand, wat Vink las en de waarden zijn op {date} verwijderd volgens de bewaartermijn van de Organisatie. Alleen dit record, de geschiedenis en het leveringslog blijven bewaard.",
+    "pdfDeleted": "Het bestand is verwijderd.",
+    "pdfFailed": "Het bestand kon niet worden geladen.",
     "reading": "Vink leest dit Document",
     "readingText": "Dit kan tot een minuut duren. De Velden worden hier ingevuld zodra het klaar is."
   },
   "changeForm": {
     "button": "Formulier wijzigen",
     "title": "Het Formulier wijzigen",
-    "description": "Vink vult het nieuwe Formulier met wat het al op de pdf heeft gelezen. Alleen als het de pdf nog niet heeft gelezen, leest het de pdf opnieuw.",
+    "description": "Vink vult het nieuwe Formulier met wat het al op het Document heeft gelezen. Alleen als het nog niet gelezen is, leest het het bestand opnieuw.",
     "newForm": "Nieuw Formulier",
     "noOtherForms": "Geen andere Formulieren",
     "lost": "{count, plural, one {# correctie gaat verloren.} other {# correcties gaan verloren.}}",
@@ -78,7 +93,7 @@
   "reject": {
     "button": "Afwijzen",
     "title": "Dit Document afwijzen?",
-    "description": "{filename} wordt nooit goedgekeurd of verstuurd. Het blijft in de lijst Afgewezen staan, en je kunt het heropenen zolang de pdf bewaard wordt.",
+    "description": "{filename} wordt nooit goedgekeurd of verstuurd. Het blijft in de lijst Afgewezen staan, en je kunt het heropenen zolang het bestand bewaard wordt.",
     "reason": "Reden (optioneel)",
     "placeholder": "Lege scan, onleesbaar, geen werkbon…",
     "reasonHelp": "Je team ziet dit naast het Document.",
@@ -89,7 +104,7 @@
   "delete": {
     "button": "Nu verwijderen",
     "title": "{filename} definitief verwijderen?",
-    "description": "De pdf, wat Vink las, elke waarde en de antwoorden van je systeem worden nu verwijderd en zijn niet terug te halen. Leveringen die nog niet zijn verstuurd, worden geannuleerd. Alleen de bestandsnaam, wie het uploadde en goedkeurde, de datums, de geschiedenis en de leveringsstatus blijven bewaard, met de regel \"Verwijderd door jou\".",
+    "description": "Het bestand, wat Vink las, elke waarde en de antwoorden van je systeem worden nu verwijderd en zijn niet terug te halen. Leveringen die nog niet zijn verstuurd, worden geannuleerd. Alleen de bestandsnaam, wie het uploadde en goedkeurde, de datums, de geschiedenis en de leveringsstatus blijven bewaard, met de regel \"Verwijderd door jou\".",
     "toast": "{filename} is verwijderd."
   },
   "pdf": {
@@ -101,5 +116,46 @@
   },
   "delivery": {
     "sendAgain": "Opnieuw versturen"
+  },
+  "setup": {
+    "welcome": "Welkom bij {organisation}",
+    "intro": "Stel Vink in drie stappen in. Het kost een paar minuten.",
+    "label": "Stappen van de installatie",
+    "announce": "Stap {step} van 3: {name}",
+    "status": {
+      "done": "klaar",
+      "current": "huidige stap",
+      "todo": "nog te doen"
+    },
+    "tryAgain": "Dat is niet gelukt. Probeer het opnieuw.",
+    "bar": "De installatie is nog niet klaar: je zit bij stap {step} van 3.",
+    "barAction": "Verder met installeren",
+    "steps": {
+      "form": {
+        "name": "Formulier",
+        "title": "Maak je eerste Formulier",
+        "description": "Een Formulier noemt de velden die Vink invult voor één soort document, bijvoorbeeld een factuur. Begin met een voorbeeld, beschrijf het in woorden of begin leeg.",
+        "action": "Formulier maken"
+      },
+      "system": {
+        "name": "Systeem",
+        "title": "Koppel je systeem",
+        "description": "Een Koppeling stuurt elk goedgekeurd Document naar het systeem waarin je werkt. Je kunt dit ook later doen.",
+        "action": "Systeem koppelen",
+        "skip": "Nu overslaan"
+      },
+      "input": {
+        "name": "Input",
+        "title": "Kies hoe documenten binnenkomen",
+        "description": "Kies er één of meer. Je kunt dit altijd aanpassen.",
+        "uploadTitle": "Uploaden",
+        "uploadDescription": "Voeg pdf's, foto's of een e-mail met de hand toe. Handig voor een eerste test.",
+        "apiTitle": "API",
+        "apiDescription": "Stuur documenten vanuit je eigen software. Maak een API-sleutel bij Instellingen.",
+        "apiAction": "Naar Instellingen",
+        "finish": "Installatie afronden",
+        "finishHint": "Daarna is Documenten je startpagina."
+      }
+    }
   }
 }

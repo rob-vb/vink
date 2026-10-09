@@ -1,7 +1,11 @@
-// Email-in: a Form's Intake Address. A Cloudflare Worker (workers/intake-email)
-// receives the mail, puts each PDF attachment in R2 and calls `receive` over
-// HTTP; every attachment then passes the same checks as an upload.
-import { ConvexError, v } from "convex/values";
+// Email-in: an Intake Address, of a Form or of the Organisation. A Cloudflare
+// Worker (workers/intake-email) receives the mail, puts each PDF and image
+// attachment in R2 and calls `receive` over HTTP with the subject, date and
+// text. Every attachment passes the same checks as an upload, and Jev decides
+// whether the email is one Document or several (lib/mailPlan.ts, ADR 0010).
+// Mail to a Form's address is that Form's; mail to the Organisation's address
+// has no Form, and the Router picks it after Read.
+import { ConvexError, type ObjectType, v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import {
@@ -9,24 +13,61 @@ import {
   internalAction,
   internalMutation,
   internalQuery,
+  type ActionCtx,
   type MutationCtx,
   type QueryCtx,
 } from "./_generated/server";
-import { acceptPdf } from "./documents";
+import { checkPdf, createDocument } from "./documents";
 import { escapeHtml, sendEmail } from "./email";
+import { chargeItems } from "./items";
 import { orgMutation, orgQuery } from "./lib/functions";
-import { PDF_TOO_LARGE } from "./lib/pdfLimits";
+import {
+  ATTACHMENTS_TOO_LARGE,
+  COVER_NOTE_NOT_READ,
+  EMAIL_BODY_TOO_LARGE,
+  IMAGE_MIME_TYPES,
+  IMAGE_TOO_LARGE,
+  MAX_EMAIL_ATTACHMENT_BYTES,
+  MAX_EMAIL_ATTACHMENTS,
+  MAX_EMAIL_BODY_BYTES,
+  MAX_IMAGE_BYTES,
+  PDF_MIME_TYPE,
+  PDF_TOO_LARGE,
+  TOO_MANY_ATTACHMENTS,
+  UNSUPPORTED_TYPE,
+} from "./lib/inputLimits";
+import { splitInfo } from "./lib/eventInfo";
+import { itemsOfMail, itemsOfPlanned, type MailPart, needsSplitCall, planMail } from "./lib/mailPlan";
 import { pdfStore } from "./lib/pdfStore";
 import { sameSecret } from "./lib/secrets";
+import { sniffFile } from "./lib/sniff";
+import { emailFilename, storeEmail } from "./lib/storedEmail";
 
 const RECENT_EMAILS = 50;
+// The Worker cuts these too (workers/intake-email/src/map.ts); a caller with the secret is cut here.
+const MAX_FILENAME_CHARS = 255;
+const MAX_HEADER_CHARS = 320;
 const ALERT_EVERY = 24 * 60 * 60 * 1000;
+
+// Why an email part was refused without a Document: the texts of lib/inputLimits.ts.
+export { UNSUPPORTED_TYPE };
 
 // Why the Worker skipped an attachment without storing it.
 const skipReasons = {
-  not_pdf: "Not a PDF.",
+  unsupported_type: UNSUPPORTED_TYPE,
   too_large: PDF_TOO_LARGE,
+  image_too_large: IMAGE_TOO_LARGE,
+  too_many_attachments: TOO_MANY_ATTACHMENTS,
+  attachments_too_large: ATTACHMENTS_TOO_LARGE,
 } as const;
+
+const skipped = v.union(
+  v.literal("unsupported_type"),
+  v.literal("too_large"),
+  v.literal("image_too_large"),
+  v.literal("too_many_attachments"),
+  v.literal("attachments_too_large"),
+);
 
 /** An unguessable, lower-case local part: 24 characters from 0-9a-z. */
 function newToken() {
@@ -43,27 +84,44 @@ async function ownForm(ctx: QueryCtx, organisationId: Id<"organisations">, formI
   return form;
 }
 
-function addressOf(token: string) {
+/** Checks the Form belongs to the Organisation; `undefined` is the Organisation's own address. */
+async function checkScope(ctx: QueryCtx, organisationId: Id<"organisations">, formId?: Id<"forms">) {
+  if (formId !== undefined) await ownForm(ctx, organisationId, formId);
+}
+
+/** The Form's Intake Address, or with no `formId`, the Organisation's. */
+function addressOf(ctx: QueryCtx, organisationId: Id<"organisations">, formId?: Id<"forms">) {
+  return ctx.db
+    .query("intakeAddresses")
+    .withIndex("by_organisationId_and_formId", (q) =>
+      q.eq("organisationId", organisationId).eq("formId", formId),
+    )
+    .unique();
+}
+
+function addressText(token: string) {
   const domain = process.env.INBOUND_DOMAIN;
   return domain ? `${token}@${domain}` : null;
 }
 
-/** The Form's Intake Address and its Recent emails, newest first. Every Member may see it. */
+/**
+ * The Intake Address of a Form, or with no `formId` of the Organisation, and its
+ * Recent emails, newest first. Every Member may see it.
+ */
 export const get = orgQuery({
-  args: { formId: v.id("forms") },
+  args: { formId: v.optional(v.id("forms")) },
   handler: async (ctx, { formId }) => {
-    await ownForm(ctx, ctx.organisationId, formId);
-    const intake = await ctx.db
-      .query("intakeAddresses")
-      .withIndex("by_formId", (q) => q.eq("formId", formId))
-      .unique();
+    await checkScope(ctx, ctx.organisationId, formId);
+    const intake = await addressOf(ctx, ctx.organisationId, formId);
     const emails = await ctx.db
       .query("intakeEmails")
-      .withIndex("by_formId", (q) => q.eq("formId", formId))
+      .withIndex("by_organisationId_and_formId", (q) =>
+        q.eq("organisationId", ctx.organisationId).eq("formId", formId),
+      )
       .order("desc")
       .take(RECENT_EMAILS);
     return {
-      address: intake ? addressOf(intake.token) : null,
+      address: intake ? addressText(intake.token) : null,
       // Switched on, but this deployment has no INBOUND_DOMAIN yet.
       pendingDomain: intake !== null && !process.env.INBOUND_DOMAIN,
       recentEmails: emails.map((e) => ({
@@ -78,14 +136,10 @@ export const get = orgQuery({
 
 export const switchOn = orgMutation({
   role: "admin",
-  args: { formId: v.id("forms") },
+  args: { formId: v.optional(v.id("forms")) },
   handler: async (ctx, { formId }) => {
-    await ownForm(ctx, ctx.organisationId, formId);
-    const existing = await ctx.db
-      .query("intakeAddresses")
-      .withIndex("by_formId", (q) => q.eq("formId", formId))
-      .unique();
-    if (existing) return;
+    await checkScope(ctx, ctx.organisationId, formId);
+    if (await addressOf(ctx, ctx.organisationId, formId)) return;
     await ctx.db.insert("intakeAddresses", {
       organisationId: ctx.organisationId,
       formId,
@@ -94,30 +148,27 @@ export const switchOn = orgMutation({
   },
 });
 
-async function removeAddress(ctx: MutationCtx, formId: Id<"forms">) {
-  const existing = await ctx.db
-    .query("intakeAddresses")
-    .withIndex("by_formId", (q) => q.eq("formId", formId))
-    .unique();
+async function removeAddress(ctx: MutationCtx, organisationId: Id<"organisations">, formId?: Id<"forms">) {
+  const existing = await addressOf(ctx, organisationId, formId);
   if (existing) await ctx.db.delete(existing._id);
 }
 
 export const switchOff = orgMutation({
   role: "admin",
-  args: { formId: v.id("forms") },
+  args: { formId: v.optional(v.id("forms")) },
   handler: async (ctx, { formId }) => {
-    await ownForm(ctx, ctx.organisationId, formId);
-    await removeAddress(ctx, formId);
+    await checkScope(ctx, ctx.organisationId, formId);
+    await removeAddress(ctx, ctx.organisationId, formId);
   },
 });
 
-/** A new address for the Form; the old one stops at once (e.g. after a leak). */
+/** A new address; the old one stops at once (e.g. after a leak). */
 export const replace = orgMutation({
   role: "admin",
-  args: { formId: v.id("forms") },
+  args: { formId: v.optional(v.id("forms")) },
   handler: async (ctx, { formId }) => {
-    await ownForm(ctx, ctx.organisationId, formId);
-    await removeAddress(ctx, formId);
+    await checkScope(ctx, ctx.organisationId, formId);
+    await removeAddress(ctx, ctx.organisationId, formId);
     await ctx.db.insert("intakeAddresses", {
       organisationId: ctx.organisationId,
       formId,
@@ -133,6 +184,7 @@ export const resolve = internalQuery({
       .query("intakeAddresses")
       .withIndex("by_token", (q) => q.eq("token", token))
       .unique();
+    // No `formId`: the Organisation's address, and the Router picks the Form.
     return intake && { organisationId: intake.organisationId, formId: intake.formId };
   },
 });
@@ -147,30 +199,31 @@ const outcome = v.object({
 export const record = internalMutation({
   args: {
     organisationId: v.id("organisations"),
-    formId: v.id("forms"),
+    formId: v.optional(v.id("forms")),
     from: v.string(),
     receivedAt: v.number(),
     attachments: v.array(outcome),
-    outOfPages: v.boolean(),
+    outOfItems: v.boolean(),
   },
-  handler: async (ctx, { outOfPages, ...email }) => {
+  handler: async (ctx, { outOfItems, ...email }) => {
     await ctx.db.insert("intakeEmails", email);
     const older = await ctx.db
       .query("intakeEmails")
-      .withIndex("by_formId", (q) => q.eq("formId", email.formId))
+      .withIndex("by_organisationId_and_formId", (q) =>
+        q.eq("organisationId", email.organisationId).eq("formId", email.formId),
+      )
       .order("desc")
       .collect();
     for (const stale of older.slice(RECENT_EMAILS)) await ctx.db.delete(stale._id);
 
-    if (!outOfPages) return;
-    const intake = await ctx.db
-      .query("intakeAddresses")
-      .withIndex("by_formId", (q) => q.eq("formId", email.formId))
-      .unique();
+    if (!outOfItems) return;
+    const intake = await addressOf(ctx, email.organisationId, email.formId);
     const now = Date.now();
-    if (!intake || (intake.outOfPagesAlertAt ?? 0) > now - ALERT_EVERY) return;
-    await ctx.db.patch(intake._id, { outOfPagesAlertAt: now });
-    const form = (await ctx.db.get(email.formId))!;
+    // TODO(narrow): read only `outOfItemsAlertAt` (see items.backfillItems).
+    const alertedAt = intake?.outOfItemsAlertAt ?? intake?.outOfPagesAlertAt ?? 0;
+    if (!intake || alertedAt > now - ALERT_EVERY) return;
+    await ctx.db.patch(intake._id, { outOfItemsAlertAt: now, outOfPagesAlertAt: undefined });
+    const form = email.formId === undefined ? null : await ctx.db.get(email.formId);
     const admins = (
       await ctx.db
         .query("memberships")
@@ -180,91 +233,365 @@ export const record = internalMutation({
         .collect()
     ).filter((m) => m.role === "admin" && m.email);
     for (const admin of admins) {
-      await ctx.scheduler.runAfter(0, internal.intake.alertOutOfPages, {
+      await ctx.scheduler.runAfter(0, internal.intake.alertOutOfItems, {
         to: admin.email!,
-        formName: form.name,
+        // `null`: the Organisation's address.
+        formName: form?.name ?? null,
       });
     }
   },
 });
 
-export const alertOutOfPages = internalAction({
-  args: { to: v.string(), formName: v.string() },
+export const alertOutOfItems = internalAction({
+  args: { to: v.string(), formName: v.union(v.string(), v.null()) },
   handler: async (_ctx, { to, formName }) => {
     const upgrade = `${process.env.SITE_URL ?? ""}/contact`;
+    const where = formName === null ? "the Organisation Intake Address" : formName;
     await sendEmail({
       to,
-      subject: `Emails to ${formName} are being refused: out of Pages`,
-      html: `<p>PDFs emailed to the Intake Address of <strong>${escapeHtml(formName)}</strong> are being refused because your Organisation has no pages left. Nothing is sent back to the sender.</p><p><a href="${upgrade}">Upgrade to get more pages</a></p><p>You get this email at most once a day.</p>`,
+      subject: `Emails to ${where} are being refused: out of Items`,
+      html: `<p>Emails sent to <strong>${escapeHtml(where)}</strong> are being refused because your Organisation has no items left. Nothing is sent back to the sender.</p><p><a href="${upgrade}">Upgrade to get more items</a></p><p>You get this email at most once a day.</p>`,
     });
   },
 });
-
 
 function reasonOf(error: unknown) {
   if (!(error instanceof ConvexError)) throw error;
   const { data } = error;
   return typeof data === "object" && data !== null && "message" in data
-    ? { reason: String(data.message), outOfPages: data.code === "out_of_pages" }
-    : { reason: String(data), outOfPages: false };
+    ? { reason: String(data.message), outOfItems: data.code === "out_of_items" }
+    : { reason: String(data), outOfItems: false };
 }
 
 const attachment = v.union(
-  v.object({ key: v.string(), filename: v.string() }),
-  v.object({ filename: v.string(), skipped: v.union(v.literal("not_pdf"), v.literal("too_large")) }),
+  // `mimeType` is the Worker's (application/pdf or an image type).
+  v.object({ key: v.string(), filename: v.string(), mimeType: v.optional(v.string()) }),
+  v.object({ filename: v.string(), skipped }),
 );
 
+type Outcome = { filename: string; outcome: "created" | "refused"; reason: string | null };
+
+const created = (filename: string): Outcome => ({ filename, outcome: "created", reason: null });
+const refusedOutcome = (filename: string, reason: string): Outcome => ({
+  filename,
+  outcome: "refused",
+  reason,
+});
+
+/** A part that passed the checks, with where its outcome sits in Recent emails. */
+type CheckedPart = MailPart & { outcomeAt: number };
+
+/** A PDF or an image of the email, checked like an upload; a refused one is removed from storage. */
+async function checkPart(
+  ctx: ActionCtx,
+  key: string,
+  mimeType: string,
+): Promise<{ kind: "pdf" | "image"; mimeType: string; pageCount: number; size: number }> {
+  if (mimeType === PDF_MIME_TYPE) {
+    const bytes = await pdfStore.read(key);
+    const size = bytes?.length ?? 0;
+    const pageCount = await checkPdf(ctx, key);
+    return { kind: "pdf", mimeType, pageCount, size };
+  }
+  try {
+    if (!(IMAGE_MIME_TYPES as readonly string[]).includes(mimeType)) throw new ConvexError(UNSUPPORTED_TYPE);
+    const bytes = await pdfStore.read(key);
+    if (bytes === null) throw new ConvexError("The upload didn't arrive. Try again.");
+    if (bytes.length > MAX_IMAGE_BYTES) throw new ConvexError(IMAGE_TOO_LARGE);
+    // The sender's type is a claim: the bytes say what the file is (HEIF is HEIC).
+    const sniffed = sniffFile(bytes);
+    if (sniffed === null || sniffed.kind !== "image") throw new ConvexError(UNSUPPORTED_TYPE);
+    return { kind: "image", mimeType: sniffed.mimeType, pageCount: 1, size: bytes.length };
+  } catch (error) {
+    await pdfStore.remove(ctx, key);
+    throw error;
+  }
+}
+
+/** One planned Document, ready for the mutation. */
+const planned = v.object({
+  kind: v.union(v.literal("pdf"), v.literal("email"), v.literal("image")),
+  mimeType: v.string(),
+  key: v.string(),
+  filename: v.string(),
+  pageCount: v.number(),
+  attachmentKeys: v.array(v.string()),
+  items: v.number(),
+});
+
 /**
- * One email from the Worker: each PDF attachment passes the same checks as an
- * upload (readable, at most 20 pages, fits the Pages) and becomes a Document of
- * the Form. A refused one creates nothing and is removed from R2.
+ * Creates the Documents of one email and charges their Items once, in one
+ * transaction: all of them, or (out of Items) none.
+ */
+export const accept = internalMutation({
+  args: {
+    organisationId: v.id("organisations"),
+    formId: v.optional(v.id("forms")),
+    documents: v.array(planned),
+    /** What an out-of-Items refusal calls the input. */
+    what: v.string(),
+    split: v.optional(splitInfo),
+    uploaderEmail: v.string(),
+  },
+  handler: async (ctx, { documents, what, ...rest }) => {
+    await chargeItems(
+      ctx,
+      rest.organisationId,
+      documents.reduce((sum, d) => sum + d.items, 0),
+      what,
+    );
+    for (const document of documents) {
+      await createDocument(ctx, {
+        organisationId: rest.organisationId,
+        formId: rest.formId,
+        split: rest.split,
+        uploadedBy: "email",
+        uploaderEmail: rest.uploaderEmail,
+        kind: document.kind,
+        mimeType: document.mimeType,
+        key: document.key,
+        filename: document.filename,
+        pageCount: document.pageCount,
+        attachmentKeys: document.attachmentKeys,
+      });
+    }
+  },
+});
+
+const receiveArgs = {
+  token: v.string(),
+  from: v.string(),
+  receivedAt: v.number(),
+  subject: v.optional(v.string()),
+  date: v.optional(v.string()),
+  body: v.optional(v.string()),
+  // The Worker did not send a text that is over the limit.
+  bodyTooLarge: v.optional(v.boolean()),
+  attachments: v.array(attachment),
+};
+
+/**
+ * One email from the Worker. Its text and each PDF or image attachment pass the
+ * same checks as an upload (readable, at most 20 pages, fits the Items). Jev
+ * decides whether the parts are one Document or several (lib/mailPlan.ts), and
+ * the Items of the whole email are charged once; an email Vink cannot afford is
+ * refused whole. A refused part creates nothing and is removed from R2. An
+ * email with nothing to process creates no Document and costs nothing, and a
+ * text Jev calls a cover note ("see attachment", at most 4000 characters) is
+ * no Document and costs nothing either; its row in Recent emails says it was
+ * not read. When anything fails before the Documents exist, every file the
+ * Worker stored is removed and the error goes back, so the sender retries. After
+ * that the mail is accepted whatever else fails (a retry would charge twice).
+ *
+ * Which attachments reach this action is the Worker's call: it drops small
+ * inline images (signature logos, social icons) before it sends the list
+ * (workers/intake-email/src/map.ts). This action does not filter them again.
  */
 export const receive = internalAction({
-  args: {
-    token: v.string(),
-    from: v.string(),
-    receivedAt: v.number(),
-    attachments: v.array(attachment),
-  },
-  handler: async (ctx, { token, from, receivedAt, attachments }) => {
-    const target = await ctx.runQuery(internal.intake.resolve, { token });
-    if (target === null) {
-      for (const a of attachments) if ("key" in a) await pdfStore.remove(ctx, a.key);
-      return { found: false as const };
+  args: receiveArgs,
+  handler: async (ctx, args) => {
+    // Every file the Worker stored. Until the Documents exist, a failure here must not leave them in storage.
+    const stored = args.attachments.flatMap((a) => ("key" in a ? [a.key] : []));
+    const emailKeys: string[] = [];
+    let committed = false;
+    try {
+      return await receiveMail(ctx, args, emailKeys, () => {
+        committed = true;
+      });
+    } catch (error) {
+      if (!committed) for (const key of [...emailKeys, ...stored]) await pdfStore.remove(ctx, key);
+      throw error;
     }
-    const outcomes = [];
-    let outOfPages = false;
-    for (const a of attachments) {
-      if ("skipped" in a) {
-        outcomes.push({ filename: a.filename, outcome: "refused" as const, reason: skipReasons[a.skipped] });
+  },
+});
+
+async function receiveMail(
+  ctx: ActionCtx,
+  { token, receivedAt, ...mail }: ObjectType<typeof receiveArgs>,
+  emailKeys: string[],
+  onCommitted: () => void,
+) {
+  const from = mail.from.slice(0, MAX_HEADER_CHARS);
+  const subject = (mail.subject ?? "").slice(0, MAX_HEADER_CHARS);
+  const date = mail.date ?? "";
+  const body = mail.body ?? "";
+  const rest = {
+    bodyTooLarge: mail.bodyTooLarge,
+    attachments: mail.attachments.map((a) => ({ ...a, filename: a.filename.slice(0, MAX_FILENAME_CHARS) })),
+  };
+  const target = await ctx.runQuery(internal.intake.resolve, { token });
+  if (target === null) {
+    for (const a of rest.attachments) if ("key" in a) await pdfStore.remove(ctx, a.key);
+    return { found: false as const };
+  }
+
+  // Recent emails: the text first, then each attachment. A placeholder stands for
+  // every part until the email is accepted or refused whole.
+  const outcomes: Outcome[] = [];
+  let text = body.trim();
+  let textAt = -1;
+  if (rest.bodyTooLarge || new TextEncoder().encode(text).length > MAX_EMAIL_BODY_BYTES) {
+    outcomes.push(refusedOutcome(emailFilename(subject, from), EMAIL_BODY_TOO_LARGE));
+    text = "";
+  } else if (text !== "") {
+    textAt = outcomes.push(created(emailFilename(subject, from))) - 1;
+  }
+  const parts: CheckedPart[] = [];
+  let bytesLeft = MAX_EMAIL_ATTACHMENT_BYTES;
+  for (const a of rest.attachments) {
+    if ("skipped" in a) {
+      outcomes.push(refusedOutcome(a.filename, skipReasons[a.skipped]));
+      continue;
+    }
+    const refuse = async (reason: string) => {
+      outcomes.push(refusedOutcome(a.filename, reason));
+      await pdfStore.remove(ctx, a.key);
+    };
+    if (parts.length >= MAX_EMAIL_ATTACHMENTS) {
+      await refuse(TOO_MANY_ATTACHMENTS);
+      continue;
+    }
+    let checked;
+    try {
+      checked = await checkPart(ctx, a.key, (a.mimeType ?? PDF_MIME_TYPE).toLowerCase());
+    } catch (error) {
+      outcomes.push(refusedOutcome(a.filename, reasonOf(error).reason));
+      continue;
+    }
+    if (checked.size > bytesLeft) {
+      await refuse(ATTACHMENTS_TOO_LARGE);
+      continue;
+    }
+    bytesLeft -= checked.size;
+    parts.push({
+      filename: a.filename,
+      mimeType: checked.mimeType,
+      key: a.key,
+      kind: checked.kind,
+      pageCount: checked.pageCount,
+      outcomeAt: outcomes.push(created(a.filename)) - 1,
+    });
+  }
+
+  // Before anything is written: Jev's call. If it fails, the sender's server retries.
+  const decision = needsSplitCall(text, parts)
+    ? await ctx.runAction(internal.intakeSplit.decide, {
+        subject,
+        from,
+        body: text,
+        attachments: parts.map((p) => ({
+          filename: p.filename,
+          kind: p.kind,
+          pageCount: p.kind === "pdf" ? p.pageCount : null,
+        })),
+      })
+    : null;
+  const plan = planMail(text, parts, decision);
+  // A cover note is no Document, but its row stays in Recent emails: it shows that the text was not read.
+  if (plan.coverNote && textAt >= 0) {
+    outcomes[textAt] = refusedOutcome(outcomes[textAt].filename, COVER_NOTE_NOT_READ);
+    textAt = -1;
+  }
+
+  const documents: Array<typeof planned.type> = [];
+  let outOfItems = false;
+  let accepted = false;
+  try {
+    for (const d of plan.documents) {
+      const items = itemsOfPlanned(d, text);
+      if (d.kind !== "email") {
+        documents.push({
+          kind: d.kind,
+          mimeType: d.part.mimeType,
+          key: d.part.key,
+          filename: d.part.filename,
+          pageCount: d.part.pageCount,
+          attachmentKeys: [],
+          items,
+        });
         continue;
       }
-      try {
-        await acceptPdf(ctx, {
-          organisationId: target.organisationId,
-          formId: target.formId,
-          key: a.key,
-          filename: a.filename,
-          uploadedBy: "email",
-          uploaderEmail: `email from ${from}`,
-        });
-        outcomes.push({ filename: a.filename, outcome: "created" as const, reason: null });
-      } catch (error) {
-        const refused = reasonOf(error);
-        outOfPages ||= refused.outOfPages;
-        outcomes.push({ filename: a.filename, outcome: "refused" as const, reason: refused.reason });
-      }
+      // The server writes the email's file, under the Organisation's prefix, and moves
+      // its attachments beside it, where only this email's file points (lib/storedEmail.ts).
+      const stored = await storeEmail(
+        ctx,
+        target.organisationId,
+        { subject, from, date, body: text },
+        await Promise.all(
+          d.parts.map(async (part) => ({
+            filename: part.filename,
+            mimeType: part.mimeType,
+            pageCount: part.pageCount,
+            bytes: (await pdfStore.read(part.key))!,
+          })),
+        ),
+      );
+      emailKeys.push(stored.key, ...stored.attachmentKeys);
+      documents.push({
+        kind: "email",
+        mimeType: "application/json",
+        key: stored.key,
+        filename: emailFilename(subject, from),
+        // The email's own page: the body (see Verify in lib/reader.ts).
+        pageCount: 1,
+        attachmentKeys: stored.attachmentKeys,
+        items,
+      });
     }
+    // However it is split, the Documents add up to the whole email (a cover note is no Document and costs nothing).
+    const whole = itemsOfMail(text, parts, plan);
+    if (documents.reduce((sum, d) => sum + d.items, 0) !== whole) {
+      throw new Error("The Items of the split do not add up to the email's");
+    }
+    if (documents.length > 0) {
+      const lone = documents.length === 1 ? documents[0] : null;
+      await ctx.runMutation(internal.intake.accept, {
+        organisationId: target.organisationId,
+        formId: target.formId,
+        documents,
+        what: lone?.kind === "pdf" ? "PDF" : lone?.kind === "image" ? "image" : "email",
+        ...(plan.unsure === null ? {} : { split: plan.unsure }),
+        uploaderEmail: `email from ${from}`,
+      });
+    }
+    // From here the Documents exist: storage is not rolled back, and a failure below must not make the Worker retry (that would charge twice).
+    onCommitted();
+    accepted = true;
+  } catch (error) {
+    // Refused whole: nothing stays in storage.
+    for (const key of emailKeys) await pdfStore.remove(ctx, key);
+    for (const part of parts) await pdfStore.remove(ctx, part.key);
+    const refused = reasonOf(error);
+    outOfItems = refused.outOfItems;
+    if (textAt >= 0) outcomes[textAt] = refusedOutcome(outcomes[textAt].filename, refused.reason);
+    for (const part of parts) outcomes[part.outcomeAt] = refusedOutcome(part.filename, refused.reason);
+  }
+  if (accepted) {
+    // The attachments of an email Document were copied under its own key.
+    try {
+      for (const part of plan.documents.flatMap((d) => (d.kind === "email" ? d.parts : []))) {
+        await pdfStore.remove(ctx, part.key);
+      }
+    } catch (error) {
+      // The Documents exist; a file left behind is only clutter. Not a reason to have the mail sent again.
+      console.error("Could not remove the stored attachments of an accepted email", error);
+    }
+  }
+  try {
     await ctx.runMutation(internal.intake.record, {
       ...target,
       from,
       receivedAt,
       attachments: outcomes,
-      outOfPages,
+      outOfItems,
     });
-    return { found: true as const, attachments: outcomes };
-  },
-});
+  } catch (error) {
+    if (!accepted) throw error;
+    // The Documents exist, so the Worker must not retry; only the row in Recent emails is lost.
+    console.error("Could not record an accepted email in Recent emails", error);
+  }
+  return { found: true as const, attachments: outcomes };
+}
 
 /** POST /intake/email, from the Worker only: `Authorization: Bearer <INTAKE_SECRET>`. */
 export const email = httpAction(async (ctx, request) => {
@@ -279,19 +606,12 @@ export const email = httpAction(async (ctx, request) => {
   } catch {
     return new Response("Bad request", { status: 400 });
   }
-  const { token, from, receivedAt, attachments } = body as {
-    token: string;
-    from: string;
-    receivedAt: number;
-    attachments: Array<{ key: string; filename: string } | { filename: string; skipped: "not_pdf" | "too_large" }>;
-  };
+  const mail = body as ObjectType<typeof receiveArgs>;
   let result;
   try {
     result = await ctx.runAction(internal.intake.receive, {
-      token: String(token).toLowerCase(),
-      from,
-      receivedAt,
-      attachments,
+      ...mail,
+      token: String(mail.token).toLowerCase(),
     });
   } catch {
     return new Response("Bad request", { status: 400 });
@@ -299,4 +619,3 @@ export const email = httpAction(async (ctx, request) => {
   if (!result.found) return new Response("Unknown address", { status: 404 });
   return Response.json({ attachments: result.attachments });
 });
-

@@ -28,7 +28,7 @@ import { ScaledStill } from "@/components/features/scaled-still";
 import { Container, Eyebrow, SectionHeading } from "@/components/marketing/section";
 import { Link } from "@/i18n/navigation";
 import { isLocale, routing, type Locale } from "@/i18n/routing";
-import { custom, formatEuro, formatNumber, perPage, plans } from "@/lib/plans";
+import { custom, formatEuro, formatNumber, perItem, plans } from "@/lib/plans";
 import { platforms } from "@/lib/platforms";
 import { sampleEnvelopeJson } from "@/lib/sample-payload";
 import { localeUrl, pageMetadata } from "@/lib/seo";
@@ -446,9 +446,9 @@ function PricingRow({ locale }: { locale: Locale }) {
                 {formatEuro(plan.monthly, locale)}
                 <small className="text-sm font-medium text-muted-foreground">{t("perMonth")}</small>
               </p>
-              <p className="font-mono text-sm">{t("pages", { count: formatNumber(plan.pages, locale) })}</p>
+              <p className="font-mono text-sm">{t("pages", { count: formatNumber(plan.items, locale) })}</p>
               <p className="text-[13px] text-muted-foreground">
-                {t("perPage", { price: formatEuro(perPage(plan, "monthly"), locale, 3) })}
+                {t("perPage", { price: formatEuro(perItem(plan, "monthly"), locale, 3) })}
               </p>
             </div>
           ))}
@@ -459,7 +459,7 @@ function PricingRow({ locale }: { locale: Locale }) {
               {formatEuro(custom.fromMonthly, locale)}
               <small className="text-sm font-medium text-muted-foreground">{t("perMonth")}</small>
             </p>
-            <p className="font-mono text-sm">{t("customPages", { count: formatNumber(custom.fromPages, locale) })}</p>
+            <p className="font-mono text-sm">{t("customPages", { count: formatNumber(custom.fromItems, locale) })}</p>
             <p className="text-[13px] text-muted-foreground">{t("customNote")}</p>
           </div>
         </div>

@@ -3,9 +3,18 @@
 // run.ts runs it with the real adapters; tests run it with the Seam 1 fakes.
 import { createHash } from "node:crypto";
 import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { extname, join } from "node:path";
 import { extract } from "../../convex/lib/extract";
-import type { Filler, FlatField, ListField, Matcher, Reader, Verifier } from "../../convex/lib/pipeline";
+import type {
+  EmailAttachment,
+  Filler,
+  FlatField,
+  ListField,
+  Matcher,
+  Reader,
+  ReaderInput,
+  Verifier,
+} from "../../convex/lib/pipeline";
 import { type Usage, usage } from "../../convex/lib/usage";
 import type { Recording } from "../../convex/test.setup";
 import { type Expected, type FixtureForm, scoreFixture } from "./score";
@@ -19,6 +28,7 @@ type Step = "read" | "match" | "fill" | "verify";
 
 export type DocumentResult = {
   document: string;
+  /** A PDF's pages; 1 for an image or an email (its Items, bar attachments). */
   pages: number;
   score: ReturnType<typeof scoreFixture>;
   /** Wall-clock time per step, and for the whole Document. */
@@ -59,17 +69,90 @@ function costOf(entries: Usage[], prices: Prices) {
 
 const json = <T>(path: string) => JSON.parse(readFileSync(path, "utf8")) as T;
 
+const IMAGE_TYPES: Record<string, string> = {
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".png": "image/png",
+  ".heic": "image/heic",
+};
+
 /**
- * The Reader, but each PDF's Reading is kept in `dir` (by the PDF's sha256)
- * and reused after the first read, so Match and Fill changes can be compared
- * on the same Readings: Read differs from run to run.
+ * A minimal plain-text .eml: the headers Subject, From and Date, a blank line,
+ * then the body as UTF-8 text. Multipart and encoded mails are refused: put
+ * the attachments in the fixture's `attachments/` folder instead.
+ */
+export function parseEml(eml: string): Omit<Extract<ReaderInput, { kind: "email" }>, "kind" | "attachments"> {
+  const [head, ...rest] = eml.replace(/\r\n/g, "\n").split("\n\n");
+  const headers = new Map<string, string>();
+  for (const line of head.replace(/\n[ \t]+/g, " ").split("\n")) {
+    const colon = line.indexOf(":");
+    if (colon > 0) headers.set(line.slice(0, colon).toLowerCase(), line.slice(colon + 1).trim());
+  }
+  const contentType = headers.get("content-type") ?? "text/plain";
+  const encoding = (headers.get("content-transfer-encoding") ?? "7bit").toLowerCase();
+  if (!contentType.toLowerCase().startsWith("text/plain") || !["7bit", "8bit"].includes(encoding)) {
+    throw new Error(`Only a plain-text, 7bit or 8bit .eml is supported (got ${contentType}, ${encoding})`);
+  }
+  const need = (name: string) => {
+    const value = headers.get(name);
+    if (value === undefined) throw new Error(`The .eml has no ${name} header`);
+    return value;
+  };
+  return { subject: need("subject"), from: need("from"), date: need("date"), body: rest.join("\n\n").trim() };
+}
+
+/**
+ * The Reader's input for a fixture Document, by the file it holds:
+ * document.pdf, document.jpg|jpeg|png|heic, or document.eml (with its
+ * attachments, if any, in attachments/).
+ */
+export function loadInput(dir: string, pages: number): ReaderInput {
+  const bytesOf = (path: string) => new Uint8Array(readFileSync(path));
+  const file = readdirSync(dir).find((name) => /^document\.[a-z]+$/.test(name));
+  if (file === undefined) throw new Error(`No document.pdf, image or .eml in ${dir}`);
+  const extension = extname(file).toLowerCase();
+  if (extension === ".pdf") return { kind: "pdf", bytes: bytesOf(join(dir, file)), pageCount: pages };
+  if (IMAGE_TYPES[extension]) {
+    return { kind: "image", bytes: bytesOf(join(dir, file)), mimeType: IMAGE_TYPES[extension] };
+  }
+  if (extension === ".eml") {
+    const attachmentsDir = join(dir, "attachments");
+    const attachments: EmailAttachment[] = existsSync(attachmentsDir)
+      ? readdirSync(attachmentsDir)
+          .sort()
+          .map((filename) => {
+            const mimeType = extname(filename).toLowerCase() === ".pdf" ? "application/pdf" : IMAGE_TYPES[extname(filename).toLowerCase()];
+            if (!mimeType) throw new Error(`Attachment ${filename} is not a PDF or an image`);
+            return { filename, mimeType, bytes: bytesOf(join(attachmentsDir, filename)) };
+          })
+      : [];
+    return { kind: "email", ...parseEml(readFileSync(join(dir, file), "utf8")), attachments };
+  }
+  throw new Error(`Unknown fixture file ${file}`);
+}
+
+const sha256 = (bytes: Uint8Array | string) => createHash("sha256").update(bytes).digest("hex");
+
+/** What the stored Reading is keyed by: the file's hash (as before for a PDF); an email's text and attachments' hashes. */
+function fingerprint(input: ReaderInput) {
+  if (input.kind !== "email") return sha256(input.bytes);
+  const { subject, from, date, body, attachments } = input;
+  return sha256(
+    JSON.stringify({ subject, from, date, body, attachments: attachments.map((a) => [a.filename, sha256(a.bytes)]) }),
+  );
+}
+
+/**
+ * The Reader, but each Document's Reading is kept in `dir` (by the input's
+ * sha256) and reused after the first read, so Match and Fill changes can be
+ * compared on the same Readings: Read differs from run to run.
  */
 function storedReadings(reader: Reader, dir: string): Reader {
   return {
-    async read(pdf) {
-      const file = join(dir, `${createHash("sha256").update(pdf).digest("hex")}.json`);
+    async read(input) {
+      const file = join(dir, `${fingerprint(input)}.json`);
       if (existsSync(file)) return json<Awaited<ReturnType<Reader["read"]>>>(file);
-      const read = await reader.read(pdf);
+      const read = await reader.read(input);
       writeFileSync(file, JSON.stringify(read));
       return read;
     },
@@ -122,9 +205,9 @@ export async function evaluate({
 
     const start = performance.now();
     try {
-      const pdf = new Uint8Array(readFileSync(join(dir, "document.pdf")));
-      const { reading, textLayer } = await timed("read", reader.read)(pdf);
-      const recording: Required<Omit<Recording, "proposal">> = {
+      const input = loadInput(dir, expected.pages);
+      const { reading, textLayer } = await timed("read", reader.read)(input);
+      const recording: Required<Omit<Recording, "proposal" | "route" | "split">> = {
         reading,
         textLayer,
         matches: {},

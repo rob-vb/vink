@@ -1,8 +1,10 @@
 import type { FieldValueData, Value } from "@/components/documents/field-row-view";
+import type { EmailData } from "@/components/documents/email-pane-view";
 import type { DocumentEvent, DocumentState, ReviewReason } from "@/components/documents/labels";
 import type { ListData } from "@/components/documents/list-group-view";
-import { DEMO_USER, seedDocuments, type SeedField } from "./demo-data";
-import type { DemoDocumentId } from "./demo-papers";
+import type { EventInfo } from "@/convex/lib/eventInfo";
+import { DEMO_USER, inLocale, seedDocuments, type SeedField } from "./demo-data";
+import type { DemoDocumentId, DemoPhotoId } from "./demo-papers";
 
 /*
  * The demo's Documents and what the visitor did to them. The rules follow the
@@ -17,11 +19,31 @@ export type DemoFieldValue = FieldValueData & { extracted: Value; reasons: Revie
 
 export type DemoList = ListData<DemoFieldValue> & { reasons: ReviewReason[]; page: number };
 
-export type DemoEvent = { event: DocumentEvent; detail: string | null; by: string; at: number };
+export type DemoEvent = {
+  event: DocumentEvent;
+  detail: string | null;
+  info?: EventInfo | null;
+  by: string;
+  at: number;
+};
+
+/** A drawn photo and its alt text. */
+export type DemoPhoto = { id: DemoPhotoId; alt: string };
 
 export type DemoDocument = {
   id: DemoDocumentId;
   filename: string;
+  /** Picks the pane: the PDF pane, the email pane or the image pane. */
+  kind: "pdf" | "email" | "image";
+  /** An email Document's email; its attachments' photos are `attachmentPhotos`, in order. */
+  email: EmailData | null;
+  attachmentPhotos: DemoPhoto[];
+  /** A photo Document's picture. */
+  photo: DemoPhoto | null;
+  /** The history's "Form picked" detail, when Vink picked the Form. */
+  routed: EventInfo | null;
+  /** The history's "No Form fits" detail, for a Document in No Form. */
+  noFormInfo: EventInfo | null;
   formName: string;
   uploadedBy: string;
   minutesAgo: number;
@@ -36,7 +58,10 @@ export type DemoDocument = {
 
 function fieldValue(
   id: string,
-  seed: Pick<SeedField, "key" | "type" | "value" | "readText" | "page" | "confidence" | "lowestSignal" | "reasons" | "required">,
+  seed: Pick<SeedField, "key" | "type" | "page" | "confidence" | "lowestSignal" | "reasons" | "required"> & {
+    value: Value;
+    readText: string | null;
+  },
   label: string,
 ): DemoFieldValue {
   const reasons = seed.reasons ?? [];
@@ -67,10 +92,37 @@ export function initialDocuments(locale: Locale): DemoDocument[] {
     formName: seed.form[locale],
     uploadedBy: seed.uploadedBy[locale],
     minutesAgo: seed.minutesAgo,
-    state: seed.autoSent ? "approved" : "needs_review",
+    kind: seed.kind ?? "pdf",
+    email: seed.email
+      ? {
+          subject: seed.filename,
+          from: seed.email.from,
+          date: seed.email.date,
+          body: seed.email.body[locale],
+          // The page counts a PDF attachment would show; the demo's attachments are photos.
+          attachments: seed.email.attachments.map((a) => ({ filename: a.filename, mimeType: a.mimeType })),
+        }
+      : null,
+    attachmentPhotos: (seed.email?.attachments ?? []).map((a) => ({ id: a.photo, alt: a.alt[locale] })),
+    photo:
+      seed.kind === "image" && seed.photoAlt
+        ? { id: seed.id as DemoPhotoId, alt: seed.photoAlt[locale] }
+        : null,
+    routed:
+      seed.routed === undefined
+        ? null
+        : { code: "routed", form: seed.form[locale], percent: Math.round(seed.routed * 100) },
+    noFormInfo: seed.noForm ? { code: "no_fit", form: seed.noForm[locale] } : null,
+    state: seed.noForm ? "no_form" : seed.autoSent ? "approved" : "needs_review",
     pageCount: seed.id === "delivery" ? 2 : 1,
     approval: seed.autoSent ? { mode: "auto", by: null, at: null } : null,
-    fieldValues: seed.fields.map((f) => fieldValue(`${seed.id}.${f.key}`, f, f.label[locale])),
+    fieldValues: seed.fields.map((f) =>
+      fieldValue(
+        `${seed.id}.${f.key}`,
+        { ...f, value: inLocale(f.value, locale), readText: inLocale(f.readText, locale) },
+        f.label[locale],
+      ),
+    ),
     lists: (seed.lists ?? []).map((list) => ({
       key: list.key,
       label: list.label[locale],

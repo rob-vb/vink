@@ -9,6 +9,7 @@ import { internalMutation, internalQuery, type ActionCtx, type MutationCtx, type
 import { deleteAuthRows } from "./auth";
 import { deleteProposal } from "./formProposals";
 import { orgAction, userAction, userQuery } from "./lib/functions";
+import { removeDocumentFiles } from "./lib/documentFiles";
 import { pdfStore } from "./lib/pdfStore";
 
 // Documents per purge run: each takes its Readings, Values, Deliveries and history along.
@@ -64,13 +65,12 @@ export const close = internalMutation({
         .collect();
       for (const row of rows) await ctx.db.delete(row._id);
     }
-    for (const form of await formsOf(ctx, organisationId)) {
-      const addresses = await ctx.db
-        .query("intakeAddresses")
-        .withIndex("by_formId", (q) => q.eq("formId", form._id))
-        .collect();
-      for (const address of addresses) await ctx.db.delete(address._id);
-    }
+    // The Forms' addresses and the Organisation's own.
+    const addresses = await ctx.db
+      .query("intakeAddresses")
+      .withIndex("by_organisationId_and_formId", (q) => q.eq("organisationId", organisationId))
+      .collect();
+    for (const address of addresses) await ctx.db.delete(address._id);
     await ctx.scheduler.runAfter(0, internal.deletion.purge, { organisationId });
   },
 });
@@ -95,7 +95,7 @@ async function deleteChildren(
 }
 
 async function removeDocument(ctx: MutationCtx, document: Doc<"documents">) {
-  if (document.dataDeletedAt === undefined) await pdfStore.remove(ctx, document.key);
+  if (document.dataDeletedAt === undefined) await removeDocumentFiles(ctx, document);
   for (const table of ["readings", "fieldValues", "listValues", "deliveries", "documentEvents"] as const) {
     await deleteChildren(ctx, table, document._id);
   }
@@ -161,12 +161,18 @@ export const purge = internalMutation({
     if (proposals.length > 0 || uploads.length > 0) return void (await again());
 
     for (const form of await formsOf(ctx, organisationId)) await removeForm(ctx, form);
+    // Recent emails of the Organisation's own Intake Address (a Form's go with the Form).
+    const emails = await ctx.db
+      .query("intakeEmails")
+      .withIndex("by_organisationId_and_formId", (q) => q.eq("organisationId", organisationId))
+      .collect();
+    for (const row of emails) await ctx.db.delete(row._id);
     const integrations = await ctx.db
       .query("integrations")
       .withIndex("by_organisationId", (q) => q.eq("organisationId", organisationId))
       .collect();
     for (const integration of integrations) await removeIntegration(ctx, integration);
-    for (const table of ["notifications", "topUpPayments"] as const) {
+    for (const table of ["notifications", "topUpPayments", "descriptionQuotas"] as const) {
       const rows = await ctx.db
         .query(table)
         .withIndex("by_organisationId", (q) => q.eq("organisationId", organisationId))

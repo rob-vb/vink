@@ -12,6 +12,7 @@ import {
 } from "./_generated/server";
 import { failOpenDeliveries } from "./deliveries";
 import { accountProviderOf, refreshTokenKeeper, sendAlone } from "./lib/accounts";
+import { formOf } from "./lib/documentForm";
 import { documentPayload } from "./lib/documentPayload";
 import { orgAction, orgMutation, orgQuery } from "./lib/functions";
 import { isWebhook, sendTo } from "./lib/integrationAdapters";
@@ -463,7 +464,7 @@ export const testSendInput = internalQuery({
         deliveryId: `test_${crypto.randomUUID()}`,
         test: true,
         document: { id: document._id, filename: document.filename, uploadedAt: document._creationTime },
-        form: { id: formId, version: document.formVersion },
+        form: { id: formId, version: formOf(document).formVersion },
         approval: document.approval
           ? { mode: document.approval.mode, by: document.approval.by, at: document.approval.at }
           : { mode: "manual", by: null, at: now },

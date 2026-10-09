@@ -95,6 +95,9 @@ test.each(["read", "match", "fill"] as const)(
     const document = await read();
     expect(document.state).toBe("extraction_failed");
     expect(document.history.map((h) => h.event)).toEqual(["uploaded", "extraction_failed"]);
+    // The screen gets a code, never the server's error text.
+    expect(document.failure).toBe("failed");
+    expect(JSON.stringify(document)).not.toContain(`${step} is down`);
     const { counts, documents } = await user.query(api.documents.list, {
       organisationSlug: slug,
       state: "extraction_failed",

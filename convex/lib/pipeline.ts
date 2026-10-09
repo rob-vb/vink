@@ -3,6 +3,7 @@
 // replay recorded responses (see test.setup.ts).
 import type { Infer } from "convex/values";
 import type { field, flatField } from "../schema";
+import type { SplitDecision } from "./mailPlan";
 
 type Json = string | number | boolean | null | Json[] | { [key: string]: Json };
 
@@ -37,12 +38,50 @@ export type FilledValue = string | number | boolean | null;
 /** The text of one page's text layer. A scanned page has none. */
 export type PageText = { page: number; text: string };
 
+/** A file the vision model gets as a part of its prompt, with its real MIME type. */
+export type InputFile = { bytes: Uint8Array; mimeType: string };
+
+/** One attachment of an email: a PDF or an image. */
+export type EmailAttachment = { filename: string; mimeType: string; bytes: Uint8Array };
+
+/**
+ * What a Reader gets, by the kind of the Document (ADR 0010). The kind is
+ * known from the file, so the Reader is picked by it and never by a model.
+ */
+export type ReaderInput =
+  /** `pageCount` is the PDF's stored count (the Items it costs); the Reader reads the file's own pages. */
+  | { kind: "pdf"; bytes: Uint8Array; pageCount: number }
+  | { kind: "image"; bytes: Uint8Array; mimeType: string }
+  | {
+      kind: "email";
+      subject: string;
+      from: string;
+      date: string;
+      /** The body as text. */
+      body: string;
+      attachments: EmailAttachment[];
+    };
+
+/** The files of an input that go to the vision model as parts: the PDF, the image, or an email's attachments. */
+export function filesOf(input: ReaderInput): InputFile[] {
+  switch (input.kind) {
+    case "pdf":
+      return [{ bytes: input.bytes, mimeType: "application/pdf" }];
+    case "image":
+      return [{ bytes: input.bytes, mimeType: input.mimeType }];
+    case "email":
+      return input.attachments.map(({ bytes, mimeType }) => ({ bytes, mimeType }));
+  }
+}
+
 export type Reader = {
   /**
-   * Reads every page of the PDF into a Reading, and returns the text layer of
-   * the pages that have one, for Verify.
+   * Reads the input into a Reading, and returns the text layer of the pages
+   * that have one, for Verify. A PDF's pages are its own; an image is page 1
+   * and has no text layer; an email's page 1 is its headers and body, and the
+   * pages of its attachments follow in order.
    */
-  read(pdf: Uint8Array): Promise<{ reading: Reading; textLayer: PageText[] }>;
+  read(input: ReaderInput): Promise<{ reading: Reading; textLayer: PageText[] }>;
 };
 
 export type Matcher = {
@@ -54,6 +93,38 @@ export type Matcher = {
     reading: Reading,
     request: { fields: FlatField[]; lists: ListField[] },
   ): Promise<{ fields: Record<string, Match>; lists: Record<string, ListMatch> }>;
+};
+
+/** What the Router knows of a Form: its name and description, and the names of its Fields. */
+export type RoutableForm = { id: string; name: string; description: string | null; fields: string[] };
+
+export type Router = {
+  /**
+   * Jev's pick of the Form a Document that came without one belongs to, from
+   * its Reading, with its probability; `formId` is `null` when none fits. The
+   * pick is not final: Match and the fit check gate it (ADR 0010).
+   */
+  route(reading: Reading, forms: RoutableForm[]): Promise<{ formId: string | null; probability: number }>;
+};
+
+/** What Jev is told of an email to decide whether it is one Document or several; never the files' contents. */
+export type MailSummary = {
+  subject: string;
+  from: string;
+  /** The text of the email, cut to what fits in a request. */
+  body: string;
+  attachments: Array<{ filename: string; kind: "pdf" | "image"; pageCount: number | null }>;
+};
+
+export type Splitter = {
+  /**
+   * Jev's call on whether the parts of one email (its text and attachments)
+   * belong together as one case, or are separate papers, and in that case
+   * whether the text is only a cover note or a paper of its own (SplitAnswer in
+   * lib/mailPlan.ts). `probability` is that of the answer given; a low one makes
+   * Vink split, keep the text as a Document and mark Needs Review.
+   */
+  split(mail: MailSummary): Promise<SplitDecision>;
 };
 
 /**
@@ -96,10 +167,17 @@ export type ProposedField = { field: Infer<typeof field>; ticked: boolean };
 
 export type Proposer = {
   /**
-   * Proposes a Form's Fields from a sample: its PDF (page images and text
-   * layer) and its Reading, which lists everything on it.
+   * Proposes a Form's Fields from a sample: its input (a PDF, an image or an
+   * email), its text layer when it has one, and its Reading, which lists
+   * everything on it.
    */
   propose(
-    sample: { pdf: Uint8Array; reading: Reading; textLayer: PageText[] },
+    sample: { input: ReaderInput; reading: Reading; textLayer: PageText[] },
   ): Promise<ProposedField[]>;
+  /**
+   * Proposes a Form's Fields from the Admin's words alone: what the document
+   * is and which data they need. No sample and no Reading, so nothing is read
+   * and nothing is charged. The same shape as `propose`.
+   */
+  describe(description: string): Promise<ProposedField[]>;
 };

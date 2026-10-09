@@ -6,34 +6,48 @@
   "form": "Form",
   "list": {
     "welcome": "Welcome to {organisation}",
-    "adminIntro": "Set up a Form for each kind of document you receive, and Vink will fill it from your PDFs.",
-    "memberIntro": "An Admin first sets up a Form for each kind of document you receive. Then you can upload PDFs here.",
+    "adminIntro": "Set up a Form for each kind of document you receive, and Vink will fill it from what you receive.",
+    "memberIntro": "An Admin first sets up a Form for each kind of document you receive. Then you can upload files here.",
     "goToForms": "Go to Forms",
-    "extracting": "Extracting"
+    "extracting": "Extracting",
+    "noSystem": {
+      "title": "No system connected yet",
+      "description": "Approved Documents stay in Vink. Connect a system to send them on.",
+      "action": "Connect a system"
+    }
   },
   "emailIn": {
     "button": "Email in",
     "title": "Email documents in",
-    "description": "Each Form can have its own email address. PDFs sent there become Documents of that Form."
+    "description": "The Organisation has an email address, and so can each Form. Mail sent to the Organisation address goes to the Form that fits; mail sent to a Form's address goes to that Form.",
+    "organisation": "All Forms (Vink picks the Form)"
   },
   "upload": {
-    "button": "Upload PDFs",
-    "title": "Upload PDFs",
-    "description": "Each PDF becomes its own Document. Vink fills the Form you choose from all of its pages.",
-    "pdfs": "PDFs",
-    "drop": "Drop PDFs here, or <browse>browse</browse>",
-    "limit": "Up to 10 MB and 20 pages each",
-    "notPdf": "Not a PDF.",
-    "tooLarge": "Larger than 10 MB. Vink takes PDFs of up to 10 MB.",
-    "failed": "We couldn't upload this PDF. Try again.",
-    "outOfPages": "You have {remaining} {remaining, plural, one {page} other {pages}} left; this PDF has {needed}.",
-    "uploaded": "{count, plural, one {# PDF uploaded} other {# PDFs uploaded}}",
+    "button": "Upload",
+    "title": "Upload documents",
+    "description": "Each file and each email becomes its own Document. Vink fills the Form you choose, or picks the Form itself.",
+    "files": "Files",
+    "drop": "Drop files here, or <browse>browse</browse>",
+    "limit": "PDF, JPG, PNG, HEIC or an .eml email, up to 10 MB each. A PDF can have up to 20 pages.",
+    "notSupported": "Not a file Vink reads. Use a PDF, JPG, PNG, HEIC or .eml.",
+    "tooLarge": "Larger than 10 MB. Vink takes files of up to 10 MB.",
+    "failed": "We couldn't upload this file. Try again.",
+    "emailFailed": "We couldn't upload this email. Try again.",
+    "outOfItems": "You have {remaining} {remaining, plural, one {item} other {items}} left; this needs {needed}.",
+    "uploaded": "{count, plural, one {# document uploaded} other {# documents uploaded}}",
     "readingNow": "Vink is reading them now.",
     "view": "View",
     "close": "Close",
-    "submit": "{count, plural, =0 {Upload} =1 {Upload} other {Upload # PDFs}}",
+    "submit": "{count, plural, =0 {Upload} =1 {Upload} other {Upload # files}}",
+    "submitEmail": "Add email",
     "remove": "Remove {filename}",
-    "progress": "Upload progress"
+    "progress": "Upload progress",
+    "tabFiles": "Files",
+    "tabEmail": "Email text",
+    "emailSubject": "Subject (optional)",
+    "emailBody": "Email text",
+    "emailPlaceholder": "Paste the text of the email here",
+    "emailTooLarge": "The text is longer than 200 KB. Send a shorter text."
   },
   "extracting": {
     "metaTitle": "Extracting · Vink",
@@ -54,22 +68,23 @@
     "rejected": "Rejected",
     "rejectedAndDeleted": "Rejected and deleted",
     "rejectedBy": "By {name}, {date}",
-    "gone": "Its PDF and data are gone; only this record and its history are kept.",
+    "gone": "Its file and data are gone; only this record and its history are kept.",
     "failedTitle": "Vink couldn't read this Document",
-    "failedText": "It tried four times. This is usually a passing outage, so try again. When a Reading was stored, the retry picks up from there and doesn't read the PDF again.",
+    "failedText": "It tried four times. This is usually a passing outage, so try again. When a Reading was stored, the retry picks up from there and doesn't read the file again.",
+    "failedUnreadable": "This file can't be used: it is damaged or of a type Vink doesn't read. Trying again won't help. Upload it again or reject it.",
     "retry": "Retry",
     "dataDeleted": "Data deleted",
-    "dataDeletedBy": "Its PDF, what Vink read and its values were deleted on {date} by {name}. Only this record, its history and its Delivery log are kept.",
-    "dataDeletedRetention": "Its PDF, what Vink read and its values were deleted on {date} under the Organisation's retention. Only this record, its history and its Delivery log are kept.",
-    "pdfDeleted": "The PDF was deleted.",
-    "pdfFailed": "The PDF couldn't be loaded.",
+    "dataDeletedBy": "Its file, what Vink read and its values were deleted on {date} by {name}. Only this record, its history and its Delivery log are kept.",
+    "dataDeletedRetention": "Its file, what Vink read and its values were deleted on {date} under the Organisation's retention. Only this record, its history and its Delivery log are kept.",
+    "pdfDeleted": "The file was deleted.",
+    "pdfFailed": "The file couldn't be loaded.",
     "reading": "Vink is reading this Document",
     "readingText": "This can take up to a minute. The Fields fill in here when it's done."
   },
   "changeForm": {
     "button": "Change Form",
     "title": "Change the Form",
-    "description": "Vink fills the new Form from what it already read on the PDF. Only when it hasn't read it yet does it read the PDF again.",
+    "description": "Vink fills the new Form from what it already read on the Document. Only when it hasn't read it yet does it read the file again.",
     "newForm": "New Form",
     "noOtherForms": "No other Forms",
     "lost": "{count, plural, one {# correction will be lost.} other {# corrections will be lost.}}",
@@ -78,7 +93,7 @@
   "reject": {
     "button": "Reject",
     "title": "Reject this Document?",
-    "description": "{filename} will never be approved or sent. It stays in the Rejected list, and you can reopen it while its PDF is kept.",
+    "description": "{filename} will never be approved or sent. It stays in the Rejected list, and you can reopen it while its file is kept.",
     "reason": "Reason (optional)",
     "placeholder": "Blank scan, unreadable, not a work order…",
     "reasonHelp": "Shown to your team next to the Document.",
@@ -89,7 +104,7 @@
   "delete": {
     "button": "Delete now",
     "title": "Delete {filename} for good?",
-    "description": "The PDF, what Vink read, every value and your system's replies are deleted now and can't be brought back. Deliveries that haven't gone out yet are cancelled. Only the filename, who uploaded and approved it, the dates, the history and the Delivery status stay, with a \"Deleted by you\" line.",
+    "description": "The file, what Vink read, every value and your system's replies are deleted now and can't be brought back. Deliveries that haven't gone out yet are cancelled. Only the filename, who uploaded and approved it, the dates, the history and the Delivery status stay, with a \"Deleted by you\" line.",
     "toast": "{filename} is deleted."
   },
   "pdf": {
@@ -101,5 +116,46 @@
   },
   "delivery": {
     "sendAgain": "Send again"
+  },
+  "setup": {
+    "welcome": "Welcome to {organisation}",
+    "intro": "Set up Vink in three steps. It takes a few minutes.",
+    "label": "Setup steps",
+    "announce": "Step {step} of 3: {name}",
+    "status": {
+      "done": "done",
+      "current": "current step",
+      "todo": "to do"
+    },
+    "tryAgain": "That didn't work. Try again.",
+    "bar": "Setup is not finished yet: you are at step {step} of 3.",
+    "barAction": "Continue setup",
+    "steps": {
+      "form": {
+        "name": "Form",
+        "title": "Make your first Form",
+        "description": "A Form lists the fields Vink fills for one kind of document, for example an invoice. Start from a sample, describe it in words, or begin blank.",
+        "action": "Make a Form"
+      },
+      "system": {
+        "name": "System",
+        "title": "Connect your system",
+        "description": "An Integration sends each approved Document to the system you work in. You can do this later.",
+        "action": "Connect a system",
+        "skip": "Skip for now"
+      },
+      "input": {
+        "name": "Input",
+        "title": "Choose how documents come in",
+        "description": "Pick one or more. You can change this at any time.",
+        "uploadTitle": "Upload",
+        "uploadDescription": "Add PDFs, photos or an email by hand. Good for a first test.",
+        "apiTitle": "API",
+        "apiDescription": "Send documents from your own software. Make an API key in Settings.",
+        "apiAction": "Open Settings",
+        "finish": "Finish setup",
+        "finishHint": "Then Documents is your home page."
+      }
+    }
   }
 }

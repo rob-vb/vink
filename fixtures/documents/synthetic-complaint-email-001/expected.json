@@ -1,0 +1,27 @@
+{
+  "form": "complaint",
+  "source": "document.eml",
+  "category": "email",
+  "pages": 1,
+  "fieldValues": {
+    "customerName": "Anouk de Wit",
+    "companyName": "Bakkerij De Wit",
+    "customerEmail": "anouk.dewit@bakkerij-dewit.example",
+    "complaintDate": "2026-10-06",
+    "orderNumber": "KB-20417",
+    "purchaseDate": "2026-09-21",
+    "product": "Broodsnijmachine BS-300"
+  },
+  "verified": [
+    "customerName",
+    "companyName",
+    "customerEmail",
+    "complaintDate",
+    "orderNumber",
+    "purchaseDate",
+    "product"
+  ],
+  "unverified": [],
+  "unknown": [],
+  "note": "Synthetic: invented names and companies, written for the eval (ADR 0010, step 4). Ground truth is true by construction."
+}

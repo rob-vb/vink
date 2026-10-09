@@ -1,7 +1,18 @@
 import type { DocumentsLabels } from "@/components/documents/labels";
+import type { SplitInfo } from "@/convex/lib/eventInfo";
 
 function pagesLabel(pages: number[]) {
   return pages.length === 1 ? `pagina ${pages[0]}` : `pagina's ${pages.join(", ")}`;
+}
+
+const SPLIT_ANSWERS = {
+  together: "één zaak",
+  cover_note: "aparte papieren, met de tekst alleen als begeleidende tekst",
+  apart: "aparte papieren",
+};
+
+function splitReason(split: SplitInfo): string {
+  return `Vink wist niet zeker of deze e-mail één zaak is of ${split.documents} aparte papieren (${split.percent}% zeker van "${SPLIT_ANSWERS[split.answer]}"), dus er zijn ${split.documents} Documenten gemaakt. Controleer of ze bij elkaar horen.`;
 }
 
 /**
@@ -15,12 +26,14 @@ export const dutchLabels: DocumentsLabels = {
     subtitle: "Statuswijzigingen verschijnen hier zodra ze gebeuren.",
     tabs: {
       needs_review: "Te controleren",
+      no_form: "Geen Formulier",
       approved: "Goedgekeurd",
       extraction_failed: "Mislukt",
       rejected: "Afgewezen",
     },
     empty: {
       needs_review: "Er wacht niets op controle.",
+      no_form: "Elk Document heeft een Formulier gevonden.",
       approved: "Er zijn nog geen Documenten goedgekeurd.",
       extraction_failed: "Er zijn geen Extracties mislukt.",
       rejected: "Er zijn geen Documenten afgewezen.",
@@ -45,13 +58,28 @@ export const dutchLabels: DocumentsLabels = {
       needs_review: "Te controleren",
       approved: "Goedgekeurd",
       extraction_failed: "Extractie mislukt",
+      no_form: "Geen Formulier",
       rejected: "Afgewezen",
       deleted: "Verwijderd",
     },
     pageCount: (n) => (n === 1 ? "pagina" : "pagina's"),
+    kinds: { email: "e-mail", image: "foto" },
     reviewThreshold: "Controledrempel",
     approved: "Goedgekeurd",
     approvedBy: (mode, by) => (mode === "auto" ? "Automatisch" : `Door ${by}`),
+    noForm: {
+      title: "Geen Formulier past bij dit Document",
+      text: "Vink vond geen Formulier dat past, dus er valt nog niets te controleren. Kies hierboven met Formulier wijzigen een Formulier om in te vullen, of wijs het af met Afwijzen. De items zijn wel geteld.",
+      empty: "Nog geen velden. Ze verschijnen zodra het Document een Formulier heeft.",
+    },
+    split: {
+      title: "Vink heeft deze e-mail gesplitst",
+      // The specific reason already says what Vink was unsure of; the general sentence is only a fallback.
+      text: (reason) =>
+        reason.trim() ||
+        "Vink wist niet zeker of de delen van deze e-mail bij elkaar horen, dus het maakte aparte Documenten. Controleer ze goed.",
+      reason: splitReason,
+    },
     fields: "Velden",
     allFields: "Alle velden",
     needsReviewOnly: "Alleen te controleren",
@@ -74,6 +102,9 @@ export const dutchLabels: DocumentsLabels = {
       rejected: "Afgewezen",
       reopened: "Heropend",
       form_changed: "Formulier gewijzigd",
+      routed: "Formulier gekozen",
+      no_form: "Geen Formulier past",
+      mail_split: "E-mail gesplitst",
       data_deleted: "Gegevens verwijderd",
       deleted: "Verwijderd",
       corrected: "Gecorrigeerd",
@@ -83,6 +114,51 @@ export const dutchLabels: DocumentsLabels = {
       entries_confirmed: "Regels bevestigd als compleet",
       entries_unconfirmed: "Regels niet langer bevestigd",
       approved: "Goedgekeurd",
+    },
+    eventDetail: (info) => {
+      switch (info.code) {
+        case "routed":
+          return `${info.form} (${info.percent}%)`;
+        case "no_forms":
+          return "De Organisatie heeft geen Formulieren";
+        case "nothing_read":
+          return "Er kon niets worden gelezen";
+        case "no_fit":
+          return info.form === undefined ? "Jev koos geen van de Formulieren" : `Past niet bij ${info.form}`;
+        case "form_changed":
+          return `${info.from ?? "Geen Formulier"} → ${info.to}`;
+        case "mail_split":
+          return splitReason(info.split);
+      }
+    },
+  },
+  panes: {
+    email: {
+      from: "Van",
+      subject: "Onderwerp",
+      date: "Datum",
+      noSubject: "(geen onderwerp)",
+      body: "E-mail",
+      attachments: (n) => `Bijlagen (${n})`,
+      attachment: (name, pages) =>
+        pages === null ? name : `${name}, ${pages} ${pages === 1 ? "pagina" : "pagina's"}`,
+      noBody: "Deze e-mail heeft geen tekst.",
+      sourceFound: "De tekst waaruit deze waarde is gelezen is gemarkeerd.",
+      failed: "De e-mail kon niet worden geladen.",
+      attachmentFailed: "De bijlage kon niet worden geladen.",
+      switcher: "E-mail en bijlagen",
+    },
+    image: {
+      zoomIn: "Inzoomen",
+      zoomOut: "Uitzoomen",
+      fit: "Passend op breedte",
+      zoomHint: "Zoom met de knoppen, Ctrl en het muiswiel, knijpen, of + en −.",
+      failed: "De foto kon hier niet worden getoond.",
+      heicTitle: "Deze browser kan geen HEIC-foto's tonen",
+      heicText: "Vink leest de foto wel. Download hem om zelf te kijken.",
+      download: "Download de foto",
+      alt: (name) => `De foto ${name}`,
+      zoom: "Foto met zoom",
     },
   },
   field: {
