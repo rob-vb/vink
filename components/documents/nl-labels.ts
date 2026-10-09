@@ -74,8 +74,10 @@ export const dutchLabels: DocumentsLabels = {
     },
     split: {
       title: "Vink heeft deze e-mail gesplitst",
+      // The specific reason already says what Vink was unsure of; the general sentence is only a fallback.
       text: (reason) =>
-        `Vink wist niet zeker of de delen van deze e-mail bij elkaar horen, dus het maakte aparte Documenten. Controleer ze goed. ${reason}`,
+        reason.trim() ||
+        "Vink wist niet zeker of de delen van deze e-mail bij elkaar horen, dus het maakte aparte Documenten. Controleer ze goed.",
       reason: splitReason,
     },
     fields: "Velden",
@@ -122,7 +124,7 @@ export const dutchLabels: DocumentsLabels = {
         case "nothing_read":
           return "Er kon niets worden gelezen";
         case "no_fit":
-          return info.form === undefined ? "Geen Formulier past" : `Past niet bij ${info.form}`;
+          return info.form === undefined ? "Jev koos geen van de Formulieren" : `Past niet bij ${info.form}`;
         case "form_changed":
           return `${info.from ?? "Geen Formulier"} → ${info.to}`;
         case "mail_split":

@@ -119,8 +119,10 @@ export const englishLabels = {
     },
     split: {
       title: "Vink split this email",
+      // The specific reason already says what Vink was unsure of; the general sentence is only a fallback.
       text: (reason: string) =>
-        `Vink wasn't sure whether the parts of this email belong together, so it made separate Documents. Please check them. ${reason}`,
+        reason.trim() ||
+        "Vink wasn't sure whether the parts of this email belong together, so it made separate Documents. Please check them.",
       /** Why, from Jev's call: the words of an email split Vink was unsure about. */
       reason: (split: SplitInfo): string => splitReason(split),
     },
@@ -167,7 +169,7 @@ export const englishLabels = {
         case "nothing_read":
           return "Nothing could be read";
         case "no_fit":
-          return info.form === undefined ? "No Form fits" : `Does not fit ${info.form}`;
+          return info.form === undefined ? "Jev picked none of the Forms" : `Does not fit ${info.form}`;
         case "form_changed":
           return `${info.from ?? "No Form"} → ${info.to}`;
         case "mail_split":
