@@ -153,7 +153,7 @@
     "reviewThreshold": "Review Threshold",
     "reviewThresholdDescription": "From 0 to 1. A value whose confidence is below it needs review.",
     "autoSend": "Auto-Send",
-    "autoSendDescription": "Approve and send a Document by itself right after it is read, when nothing on it needs review, Jev has verified it, it fits this Form and nobody has changed it. Applies to Documents read from now on.",
+    "autoSendDescription": "Approve and send a Document by itself right after it is read, when nothing on it needs review, it has been verified, it fits this Form and nobody has changed it. Applies to Documents read from now on.",
     "save": "Save settings"
   },
   "intake": {

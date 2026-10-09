@@ -58,8 +58,8 @@
   },
   "review": {
     "metaTitle": "Controleren · Vink",
-    "notVerified": "Niet geverifieerd door Jev",
-    "notVerifiedTip": "Jev kon dit Document niet verifiëren, dus het wordt nooit automatisch goedgekeurd.",
+    "notVerified": "Niet geverifieerd",
+    "notVerifiedTip": "Dit Document kon niet worden geverifieerd, dus het wordt nooit automatisch goedgekeurd.",
     "approvedToast": "{filename} is goedgekeurd.",
     "nothingElse": "Er is niets meer te controleren.",
     "approvalFailed": "Goedkeuren is niet gelukt. Probeer het opnieuw.",

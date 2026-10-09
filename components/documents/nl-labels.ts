@@ -124,7 +124,7 @@ export const dutchLabels: DocumentsLabels = {
         case "nothing_read":
           return "Er kon niets worden gelezen";
         case "no_fit":
-          return info.form === undefined ? "Jev koos geen van de Formulieren" : `Past niet bij ${info.form}`;
+          return info.form === undefined ? "Het systeem koos geen van de Formulieren" : `Past niet bij ${info.form}`;
         case "form_changed":
           return `${info.from ?? "Geen Formulier"} → ${info.to}`;
         case "mail_split":
@@ -169,7 +169,7 @@ export const dutchLabels: DocumentsLabels = {
       unsure: "Onzeker gelezen",
       conflicting: "Tegenstrijdige lezingen",
     },
-    signals: { match: "Match", fit: "Jev fit", support: "Jev support" },
+    signals: { match: "Match", fit: "Fit", support: "Support" },
     lowestSignal: "laagste signaal",
     readOn: (pages) => `Gelezen op ${pagesLabel(pages)}`,
     notFound: "Niet gevonden op het Document",
