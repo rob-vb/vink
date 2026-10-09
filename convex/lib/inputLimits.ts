@@ -9,9 +9,9 @@
 
 export type InputKind = "pdf" | "email" | "image";
 
-// A Document from before kinds existed (the widen step of step 3 of the "any
+// A Submission from before kinds existed (the widen step of step 3 of the "any
 // input" plan) has no `kind` and no `mimeType`: it is a PDF.
-// TODO(narrow, after `documents:backfillInputKind` ran on dev AND prod): make
+// TODO(narrow, after `submissions:backfillInputKind` ran on dev AND prod): make
 // `kind` and `mimeType` required in schema.ts, and drop these fallbacks.
 export const PDF_MIME_TYPE = "application/pdf";
 
@@ -79,7 +79,7 @@ export const EMAIL_BODY_TOO_LARGE = "The email text is longer than 200 KB.";
 export const TOO_MANY_ATTACHMENTS = `Vink reads up to ${MAX_EMAIL_ATTACHMENTS} attachments per email.`;
 export const ATTACHMENTS_TOO_LARGE = "The attachments of this email are larger than 12 MB together.";
 export const EMPTY_EMAIL = "This email has no text and no attachments.";
-// The row in Recent emails for a text Jev called a cover note ("see attachment"): it is no Document and costs nothing.
+// The row in Recent emails for a text Jev called a cover note ("see attachment"): it is no Submission and costs nothing.
 export const COVER_NOTE_NOT_READ = "Cover note, not read";
 
 // --- Items ---
@@ -97,9 +97,9 @@ export type CountedInput =
  *   image = 1
  *   email = its body (1 when it has content, 0 when it is empty) plus each
  *           attachment: a PDF its pages, an image 1.
- * The email's text is counted as one Item when it is a Document, or part of
+ * The email's text is counted as one Item when it is a Submission, or part of
  * one. A text that Jev calls only a cover note ("see attachment, regards") is no
- * Document and costs nothing: the caller passes it as an empty `body`
+ * Submission and costs nothing: the caller passes it as an empty `body`
  * (itemsOfMail in lib/mailPlan.ts does). So "Zie bijlage" with three PDFs costs
  * the pages of the three PDFs, a complaint with a photo costs 2, and a complaint
  * with two photos sent as separate papers costs 3.

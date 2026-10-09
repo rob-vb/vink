@@ -1,49 +1,49 @@
-// Review actions on a Document in Needs Review: Correct, Check ("Value is
+// Review actions on a Submission in Needs Review: Correct, Check ("Value is
 // right") and Undo per Field Value, and manual Approval.
 import { ConvexError, v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { createDeliveries } from "./deliveries";
 import { reviewReasonsOf } from "./lib/confidence";
-import { formOf } from "./lib/documentForm";
-import { moveTo } from "./lib/documentStates";
+import { formOf } from "./lib/submissionForm";
+import { moveTo } from "./lib/submissionStates";
 import { fitType } from "./lib/fieldTypes";
 import { orgMutation } from "./lib/functions";
 import type { FlatField, ListField } from "./lib/pipeline";
 import { liveEntries, needsReviewCount } from "./lib/reviewState";
 import { fieldValue as fieldValueType } from "./schema";
 
-/** How many Field Values and List Fields of a Document still wait for a user. */
-export async function openReviews(ctx: QueryCtx, documentId: Id<"documents">) {
+/** How many Field Values and List Fields of a Submission still wait for a user. */
+export async function openReviews(ctx: QueryCtx, submissionId: Id<"submissions">) {
   const fieldValues = await ctx.db
     .query("fieldValues")
-    .withIndex("by_documentId", (q) => q.eq("documentId", documentId))
+    .withIndex("by_submissionId", (q) => q.eq("submissionId", submissionId))
     .take(5000);
   const listValues = await ctx.db
     .query("listValues")
-    .withIndex("by_documentId", (q) => q.eq("documentId", documentId))
+    .withIndex("by_submissionId", (q) => q.eq("submissionId", submissionId))
     .take(100);
   return needsReviewCount(fieldValues, listValues);
 }
 
-/** A Document of the caller's Organisation that is open for review. */
+/** A Submission of the caller's Organisation that is open for review. */
 async function reviewable(
   ctx: QueryCtx,
   organisationId: Id<"organisations">,
-  documentId: Id<"documents">,
+  submissionId: Id<"submissions">,
 ) {
-  const document = await ctx.db.get(documentId);
-  if (document === null || document.organisationId !== organisationId) {
+  const submission = await ctx.db.get(submissionId);
+  if (submission === null || submission.organisationId !== organisationId) {
     throw new ConvexError("Submission not found");
   }
-  if (document.state === "approved") throw new ConvexError("This Submission is approved");
-  if (document.state !== "needs_review") {
+  if (submission.state === "approved") throw new ConvexError("This Submission is approved");
+  if (submission.state !== "needs_review") {
     throw new ConvexError("This Submission can't be reviewed now");
   }
-  return document;
+  return submission;
 }
 
-/** A Field Value of the caller's Organisation, its open Document and its Field. */
+/** A Field Value of the caller's Organisation, its open Submission and its Field. */
 async function loadFieldValue(
   ctx: QueryCtx,
   organisationId: Id<"organisations">,
@@ -53,16 +53,16 @@ async function loadFieldValue(
   if (fieldValue === null || fieldValue.organisationId !== organisationId) {
     throw new ConvexError("Not found");
   }
-  const document = await reviewable(ctx, organisationId, fieldValue.documentId);
+  const submission = await reviewable(ctx, organisationId, fieldValue.submissionId);
   const formVersion = (await ctx.db
     .query("formVersions")
     .withIndex("by_formId_and_number", (q) =>
-      q.eq("formId", formOf(document).formId).eq("number", formOf(document).formVersion),
+      q.eq("formId", formOf(submission).formId).eq("number", formOf(submission).formVersion),
     )
     .unique())!;
   const top = formVersion.fields.find((f) => f.key === (fieldValue.list?.key ?? fieldValue.key))!;
   const field = (top.type === "list" ? top.fields.find((f) => f.key === fieldValue.key)! : top) as FlatField;
-  return { fieldValue, document, field };
+  return { fieldValue, submission, field };
 }
 
 async function reviewer(ctx: MutationCtx, userId: string) {
@@ -81,7 +81,7 @@ const expectedType = {
 export const correct = orgMutation({
   args: { fieldValueId: v.id("fieldValues"), value: fieldValueType },
   handler: async (ctx, { fieldValueId, value }) => {
-    const { fieldValue, document, field } = await loadFieldValue(
+    const { fieldValue, submission, field } = await loadFieldValue(
       ctx,
       ctx.organisationId,
       fieldValueId,
@@ -100,10 +100,10 @@ export const correct = orgMutation({
         fieldValue.extractedValue === undefined ? fieldValue.value : fieldValue.extractedValue,
       review: { state: "corrected", ...who },
     });
-    await ctx.db.patch(document._id, { userTouched: true });
-    await ctx.db.insert("documentEvents", {
+    await ctx.db.patch(submission._id, { userTouched: true });
+    await ctx.db.insert("submissionEvents", {
       organisationId: ctx.organisationId,
-      documentId: document._id,
+      submissionId: submission._id,
       event: "corrected",
       detail: field.label,
       ...who,
@@ -135,14 +135,14 @@ export const undo = orgMutation({
 });
 
 /**
- * Approves a Document once nothing on it is Needs Review, and returns the
- * next Document that needs review, oldest first, for "Approve and next".
+ * Approves a Submission once nothing on it is Needs Review, and returns the
+ * next Submission that needs review, oldest first, for "Approve and next".
  */
 export const approve = orgMutation({
-  args: { documentId: v.id("documents") },
-  handler: async (ctx, { documentId }) => {
-    const document = await reviewable(ctx, ctx.organisationId, documentId);
-    const left = await openReviews(ctx, documentId);
+  args: { submissionId: v.id("submissions") },
+  handler: async (ctx, { submissionId }) => {
+    const submission = await reviewable(ctx, ctx.organisationId, submissionId);
+    const left = await openReviews(ctx, submissionId);
     if (left > 0) {
       throw new ConvexError(
         left === 1 ? "1 value still needs review" : `${left} values still need review`,
@@ -150,79 +150,79 @@ export const approve = orgMutation({
     }
     const who = await reviewer(ctx, ctx.userId);
     const approval = { mode: "manual" as const, ...who };
-    await ctx.db.patch(documentId, { approval });
-    await moveTo(ctx, document, "approved");
-    await createDeliveries(ctx, { ...document, approval });
-    await ctx.db.insert("documentEvents", {
+    await ctx.db.patch(submissionId, { approval });
+    await moveTo(ctx, submission, "approved");
+    await createDeliveries(ctx, { ...submission, approval });
+    await ctx.db.insert("submissionEvents", {
       organisationId: ctx.organisationId,
-      documentId,
+      submissionId,
       event: "approved",
       ...who,
     });
     const next = await ctx.db
-      .query("documents")
+      .query("submissions")
       .withIndex("by_organisationId_and_state", (q) =>
         q.eq("organisationId", ctx.organisationId).eq("state", "needs_review"),
       )
       .first();
-    return { nextDocumentId: next?._id ?? null };
+    return { nextSubmissionId: next?._id ?? null };
   },
 });
 
-/** A List Field of an open Document, with its definition. */
+/** A List Field of an open Submission, with its definition. */
 async function loadList(
   ctx: QueryCtx,
   organisationId: Id<"organisations">,
-  documentId: Id<"documents">,
+  submissionId: Id<"submissions">,
   listKey: string,
 ) {
-  const document = await reviewable(ctx, organisationId, documentId);
+  const submission = await reviewable(ctx, organisationId, submissionId);
   const list = await ctx.db
     .query("listValues")
-    .withIndex("by_documentId", (q) => q.eq("documentId", documentId))
+    .withIndex("by_submissionId", (q) => q.eq("submissionId", submissionId))
     .take(100)
     .then((lists) => lists.find((l) => l.key === listKey));
   const formVersion = (await ctx.db
     .query("formVersions")
     .withIndex("by_formId_and_number", (q) =>
-      q.eq("formId", formOf(document).formId).eq("number", formOf(document).formVersion),
+      q.eq("formId", formOf(submission).formId).eq("number", formOf(submission).formVersion),
     )
     .unique())!;
   const field = formVersion.fields.find((f) => f.key === listKey);
   if (list === undefined || field?.type !== "list") throw new ConvexError("List not found");
-  return { document, list, field: field as ListField };
+  return { submission, list, field: field as ListField };
 }
 
 /** Records a user's change to a List Field: history, and "user touched". */
 async function touched(
   ctx: MutationCtx,
-  document: Doc<"documents">,
-  event: Doc<"documentEvents">["event"],
+  submission: Doc<"submissions">,
+  event: Doc<"submissionEvents">["event"],
   detail: string,
   who: Awaited<ReturnType<typeof reviewer>>,
 ) {
-  await ctx.db.patch(document._id, { userTouched: true });
-  await ctx.db.insert("documentEvents", {
-    organisationId: document.organisationId,
-    documentId: document._id,
+  await ctx.db.patch(submission._id, { userTouched: true });
+  await ctx.db.insert("submissionEvents", {
+    organisationId: submission.organisationId,
+    submissionId: submission._id,
     event,
     detail,
     ...who,
   });
 }
 
-const listArgs = { documentId: v.id("documents"), listKey: v.string() };
+const listArgs = { submissionId: v.id("submissions"), listKey: v.string() };
 
 /** Adds an empty entry to a List Field, to fill in by hand. */
 export const addEntry = orgMutation({
   args: listArgs,
-  handler: async (ctx, { documentId, listKey }) => {
-    const { document, list, field } = await loadList(ctx, ctx.organisationId, documentId, listKey);
+  handler: async (ctx, { submissionId, listKey }) => {
+    const { submission, list, field } = await loadList(ctx, ctx.organisationId, submissionId, listKey);
     const entry = list.entryCount;
     for (const subField of field.fields) {
       await ctx.db.insert("fieldValues", {
         organisationId: ctx.organisationId,
-        documentId,
+        submissionId,
         key: subField.key,
         list: { key: listKey, entry },
         value: null,
@@ -249,54 +249,54 @@ export const addEntry = orgMutation({
       addedEntries: [...(list.addedEntries ?? []), entry],
     });
     const who = await reviewer(ctx, ctx.userId);
-    await touched(ctx, document, "entry_added", `${field.label} #${entry + 1}`, who);
+    await touched(ctx, submission, "entry_added", `${field.label} #${entry + 1}`, who);
     return { entry };
   },
 });
 
 export const removeEntry = orgMutation({
   args: { ...listArgs, entry: v.number() },
-  handler: async (ctx, { documentId, listKey, entry }) => {
-    const { document, list, field } = await loadList(ctx, ctx.organisationId, documentId, listKey);
+  handler: async (ctx, { submissionId, listKey, entry }) => {
+    const { submission, list, field } = await loadList(ctx, ctx.organisationId, submissionId, listKey);
     if (!liveEntries(list).includes(entry)) throw new ConvexError("Entry not found");
     await ctx.db.patch(list._id, { removedEntries: [...(list.removedEntries ?? []), entry] });
     const who = await reviewer(ctx, ctx.userId);
-    await touched(ctx, document, "entry_removed", `${field.label} #${entry + 1}`, who);
+    await touched(ctx, submission, "entry_removed", `${field.label} #${entry + 1}`, who);
   },
 });
 
 export const restoreEntry = orgMutation({
   args: { ...listArgs, entry: v.number() },
-  handler: async (ctx, { documentId, listKey, entry }) => {
-    const { document, list, field } = await loadList(ctx, ctx.organisationId, documentId, listKey);
+  handler: async (ctx, { submissionId, listKey, entry }) => {
+    const { submission, list, field } = await loadList(ctx, ctx.organisationId, submissionId, listKey);
     const removed = list.removedEntries ?? [];
     if (!removed.includes(entry)) throw new ConvexError("Entry not found");
     await ctx.db.patch(list._id, { removedEntries: removed.filter((e) => e !== entry) });
     const who = await reviewer(ctx, ctx.userId);
-    await touched(ctx, document, "entry_restored", `${field.label} #${entry + 1}`, who);
+    await touched(ctx, submission, "entry_restored", `${field.label} #${entry + 1}`, who);
   },
 });
 
 /** "Entries are complete": clears the List Field's completeness Needs Review. */
 export const confirmEntries = orgMutation({
   args: listArgs,
-  handler: async (ctx, { documentId, listKey }) => {
-    const { document, list, field } = await loadList(ctx, ctx.organisationId, documentId, listKey);
+  handler: async (ctx, { submissionId, listKey }) => {
+    const { submission, list, field } = await loadList(ctx, ctx.organisationId, submissionId, listKey);
     if (field.required && liveEntries(list).length === 0) {
       throw new ConvexError(`${field.label} is required: add an entry first`);
     }
     const who = await reviewer(ctx, ctx.userId);
     await ctx.db.patch(list._id, { complete: { by: who.by, byEmail: who.byEmail, at: who.at } });
-    await touched(ctx, document, "entries_confirmed", field.label, who);
+    await touched(ctx, submission, "entries_confirmed", field.label, who);
   },
 });
 
 export const undoConfirmEntries = orgMutation({
   args: listArgs,
-  handler: async (ctx, { documentId, listKey }) => {
-    const { document, list, field } = await loadList(ctx, ctx.organisationId, documentId, listKey);
+  handler: async (ctx, { submissionId, listKey }) => {
+    const { submission, list, field } = await loadList(ctx, ctx.organisationId, submissionId, listKey);
     await ctx.db.patch(list._id, { complete: undefined });
     const who = await reviewer(ctx, ctx.userId);
-    await touched(ctx, document, "entries_unconfirmed", field.label, who);
+    await touched(ctx, submission, "entries_unconfirmed", field.label, who);
   },
 });

@@ -1,7 +1,7 @@
 // Every /v1 route. A resource keeps its routes in its own module (forms.ts)
 // and adds them here; paths use `{name}` for parameters (router.ts).
-import { documentReadRoutes } from "./documentRead";
-import { documentsRoutes } from "./documents";
+import { submissionReadRoutes } from "./submissionRead";
+import { submissionsRoutes } from "./submissions";
 import { formsRoutes } from "./forms";
 import { openApiDocument } from "./openapi";
 import { apiJson } from "./respond";
@@ -14,7 +14,7 @@ export const routes: ApiRoute[] = [
     apiJson(openApiDocument, 200, { "Access-Control-Allow-Origin": "*" }),
   ),
   ...formsRoutes,
-  ...documentsRoutes,
+  ...submissionsRoutes,
   ...subscriptionsRoutes,
-  ...documentReadRoutes,
+  ...submissionReadRoutes,
 ];

@@ -2,7 +2,7 @@
   "frame": {
     "label": "Vink demo with demo data",
     "organisation": "Kantoor Noord",
-    "documents": "Inbox",
+    "submissions": "Inbox",
     "forms": "Forms",
     "integrations": "Integrations",
     "members": "Members",

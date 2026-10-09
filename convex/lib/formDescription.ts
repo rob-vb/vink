@@ -1,5 +1,5 @@
 // "Describe in words" for a new Form (PLAN step 10): the Admin writes what the
-// document is and which data they need, and the Proposer proposes the Fields
+// submission is and which data they need, and the Proposer proposes the Fields
 // from that text alone. Free of Convex imports; the app imports this file too.
 
 export const MAX_DESCRIPTION_CHARS = 2000;

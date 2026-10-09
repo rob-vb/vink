@@ -11,10 +11,10 @@ import {
   type MutationCtx,
   type QueryCtx,
 } from "./_generated/server";
-import { checkEmail, checkFile, checkIssued, claimUpload, createDocument } from "./documents";
+import { checkEmail, checkFile, checkIssued, claimUpload, createSubmission } from "./submissions";
 import { extractionPool } from "./extraction";
 import { insertForm, saveVersion } from "./forms";
-import { removeDocumentFiles } from "./lib/documentFiles";
+import { removeSubmissionFiles } from "./lib/submissionFiles";
 import { failureCodeOf, failureOf } from "./lib/failure";
 import {
   DESCRIPTION_EMPTY,
@@ -89,7 +89,7 @@ type Sample = {
   formId?: Id<"forms">;
 };
 
-/** Step 2 of a sample upload (step 1 is `documents.generateUploadUrl`): a PDF, a JPG/PNG/HEIC photo or an .eml email. */
+/** Step 2 of a sample upload (step 1 is `submissions.generateUploadUrl`): a PDF, a JPG/PNG/HEIC photo or an .eml email. */
 export const create = orgAction({
   role: "admin",
   args: { key: v.string(), filename: v.string(), formId: v.optional(v.id("forms")) },
@@ -105,7 +105,7 @@ export const create = orgAction({
     const bytes = await pdfStore.read(key);
     if (bytes === null) throw new ConvexError("The upload didn't arrive. Try again.");
     try {
-      // The same checks and byte sniffing as a Document's upload (documents.ts checkFile).
+      // The same checks and byte sniffing as a Submission's upload (submissions.ts checkFile).
       const checked = await checkFile(bytes, filename);
       if (checked.kind === "email") {
         const { subject, from, date, body, attachments } = checked.email;
@@ -150,7 +150,7 @@ export const createFromEmail = orgAction({
 });
 
 /**
- * An email sample: checked and stored like an email Document (documents.ts
+ * An email sample: checked and stored like an email Submission (submissions.ts
  * checkEmail, lib/storedEmail.ts), charged as itemCountOf says. A refused
  * email leaves nothing behind.
  */
@@ -211,8 +211,8 @@ export const insert = internalMutation({
         throw new ConvexError("Form not found");
       }
     }
-    // The sample is read like a Document, so its Items count now; saving it
-    // as the Form's first Document later costs nothing more.
+    // The sample is read like a Submission, so its Items count now; saving it
+    // as the Form's first Submission later costs nothing more.
     await chargeItems(ctx, args.organisationId, items);
     const proposalId = await ctx.db.insert("formProposals", { ...args, state: "reading" });
     await claimUpload(ctx, uploadKey ?? args.key);
@@ -312,7 +312,7 @@ export const retry = orgMutation({
 /** Deletes a Form Proposal and its sample's file (an email's attachments too) and Reading. */
 export async function deleteProposal(ctx: MutationCtx, proposal: Doc<"formProposals">) {
   if (proposal.key !== undefined) {
-    await removeDocumentFiles(ctx, { key: proposal.key, attachmentKeys: proposal.attachmentKeys });
+    await removeSubmissionFiles(ctx, { key: proposal.key, attachmentKeys: proposal.attachmentKeys });
   }
   await ctx.db.delete(proposal._id);
 }
@@ -327,7 +327,7 @@ export const discard = orgMutation({
 
 /**
  * Saves the Fields the Admin kept (and edited) as a new Form's first Version.
- * With `processSample`, the sample becomes its first Document from the stored
+ * With `processSample`, the sample becomes its first Submission from the stored
  * Reading; without, the sample's PDF and Reading are deleted now.
  */
 export const save = orgMutation({
@@ -356,9 +356,9 @@ export const save = orgMutation({
     });
     if (!processSample) {
       await deleteProposal(ctx, proposal);
-      return { formId, documentId: null };
+      return { formId, submissionId: null };
     }
-    const documentId = await createDocument(ctx, {
+    const submissionId = await createSubmission(ctx, {
       organisationId: ctx.organisationId,
       formId,
       key: proposal.key!,
@@ -371,15 +371,15 @@ export const save = orgMutation({
       uploaderEmail: proposal.createdByEmail,
       reading: { json: proposal.readingJson!, textLayer: proposal.textLayer ?? [] },
     });
-    // The PDF now belongs to the Document.
+    // The PDF now belongs to the Submission.
     await ctx.db.delete(proposalId);
-    return { formId, documentId };
+    return { formId, submissionId };
   },
 });
 
 /**
  * "Suggest Fields from PDF": saves the Form, now with the kept suggestions,
- * as its next Form Version. Documents already in progress keep theirs.
+ * as its next Form Version. Submissions already in progress keep theirs.
  */
 export const saveToForm = orgMutation({
   role: "admin",

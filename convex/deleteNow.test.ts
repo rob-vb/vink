@@ -80,10 +80,10 @@ async function kantoorNoord(t: Backend) {
   });
   await ann.user.mutation(api.integrations.attach, { organisationSlug, integrationId, formId });
   fakePipeline.replay(invoice);
-  const documentId = (await uploadAndExtract(t, ann.user, organisationSlug, formId)) as Id<"documents">;
-  const key = await t.run(async (ctx) => (await ctx.db.get(documentId))!.key);
-  const on = { organisationSlug, documentId };
-  const read = () => ann.user.query(api.documents.get, on);
+  const submissionId = (await uploadAndExtract(t, ann.user, organisationSlug, formId)) as Id<"submissions">;
+  const key = await t.run(async (ctx) => (await ctx.db.get(submissionId))!.key);
+  const on = { organisationSlug, submissionId };
+  const read = () => ann.user.query(api.submissions.get, on);
   const approve = async () => {
     const total = (await read()).fieldValues.find((f) => f.key === "total")!;
     await ann.user.mutation(api.review.check, { organisationSlug, fieldValueId: total.id });
@@ -92,11 +92,11 @@ async function kantoorNoord(t: Backend) {
   return { ...ann, organisationSlug, key, on, read, approve };
 }
 
-async function leftovers(t: Backend, documentId: Id<"documents">) {
+async function leftovers(t: Backend, submissionId: Id<"submissions">) {
   return await t.run(async (ctx) => {
-    const of = <T extends { documentId: Id<"documents"> }>(rows: T[]) =>
-      rows.filter((r) => r.documentId === documentId).length;
-    const deliveries = (await ctx.db.query("deliveries").collect()).filter((d) => d.documentId === documentId);
+    const of = <T extends { submissionId: Id<"submissions"> }>(rows: T[]) =>
+      rows.filter((r) => r.submissionId === submissionId).length;
+    const deliveries = (await ctx.db.query("deliveries").collect()).filter((d) => d.submissionId === submissionId);
     return {
       readings: of(await ctx.db.query("readings").collect()),
       fieldValues: of(await ctx.db.query("fieldValues").collect()),
@@ -109,20 +109,20 @@ async function leftovers(t: Backend, documentId: Id<"documents">) {
 
 const nothingLeft = { readings: 0, fieldValues: 0, listValues: 0, envelopes: 0, responseBodies: 0 };
 
-test("an Admin deletes an Approved, delivered Document now: its data and the receiver's response bodies go, the short record stays", async () => {
+test("an Admin deletes an Approved, delivered Submission now: its data and the receiver's response bodies go, the short record stays", async () => {
   const t = newBackend();
   const { user, key, on, read, approve } = await kantoorNoord(t);
   fakeHttp.answer({ status: 200, body: '{"booked":"F-2026-118"}' });
   await approve();
   await t.finishAllScheduledFunctions(vi.runAllTimers);
-  expect((await leftovers(t, on.documentId)).responseBodies).toBe(1);
+  expect((await leftovers(t, on.submissionId)).responseBodies).toBe(1);
 
   await user.mutation(api.rejection.remove, on);
 
   expect(fakePdfStore.objects.has(key)).toBe(false);
-  expect(await leftovers(t, on.documentId)).toEqual(nothingLeft);
-  const document = await read();
-  expect(document).toMatchObject({
+  expect(await leftovers(t, on.submissionId)).toEqual(nothingLeft);
+  const submission = await read();
+  expect(submission).toMatchObject({
     filename: "werkorder.pdf",
     state: "approved",
     dataDeleted: true,
@@ -130,22 +130,22 @@ test("an Admin deletes an Approved, delivered Document now: its data and the rec
     fieldValues: [],
     approval: { mode: "manual", by: "ann@example.com" },
   });
-  expect(document.deliveries).toEqual([
+  expect(submission.deliveries).toEqual([
     expect.objectContaining({ integrationName: "Bookkeeping", state: "delivered", canResend: false }),
   ]);
-  expect(document.deliveries[0].attempts).toEqual([
+  expect(submission.deliveries[0].attempts).toEqual([
     expect.objectContaining({ status: 200, body: null }),
   ]);
-  expect(document.history.at(-1)).toMatchObject({ event: "deleted", by: "ann@example.com" });
-  await expect(user.mutation(api.documents.pdfUrl, on)).rejects.toThrow("The PDF was deleted");
-  const { documents } = await user.query(api.documents.list, {
+  expect(submission.history.at(-1)).toMatchObject({ event: "deleted", by: "ann@example.com" });
+  await expect(user.mutation(api.submissions.pdfUrl, on)).rejects.toThrow("The PDF was deleted");
+  const { submissions } = await user.query(api.submissions.list, {
     organisationSlug: on.organisationSlug,
     state: "approved",
   });
-  expect(documents).toEqual([expect.objectContaining({ filename: "werkorder.pdf", uploadedBy: "ann@example.com" })]);
+  expect(submissions).toEqual([expect.objectContaining({ filename: "werkorder.pdf", uploadedBy: "ann@example.com" })]);
 });
 
-test("deleting a Document whose Delivery is waiting to retry cancels it: the data is never sent afterwards", async () => {
+test("deleting a Submission whose Delivery is waiting to retry cancels it: the data is never sent afterwards", async () => {
   const t = newBackend();
   const { user, on, read, approve } = await kantoorNoord(t);
   fakeHttp.answer({ status: 503, body: "down" });
@@ -167,7 +167,7 @@ test("deleting a Document whose Delivery is waiting to retry cancels it: the dat
     nextAttemptAt: null,
     canResend: false,
   });
-  expect(await leftovers(t, on.documentId)).toEqual(nothingLeft);
+  expect(await leftovers(t, on.submissionId)).toEqual(nothingLeft);
   await expect(user.mutation(api.deliveries.resend, { ...on, id: delivery.id })).rejects.toThrow();
 });
 
@@ -183,7 +183,7 @@ test("a pending Delivery not yet attempted is cancelled too", async () => {
   expect((await read()).deliveries[0]).toMatchObject({ state: "failed", attempts: [] });
 });
 
-test("a Document in Needs Review can be deleted now; it leaves a Deleted record", async () => {
+test("a Submission in Needs Review can be deleted now; it leaves a Deleted record", async () => {
   const t = newBackend();
   const { user, key, on, read } = await kantoorNoord(t);
 
@@ -191,15 +191,15 @@ test("a Document in Needs Review can be deleted now; it leaves a Deleted record"
 
   expect(fakePdfStore.objects.has(key)).toBe(false);
   expect(await read()).toMatchObject({ state: "deleted", dataDeleted: true, fieldValues: [] });
-  expect(await leftovers(t, on.documentId)).toEqual(nothingLeft);
-  const { counts } = await user.query(api.documents.list, {
+  expect(await leftovers(t, on.submissionId)).toEqual(nothingLeft);
+  const { counts } = await user.query(api.submissions.list, {
     organisationSlug: on.organisationSlug,
     state: "needs_review",
   });
   expect(counts.needs_review).toBe(0);
 });
 
-test("a Document already deleted can't be deleted again", async () => {
+test("a Submission already deleted can't be deleted again", async () => {
   const t = newBackend();
   const { user, on, approve } = await kantoorNoord(t);
   await approve();
@@ -208,7 +208,7 @@ test("a Document already deleted can't be deleted again", async () => {
   await expect(user.mutation(api.rejection.remove, on)).rejects.toThrow("already deleted");
 });
 
-test("a Member can't delete a Document", async () => {
+test("a Member can't delete a Submission", async () => {
   const t = newBackend();
   const { key, on, read, organisationSlug } = await kantoorNoord(t);
   const bob = await addMembership(t, "bob", organisationSlug, "member");
@@ -224,7 +224,7 @@ test("an Admin of another Organisation can't delete it", async () => {
   const eve = await signUp(t, "eve", "Het Anker");
 
   await expect(
-    eve.user.mutation(api.rejection.remove, { organisationSlug: eve.slug, documentId: on.documentId }),
+    eve.user.mutation(api.rejection.remove, { organisationSlug: eve.slug, submissionId: on.submissionId }),
   ).rejects.toThrow("Submission not found");
   expect(fakePdfStore.objects.has(key)).toBe(true);
   expect((await read()).dataDeleted).toBe(false);

@@ -296,10 +296,10 @@ test("the sample is the test-send's example envelope for the Form's current Vers
 
   expect(response.status).toBe(200);
   expect(await response.json()).toEqual({
-    event: "document.approved",
+    event: "submission.approved",
     delivery_id: expect.stringMatching(/^test_/),
     test: true,
-    document: { id: "test", filename: "example.pdf", uploaded_at: "2026-10-06T09:00:00.000Z" },
+    submission: { id: "test", filename: "example.pdf", uploaded_at: "2026-10-06T09:00:00.000Z" },
     form: { id: formId, version: 2 },
     approval: { mode: "manual", by: null, at: "2026-10-06T09:00:00.000Z" },
     data: {
@@ -334,7 +334,7 @@ test("the schema describes the envelope for the Form's current Version, Fields b
   expect(Object.keys(schema.properties).sort()).toEqual(
     Object.keys(openApiDocument.components.schemas.Envelope.properties!).sort(),
   );
-  expect(schema.properties.document.properties.filename).toMatchObject({ type: "string" });
+  expect(schema.properties.submission.properties.filename).toMatchObject({ type: "string" });
   expect(schema.properties.approval.properties.by).toMatchObject({ type: "string", "x-nullable": true });
   expect(schema.properties.data).toEqual({
     type: "object",
@@ -377,9 +377,9 @@ test("an Approval reaches the subscribed url as a signed Delivery, like any Webh
     lists: { lines: { path: null, probability: 0.95, keys: {} } },
     fills: { license_plate: "OR18DH" },
   });
-  const documentId = (await uploadAndExtract(t, user, organisationSlug, formId))!;
+  const submissionId = (await uploadAndExtract(t, user, organisationSlug, formId))!;
 
-  await user.mutation(api.review.approve, { organisationSlug, documentId });
+  await user.mutation(api.review.approve, { organisationSlug, submissionId });
   await t.finishAllScheduledFunctions(vi.runAllTimers);
 
   const [integration] = await user.query(api.integrations.list, { organisationSlug });
@@ -392,26 +392,26 @@ test("an Approval reaches the subscribed url as a signed Delivery, like any Webh
   expect(request.url).toBe("https://hooks.zapier.com/hooks/standard/1/abc");
   expectSignedBy(secret, request);
   expect(JSON.parse(request.body)).toMatchObject({
-    event: "document.approved",
+    event: "submission.approved",
     test: false,
-    document: { id: documentId },
+    submission: { id: submissionId },
     data: { license_plate: "OR18DH", lines: [] },
   });
-  const { deliveries } = await user.query(api.documents.get, { organisationSlug, documentId });
+  const { deliveries } = await user.query(api.submissions.get, { organisationSlug, submissionId });
   expect(deliveries.map((d) => [d.integrationName, d.state])).toEqual([["Zapier", "delivered"]]);
 });
 
-async function approvedDocument(t: Backend, user: Awaited<ReturnType<typeof organisation>>["user"], organisationSlug: string, formId: Id<"forms">) {
+async function approvedSubmission(t: Backend, user: Awaited<ReturnType<typeof organisation>>["user"], organisationSlug: string, formId: Id<"forms">) {
   fakePipeline.replay({
     reading: { plate: { value: "OR18DH", _pages: [1] } },
     matches: { license_plate: { path: "plate.value", probability: 0.97 } },
     lists: { lines: { path: null, probability: 0.95, keys: {} } },
     fills: { license_plate: "OR18DH" },
   });
-  const documentId = (await uploadAndExtract(t, user, organisationSlug, formId))!;
-  await user.mutation(api.review.approve, { organisationSlug, documentId });
+  const submissionId = (await uploadAndExtract(t, user, organisationSlug, formId))!;
+  await user.mutation(api.review.approve, { organisationSlug, submissionId });
   await t.finishAllScheduledFunctions(vi.runAllTimers);
-  return (await user.query(api.documents.get, { organisationSlug, documentId })).deliveries;
+  return (await user.query(api.submissions.get, { organisationSlug, submissionId })).deliveries;
 }
 
 test("a 410 Gone from the subscribed url ends the Subscription and fails the Delivery, without a notice", async () => {
@@ -420,7 +420,7 @@ test("a 410 Gone from the subscribed url ends the Subscription and fails the Del
   await subscribe("https://hooks.zapier.com/hooks/standard/1/abc");
   fakeHttp.answer({ status: 410, body: "gone" });
 
-  const [delivery] = await approvedDocument(t, user, organisationSlug, formId);
+  const [delivery] = await approvedSubmission(t, user, organisationSlug, formId);
 
   expect(delivery).toMatchObject({
     state: "failed",
@@ -445,7 +445,7 @@ test("a 410 Gone from an Admin's own Webhook fails the Delivery as any refusal, 
   await user.mutation(api.integrations.attach, { organisationSlug, integrationId, formId });
   fakeHttp.answer({ status: 410 });
 
-  const [delivery] = await approvedDocument(t, user, organisationSlug, formId);
+  const [delivery] = await approvedSubmission(t, user, organisationSlug, formId);
 
   expect(delivery).toMatchObject({ state: "failed", failureReason: "The receiver refused it (410)", canResend: true });
   expect(await user.query(api.integrations.list, { organisationSlug })).toHaveLength(1);

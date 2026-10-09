@@ -24,7 +24,7 @@ export function ResendButton({
   organisationSlug: string;
   delivery: DeliveryView;
 }) {
-  const t = useTranslations("appDocuments");
+  const t = useTranslations("appSubmissions");
   const errorText = useErrorText();
   const resend = useMutation(api.deliveries.resend);
   if (!delivery.canResend) return null;

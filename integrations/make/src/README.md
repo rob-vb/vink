@@ -11,5 +11,5 @@ You need an API Key. An Admin makes one in Vink under Settings → API Keys. Pas
 Modules
 -------
 
-- **Watch approved Documents**: starts your scenario each time a Document of the chosen Form is approved. The output holds the Form's Fields under `data`; a List Field is an array, one item per row.
-- **Send in a Document**: sends a PDF to a Form. Vink reads it, then a person approves it in Vink.
+- **Watch approved Submissions**: starts your scenario each time a Submission of the chosen Form is approved. The output holds the Form's Fields under `data`; a List Field is an array, one item per row.
+- **Send in a Submission**: sends a PDF to a Form. Vink reads it, then a person approves it in Vink.

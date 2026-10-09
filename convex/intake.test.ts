@@ -93,8 +93,8 @@ async function email(
   return { response, keys: entries.flatMap((e) => ("key" in e ? [e.key] : [])) };
 }
 
-async function documents(t: Backend) {
-  return await t.run(async (ctx) => await ctx.db.query("documents").collect());
+async function submissions(t: Backend) {
+  return await t.run(async (ctx) => await ctx.db.query("submissions").collect());
 }
 
 test("an Admin switches the Intake Address on; every Member can read it", async () => {
@@ -127,7 +127,7 @@ test("another Organisation can't read or change a Form's Intake Address", async 
   ).rejects.toThrow(ConvexError);
 });
 
-test("each PDF attached to an email becomes its own Document of that Form", async () => {
+test("each PDF attached to an email becomes its own Submission of that Form", async () => {
   const t = newBackend();
   const { token, formId } = await switchedOn(t);
 
@@ -137,7 +137,7 @@ test("each PDF attached to an email becomes its own Document of that Form", asyn
   ]);
 
   expect(response.status).toBe(200);
-  const created = await documents(t);
+  const created = await submissions(t);
   expect(created.map((d) => [d.filename, d.formId, d.pageCount, d.uploaderEmail])).toEqual([
     ["F-118.pdf", formId, 2, "email from facturen@hoekstra.nl"],
     ["F-119.pdf", formId, 1, "email from facturen@hoekstra.nl"],
@@ -153,7 +153,7 @@ test("a wrong secret or an unknown address is refused and creates nothing", asyn
 
   expect(wrongSecret.response.status).toBe(401);
   expect(unknown.response.status).toBe(404);
-  expect(await documents(t)).toHaveLength(0);
+  expect(await submissions(t)).toHaveLength(0);
   // What the Worker stored for an unknown address is removed.
   for (const key of unknown.keys) expect(fakePdfStore.objects.has(key)).toBe(false);
 });
@@ -209,7 +209,7 @@ test("each attachment has its own outcome in Recent emails; refused PDFs are del
       { filename: "huge.pdf", outcome: "refused", reason: "The PDF is larger than 10 MB." },
     ],
   });
-  expect(await documents(t)).toHaveLength(1);
+  expect(await submissions(t)).toHaveLength(1);
   expect(fakePdfStore.objects.has(keys[0])).toBe(true);
   expect(fakePdfStore.objects.has(keys[1])).toBe(false);
   expect(fakePdfStore.objects.has(keys[2])).toBe(false);

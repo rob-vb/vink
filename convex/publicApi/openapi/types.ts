@@ -1,4 +1,4 @@
-// The slice of OpenAPI 3.1 the /v1 document uses. Loose where JSON Schema is
+// The slice of OpenAPI 3.1 the /v1 submission uses. Loose where JSON Schema is
 // open-ended; typed where the API reference page (/developers/api) reads it.
 
 export type Schema = {

@@ -87,7 +87,7 @@ const invoice: Recording = {
   fills: { invoice_number: "F-2026-118", total: 1249.5 },
 };
 
-/** An Organisation with a Form, an Integration, a Document, an API Key, an Invitation and a paid Plan. */
+/** An Organisation with a Form, an Integration, a Submission, an API Key, an Invitation and a paid Plan. */
 async function busyOrganisation(t: Backend, userId: string, name: string, customer: string) {
   const owner = await signUp(t, userId, name);
   const organisationSlug = owner.slug;
@@ -109,8 +109,8 @@ async function busyOrganisation(t: Backend, userId: string, name: string, custom
   await owner.user.mutation(api.apiKeys.create, { organisationSlug, name: "Zapier" });
   await owner.user.mutation(api.invitations.invite, { organisationSlug, email: "new@example.com", role: "member" });
   fakePipeline.replay(invoice);
-  const documentId = (await uploadAndExtract(t, owner.user, organisationSlug, formId)) as Id<"documents">;
-  const key = await t.run(async (ctx) => (await ctx.db.get(documentId))!.key);
+  const submissionId = (await uploadAndExtract(t, owner.user, organisationSlug, formId)) as Id<"submissions">;
+  const key = await t.run(async (ctx) => (await ctx.db.get(submissionId))!.key);
   const organisationId = await t.run(async (ctx) => {
     const organisation = (await ctx.db
       .query("organisations")
@@ -132,7 +132,7 @@ const TABLES = [
   "formProposals",
   "intakeAddresses",
   "intakeEmails",
-  "documents",
+  "submissions",
   "readings",
   "fieldValues",
   "listValues",
@@ -140,11 +140,11 @@ const TABLES = [
   "formIntegrations",
   "deliveries",
   "notifications",
-  "documentEvents",
+  "submissionEvents",
   "uploads",
   "apiKeys",
   "subscriptions",
-  "documentCounts",
+  "submissionCounts",
 ] as const;
 
 /** Rows per table that still belong to the Organisation, and whether it exists. */
@@ -168,7 +168,7 @@ test("an Admin deletes the Organisation: the Plan stops, then every row and PDF 
   const before = await rowsOf(t, ann.organisationId);
   const otherBefore = await rowsOf(t, bob.organisationId);
   expect(Object.keys(before.rows)).toEqual(
-    expect.arrayContaining(["memberships", "forms", "documents", "fieldValues", "integrations", "apiKeys", "invitations"]),
+    expect.arrayContaining(["memberships", "forms", "submissions", "fieldValues", "integrations", "apiKeys", "invitations"]),
   );
 
   await ann.user.action(api.deletion.deleteOrganisation, {

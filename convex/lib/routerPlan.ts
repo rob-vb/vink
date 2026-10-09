@@ -2,7 +2,7 @@
 // Form as a criterion, kept under Jev's token cap like Match (lib/matchPlan.ts).
 // When the full request is too big, the Reading and the criteria are cut in
 // steps; when even the smallest does not fit, there is no request, and the
-// Document goes to No Form instead of failing.
+// Submission goes to No Form instead of failing.
 import { criterionChars, estimateTokens, MAX_ROUTABLE_FORMS, tokenCap } from "./matchPlan";
 import type { Reading, RoutableForm } from "./pipeline";
 

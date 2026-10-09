@@ -15,7 +15,7 @@ import { microsoftAccount } from "./lib/accounts";
 import { orgAction, orgQuery } from "./lib/functions";
 import { adminConsentUrl as consentLink, microsoft, MicrosoftFailure } from "./lib/microsoft";
 import { readState, signState } from "./lib/oauthState";
-import { DOCUMENT_COLUMNS } from "./lib/rows";
+import { SUBMISSION_COLUMNS } from "./lib/rows";
 import { encryptSecret } from "./lib/secrets";
 
 /** Microsoft's sign-in page for a new Excel Integration called `name`. */
@@ -68,7 +68,7 @@ export const connect = orgAction({
       const refreshToken = await microsoftAccount.exchangeCode(code);
       if (refreshToken === null) return { result: "no_access" };
       const token = await microsoft.accessToken(refreshToken);
-      const workbook = await microsoft.createWorkbook(token.accessToken, claims.name, DOCUMENT_COLUMNS);
+      const workbook = await microsoft.createWorkbook(token.accessToken, claims.name, SUBMISSION_COLUMNS);
       await ctx.runMutation(internal.excel.insert, {
         organisationId: ctx.organisationId,
         name: claims.name,

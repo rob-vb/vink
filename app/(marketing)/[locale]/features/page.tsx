@@ -4,7 +4,7 @@ import Image from "next/image";
 import { getTranslations } from "next-intl/server";
 import type { ReactNode } from "react";
 import { Demo } from "@/components/demo/demo";
-import { DocumentsStill, ReviewStill } from "@/components/demo/demo-stills";
+import { SubmissionsStill, ReviewStill } from "@/components/demo/demo-stills";
 import { BrowserFrame } from "@/components/features/browser-frame";
 import { FeaturePicker, type Feature } from "@/components/features/feature-picker";
 import { FeatureVideo } from "@/components/features/feature-video";
@@ -143,7 +143,7 @@ export default async function FeaturesPage() {
               still(
                 t("frames.invoice"),
                 t("source.alt"),
-                <ReviewStill documentId="invoice" selected="invoice.invoice_date" />,
+                <ReviewStill submissionId="invoice" selected="invoice.invoice_date" />,
               ),
             ),
           ]}
@@ -163,16 +163,16 @@ export default async function FeaturesPage() {
               still(
                 t("frames.claim"),
                 t("review.alt"),
-                <ReviewStill documentId="claim" filter="needs_review" />,
+                <ReviewStill submissionId="claim" filter="needs_review" />,
               ),
             ),
             feature(
               "approve",
               "approve",
               still(
-                t("frames.documents"),
+                t("frames.submissions"),
                 t("approve.alt"),
-                <DocumentsStill tab="approved" />,
+                <SubmissionsStill tab="approved" />,
                 "aspect-[4/5] sm:aspect-[16/9]",
               ),
             ),

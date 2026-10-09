@@ -69,19 +69,19 @@ async function acmeWithWorkOrderForm(t: Backend) {
   return { ...ann, formId };
 }
 
-test("an uploaded PDF is extracted into a Field Value per Field, and its Document moves to Needs Review", async () => {
+test("an uploaded PDF is extracted into a Field Value per Field, and its Submission moves to Needs Review", async () => {
   const t = newBackend();
   const { user, slug, formId } = await acmeWithWorkOrderForm(t);
   fakePipeline.replay(workOrder);
 
-  const documentId = await uploadAndExtract(t, user, slug, formId, 2);
+  const submissionId = await uploadAndExtract(t, user, slug, formId, 2);
 
-  const document = await user.query(api.documents.get, {
+  const submission = await user.query(api.submissions.get, {
     organisationSlug: slug,
-    documentId: documentId!,
+    submissionId: submissionId!,
   });
-  expect(document.state).toBe("needs_review");
-  expect(document.fieldValues).toMatchObject([
+  expect(submission.state).toBe("needs_review");
+  expect(submission.fieldValues).toMatchObject([
     {
       key: "license_plate",
       label: "Kenteken",
@@ -169,21 +169,21 @@ test("an Extraction that is run again matches the stored Reading without reading
   expect(fakePipeline.calls[2]).toMatchObject({ reading: workOrder.reading });
 });
 
-test("the Document list's counts move the Document from Extracting to Needs Review", async () => {
+test("the Submission list's counts move the Submission from Extracting to Needs Review", async () => {
   const t = newBackend();
   const { user, slug, formId } = await acmeWithWorkOrderForm(t);
   fakePipeline.replay(workOrder);
 
   await uploadAndExtract(t, user, slug, formId);
 
-  const { counts } = await user.query(api.documents.list, {
+  const { counts } = await user.query(api.submissions.list, {
     organisationSlug: slug,
     state: "needs_review",
   });
   expect(counts).toEqual({ extracting: 0, needs_review: 1, approved: 0, extraction_failed: 0, no_form: 0, rejected: 0 });
 });
 
-// The fixture Documents' real pipeline runs, recorded by the eval harness
+// The fixture Submissions' real pipeline runs, recorded by the eval harness
 // (`npm run eval`, scripts/eval): what the models answered (recording.json)
 // and what the pipeline made of it (extracted.json). They hold personal data,
 // so they're git-ignored, and these tests are skipped where they're missing.
@@ -292,21 +292,21 @@ describe.runIf(fixtures.length > 0)("replaying the recorded fixture runs", () =>
       });
       fakePipeline.replay(recording);
 
-      const documentId = await uploadAndExtract(t, ann.user, ann.slug, formId, pages);
+      const submissionId = await uploadAndExtract(t, ann.user, ann.slug, formId, pages);
 
       expect(fakePipeline.calls.map((c) => c.step)).toEqual(
         expect.arrayContaining(["read", "match", "fill", "verify"]),
       );
-      const document = await ann.user.query(api.documents.get, {
+      const submission = await ann.user.query(api.submissions.get, {
         organisationSlug: ann.slug,
-        documentId: documentId!,
+        submissionId: submissionId!,
       });
-      expect(document.jevVerified).toBe(extracted.jevVerified);
-      expect(document.fieldValues).toMatchObject(
+      expect(submission.jevVerified).toBe(extracted.jevVerified);
+      expect(submission.fieldValues).toMatchObject(
         extracted.fieldValues.filter((v) => !v.list).map(asExtracted),
       );
       for (const list of extracted.lists) {
-        const stored = document.lists.find((l) => l.key === list.key)!;
+        const stored = submission.lists.find((l) => l.key === list.key)!;
         expect(stored.completeness).toBe(list.completeness);
         expect(stored.entries).toHaveLength(list.entries);
         stored.entries.forEach((entry, i) => {

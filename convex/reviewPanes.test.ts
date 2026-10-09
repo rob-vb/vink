@@ -1,5 +1,5 @@
 // What the review screen's panes need from the backend (ADR 0010, step 8): the
-// Document's kind, MIME type and split reason, the stored email with its
+// Submission's kind, MIME type and split reason, the stored email with its
 // attachments' page counts, and signed URLs for an email's attachments only.
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { api } from "./_generated/api";
@@ -86,25 +86,25 @@ async function sendMail(t: Backend, token: string) {
   await settle(t);
 }
 
-test("get tells the pane which kind a Document is, and an email's file lists its attachments with their pages", async () => {
+test("get tells the pane which kind a Submission is, and an email's file lists its attachments with their pages", async () => {
   const t = newBackend();
   const { org, token } = await setup(t);
   fakePipeline.replay(complaint);
   await sendMail(t, token);
-  const [document] = await t.run((ctx) => ctx.db.query("documents").collect());
+  const [submission] = await t.run((ctx) => ctx.db.query("submissions").collect());
 
-  const view = await org.user.query(api.documents.get, { organisationSlug: org.slug, documentId: document._id });
+  const view = await org.user.query(api.submissions.get, { organisationSlug: org.slug, submissionId: submission._id });
   expect(view).toMatchObject({ kind: "email", mimeType: "application/json", splitReason: null });
 
   // The pane reads this file through a signed URL; the pages let it number the attachments' pages after the body's.
-  const stored = JSON.parse(new TextDecoder().decode(fakePdfStore.objects.get(document.key)!)) as StoredEmail;
+  const stored = JSON.parse(new TextDecoder().decode(fakePdfStore.objects.get(submission.key)!)) as StoredEmail;
   expect(stored.attachments).toEqual([
-    { filename: "pakbon.pdf", mimeType: "application/pdf", key: `${document.key}/1`, pageCount: 3 },
-    { filename: "doos.jpg", mimeType: "image/jpeg", key: `${document.key}/2`, pageCount: 1 },
+    { filename: "pakbon.pdf", mimeType: "application/pdf", key: `${submission.key}/1`, pageCount: 3 },
+    { filename: "doos.jpg", mimeType: "image/jpeg", key: `${submission.key}/2`, pageCount: 1 },
   ]);
 });
 
-test("a Document from before kinds is a PDF to the pane", async () => {
+test("a Submission from before kinds is a PDF to the pane", async () => {
   const t = newBackend();
   const org = await signUp(t, "ann", "Bakkerij De Wit");
   const { formId } = await org.user.mutation(api.forms.create, {
@@ -112,9 +112,9 @@ test("a Document from before kinds is a PDF to the pane", async () => {
     name: "Invoice",
     fields: [{ type: "text", label: "Leverancier", key: "supplier_name", required: true }],
   });
-  const documentId = await t.run(async (ctx) => {
+  const submissionId = await t.run(async (ctx) => {
     const organisationId = (await ctx.db.query("organisations").first())!._id;
-    return await ctx.db.insert("documents", {
+    return await ctx.db.insert("submissions", {
       organisationId,
       formId,
       formVersion: 1,
@@ -126,31 +126,31 @@ test("a Document from before kinds is a PDF to the pane", async () => {
       state: "needs_review",
     });
   });
-  const view = await org.user.query(api.documents.get, { organisationSlug: org.slug, documentId });
+  const view = await org.user.query(api.submissions.get, { organisationSlug: org.slug, submissionId });
   expect(view).toMatchObject({ kind: "pdf", mimeType: "application/pdf", splitReason: null });
 });
 
-test("attachmentUrl signs only the Document's own attachments, for members of its Organisation", async () => {
+test("attachmentUrl signs only the Submission's own attachments, for members of its Organisation", async () => {
   const t = newBackend();
   const { org, token } = await setup(t);
   fakePipeline.replay(complaint);
   await sendMail(t, token);
-  const [document] = await t.run((ctx) => ctx.db.query("documents").collect());
-  const args = { organisationSlug: org.slug, documentId: document._id };
+  const [submission] = await t.run((ctx) => ctx.db.query("submissions").collect());
+  const args = { organisationSlug: org.slug, submissionId: submission._id };
 
-  expect(await org.user.mutation(api.documents.attachmentUrl, { ...args, index: 1 })).toContain(
-    `/view/${document.key}/2?`,
+  expect(await org.user.mutation(api.submissions.attachmentUrl, { ...args, index: 1 })).toContain(
+    `/view/${submission.key}/2?`,
   );
-  await expect(org.user.mutation(api.documents.attachmentUrl, { ...args, index: 2 })).rejects.toThrow(
+  await expect(org.user.mutation(api.submissions.attachmentUrl, { ...args, index: 2 })).rejects.toThrow(
     "Attachment not found",
   );
-  await expect(org.user.mutation(api.documents.attachmentUrl, { ...args, index: -1 })).rejects.toThrow(
+  await expect(org.user.mutation(api.submissions.attachmentUrl, { ...args, index: -1 })).rejects.toThrow(
     "Attachment not found",
   );
 
-  // Another Organisation's Document looks like a missing one.
+  // Another Organisation's Submission looks like a missing one.
   const eve = await signUp(t, "eve", "Eve BV");
   await expect(
-    eve.user.mutation(api.documents.attachmentUrl, { organisationSlug: eve.slug, documentId: document._id, index: 0 }),
+    eve.user.mutation(api.submissions.attachmentUrl, { organisationSlug: eve.slug, submissionId: submission._id, index: 0 }),
   ).rejects.toThrow("Submission not found");
 });

@@ -33,7 +33,7 @@ test("translates a message with values in it", () => {
 test("translates the page limit, also as worded in older stored skip reasons", () => {
   const dutch = "Deze pdf heeft 21 pagina's. Vink leest maximaal 20 pagina's per pdf.";
   expect(serverErrorText("This PDF has 21 pages. Vink reads up to 20 pages per PDF.", "nl")).toBe(dutch);
-  expect(serverErrorText("This PDF has 21 pages. Vink reads up to 20 pages per Document.", "nl")).toBe(dutch);
+  expect(serverErrorText("This PDF has 21 pages. Vink reads up to 20 pages per Submission.", "nl")).toBe(dutch);
 });
 
 test("shows an unknown message as it is", () => {

@@ -1,4 +1,4 @@
-// The Payload (spec, Payload and Delivery): the JSON built from a Document's
+// The Payload (spec, Payload and Delivery): the JSON built from a Submission's
 // Field Values, keyed by the Form's Fields, and the envelope around it. Every
 // key on the wire is snake_case (ADR 0005) and always there: `null` for no value, `[]` for a List without entries.
 import type { Infer } from "convex/values";
@@ -101,10 +101,10 @@ export function envelopeSchema(fields: Field[]): JsonSchema {
     event: titled("Event", { type: "string" }),
     delivery_id: titled("Delivery ID", { type: "string" }),
     test: titled("Test", { type: "boolean" }),
-    document: titled(
-      "Document",
+    submission: titled(
+      "Submission",
       object({
-        id: titled("Document ID", { type: "string" }),
+        id: titled("Submission ID", { type: "string" }),
         filename: titled("Filename", { type: "string" }),
         uploaded_at: titled("Uploaded at", { type: "string", format: "date-time" }),
       }),
@@ -133,19 +133,19 @@ const iso = (ms: number) => new Date(ms).toISOString();
 export function envelopeOf(delivery: {
   deliveryId: string;
   test: boolean;
-  document: { id: string; filename: string; uploadedAt: number };
+  submission: { id: string; filename: string; uploadedAt: number };
   form: { id: string; version: number };
   approval: { mode: "manual" | "auto"; by: string | null; at: number };
   data: Payload;
 }) {
   return {
-    event: "document.approved",
+    event: "submission.approved",
     delivery_id: delivery.deliveryId,
     test: delivery.test,
-    document: {
-      id: delivery.document.id,
-      filename: delivery.document.filename,
-      uploaded_at: iso(delivery.document.uploadedAt),
+    submission: {
+      id: delivery.submission.id,
+      filename: delivery.submission.filename,
+      uploaded_at: iso(delivery.submission.uploadedAt),
     },
     form: delivery.form,
     approval: { ...delivery.approval, at: iso(delivery.approval.at) },

@@ -16,9 +16,9 @@
     "label": "A 30-second film: a handwritten work order goes into Vink and comes out as clean data."
   },
   "frames": {
-    "documents": "/app/o/kantoor-noord",
-    "invoice": "/app/o/kantoor-noord/documents/jd72q8vn",
-    "claim": "/app/o/kantoor-noord/documents/jd7f4mx1",
+    "submissions": "/app/o/kantoor-noord",
+    "invoice": "/app/o/kantoor-noord/submissions/jd72q8vn",
+    "claim": "/app/o/kantoor-noord/submissions/jd7f4mx1",
     "upload": "/app/o/kantoor-noord/forms/invoices",
     "form": "/app/o/kantoor-noord/forms/invoices",
     "integration": "/app/o/kantoor-noord/integrations",

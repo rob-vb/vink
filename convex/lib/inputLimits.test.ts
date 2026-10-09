@@ -67,7 +67,7 @@ test("an email with no body and no attachments costs nothing", () => {
   expect(itemCountOf({ kind: "email", body: "", attachments: [] })).toBe(0);
 });
 
-test("a Document from before kinds is a PDF", () => {
+test("a Submission from before kinds is a PDF", () => {
   expect(kindOf({})).toBe("pdf");
   expect(mimeTypeOf({})).toBe("application/pdf");
   expect(kindOf({ kind: "image" })).toBe("image");

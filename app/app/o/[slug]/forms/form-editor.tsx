@@ -233,7 +233,7 @@ export function FormEditor({ organisationSlug, form, initial, settings, proposal
         setSaved(draft);
         toast.success(t("savedAsVersion", { version }));
       } else if (proposal) {
-        const { formId, documentId } = await saveProposal({
+        const { formId, submissionId } = await saveProposal({
           organisationSlug,
           proposalId: proposal.id,
           ...content,
@@ -242,7 +242,7 @@ export function FormEditor({ organisationSlug, form, initial, settings, proposal
         });
         setSaved(draft);
         toast.success(
-          documentId
+          submissionId
             ? t("createdWithSample", { filename: proposal.filename })
             : t("created"),
         );

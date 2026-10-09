@@ -1,6 +1,6 @@
 // Email in, whole mails (ADR 0010, step 6): the text and the PDF and image
 // attachments of one email, the Organisation Intake Address next to the Forms',
-// and Jev's call on one Document or several. Jev (splitter, router), Reader,
+// and Jev's call on one Submission or several. Jev (splitter, router), Reader,
 // Matcher, Filler and Verifier are the fakes of test.setup.ts.
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { api } from "./_generated/api";
@@ -175,10 +175,10 @@ async function mail(
   return { response, keys };
 }
 
-const documents = (t: Backend) => t.run(async (ctx) => await ctx.db.query("documents").collect());
+const submissions = (t: Backend) => t.run(async (ctx) => await ctx.db.query("submissions").collect());
 const used = async (org: Org) => (await org.user.query(api.items.usage, { organisationSlug: org.slug })).used;
-const read = (org: Org, documentId: Id<"documents">) =>
-  org.user.query(api.documents.get, { organisationSlug: org.slug, documentId });
+const read = (org: Org, submissionId: Id<"submissions">) =>
+  org.user.query(api.submissions.get, { organisationSlug: org.slug, submissionId });
 const steps = () => fakePipeline.calls.map((c) => c.step);
 
 test("the Organisation Intake Address: an Admin switches it on, replaces it and switches it off; a Member can read it", async () => {
@@ -209,7 +209,7 @@ test("the Organisation Intake Address: an Admin switches it on, replaces it and 
   expect((await org.cas.query(api.intake.get, { ...on, formId: org.forms.Invoice })).address).toBe(`${formToken}@in.vink.test`);
 });
 
-test("complaint + photo to the Organisation address: one Document of 2 Items, and the Router picks the Form", async () => {
+test("complaint + photo to the Organisation address: one Submission of 2 Items, and the Router picks the Form", async () => {
   const t = newBackend();
   const org = await bakkerij(t);
   const token = await organisationAddress(org);
@@ -222,15 +222,15 @@ test("complaint + photo to the Organisation address: one Document of 2 Items, an
   });
 
   expect(response.status).toBe(200);
-  const [document] = await documents(t);
-  expect(await documents(t)).toHaveLength(1);
-  expect(document).toMatchObject({
+  const [submission] = await submissions(t);
+  expect(await submissions(t)).toHaveLength(1);
+  expect(submission).toMatchObject({
     kind: "email",
     mimeType: "application/json",
     filename: "Klacht over levering 4410",
     uploaderEmail: "email from anouk@bakkerij-dewit.example",
   });
-  expect(document.splitInfo).toBeUndefined();
+  expect(submission.splitInfo).toBeUndefined();
   expect(await used(org)).toBe(2);
   // Jev decided on the split, then the Router picked the Form.
   expect(steps()).toEqual(["split", "read", "route", "match", "fill", "verify"]);
@@ -238,21 +238,21 @@ test("complaint + photo to the Organisation address: one Document of 2 Items, an
     step: "split",
     mail: { subject: "Klacht over levering 4410", attachments: [{ filename: "werkbon.jpg", kind: "image", pageCount: null }] },
   });
-  expect(await read(org, document._id)).toMatchObject({ state: "needs_review", formName: "Complaint" });
+  expect(await read(org, submission._id)).toMatchObject({ state: "needs_review", formName: "Complaint" });
 
   // The server wrote the email's file under the Organisation's prefix, the attachment beside it.
-  expect(document.key.startsWith(`${org.organisationId}/`)).toBe(true);
-  expect(document.attachmentKeys).toEqual([`${document.key}/1`]);
-  const stored = JSON.parse(new TextDecoder().decode(fakePdfStore.objects.get(document.key)!)) as StoredEmail;
+  expect(submission.key.startsWith(`${org.organisationId}/`)).toBe(true);
+  expect(submission.attachmentKeys).toEqual([`${submission.key}/1`]);
+  const stored = JSON.parse(new TextDecoder().decode(fakePdfStore.objects.get(submission.key)!)) as StoredEmail;
   expect(stored).toEqual({
     subject: "Klacht over levering 4410",
     from: "anouk@bakkerij-dewit.example",
     date: "2026-10-06T07:12:00.000Z",
     body: "De levering van gisteren was onvolledig, zie de werkbon.",
-    attachments: [{ filename: "werkbon.jpg", mimeType: "image/jpeg", key: `${document.key}/1`, pageCount: 1 }],
+    attachments: [{ filename: "werkbon.jpg", mimeType: "image/jpeg", key: `${submission.key}/1`, pageCount: 1 }],
   });
-  expect(fakePdfStore.objects.get(`${document.key}/1`)).toEqual(photo);
-  expect(fakePdfStore.types.get(`${document.key}/1`)).toBe("image/jpeg");
+  expect(fakePdfStore.objects.get(`${submission.key}/1`)).toEqual(photo);
+  expect(fakePdfStore.types.get(`${submission.key}/1`)).toBe("image/jpeg");
   // What the Worker stored was moved, not kept twice.
   expect(fakePdfStore.objects.has(keys[0])).toBe(false);
 });
@@ -269,14 +269,14 @@ test("the same mail to a Form's address goes to that Form and the Router is skip
     parts: [{ filename: "werkbon.jpg", mimeType: "image/jpeg" }],
   });
 
-  const [document] = await documents(t);
-  expect(document.formId).toBe(org.forms.Complaint);
+  const [submission] = await submissions(t);
+  expect(submission.formId).toBe(org.forms.Complaint);
   expect(steps()).not.toContain("route");
-  expect(await read(org, document._id)).toMatchObject({ formName: "Complaint" });
+  expect(await read(org, submission._id)).toMatchObject({ formName: "Complaint" });
   expect(await used(org)).toBe(2);
 });
 
-test("an empty body with 3 PDFs: Jev says apart, 3 Documents, and the Items are their pages", async () => {
+test("an empty body with 3 PDFs: Jev says apart, 3 Submissions, and the Items are their pages", async () => {
   const t = newBackend();
   const org = await bakkerij(t);
   const token = await formAddress(org, "Invoice");
@@ -291,7 +291,7 @@ test("an empty body with 3 PDFs: Jev says apart, 3 Documents, and the Items are 
     ],
   });
 
-  const created = await documents(t);
+  const created = await submissions(t);
   expect(created.map((d) => [d.filename, d.kind, d.pageCount, d.formId])).toEqual([
     ["F-118.pdf", "pdf", 2, org.forms.Invoice],
     ["F-119.pdf", "pdf", 1, org.forms.Invoice],
@@ -305,7 +305,7 @@ test("an empty body with 3 PDFs: Jev says apart, 3 Documents, and the Items are 
   });
 });
 
-test("an ambiguous mail is split, and every Document is marked Needs Review with the reason", async () => {
+test("an ambiguous mail is split, and every Submission is marked Needs Review with the reason", async () => {
   const t = newBackend();
   const org = await bakkerij(t);
   const token = await formAddress(org, "Complaint");
@@ -320,7 +320,7 @@ test("an ambiguous mail is split, and every Document is marked Needs Review with
     ],
   });
 
-  const created = await documents(t);
+  const created = await submissions(t);
   // The text, the PDF and the photo each on their own.
   expect(created.map((d) => [d.kind, d.filename])).toEqual([
     ["email", "Dingen"],
@@ -328,21 +328,21 @@ test("an ambiguous mail is split, and every Document is marked Needs Review with
     ["image", "b.jpg"],
   ]);
   expect(await used(org)).toBe(4);
-  for (const document of created) {
+  for (const submission of created) {
     // A code with its numbers, not English text: the screens write it in the user's language.
-    expect(document.splitReason).toBeUndefined();
-    expect(document.splitInfo).toMatchObject({ percent: 60, documents: 3 });
-    const view = await read(org, document._id);
+    expect(submission.splitReason).toBeUndefined();
+    expect(submission.splitInfo).toMatchObject({ percent: 60, submissions: 3 });
+    const view = await read(org, submission._id);
     expect(view.state).toBe("needs_review");
-    expect(view.split).toEqual(document.splitInfo);
+    expect(view.split).toEqual(submission.splitInfo);
     expect(view.history.find((h) => h.event === "mail_split")?.info).toEqual({
       code: "mail_split",
-      split: document.splitInfo,
+      split: submission.splitInfo,
     });
   }
 });
 
-test("a cover note with 3 PDFs: 3 Documents, charged the pages of the PDFs, no Document for the text", async () => {
+test("a cover note with 3 PDFs: 3 Submissions, charged the pages of the PDFs, no Submission for the text", async () => {
   const t = newBackend();
   const org = await bakkerij(t);
   const token = await organisationAddress(org);
@@ -358,7 +358,7 @@ test("a cover note with 3 PDFs: 3 Documents, charged the pages of the PDFs, no D
     ],
   });
 
-  const created = await documents(t);
+  const created = await submissions(t);
   expect(created.map((d) => [d.filename, d.kind, d.pageCount])).toEqual([
     ["F-118.pdf", "pdf", 2],
     ["F-119.pdf", "pdf", 1],
@@ -366,7 +366,7 @@ test("a cover note with 3 PDFs: 3 Documents, charged the pages of the PDFs, no D
   ]);
   expect(created.every((d) => d.splitInfo === undefined)).toBe(true);
   expect(await used(org)).toBe(6);
-  // Jev was asked once, with the text; the cover note is no Document, and its row says it was not read.
+  // Jev was asked once, with the text; the cover note is no Submission, and its row says it was not read.
   expect(steps().filter((s) => s === "split")).toHaveLength(1);
   expect(fakePipeline.calls[0]).toMatchObject({ step: "split", mail: { body: "Zie bijlage, groet Jan" } });
   const { recentEmails } = await org.cas.query(api.intake.get, { organisationSlug: org.slug });
@@ -388,10 +388,10 @@ test("a long text is never dropped as a cover note: Jev saw only its first 4000 
 
   // Exactly 4000 characters (trimmed) is still a cover note; one more is a paper of its own.
   await mail(t, token, { body: `  ${"x".repeat(4000)}  `, parts: [{ filename: "a.pdf" }, { filename: "b.pdf" }] });
-  expect((await documents(t)).map((d) => d.kind)).toEqual(["pdf", "pdf"]);
+  expect((await submissions(t)).map((d) => d.kind)).toEqual(["pdf", "pdf"]);
 
   await mail(t, token, { body: "x".repeat(4001), parts: [{ filename: "c.pdf" }, { filename: "d.pdf" }] });
-  const created = await documents(t);
+  const created = await submissions(t);
   expect(created.map((d) => d.kind)).toEqual(["pdf", "pdf", "email", "pdf", "pdf"]);
   // Sure of `apart`: nothing to check by hand, and the text was charged (1 Item) like any text.
   expect(created.slice(2).every((d) => d.splitInfo === undefined)).toBe(true);
@@ -414,7 +414,7 @@ test("a cover note keeps its row in Recent emails when the rest of the mail is r
   // 20 Free Items: 15 + 8 do not fit together.
   await mail(t, token, { subject: "Facturen", body: "Zie bijlage", parts: [{ filename: "big.pdf", pages: 15 }, { filename: "next.pdf", pages: 8 }] });
 
-  expect(await documents(t)).toHaveLength(0);
+  expect(await submissions(t)).toHaveLength(0);
   const { recentEmails } = await org.cas.query(api.intake.get, { organisationSlug: org.slug, formId: org.forms.Invoice });
   expect(recentEmails[0].attachments).toMatchObject([
     { filename: "Facturen", outcome: "refused", reason: "Cover note, not read" },
@@ -423,7 +423,7 @@ test("a cover note keeps its row in Recent emails when the rest of the mail is r
   ]);
 });
 
-test("a cover note with one PDF: only the PDF becomes a Document", async () => {
+test("a cover note with one PDF: only the PDF becomes a Submission", async () => {
   const t = newBackend();
   const org = await bakkerij(t);
   const token = await formAddress(org, "Invoice");
@@ -431,11 +431,11 @@ test("a cover note with one PDF: only the PDF becomes a Document", async () => {
 
   await mail(t, token, { body: "Zie bijlage", parts: [{ filename: "F-118.pdf", pages: 2 }] });
 
-  expect((await documents(t)).map((d) => [d.kind, d.pageCount])).toEqual([["pdf", 2]]);
+  expect((await submissions(t)).map((d) => [d.kind, d.pageCount])).toEqual([["pdf", 2]]);
   expect(await used(org)).toBe(2);
 });
 
-test("a real complaint with 2 photos, apart and its own Document: 3 Documents of 1 Item each", async () => {
+test("a real complaint with 2 photos, apart and its own Submission: 3 Submissions of 1 Item each", async () => {
   const t = newBackend();
   const org = await bakkerij(t);
   const token = await formAddress(org, "Complaint");
@@ -450,7 +450,7 @@ test("a real complaint with 2 photos, apart and its own Document: 3 Documents of
     ],
   });
 
-  const created = await documents(t);
+  const created = await submissions(t);
   expect(created.map((d) => [d.kind, d.filename])).toEqual([
     ["email", "Klacht over levering 4410"],
     ["image", "a.jpg"],
@@ -460,7 +460,7 @@ test("a real complaint with 2 photos, apart and its own Document: 3 Documents of
   expect(await used(org)).toBe(3);
 });
 
-test("a cover note Jev is unsure about is not dropped: the text is its own Document and all wait for a user", async () => {
+test("a cover note Jev is unsure about is not dropped: the text is its own Submission and all wait for a user", async () => {
   const t = newBackend();
   const org = await bakkerij(t);
   const token = await formAddress(org, "Invoice");
@@ -475,16 +475,16 @@ test("a cover note Jev is unsure about is not dropped: the text is its own Docum
     ],
   });
 
-  const created = await documents(t);
+  const created = await submissions(t);
   expect(created.map((d) => [d.kind, d.filename])).toEqual([
     ["email", "Facturen"],
     ["pdf", "F-118.pdf"],
     ["pdf", "F-119.pdf"],
   ]);
   expect(await used(org)).toBe(4);
-  for (const document of created) {
-    expect(document.splitInfo).toMatchObject({ percent: 70, documents: 3 });
-    expect((await read(org, document._id)).state).toBe("needs_review");
+  for (const submission of created) {
+    expect(submission.splitInfo).toMatchObject({ percent: 70, submissions: 3 });
+    expect((await read(org, submission._id)).state).toBe("needs_review");
   }
   const { recentEmails } = await org.cas.query(api.intake.get, { organisationSlug: org.slug, formId: org.forms.Invoice });
   expect(recentEmails[0].attachments.map((a) => a.filename)).toEqual(["Facturen", "F-118.pdf", "F-119.pdf"]);
@@ -506,8 +506,8 @@ test("a split Vink was unsure about never goes through Auto-Send, a sure one doe
   fakePipeline.replay({ ...complaint, split: { answer: "together", probability: 0.5 } });
   await mail(t, token, { body: "Klacht", parts: [{ filename: "werkbon.jpg", mimeType: "image/jpeg" }] });
 
-  const states = await Promise.all((await documents(t)).map(async (d) => (await read(org, d._id)).state));
-  // Sure: one email Document, approved by itself. Unsure: the text and the photo apart, both waiting.
+  const states = await Promise.all((await submissions(t)).map(async (d) => (await read(org, d._id)).state));
+  // Sure: one email Submission, approved by itself. Unsure: the text and the photo apart, both waiting.
   expect(states).toEqual(["approved", "needs_review", "needs_review"]);
 });
 
@@ -521,7 +521,7 @@ test("a sure 'together' is not split, and a sure 'apart' is not flagged; the thr
   fakePipeline.replay({ ...complaint, split: { answer: "apart", probability: 0.79 } });
   await mail(t, token, { body: "Klacht", parts: [{ filename: "b.pdf" }] });
 
-  const created = await documents(t);
+  const created = await submissions(t);
   expect(created.map((d) => [d.kind, d.splitInfo === undefined])).toEqual([
     ["email", true],
     ["email", false],
@@ -529,7 +529,7 @@ test("a sure 'together' is not split, and a sure 'apart' is not flagged; the thr
   ]);
 });
 
-test("a newsletter (text only) is one Document of 1 Item, with no call to Jev, and the Router may send it to No Form", async () => {
+test("a newsletter (text only) is one Submission of 1 Item, with no call to Jev, and the Router may send it to No Form", async () => {
   const t = newBackend();
   const org = await bakkerij(t);
   const token = await organisationAddress(org);
@@ -541,16 +541,16 @@ test("a newsletter (text only) is one Document of 1 Item, with no call to Jev, a
 
   await mail(t, token, { subject: "Onze herfstactie", body: "Alle broden 10% korting deze week! ".repeat(20) });
 
-  const [document] = await documents(t);
-  expect(await documents(t)).toHaveLength(1);
-  expect(document.kind).toBe("email");
+  const [submission] = await submissions(t);
+  expect(await submissions(t)).toHaveLength(1);
+  expect(submission.kind).toBe("email");
   expect(await used(org)).toBe(1);
   expect(steps()).not.toContain("split");
   expect(steps()).toContain("route");
-  expect(await read(org, document._id)).toMatchObject({ state: "no_form" });
+  expect(await read(org, submission._id)).toMatchObject({ state: "no_form" });
 });
 
-test("an empty mail creates no Document and costs nothing; neither does one with only unsupported files", async () => {
+test("an empty mail creates no Submission and costs nothing; neither does one with only unsupported files", async () => {
   const t = newBackend();
   const org = await bakkerij(t);
   const token = await organisationAddress(org);
@@ -562,7 +562,7 @@ test("an empty mail creates no Document and costs nothing; neither does one with
   });
 
   expect([empty.response.status, files.response.status]).toEqual([200, 200]);
-  expect(await documents(t)).toHaveLength(0);
+  expect(await submissions(t)).toHaveLength(0);
   expect(await used(org)).toBe(0);
   expect(steps()).toEqual([]);
   const { recentEmails } = await org.cas.query(api.intake.get, { organisationSlug: org.slug });
@@ -624,7 +624,7 @@ test("out of Items, the whole mail is refused: nothing is created, nothing is ch
   });
   await settle(t);
 
-  expect(await documents(t)).toHaveLength(0);
+  expect(await submissions(t)).toHaveLength(0);
   expect(await used(org)).toBe(0);
   for (const key of keys) expect(fakePdfStore.objects.has(key)).toBe(false);
   const { recentEmails } = await org.cas.query(api.intake.get, { organisationSlug: org.slug, formId: org.forms.Invoice });
@@ -680,7 +680,7 @@ test("unsupported types, too many, too large and an over-long text are refused o
     ["broken.pdf", "refused", "This file isn't a PDF Vink can read."],
   ]);
   // The text was refused; the PDF and the photo that were accepted are one case for Jev.
-  expect((await documents(t)).map((d) => [d.kind, d.attachmentKeys?.length])).toEqual([["email", 2]]);
+  expect((await submissions(t)).map((d) => [d.kind, d.attachmentKeys?.length])).toEqual([["email", 2]]);
   expect(await used(org)).toBe(2);
   // What the Worker stored is gone: refused, or moved under the email's key.
   for (const key of keys) expect(fakePdfStore.objects.has(key)).toBe(false);
@@ -693,7 +693,7 @@ test("a mail takes at most 10 attachments", async () => {
 
   await mail(t, token, { parts: Array.from({ length: 11 }, (_, i) => ({ filename: `f${i}.pdf` })) });
 
-  expect(await documents(t)).toHaveLength(10);
+  expect(await submissions(t)).toHaveLength(10);
   const { recentEmails } = await org.cas.query(api.intake.get, { organisationSlug: org.slug, formId: org.forms.Invoice });
   expect(recentEmails[0].attachments[10]).toMatchObject({
     filename: "f10.pdf",
@@ -712,7 +712,7 @@ test("Jev being down creates nothing: the sender's server retries, and nothing i
   const first = await mail(t, token, { body: "Zie bijlage", parts: [{ filename: "a.pdf" }] });
 
   expect(first.response.status).toBe(400);
-  expect(await documents(t)).toHaveLength(0);
+  expect(await submissions(t)).toHaveLength(0);
   expect(await used(org)).toBe(0);
   // The sender retries with the files again, so these must not stay in storage.
   expect(fakePdfStore.objects.size).toBe(0);
@@ -731,7 +731,7 @@ test("a storage failure while checking a part creates nothing, and no file stays
   read.mockRestore();
 
   expect(result.response.status).toBe(400);
-  expect(await documents(t)).toHaveLength(0);
+  expect(await submissions(t)).toHaveLength(0);
   expect(await used(org)).toBe(0);
   expect(fakePdfStore.objects.size).toBe(0);
 });
@@ -774,7 +774,7 @@ test("an image is what its bytes say, not what the sender says: a ZIP, a web pag
     ["wrong.png", "created", null],
     ["phone.heif", "created", null],
   ]);
-  const [email] = await documents(t);
+  const [email] = await submissions(t);
   const stored = JSON.parse(new TextDecoder().decode(fakePdfStore.objects.get(email.key)!)) as StoredEmail;
   expect(stored.attachments.map((a) => [a.filename, a.mimeType])).toEqual([
     ["wrong.png", "image/jpeg"],
@@ -794,14 +794,14 @@ test("a long subject, From and file name are cut", async () => {
     from: `${"a".repeat(400)}@bakkerij.example`,
   });
 
-  const [document] = await documents(t);
-  expect(document.filename).toHaveLength(255);
+  const [submission] = await submissions(t);
+  expect(submission.filename).toHaveLength(255);
   const { recentEmails } = await org.cas.query(api.intake.get, { organisationSlug: org.slug, formId: org.forms.Invoice });
   expect(recentEmails[0].from).toHaveLength(320);
   expect(recentEmails[0].attachments[0].filename).toHaveLength(255);
 });
 
-test("once the Documents exist, a failing clean-up does not fail the mail: a retry would charge twice", async () => {
+test("once the Submissions exist, a failing clean-up does not fail the mail: a retry would charge twice", async () => {
   const t = newBackend();
   const org = await bakkerij(t);
   const token = await formAddress(org, "Complaint");
@@ -814,7 +814,7 @@ test("once the Documents exist, a failing clean-up does not fail the mail: a ret
   remove.mockRestore();
 
   expect(response.status).toBe(200);
-  expect(await documents(t)).toHaveLength(1);
+  expect(await submissions(t)).toHaveLength(1);
   expect(await used(org)).toBe(2);
   expect(error).toHaveBeenCalled();
   error.mockRestore();
@@ -822,7 +822,7 @@ test("once the Documents exist, a failing clean-up does not fail the mail: a ret
   expect(recentEmails).toHaveLength(1);
 });
 
-test("deleting an email Document removes its file and its attachments", async () => {
+test("deleting an email Submission removes its file and its attachments", async () => {
   const t = newBackend();
   const org = await bakkerij(t);
   const token = await formAddress(org, "Complaint");
@@ -834,24 +834,24 @@ test("deleting an email Document removes its file and its attachments", async ()
       { filename: "bon.pdf" },
     ],
   });
-  const [document] = await documents(t);
-  expect(document.attachmentKeys).toHaveLength(2);
+  const [submission] = await submissions(t);
+  expect(submission.attachmentKeys).toHaveLength(2);
   // Another Organisation's file that a forged key list points at must stay.
   fakePdfStore.objects.set("otherorganisation/secret", photo);
   await t.run(async (ctx) =>
-    ctx.db.patch(document._id, { attachmentKeys: [...document.attachmentKeys!, "otherorganisation/secret"] }),
+    ctx.db.patch(submission._id, { attachmentKeys: [...submission.attachmentKeys!, "otherorganisation/secret"] }),
   );
-  expect(fakePdfStore.objects.has(document.key)).toBe(true);
+  expect(fakePdfStore.objects.has(submission.key)).toBe(true);
 
-  await org.user.mutation(api.rejection.remove, { organisationSlug: org.slug, documentId: document._id });
+  await org.user.mutation(api.rejection.remove, { organisationSlug: org.slug, submissionId: submission._id });
 
-  expect(fakePdfStore.objects.has(document.key)).toBe(false);
-  expect(fakePdfStore.objects.has(`${document.key}/1`)).toBe(false);
-  expect(fakePdfStore.objects.has(`${document.key}/2`)).toBe(false);
+  expect(fakePdfStore.objects.has(submission.key)).toBe(false);
+  expect(fakePdfStore.objects.has(`${submission.key}/1`)).toBe(false);
+  expect(fakePdfStore.objects.has(`${submission.key}/2`)).toBe(false);
   expect(fakePdfStore.objects.has("otherorganisation/secret")).toBe(true);
 });
 
-test("deleting the Organisation removes the files of an email Document and the Organisation address", async () => {
+test("deleting the Organisation removes the files of an email Submission and the Organisation address", async () => {
   const t = newBackend();
   const org = await bakkerij(t);
   const token = await organisationAddress(org);

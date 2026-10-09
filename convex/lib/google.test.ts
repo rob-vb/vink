@@ -51,11 +51,11 @@ test("an old-style 403 rate limit counts as a 429; another 403 doesn't", async (
 test("reading finds the tab by its id, its width and the column under its header", async () => {
   answers = [
     tabs(),
-    Response.json({ values: [["document", "approved_at", "approved_by", "delivery_id"]] }),
+    Response.json({ values: [["submission", "approved_at", "approved_by", "delivery_id"]] }),
     Response.json({ values: [["dlv_1"], [], ["dlv_2"]] }),
   ];
   expect(await google.read("t", sheet, "delivery_id")).toEqual({
-    header: ["document", "approved_at", "approved_by", "delivery_id"],
+    header: ["submission", "approved_at", "approved_by", "delivery_id"],
     column: ["dlv_1", null, "dlv_2"],
     columnCount: 5,
   });
@@ -65,7 +65,7 @@ test("reading finds the tab by its id, its width and the column under its header
 
 test("appending inserts new columns at their index, widens the grid past its edge, and writes values, never formulas, in one request", async () => {
   answers = [Response.json({})];
-  // A full grid of 5: document, invoice_number, approved_at, approved_by, delivery_id.
+  // A full grid of 5: submission, invoice_number, approved_at, approved_by, delivery_id.
   await google.append(
     "t",
     sheet,

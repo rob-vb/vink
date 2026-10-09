@@ -108,7 +108,7 @@ function Settings({
   );
 }
 
-/** Organisation settings: its name, how long Document data is kept, API Keys, and the Danger Zone. */
+/** Organisation settings: its name, how long Submission data is kept, API Keys, and the Danger Zone. */
 export function OrganisationSettings({ organisationSlug }: { organisationSlug: string }) {
   const t = useTranslations("appSettings");
   const settings = useQuery(api.organisations.settings, { organisationSlug });

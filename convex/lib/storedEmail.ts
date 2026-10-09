@@ -1,7 +1,7 @@
-// The one place that writes an email Document's files: the email as a JSON file
+// The one place that writes an email Submission's files: the email as a JSON file
 // (StoredEmail, lib/readerInput.ts) at `${organisationId}/${uuid}`, and each
 // attachment as a file of its own under `${emailKey}/n`. Every way in that
-// makes an email Document (Intake Address, app upload, public API) uses this.
+// makes an email Submission (Intake Address, app upload, public API) uses this.
 import type { Id } from "../_generated/dataModel";
 import type { ActionCtx } from "../_generated/server";
 import { pdfStore } from "./pdfStore";
@@ -9,7 +9,7 @@ import type { StoredEmail } from "./readerInput";
 
 export const EMAIL_MIME_TYPE = "application/json";
 
-/** The name an email's Document gets in the list: its subject. */
+/** The name an email's Submission gets in the list: its subject. */
 export function emailFilename(subject: string, from: string) {
   return subject.trim().slice(0, 200) || (from.trim() === "" ? "Email" : `Email from ${from}`);
 }

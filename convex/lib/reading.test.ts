@@ -4,7 +4,7 @@ import { readingLeaves } from "./reading";
 
 test("every value in a Reading is a leaf with its path and the pages of its nearest object", () => {
   const reading: Reading = {
-    documentType: "invoice",
+    submissionType: "invoice",
     _pages: [1, 2, 3],
     vehicle: { licensePlate: "OR18DH", mileageKm: 181250, _pages: [2], _unsure: ["mileageKm"] },
     tyreChanges: [
@@ -16,7 +16,7 @@ test("every value in a Reading is a leaf with its path and the pages of its near
   };
 
   expect(readingLeaves(reading)).toEqual([
-    { path: "documentType", text: "invoice", pages: [1, 2, 3] },
+    { path: "submissionType", text: "invoice", pages: [1, 2, 3] },
     { path: "vehicle.licensePlate", text: "OR18DH", pages: [2] },
     { path: "vehicle.mileageKm", text: "181250", pages: [2] },
     { path: "tyreChanges[0].position", text: "2R1", pages: [2, 3] },

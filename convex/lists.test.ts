@@ -105,12 +105,12 @@ async function extracted(recording: Recording, options: ListOptions = {}) {
     ],
   });
   fakePipeline.replay(recording);
-  const documentId = await uploadAndExtract(t, ann.user, ann.slug, formId, 2);
-  const document = await ann.user.query(api.documents.get, {
+  const submissionId = await uploadAndExtract(t, ann.user, ann.slug, formId, 2);
+  const submission = await ann.user.query(api.submissions.get, {
     organisationSlug: ann.slug,
-    documentId: documentId!,
+    submissionId: submissionId!,
   });
-  return { t, ...ann, formId, document, list: document.lists[0] };
+  return { t, ...ann, formId, submission, list: submission.lists[0] };
 }
 
 test("a List Field gets one entry per element of the array Match chose, with a Field Value per sub-Field", async () => {
@@ -245,14 +245,14 @@ function bulkyReading() {
 }
 
 test("a Reading over the request cap is matched in two requests, top-level Fields and List Fields apart", async () => {
-  const { document } = await extracted({ ...tyreReport, reading: bulkyReading() });
+  const { submission } = await extracted({ ...tyreReport, reading: bulkyReading() });
 
   const matches = fakePipeline.calls.filter((c) => c.step === "match");
   expect(matches.map((c) => ({ fields: c.fields, lists: c.lists }))).toEqual([
     { fields: ["license_plate"], lists: [] },
     { fields: [], lists: ["tyre_changes"] },
   ]);
-  expect(document.lists[0].entries).toHaveLength(2);
+  expect(submission.lists[0].entries).toHaveLength(2);
 });
 
 test("matching in two requests gives the same Field Values as one request", async () => {
@@ -262,8 +262,8 @@ test("matching in two requests gives the same Field Values as one request", asyn
   const single = await extracted({ ...tyreReport, reading: bulkyReading() });
 
   expect(fakePipeline.calls.filter((c) => c.step === "match")).toHaveLength(1);
-  expect(single.document.fieldValues).toEqual(split.document.fieldValues);
-  expect(single.document.lists).toEqual(split.document.lists);
+  expect(single.submission.fieldValues).toEqual(split.submission.fieldValues);
+  expect(single.submission.lists).toEqual(split.submission.lists);
 });
 
 // A long invoice as the Reader writes it: 150 lines, 600 values. Each Field's
@@ -296,8 +296,8 @@ test("a Form with many Fields is matched in as many requests as Jev's cap needs,
       fields: [{ type: "text", label: "Kenteken", key: "license_plate", required: false }, ...fields],
     });
     fakePipeline.replay({ ...tyreReport, reading: longInvoiceReading() });
-    const documentId = await uploadAndExtract(t, ann.user, ann.slug, formId, 2);
-    return await ann.user.query(api.documents.get, { organisationSlug: ann.slug, documentId: documentId! });
+    const submissionId = await uploadAndExtract(t, ann.user, ann.slug, formId, 2);
+    return await ann.user.query(api.submissions.get, { organisationSlug: ann.slug, submissionId: submissionId! });
   };
 
   const split = await run();

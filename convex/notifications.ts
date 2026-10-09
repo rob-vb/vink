@@ -15,7 +15,7 @@ export const list = orgQuery({
     return notifications.map((n) => ({
       id: n._id,
       text: n.text,
-      documentId: n.documentId ?? null,
+      submissionId: n.submissionId ?? null,
       at: n.at,
       read: n.readBy.includes(ctx.userId),
     }));

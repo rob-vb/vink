@@ -1,7 +1,7 @@
 {
   "name": "vink-zapier",
   "version": "1.0.0",
-  "description": "Vink on Zapier: a trigger for approved Documents and an action that sends a PDF in.",
+  "description": "Vink on Zapier: a trigger for approved Submissions and an action that sends a PDF in.",
   "private": true,
   "main": "index.js",
   "scripts": {

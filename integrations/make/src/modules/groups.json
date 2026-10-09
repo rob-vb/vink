@@ -1,7 +1,7 @@
 [
     {
-        "label": "Documents",
-        "modules": ["watchApprovedDocuments", "sendDocument"]
+        "label": "Submissions",
+        "modules": ["watchApprovedSubmissions", "sendSubmission"]
     },
     {
         "label": "Other",

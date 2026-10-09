@@ -89,7 +89,7 @@ async function proposed(t: Backend, pages = 1) {
   const ann = await signUp(t, "ann", "Acme Fleet");
   const organisationSlug = ann.slug;
   fakePipeline.replay(sample);
-  const { key, url } = await ann.user.mutation(api.documents.generateUploadUrl, { organisationSlug });
+  const { key, url } = await ann.user.mutation(api.submissions.generateUploadUrl, { organisationSlug });
   putToUploadUrl(url, await pdfWithPages(pages));
   const { proposalId } = await ann.user.action(api.formProposals.create, {
     organisationSlug,
@@ -125,13 +125,13 @@ test("a sample PDF is read in the background, then every piece of data is propos
   expect(fakePipeline.calls[1]).toMatchObject({ reading: sample.reading });
 });
 
-test("saving the ticked Fields creates the Form's first Version, and the sample becomes its first Document without a second Read", async () => {
+test("saving the ticked Fields creates the Form's first Version, and the sample becomes its first Submission without a second Read", async () => {
   const t = newBackend();
   const { user, organisationSlug, proposalId, read } = await proposed(t);
   await settle(t);
   fakePipeline.calls = [];
 
-  const { formId, documentId } = await user.mutation(api.formProposals.save, {
+  const { formId, submissionId } = await user.mutation(api.formProposals.save, {
     organisationSlug,
     proposalId,
     name: "Work order",
@@ -144,12 +144,12 @@ test("saving the ticked Fields creates the Form's first Version, and the sample 
   expect(form).toMatchObject({ name: "Work order", version: 1 });
   expect(form.fields.map((f) => f.key)).toEqual(["license_plate", "mileage_km"]);
   expect(fakePipeline.calls.map((c) => c.step)).toEqual(["match", "fill", "verify"]);
-  const document = await user.query(api.documents.get, {
+  const submission = await user.query(api.submissions.get, {
     organisationSlug,
-    documentId: documentId as Id<"documents">,
+    submissionId: submissionId as Id<"submissions">,
   });
-  expect(document).toMatchObject({ filename: "voorbeeld.pdf", state: "needs_review", formVersion: 1 });
-  expect(document.fieldValues.map((f) => f.value)).toEqual(["NWA30E", 9899]);
+  expect(submission).toMatchObject({ filename: "voorbeeld.pdf", state: "needs_review", formVersion: 1 });
+  expect(submission.fieldValues.map((f) => f.value)).toEqual(["NWA30E", 9899]);
   await expect(read()).rejects.toThrow("Form Proposal not found");
 });
 
@@ -158,7 +158,7 @@ test("with \"Also process this sample\" off, the sample's PDF and Reading are de
   const { user, organisationSlug, key, proposalId, read } = await proposed(t);
   await settle(t);
 
-  const { documentId } = await user.mutation(api.formProposals.save, {
+  const { submissionId } = await user.mutation(api.formProposals.save, {
     organisationSlug,
     proposalId,
     name: "Work order",
@@ -166,14 +166,14 @@ test("with \"Also process this sample\" off, the sample's PDF and Reading are de
     processSample: false,
   });
 
-  expect(documentId).toBeNull();
+  expect(submissionId).toBeNull();
   expect(fakePdfStore.objects.has(key)).toBe(false);
   await expect(read()).rejects.toThrow("Form Proposal not found");
   const left = await t.run(async (ctx) => ({
-    documents: await ctx.db.query("documents").collect(),
+    submissions: await ctx.db.query("submissions").collect(),
     proposals: await ctx.db.query("formProposals").collect(),
   }));
-  expect(left).toEqual({ documents: [], proposals: [] });
+  expect(left).toEqual({ submissions: [], proposals: [] });
 });
 
 test("a failed proposal shows a friendly failure code, never the server's error, and can be retried without reading the sample again", async () => {

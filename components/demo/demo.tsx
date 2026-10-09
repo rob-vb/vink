@@ -3,17 +3,17 @@
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useReducer, useRef, useState } from "react";
 import { toast } from "sonner";
-import type { ListedState } from "@/components/documents/labels";
-import type { ReviewFilter } from "@/components/documents/review-view";
+import type { ListedState } from "@/components/submissions/labels";
+import type { ReviewFilter } from "@/components/submissions/review-view";
 import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/sonner";
 import { StartFreeLink } from "@/components/marketing/cta-links";
 import { trackSignUpClick } from "@/lib/analytics";
 import { SIGN_UP_PATH } from "@/lib/site";
 import { DemoAppFrame } from "./demo-app-frame";
-import type { DemoDocumentId } from "./demo-papers";
-import { DemoDocumentsScreen, DemoLabels, DemoReviewScreen, type ReviewHandlers } from "./demo-screens";
-import { demoReducer, initialDocuments, valuesRead, type Locale } from "./demo-state";
+import type { DemoSubmissionId } from "./demo-papers";
+import { DemoSubmissionsScreen, DemoLabels, DemoReviewScreen, type ReviewHandlers } from "./demo-screens";
+import { demoReducer, initialSubmissions, valuesRead, type Locale } from "./demo-state";
 
 const TOASTER = "vink-demo";
 
@@ -21,16 +21,16 @@ const TOASTER = "vink-demo";
 const stamp = () => Date.now();
 
 /**
- * The clickable demo (Interactive demo, variant D): the app's Documents page
- * and review screen with eight demo Documents (PDFs, an email, a photo), all in the browser. Nothing is
+ * The clickable demo (Interactive demo, variant D): the app's Submissions page
+ * and review screen with eight demo Submissions (PDFs, an email, a photo), all in the browser. Nothing is
  * sent anywhere. When Needs Review is empty, a card shows the visitor's time
  * and counts, then Start free.
  */
 export function Demo() {
   const locale = useLocale() as Locale;
   const t = useTranslations("demo");
-  const [documents, dispatch] = useReducer(demoReducer, locale, initialDocuments);
-  const [view, setView] = useState<DemoDocumentId | null>(null);
+  const [submissions, dispatch] = useReducer(demoReducer, locale, initialSubmissions);
+  const [view, setView] = useState<DemoSubmissionId | null>(null);
   const [tab, setTab] = useState<ListedState>("needs_review");
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<string | null>(null);
@@ -40,10 +40,10 @@ export function Demo() {
   const [closed, setClosed] = useState(false);
   const frame = useRef<HTMLDivElement>(null);
 
-  const waiting = documents.filter((d) => d.state === "needs_review");
-  const document = view === null ? undefined : documents.find((d) => d.id === view);
+  const waiting = submissions.filter((d) => d.state === "needs_review");
+  const submission = view === null ? undefined : submissions.find((d) => d.id === view);
 
-  // Opening a Document or going back: keep the top of the demo in view.
+  // Opening a Submission or going back: keep the top of the demo in view.
   const moved = useRef(false);
   useEffect(() => {
     const element = frame.current;
@@ -57,7 +57,7 @@ export function Demo() {
   }, [view]);
 
   function open(id: string) {
-    setView(id as DemoDocumentId);
+    setView(id as DemoSubmissionId);
     setPage(1);
     setSelected(null);
     setFilter("all");
@@ -78,9 +78,9 @@ export function Demo() {
     toast.dismiss();
   }
 
-  const on = (documentId: DemoDocumentId) => ({ documentId, at: stamp() });
+  const on = (submissionId: DemoSubmissionId) => ({ submissionId, at: stamp() });
 
-  const handlers = (documentId: DemoDocumentId): ReviewHandlers => ({
+  const handlers = (submissionId: DemoSubmissionId): ReviewHandlers => ({
     onBack: backToTable,
     onPageChange: setPage,
     onSelect: (id, pages) => {
@@ -90,20 +90,20 @@ export function Demo() {
     },
     onFilterChange: setFilter,
     onNoFormAction: () => toast.info(t("toast.noForm"), { toasterId: TOASTER }),
-    onCorrect: (fieldValueId, value) => dispatch({ type: "correct", ...on(documentId), fieldValueId, value }),
-    onCheck: (fieldValueId) => dispatch({ type: "check", ...on(documentId), fieldValueId }),
-    onUndo: (fieldValueId) => dispatch({ type: "undo", documentId, fieldValueId }),
-    onConfirmEntries: (listKey) => dispatch({ type: "confirmEntries", ...on(documentId), listKey }),
-    onUndoConfirmEntries: (listKey) => dispatch({ type: "undoConfirmEntries", ...on(documentId), listKey }),
-    onRemoveEntry: (listKey, entry) => dispatch({ type: "removeEntry", ...on(documentId), listKey, entry }),
-    onRestoreEntry: (listKey, entry) => dispatch({ type: "restoreEntry", ...on(documentId), listKey, entry }),
-    onAddEntry: (listKey) => dispatch({ type: "addEntry", ...on(documentId), listKey }),
+    onCorrect: (fieldValueId, value) => dispatch({ type: "correct", ...on(submissionId), fieldValueId, value }),
+    onCheck: (fieldValueId) => dispatch({ type: "check", ...on(submissionId), fieldValueId }),
+    onUndo: (fieldValueId) => dispatch({ type: "undo", submissionId, fieldValueId }),
+    onConfirmEntries: (listKey) => dispatch({ type: "confirmEntries", ...on(submissionId), listKey }),
+    onUndoConfirmEntries: (listKey) => dispatch({ type: "undoConfirmEntries", ...on(submissionId), listKey }),
+    onRemoveEntry: (listKey, entry) => dispatch({ type: "removeEntry", ...on(submissionId), listKey, entry }),
+    onRestoreEntry: (listKey, entry) => dispatch({ type: "restoreEntry", ...on(submissionId), listKey, entry }),
+    onAddEntry: (listKey) => dispatch({ type: "addEntry", ...on(submissionId), listKey }),
     onApprove: (next) => {
       const at = stamp();
-      const filename = documents.find((d) => d.id === documentId)?.filename ?? "";
-      dispatch({ type: "approve", documentId, at });
+      const filename = submissions.find((d) => d.id === submissionId)?.filename ?? "";
+      dispatch({ type: "approve", submissionId, at });
       toast.success(t("toast.approved", { filename }), { toasterId: TOASTER });
-      const rest = waiting.filter((d) => d.id !== documentId);
+      const rest = waiting.filter((d) => d.id !== submissionId);
       if (rest.length === 0) setFinishedAt(at);
       if (next && rest.length > 0) {
         open(rest[0].id);
@@ -115,7 +115,7 @@ export function Demo() {
     },
   });
 
-  const checked = documents.reduce(
+  const checked = submissions.reduce(
     (n, d) =>
       n +
       d.fieldValues.filter((f) => f.review).length +
@@ -144,28 +144,28 @@ export function Demo() {
         <DemoAppFrame
           organisation={t("frame.organisation")}
           nav={{
-            documents: t("frame.documents"),
+            submissions: t("frame.submissions"),
             forms: t("frame.forms"),
             integrations: t("frame.integrations"),
             members: t("frame.members"),
           }}
           demoData={t("frame.demoData")}
           startOver={t("frame.startOver")}
-          onDocuments={backToTable}
+          onSubmissions={backToTable}
           onStartOver={startOver}
         >
           <div className="min-h-[34rem]">
-            {document ? (
+            {submission ? (
               <DemoReviewScreen
-                document={document}
+                submission={submission}
                 page={page}
                 selected={selected}
                 filter={filter}
-                handlers={handlers(document.id)}
+                handlers={handlers(submission.id)}
               />
             ) : (
-              <DemoDocumentsScreen
-                documents={documents}
+              <DemoSubmissionsScreen
+                submissions={submissions}
                 tab={tab}
                 onTabChange={setTab}
                 onOpen={open}
@@ -207,7 +207,7 @@ export function Demo() {
                 {[
                   [time, t("done.time")],
                   [String(checked), t("done.checked")],
-                  [String(valuesRead(documents)), t("done.read")],
+                  [String(valuesRead(submissions)), t("done.read")],
                 ].map(([value, label]) => (
                   <div key={label} className="flex flex-col-reverse">
                     <dt className="mt-1 text-xs text-muted-foreground">{label}</dt>

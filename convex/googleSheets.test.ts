@@ -121,16 +121,16 @@ async function connected(t: Backend) {
 
 async function approve(t: Backend, ctx: Awaited<ReturnType<typeof connected>>) {
   fakePipeline.replay(tyreService);
-  const documentId = (await uploadAndExtract(t, ctx.user, ctx.organisationSlug, ctx.formId, 2))!;
-  await ctx.user.mutation(api.review.approve, { organisationSlug: ctx.organisationSlug, documentId });
+  const submissionId = (await uploadAndExtract(t, ctx.user, ctx.organisationSlug, ctx.formId, 2))!;
+  await ctx.user.mutation(api.review.approve, { organisationSlug: ctx.organisationSlug, submissionId });
   await t.finishAllScheduledFunctions(vi.runAllTimers);
-  return documentId;
+  return submissionId;
 }
 
-async function deliveryOf(t: Backend, ctx: Awaited<ReturnType<typeof connected>>, documentId: Id<"documents">) {
-  const { deliveries } = await ctx.user.query(api.documents.get, {
+async function deliveryOf(t: Backend, ctx: Awaited<ReturnType<typeof connected>>, submissionId: Id<"submissions">) {
+  const { deliveries } = await ctx.user.query(api.submissions.get, {
     organisationSlug: ctx.organisationSlug,
-    documentId,
+    submissionId,
   });
   expect(deliveries).toHaveLength(1);
   return deliveries[0];
@@ -160,7 +160,7 @@ test("connecting makes a sheet with the header row, lists its link and stores th
   const ann = await connected(t);
   expect(fakeGoogle.onlySheet()).toEqual({
     title: "Tyre log",
-    header: ["document", "approved_at", "approved_by", "delivery_id"],
+    header: ["submission", "approved_at", "approved_by", "delivery_id"],
     rows: [],
   });
   expect(fakeGoogle.redirectUris).toEqual(["https://vink.page/api/integrations/google/callback"]);
@@ -224,13 +224,13 @@ test("consent without access to Vink's files connects nothing", async () => {
 test("an Approval adds a row per tyre change, the second List as an empty cell", async () => {
   const t = newBackend();
   const ann = await connected(t);
-  const documentId = await approve(t, ann);
+  const submissionId = await approve(t, ann);
 
-  const delivery = await deliveryOf(t, ann, documentId);
+  const delivery = await deliveryOf(t, ann, submissionId);
   expect(delivery).toMatchObject({ state: "delivered", attempts: [{ status: 200, body: "2 rows added to the sheet" }] });
   const sheet = fakeGoogle.onlySheet();
   expect(sheet.header).toEqual([
-    "document",
+    "submission",
     "license_plate",
     "tyre_changes.position",
     "tyre_changes.tread_depth_mm",
@@ -239,10 +239,10 @@ test("an Approval adds a row per tyre change, the second List as an empty cell",
     "approved_by",
     "delivery_id",
   ]);
-  const document = { approved_at: expect.stringMatching(/^2026-10-06T\d\d:\d\d:\d\d\.\d{3}Z$/), approved_by: "ann@example.com" };
+  const submission = { approved_at: expect.stringMatching(/^2026-10-06T\d\d:\d\d:\d\d\.\d{3}Z$/), approved_by: "ann@example.com" };
   expect(sheet.rows).toEqual([
-    [expect.stringMatching(/\.pdf$/), "OR18DH", "2L1", 3, null, document.approved_at, document.approved_by, delivery.deliveryId],
-    [expect.stringMatching(/\.pdf$/), "OR18DH", "2R1", 4, null, document.approved_at, document.approved_by, delivery.deliveryId],
+    [expect.stringMatching(/\.pdf$/), "OR18DH", "2L1", 3, null, submission.approved_at, submission.approved_by, delivery.deliveryId],
+    [expect.stringMatching(/\.pdf$/), "OR18DH", "2R1", 4, null, submission.approved_at, submission.approved_by, delivery.deliveryId],
   ]);
 });
 
@@ -277,7 +277,7 @@ test("a sheet in the old column order keeps it: values go by name, a new Field b
   // The sheet as Vink made it before: Vink's columns first, then the Fields.
   const [stored] = fakeGoogle.sheets.values();
   stored.rows = [
-    ["document", "approved_at", "approved_by", "delivery_id", "license_plate", "tyre_changes.position", "tyre_changes.tread_depth_mm"],
+    ["submission", "approved_at", "approved_by", "delivery_id", "license_plate", "tyre_changes.position", "tyre_changes.tread_depth_mm"],
     ["old.pdf", "2026-10-01T08:00:00.000Z", "ann@example.com", "dlv_old", "OLD1", "1L", 5],
   ];
   // The first write lands, but its answer never arrives: the retry must find delivery_id by name.
@@ -288,13 +288,13 @@ test("a sheet in the old column order keeps it: values go by name, a new Field b
     const { GoogleFailure } = await import("./lib/google");
     throw new GoogleFailure(null, "Google didn't answer within 15 s");
   };
-  const documentId = await approve(t, ann);
-  const { deliveryId, attempts } = await deliveryOf(t, ann, documentId);
+  const submissionId = await approve(t, ann);
+  const { deliveryId, attempts } = await deliveryOf(t, ann, submissionId);
   expect(attempts.at(-1)?.body).toBe("Already in the sheet: no rows added");
 
   const sheet = fakeGoogle.onlySheet();
   expect(sheet.header).toEqual([
-    "document",
+    "submission",
     "rims",
     "approved_at",
     "approved_by",
@@ -315,9 +315,9 @@ test("Google's rate limits and 5xx are retried", async () => {
   const t = newBackend();
   const ann = await connected(t);
   fakeGoogle.answer({ status: 429, retryAfter: "30" }, { status: 503 });
-  const documentId = await approve(t, ann);
+  const submissionId = await approve(t, ann);
 
-  const delivery = await deliveryOf(t, ann, documentId);
+  const delivery = await deliveryOf(t, ann, submissionId);
   expect(delivery.state).toBe("delivered");
   expect(delivery.attempts.map((a) => a.status)).toEqual([429, 503, 200]);
   expect(fakeGoogle.onlySheet().rows).toHaveLength(2);
@@ -327,9 +327,9 @@ test("a write Google refuses fails the Delivery with a clear reason", async () =
   const t = newBackend();
   const ann = await connected(t);
   fakeGoogle.answer({ status: 403 });
-  const documentId = await approve(t, ann);
+  const submissionId = await approve(t, ann);
 
-  const delivery = await deliveryOf(t, ann, documentId);
+  const delivery = await deliveryOf(t, ann, submissionId);
   expect(delivery).toMatchObject({ state: "failed", failureReason: "Google refused the write (403)" });
   expect(delivery.attempts).toHaveLength(1);
 });
@@ -338,8 +338,8 @@ test("a deleted sheet fails the Delivery at once", async () => {
   const t = newBackend();
   const ann = await connected(t);
   fakeGoogle.answer({ status: 404 });
-  const documentId = await approve(t, ann);
-  expect(await deliveryOf(t, ann, documentId)).toMatchObject({
+  const submissionId = await approve(t, ann);
+  expect(await deliveryOf(t, ann, submissionId)).toMatchObject({
     state: "failed",
     failureReason: "The sheet is gone: it, or its Vink tab, was deleted",
   });
@@ -349,9 +349,9 @@ test("access the Google account took back fails the Delivery at once as access e
   const t = newBackend();
   const ann = await connected(t);
   fakeGoogle.revoked.add("refresh-ann");
-  const documentId = await approve(t, ann);
+  const submissionId = await approve(t, ann);
 
-  const delivery = await deliveryOf(t, ann, documentId);
+  const delivery = await deliveryOf(t, ann, submissionId);
   expect(delivery).toMatchObject({ state: "failed", failureReason: ACCESS_EXPIRED });
   expect(delivery.attempts).toHaveLength(1);
   const notifications = await ann.user.query(api.notifications.list, { organisationSlug: ann.organisationSlug });
@@ -369,9 +369,9 @@ test("rows that reached the sheet before an answer got lost aren't added again",
     const { GoogleFailure } = await import("./lib/google");
     throw new GoogleFailure(null, "Google didn't answer within 15 s");
   };
-  const documentId = await approve(t, ann);
+  const submissionId = await approve(t, ann);
 
-  const delivery = await deliveryOf(t, ann, documentId);
+  const delivery = await deliveryOf(t, ann, submissionId);
   expect(delivery.state).toBe("delivered");
   expect(delivery.attempts.map((a) => a.body ?? a.error)).toEqual([
     "Google didn't answer within 15 s",
@@ -384,13 +384,13 @@ test("a re-send after a failure adds the rows once", async () => {
   const t = newBackend();
   const ann = await connected(t);
   fakeGoogle.answer({ status: 400 });
-  const documentId = await approve(t, ann);
-  const failed = await deliveryOf(t, ann, documentId);
+  const submissionId = await approve(t, ann);
+  const failed = await deliveryOf(t, ann, submissionId);
   expect(failed.state).toBe("failed");
 
   await ann.user.mutation(api.deliveries.resend, { organisationSlug: ann.organisationSlug, id: failed.id });
   await t.finishAllScheduledFunctions(vi.runAllTimers);
-  expect((await deliveryOf(t, ann, documentId)).state).toBe("delivered");
+  expect((await deliveryOf(t, ann, submissionId)).state).toBe("delivered");
   expect(fakeGoogle.onlySheet().rows).toHaveLength(2);
 });
 
@@ -487,8 +487,8 @@ test("after Reconnect, a re-send writes to the same sheet and skips rows already
   const [listed] = await ann.user.query(api.integrations.list, { organisationSlug: ann.organisationSlug });
   expect(listed).toMatchObject({ needsReconnect: false, url: "https://docs.google.com/spreadsheets/d/sheet1/edit" });
 
-  for (const documentId of [first, second]) {
-    const failed = await deliveryOf(t, ann, documentId);
+  for (const submissionId of [first, second]) {
+    const failed = await deliveryOf(t, ann, submissionId);
     await ann.user.mutation(api.deliveries.resend, { organisationSlug: ann.organisationSlug, id: failed.id });
   }
   await t.finishAllScheduledFunctions(vi.runAllTimers);

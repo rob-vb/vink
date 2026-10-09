@@ -361,7 +361,7 @@ export function parseEml(bytes: Uint8Array): ParsedEmail {
 /**
  * Whether the bytes look like an email file: a header block at the start, with
  * a header only an email has. Not a proof (parseEml is lenient); it keeps a
- * random text file from becoming an email Document.
+ * random text file from becoming an email Submission.
  */
 export function looksLikeEmail(bytes: Uint8Array) {
   const head = binaryString(bytes.subarray(0, 4096));

@@ -23,7 +23,7 @@ export const marketingNamespaces = [
 // The app's own files, never sent to the marketing site and the other way round.
 export const appNamespaces = [
   "app",
-  "appDocuments",
+  "appSubmissions",
   "appForms",
   "appMembers",
   "appIntegrations",

@@ -1,0 +1,10 @@
+[
+    {
+        "name": "form_id",
+        "type": "select",
+        "label": "Form",
+        "required": true,
+        "options": "rpc://listForms",
+        "help": "The scenario starts each time a Submission of this Form is approved."
+    }
+]

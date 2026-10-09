@@ -192,7 +192,7 @@ export async function extract(
         toVerify,
       );
     } catch (error) {
-      console.error("Verify failed; the Document stays unverified", error);
+      console.error("Verify failed; the Submission stays unverified", error);
       jevVerified = false;
     }
   }

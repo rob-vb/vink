@@ -106,11 +106,11 @@ function RecentDeliveries({
           delivery={delivery}
           title={
             <Link
-              href={`/app/o/${organisationSlug}/documents/${delivery.document.id}`}
+              href={`/app/o/${organisationSlug}/submissions/${delivery.submission.id}`}
               className="hover:underline"
               onClick={(event) => event.stopPropagation()}
             >
-              {delivery.document.filename}
+              {delivery.submission.filename}
             </Link>
           }
           actions={<ResendButton organisationSlug={organisationSlug} delivery={delivery} />}

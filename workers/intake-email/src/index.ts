@@ -2,7 +2,7 @@
 // Email Routing's catch-all on the intake apex sends every message here. The
 // Worker holds no business logic: it stores PDF and image attachments in R2 and
 // tells Vink the whole mail (subject, date, text, attachments); Vink decides
-// which Form, and whether it is one Document or several (see convex/intake.ts).
+// which Form, and whether it is one Submission or several (see convex/intake.ts).
 // It never replies.
 import PostalMime from "postal-mime";
 import { deliver } from "./deliver";
@@ -20,7 +20,7 @@ export default {
       message.setReject("Message too large");
       return;
     }
-    // Spoofed mail must never inject Documents.
+    // Spoofed mail must never inject Submissions.
     if (failsDmarc(message.headers.get("Authentication-Results"))) {
       message.setReject("DMARC check failed");
       return;

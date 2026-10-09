@@ -70,7 +70,7 @@
         },
         "lists": "<b>List Fields:</b> Vink writes one row per entry of the Form's first List Field, and repeats the Submission's other values on each row. A Submission without entries gives one row. A second List Field goes into one cell as JSON.",
         "security": "<b>Access:</b> Vink can only open the sheet it makes itself. Your other files in Google Drive stay closed to it.",
-        "note": "<b>Columns:</b> first <code>document</code>, then your Fields headed by their keys, and on the right <code>approved_at</code>, <code>approved_by</code> and <code>delivery_id</code>. A new Field gets a new column just before <code>approved_at</code>. Don't change the headers, because Vink puts each value under the column with the same header. Can Vink no longer write to the sheet? Choose <b>Reconnect Google account</b>, then send the failed Delivery again from the Submission."
+        "note": "<b>Columns:</b> first <code>submission</code>, then your Fields headed by their keys, and on the right <code>approved_at</code>, <code>approved_by</code> and <code>delivery_id</code>. A new Field gets a new column just before <code>approved_at</code>. Don't change the headers, because Vink puts each value under the column with the same header. Can Vink no longer write to the sheet? Choose <b>Reconnect Google account</b>, then send the failed Delivery again from the Submission."
       },
       "n8n": {
         "title": "n8n",
@@ -127,10 +127,10 @@
     "table": {
       "key": "Key",
       "meaning": "Meaning",
-      "event": "Always <code>document.approved</code>.",
+      "event": "Always <code>submission.approved</code>.",
       "delivery_id": "Unique per Delivery. It stays the same when a Delivery is retried or sent again, so use it to deduplicate.",
       "test": "<code>true</code> for a test-send, <code>false</code> for a real Delivery.",
-      "document": "The Submission: its id, its file name and when it was uploaded (ISO 8601, UTC).",
+      "submission": "The Submission: its id, its file name and when it was uploaded (ISO 8601, UTC).",
       "form": "The Form's id and the Form Version the Submission was read with.",
       "approval": "<code>manual</code> or <code>auto</code> (Auto-Send), the approving user's id (<code>null</code> for Auto-Send) and when it was approved.",
       "data": "The values, keyed by Field. Numbers are numbers, dates are <code>YYYY-MM-DD</code>, yes/no Fields are booleans and Lists are arrays of objects."

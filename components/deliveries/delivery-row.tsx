@@ -2,7 +2,7 @@
 
 import { ChevronRight } from "lucide-react";
 import type { ReactNode } from "react";
-import { useDocumentsLabels } from "@/components/documents/labels";
+import { useSubmissionsLabels } from "@/components/submissions/labels";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "cn";
@@ -20,7 +20,7 @@ export type DeliveryView = {
 };
 
 export function DeliveryState({ state }: { state: DeliveryView["state"] }) {
-  const { labels } = useDocumentsLabels();
+  const { labels } = useSubmissionsLabels();
   return (
     <Badge
       variant="outline"
@@ -48,7 +48,7 @@ export function DeliveryRow({
   title: ReactNode;
   actions?: ReactNode;
 }) {
-  const { labels, format } = useDocumentsLabels();
+  const { labels, format } = useSubmissionsLabels();
   return (
     <Collapsible className="border-b last:border-b-0">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5">

@@ -8,7 +8,7 @@ import type { SplitDecision } from "./mailPlan";
 type Json = string | number | boolean | null | Json[] | { [key: string]: Json };
 
 /**
- * What the vision model says a Document holds, independent of any Form: one
+ * What the vision model says a Submission holds, independent of any Form: one
  * object per real-world thing, each with its `_pages` and `_unsure`.
  */
 export type Reading = { [key: string]: Json };
@@ -45,7 +45,7 @@ export type InputFile = { bytes: Uint8Array; mimeType: string };
 export type EmailAttachment = { filename: string; mimeType: string; bytes: Uint8Array };
 
 /**
- * What a Reader gets, by the kind of the Document (ADR 0010). The kind is
+ * What a Reader gets, by the kind of the Submission (ADR 0010). The kind is
  * known from the file, so the Reader is picked by it and never by a model.
  */
 export type ReaderInput =
@@ -100,14 +100,14 @@ export type RoutableForm = { id: string; name: string; description: string | nul
 
 export type Router = {
   /**
-   * Jev's pick of the Form a Document that came without one belongs to, from
+   * Jev's pick of the Form a Submission that came without one belongs to, from
    * its Reading, with its probability; `formId` is `null` when none fits. The
    * pick is not final: Match and the fit check gate it (ADR 0010).
    */
   route(reading: Reading, forms: RoutableForm[]): Promise<{ formId: string | null; probability: number }>;
 };
 
-/** What Jev is told of an email to decide whether it is one Document or several; never the files' contents. */
+/** What Jev is told of an email to decide whether it is one Submission or several; never the files' contents. */
 export type MailSummary = {
   subject: string;
   from: string;
@@ -122,7 +122,7 @@ export type Splitter = {
    * belong together as one case, or are separate papers, and in that case
    * whether the text is only a cover note or a paper of its own (SplitAnswer in
    * lib/mailPlan.ts). `probability` is that of the answer given; a low one makes
-   * Vink split, keep the text as a Document and mark Needs Review.
+   * Vink split, keep the text as a Submission and mark Needs Review.
    */
   split(mail: MailSummary): Promise<SplitDecision>;
 };
@@ -155,9 +155,9 @@ export type VerifyRequest = {
 export type Verification = { fit: number; support: number | null };
 
 export type Verifier = {
-  /** Checks every filled value of one Document, in one request; answers per request id. */
+  /** Checks every filled value of one Submission, in one request; answers per request id. */
   verify(
-    document: { formName: string; formDescription: string | null; reading: Reading },
+    submission: { formName: string; formDescription: string | null; reading: Reading },
     requests: VerifyRequest[],
   ): Promise<Record<string, Verification>>;
 };

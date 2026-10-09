@@ -301,7 +301,7 @@ function escapeXml(text: string) {
 
 const XML = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n';
 const MAIN = "http://schemas.openxmlformats.org/spreadsheetml/2006/main";
-const REL = "http://schemas.openxmlformats.org/officeDocument/2006/relationships";
+const REL = "http://schemas.openxmlformats.org/officeSubmission/2006/relationships";
 
 /** The parts of the smallest workbook Excel opens: content types, two relationship files, the workbook and its sheet. */
 function workbookParts(sheetName: string, header: string[]): Array<[string, string]> {
@@ -321,7 +321,7 @@ function workbookParts(sheetName: string, header: string[]): Array<[string, stri
     [
       "_rels/.rels",
       `${XML}<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">` +
-        `<Relationship Id="rId1" Type="${REL}/officeDocument" Target="xl/workbook.xml"/>` +
+        `<Relationship Id="rId1" Type="${REL}/officeSubmission" Target="xl/workbook.xml"/>` +
         "</Relationships>",
     ],
     [

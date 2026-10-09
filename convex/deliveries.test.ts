@@ -47,7 +47,7 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 
-// Everything clears review, so the Document can be approved straight away.
+// Everything clears review, so the Submission can be approved straight away.
 const tyreService: Recording = {
   reading: {
     vehicle: { license_plate: "OR18DH", fuel: "Diesel", _pages: [1] },
@@ -128,13 +128,13 @@ async function approvedWith(t: Backend, integrations: number, answers: typeof fa
     integrationIds.push(integrationId);
   }
   fakePipeline.replay(tyreService);
-  const documentId = (await uploadAndExtract(t, ann.user, organisationSlug, formId, 2))!;
+  const submissionId = (await uploadAndExtract(t, ann.user, organisationSlug, formId, 2))!;
   fakeHttp.answer(...answers);
   vi.setSystemTime(new Date("2026-09-24T12:00:00Z"));
-  await ann.user.mutation(api.review.approve, { organisationSlug, documentId });
+  await ann.user.mutation(api.review.approve, { organisationSlug, submissionId });
   await t.finishAllScheduledFunctions(vi.runAllTimers);
-  const read = () => ann.user.query(api.documents.get, { organisationSlug, documentId });
-  return { ...ann, organisationSlug, formId, documentId, integrationIds, read };
+  const read = () => ann.user.query(api.submissions.get, { organisationSlug, submissionId });
+  return { ...ann, organisationSlug, formId, submissionId, integrationIds, read };
 }
 
 test("Approval with no Integration attached creates no Delivery and sends nothing", async () => {
@@ -165,14 +165,14 @@ test("Approval creates one Delivery per attached Integration, each with its own 
 
 test("the envelope carries the Payload with every key: null, [], ISO dates, choice values, and nothing else", async () => {
   const t = newBackend();
-  const { documentId, formId } = await approvedWith(t, 1);
+  const { submissionId, formId } = await approvedWith(t, 1);
 
   const envelope = JSON.parse(fakeHttp.requests[0].body);
   expect(envelope).toEqual({
-    event: "document.approved",
+    event: "submission.approved",
     delivery_id: expect.stringMatching(/^dlv_/),
     test: false,
-    document: { id: documentId, filename: "werkorder.pdf", uploaded_at: expect.any(String) },
+    submission: { id: submissionId, filename: "werkorder.pdf", uploaded_at: expect.any(String) },
     form: { id: formId, version: 1 },
     approval: { mode: "manual", by: "ann", at: "2026-09-24T12:00:00.000Z" },
     data: {
@@ -246,9 +246,9 @@ test("a 4xx other than 408 and 429 fails the Delivery at once", async () => {
   expect(fakeHttp.requests).toHaveLength(1);
 });
 
-test("an Integration lists its Deliveries with the Document they carried", async () => {
+test("an Integration lists its Deliveries with the Submission they carried", async () => {
   const t = newBackend();
-  const { user, organisationSlug, integrationIds, documentId } = await approvedWith(t, 1);
+  const { user, organisationSlug, integrationIds, submissionId } = await approvedWith(t, 1);
 
   const deliveries = await user.query(api.deliveries.forIntegration, {
     organisationSlug,
@@ -257,7 +257,7 @@ test("an Integration lists its Deliveries with the Document they carried", async
 
   expect(deliveries).toEqual([
     expect.objectContaining({
-      document: { id: documentId, filename: "werkorder.pdf" },
+      submission: { id: submissionId, filename: "werkorder.pdf" },
       state: "delivered",
       attempts: [expect.objectContaining({ status: 200 })],
     }),

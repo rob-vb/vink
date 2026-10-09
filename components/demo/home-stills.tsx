@@ -2,49 +2,49 @@
 
 import { useLocale } from "next-intl";
 import { useState } from "react";
-import { FieldRowView } from "@/components/documents/field-row-view";
-import { useDocumentsLabels } from "@/components/documents/labels";
-import { ListGroupView } from "@/components/documents/list-group-view";
+import { FieldRowView } from "@/components/submissions/field-row-view";
+import { useSubmissionsLabels } from "@/components/submissions/labels";
+import { ListGroupView } from "@/components/submissions/list-group-view";
 import { ScaledStill } from "@/components/features/scaled-still";
 import { DEMO_THRESHOLD } from "./demo-data";
-import { demoPages, type DemoDocumentId, type DemoPdfId } from "./demo-papers";
+import { demoPages, type DemoSubmissionId, type DemoPdfId } from "./demo-papers";
 import { DemoLabels } from "./demo-screens";
-import { demoReducer, initialDocuments, type DemoAction, type DemoDocument, type Locale } from "./demo-state";
+import { demoReducer, initialSubmissions, type DemoAction, type DemoSubmission, type Locale } from "./demo-state";
 
 /*
- * Home's pictures of the review screen's Fields: the demo's Documents drawn
- * with the app's own rows (components/documents), in the page's language.
+ * Home's pictures of the review screen's Fields: the demo's Submissions drawn
+ * with the app's own rows (components/submissions), in the page's language.
  * Pictures only: nothing inside can be clicked or typed in.
  */
 
 const nothing = () => {};
 
-function useDemoDocument(documentId: DemoDocumentId, steps: DemoAction[] = []) {
+function useDemoSubmission(submissionId: DemoSubmissionId, steps: DemoAction[] = []) {
   const locale = useLocale() as Locale;
-  const [documents] = useState(() => steps.reduce(demoReducer, initialDocuments(locale)));
-  return documents.find((d) => d.id === documentId)!;
+  const [submissions] = useState(() => steps.reduce(demoReducer, initialSubmissions(locale)));
+  return submissions.find((d) => d.id === submissionId)!;
 }
 
-/** A Document's Field rows, as on the review screen. */
+/** A Submission's Field rows, as on the review screen. */
 function Fields({
-  document,
+  submission,
   keys,
   prefix,
   lists = false,
 }: {
-  document: DemoDocument;
+  submission: DemoSubmission;
   /** Only these Fields, in this order; all Fields when left out. */
   keys?: string[];
-  /** Keeps the inputs' ids apart from other pictures of the same Document. */
+  /** Keeps the inputs' ids apart from other pictures of the same Submission. */
   prefix: string;
-  /** Also the Document's Lists, after its Fields. */
+  /** Also the Submission's Lists, after its Fields. */
   lists?: boolean;
 }) {
   const own = <F extends { id: string }>(f: F) => ({ ...f, id: `${prefix}-${f.id}` });
   const rows = keys
-    ? keys.map((key) => document.fieldValues.find((f) => f.key === key)!)
-    : document.fieldValues;
-  const field = (fieldValue: DemoDocument["fieldValues"][number], manual = false) => (
+    ? keys.map((key) => submission.fieldValues.find((f) => f.key === key)!)
+    : submission.fieldValues;
+  const field = (fieldValue: DemoSubmission["fieldValues"][number], manual = false) => (
     <FieldRowView
       key={fieldValue.id}
       fieldValue={own(fieldValue)}
@@ -62,7 +62,7 @@ function Fields({
     <div className="flex min-w-0 flex-col gap-3">
       <div className="overflow-hidden rounded-lg border bg-card">{rows.map((f) => field(f))}</div>
       {lists &&
-        document.lists.map((list) => (
+        submission.lists.map((list) => (
           <ListGroupView
             key={list.key}
             list={list}
@@ -82,54 +82,54 @@ function Fields({
   );
 }
 
-function FirstPage({ documentId }: { documentId: DemoPdfId }) {
-  const Page = demoPages[documentId][0];
+function FirstPage({ submissionId }: { submissionId: DemoPdfId }) {
+  const Page = demoPages[submissionId][0];
   return <Page />;
 }
 
 /** "Needs Review · filename", for a screenshot frame's title bar. */
-export function ReviewFrameTitle({ documentId }: { documentId: DemoDocumentId }) {
+export function ReviewFrameTitle({ submissionId }: { submissionId: DemoSubmissionId }) {
   return (
     <DemoLabels>
-      <FrameTitle documentId={documentId} />
+      <FrameTitle submissionId={submissionId} />
     </DemoLabels>
   );
 }
 
-function FrameTitle({ documentId }: { documentId: DemoDocumentId }) {
-  const { labels } = useDocumentsLabels();
-  const document = useDemoDocument(documentId);
+function FrameTitle({ submissionId }: { submissionId: DemoSubmissionId }) {
+  const { labels } = useSubmissionsLabels();
+  const submission = useDemoSubmission(submissionId);
   return (
     <>
-      {labels.review.states[document.state]} · {document.filename}
+      {labels.review.states[submission.state]} · {submission.filename}
     </>
   );
 }
 
 /** The demo's papers side by side, as they arrive. */
-export function PapersRow({ documentIds, label }: { documentIds: DemoPdfId[]; label: string }) {
+export function PapersRow({ submissionIds, label }: { submissionIds: DemoPdfId[]; label: string }) {
   return (
     <ScaledStill width={1440} always fade={false} label={label} className="bg-transparent">
       <div className="grid grid-flow-col gap-10 p-2">
-        {documentIds.map((id) => (
-          <FirstPage key={id} documentId={id} />
+        {submissionIds.map((id) => (
+          <FirstPage key={id} submissionId={id} />
         ))}
       </div>
     </ScaledStill>
   );
 }
 
-/** One Document's first page next to all its Fields. */
-export function DocumentFieldsStill({ documentId, label }: { documentId: DemoPdfId; label: string }) {
-  const document = useDemoDocument(documentId);
+/** One Submission's first page next to all its Fields. */
+export function SubmissionFieldsStill({ submissionId, label }: { submissionId: DemoPdfId; label: string }) {
+  const submission = useDemoSubmission(submissionId);
   return (
     <ScaledStill width={800} fade={false} label={label} className="bg-transparent">
       <DemoLabels>
         <div className="grid items-start gap-5 p-1 sm:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
           <div className="mx-auto w-fit [zoom:0.6] sm:[zoom:0.8]">
-            <FirstPage documentId={documentId} />
+            <FirstPage submissionId={submissionId} />
           </div>
-          <Fields document={document} prefix={`home-${documentId}`} />
+          <Fields submission={submission} prefix={`home-${submissionId}`} />
         </div>
       </DemoLabels>
     </ScaledStill>
@@ -138,12 +138,12 @@ export function DocumentFieldsStill({ documentId, label }: { documentId: DemoPdf
 
 /** The damage claim's Fields around its vague cause, the one value to check. */
 export function CheckStill({ label }: { label: string }) {
-  const document = useDemoDocument("claim");
+  const submission = useDemoSubmission("claim");
   return (
     <ScaledStill width={760} fade={false} label={label} className="bg-transparent">
       <DemoLabels>
         <div className="p-4">
-          <Fields document={document} keys={["damage_date", "cause", "total_claimed"]} prefix="home-check" />
+          <Fields submission={submission} keys={["damage_date", "cause", "total_claimed"]} prefix="home-check" />
         </div>
       </DemoLabels>
     </ScaledStill>

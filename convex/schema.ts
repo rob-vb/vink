@@ -48,11 +48,11 @@ export const field = v.union(
   }),
 );
 
-// What a Document is (ADR 0010). Stored with its real MIME type, since the file
+// What a Submission is (ADR 0010). Stored with its real MIME type, since the file
 // is no longer always a PDF.
 export const inputKind = v.union(v.literal("pdf"), v.literal("email"), v.literal("image"));
 
-export const documentState = v.union(
+export const submissionState = v.union(
   v.literal("extracting"),
   v.literal("needs_review"),
   v.literal("approved"),
@@ -120,7 +120,7 @@ export default defineSchema({
   organisations: defineTable({
     name: v.string(),
     slug: v.string(),
-    // Days a Document's data is kept after its last successful Delivery
+    // Days a Submission's data is kept after its last successful Delivery
     // (or its Approval, with no Integration). 30 when unset.
     retentionDays: v.optional(v.number()),
     // The user who created it, so only a user's first Organisation gets Free
@@ -137,7 +137,7 @@ export default defineSchema({
     pages: v.optional(itemsState),
     // The setup after sign-up (onboarding.ts): Form, System, Input. Unset for
     // Organisations from before it, which count as set up. The steps themselves
-    // are derived from facts (Forms, Integrations, Documents); this only holds
+    // are derived from facts (Forms, Integrations, Submissions); this only holds
     // what a fact can't show: the System step was skipped, the Input step was seen.
     onboarding: v.optional(
       v.object({
@@ -230,16 +230,16 @@ export default defineSchema({
     organisationId: v.id("organisations"),
     createdBy: v.string(),
     createdByEmail: v.string(),
-    // The sample's file in R2, like `documents.key`. Unset for a description:
+    // The sample's file in R2, like `submissions.key`. Unset for a description:
     // it has no sample (and no Reading, and no Items are charged).
     key: v.optional(v.string()),
-    // An email sample's attachments, stored under `${key}/…` like a Document's.
+    // An email sample's attachments, stored under `${key}/…` like a Submission's.
     attachmentKeys: v.optional(v.array(v.string())),
     // "Describe in words": what the document is and which data the Admin needs.
     description: v.optional(v.string()),
-    // Its kind and MIME type, like a Document's. Widen step: unset on samples
+    // Its kind and MIME type, like a Submission's. Widen step: unset on samples
     // from before kinds; they read as a PDF (lib/inputLimits.ts kindOf).
-    // TODO(narrow, after `documents:backfillInputKind` ran on dev AND prod): make both required.
+    // TODO(narrow, after `submissions:backfillInputKind` ran on dev AND prod): make both required.
     kind: v.optional(inputKind),
     mimeType: v.optional(v.string()),
     // A description's first words; its `pageCount` is 0.
@@ -254,7 +254,7 @@ export default defineSchema({
       v.literal("failed"),
     ),
     error: v.optional(v.string()),
-    // The sample's Reading and text layer, as stored for a Document.
+    // The sample's Reading and text layer, as stored for a Submission.
     readingJson: v.optional(v.string()),
     textLayer: v.optional(v.array(v.object({ page: v.number(), text: v.string() }))),
     fields: v.optional(v.array(v.object({ field, ticked: v.boolean() }))),
@@ -297,7 +297,7 @@ export default defineSchema({
       v.object({
         filename: v.string(),
         outcome: v.union(v.literal("created"), v.literal("refused")),
-        // Why it was refused; `null` for a created Document.
+        // Why it was refused; `null` for a created Submission.
         reason: v.union(v.string(), v.null()),
       }),
     ),
@@ -305,38 +305,38 @@ export default defineSchema({
     .index("by_formId", ["formId"])
     .index("by_organisationId_and_formId", ["organisationId", "formId"]),
 
-  // A Document (a PDF, for now) processed against the Form Version that was current at upload.
-  documents: defineTable({
+  // A Submission (a PDF, for now) processed against the Form Version that was current at upload.
+  submissions: defineTable({
     organisationId: v.id("organisations"),
-    // Unset while a Document that came without a Form is Extracting before the
+    // Unset while a Submission that came without a Form is Extracting before the
     // Router has picked one, and in No Form (ADR 0010). Widened only: every
-    // Document from before keeps its Form.
+    // Submission from before keeps its Form.
     formId: v.optional(v.id("forms")),
     formVersion: v.optional(v.number()),
     // The file's key in R2 (see lib/pdfStore.ts), prefixed with the Organisation.
     key: v.string(),
     // Its kind and the real MIME type of the stored file. Widen step: unset on
-    // Documents from before kinds, which are PDFs (lib/inputLimits.ts reads a
-    // missing one as "pdf" / "application/pdf") until `documents:backfillInputKind` has run.
-    // TODO(narrow, after `documents:backfillInputKind` ran on dev AND prod): make both required.
+    // Submissions from before kinds, which are PDFs (lib/inputLimits.ts reads a
+    // missing one as "pdf" / "application/pdf") until `submissions:backfillInputKind` has run.
+    // TODO(narrow, after `submissions:backfillInputKind` ran on dev AND prod): make both required.
     kind: v.optional(inputKind),
     mimeType: v.optional(v.string()),
     filename: v.string(),
     // A PDF's pages. For other kinds the number of Items is itemCountOf's to say.
     pageCount: v.number(),
-    // An email Document's attachments, stored as files of their own (see
+    // An email Submission's attachments, stored as files of their own (see
     // `StoredEmail` in lib/readerInput.ts); removed together with `key`.
     attachmentKeys: v.optional(v.array(v.string())),
-    // Why Vink split an email it was unsure about into this Document and its
+    // Why Vink split an email it was unsure about into this Submission and its
     // siblings (convex/intake.ts). It keeps Auto-Send off: a user looks first.
     // `splitInfo` is the structured reason; `splitReason` is the English text
-    // older Documents were written with.
+    // older Submissions were written with.
     splitReason: v.optional(v.string()),
     splitInfo: v.optional(splitInfo),
     uploadedBy: v.string(),
-    // Copied from the uploader at upload time, for the Document list.
+    // Copied from the uploader at upload time, for the Submission list.
     uploaderEmail: v.string(),
-    state: documentState,
+    state: submissionState,
     // Set when an Extraction finishes: whether Jev's Verify succeeded, and the
     // Form's Review Threshold at that moment, which its Field Values keep.
     jevVerified: v.optional(v.boolean()),
@@ -359,7 +359,7 @@ export default defineSchema({
     ),
     // When its PDF, Reading and Field Values were deleted; only metadata is left.
     dataDeletedAt: v.optional(v.number()),
-    // An approved Document's retention clock: its last successful Delivery,
+    // An approved Submission's retention clock: its last successful Delivery,
     // or its Approval when nothing is sent. Its data goes N days later.
     retentionClockAt: v.optional(v.number()),
     // Why the last Extraction failed, after all its attempts.
@@ -379,28 +379,28 @@ export default defineSchema({
     .index("by_organisationId_and_state", ["organisationId", "state"])
     .index("by_organisationId_and_retentionClockAt", ["organisationId", "retentionClockAt"]),
 
-  // What the vision model read on a Document (see lib/pipeline.ts), as JSON
+  // What the vision model read on a Submission (see lib/pipeline.ts), as JSON
   // text: its `_pages` and `_unsure` keys aren't valid Convex field names.
-  // Kept apart from `documents` so the Document list never loads it.
+  // Kept apart from `submissions` so the Submission list never loads it.
   readings: defineTable({
     organisationId: v.id("organisations"),
-    documentId: v.id("documents"),
+    submissionId: v.id("submissions"),
     json: v.string(),
     // The pages with a text layer, for Verify's support check. Optional only
     // for Readings stored before ticket 24.
     textLayer: v.optional(v.array(v.object({ page: v.number(), text: v.string() }))),
-  }).index("by_documentId", ["documentId"]),
+  }).index("by_submissionId", ["submissionId"]),
 
-  // One per top-level Field of the Document's Form Version, and one per
+  // One per top-level Field of the Submission's Form Version, and one per
   // sub-Field per entry of each List Field.
   fieldValues: defineTable({
     organisationId: v.id("organisations"),
-    documentId: v.id("documents"),
+    submissionId: v.id("submissions"),
     // The Field's key; for a sub-Field, the sub-Field's key inside `list`.
     key: v.string(),
     // Set on a sub-Field's value: its List Field's key and the entry's index.
     list: v.optional(v.object({ key: v.string(), entry: v.number() })),
-    // `null` when nothing on the Document holds the Field.
+    // `null` when nothing on the Submission holds the Field.
     value: fieldValue,
     // What the Extraction wrote, kept while a correction replaces it, for Undo.
     extractedValue: v.optional(fieldValue),
@@ -423,12 +423,12 @@ export default defineSchema({
     lowestSignal: signal,
     // Why it is Needs Review; empty when it isn't.
     reviewReasons: v.array(reviewReason),
-  }).index("by_documentId", ["documentId"]),
+  }).index("by_submissionId", ["submissionId"]),
 
-  // One per List Field of the Document's Form Version: what holds its entries.
+  // One per List Field of the Submission's Form Version: what holds its entries.
   listValues: defineTable({
     organisationId: v.id("organisations"),
-    documentId: v.id("documents"),
+    submissionId: v.id("submissions"),
     key: v.string(),
     // The array in the Reading that Match chose, `null` for `none`.
     sourcePath: v.union(v.string(), v.null()),
@@ -445,7 +445,7 @@ export default defineSchema({
     addedEntries: v.optional(v.array(v.number())),
     // "Entries are complete": who confirmed all entries were found.
     complete: v.optional(v.object({ by: v.string(), byEmail: v.string(), at: v.number() })),
-  }).index("by_documentId", ["documentId"]),
+  }).index("by_submissionId", ["submissionId"]),
 
   // A destination outside Vink that receives Payloads after Approval. One
   // member per kind: `organisationId` and `name`, then the kind's own
@@ -516,16 +516,16 @@ export default defineSchema({
     .index("by_formId", ["formId"])
     .index("by_integrationId", ["integrationId"]),
 
-  // One attempt-series to send one approved Document's Payload to one Integration.
+  // One attempt-series to send one approved Submission's Payload to one Integration.
   deliveries: defineTable({
     organisationId: v.id("organisations"),
-    documentId: v.id("documents"),
+    submissionId: v.id("submissions"),
     integrationId: v.id("integrations"),
     // Kept for the log after the Integration is deleted.
     integrationName: v.string(),
     // Stable over every attempt and re-send, so the receiver can dedupe.
     deliveryId: v.string(),
-    // The envelope as frozen at Approval, JSON. Removed with the Document's data.
+    // The envelope as frozen at Approval, JSON. Removed with the Submission's data.
     envelope: v.optional(v.string()),
     state: v.union(
       v.literal("pending"),
@@ -550,23 +550,23 @@ export default defineSchema({
     // Failed because its Integration was detached or deleted: never re-sent.
     integrationRemoved: v.optional(v.boolean()),
   })
-    .index("by_documentId", ["documentId"])
+    .index("by_submissionId", ["submissionId"])
     .index("by_integrationId", ["integrationId"]),
 
   // In-app notifications for an Organisation's Admins, e.g. a failed Delivery.
   notifications: defineTable({
     organisationId: v.id("organisations"),
     text: v.string(),
-    documentId: v.optional(v.id("documents")),
+    submissionId: v.optional(v.id("submissions")),
     at: v.number(),
     // The Admins who have seen it.
     readBy: v.array(v.string()),
   }).index("by_organisationId", ["organisationId"]),
 
-  // A Document's history: who did what, and when.
-  documentEvents: defineTable({
+  // A Submission's history: who did what, and when.
+  submissionEvents: defineTable({
     organisationId: v.id("organisations"),
-    documentId: v.id("documents"),
+    submissionId: v.id("submissions"),
     event: v.union(
       v.literal("uploaded"),
       v.literal("extracted"),
@@ -585,7 +585,7 @@ export default defineSchema({
       // The Router picked the Form, or found none (ADR 0010).
       v.literal("routed"),
       v.literal("no_form"),
-      // An email became several Documents and Vink was unsure it should (ADR 0010).
+      // An email became several Submissions and Vink was unsure it should (ADR 0010).
       v.literal("mail_split"),
       v.literal("data_deleted"),
       v.literal("deleted"),
@@ -599,13 +599,13 @@ export default defineSchema({
     info: v.optional(eventInfo),
     // The user's id, or `vink` for what Vink did itself.
     by: v.string(),
-    // Copied from the user at the time, like `documents.uploaderEmail`.
+    // Copied from the user at the time, like `submissions.uploaderEmail`.
     byEmail: v.string(),
     at: v.number(),
-  }).index("by_documentId", ["documentId"]),
+  }).index("by_submissionId", ["submissionId"]),
 
-  // An upload URL handed out by `documents.generateUploadUrl`, until its PDF
-  // becomes a Document or a Form Proposal sample. One still here after 24
+  // An upload URL handed out by `submissions.generateUploadUrl`, until its PDF
+  // becomes a Submission or a Form Proposal sample. One still here after 24
   // hours is an orphan: the daily cleanup deletes its R2 object.
   uploads: defineTable({
     organisationId: v.id("organisations"),
@@ -655,11 +655,11 @@ export default defineSchema({
     .index("by_apiKeyId", ["apiKeyId"])
     .index("by_integrationId", ["integrationId"]),
 
-  // How many Documents an Organisation has in each state, for the list's tabs.
-  // Kept in step by every state change, so the tabs never scan Documents.
-  documentCounts: defineTable({
+  // How many Submissions an Organisation has in each state, for the list's tabs.
+  // Kept in step by every state change, so the tabs never scan Submissions.
+  submissionCounts: defineTable({
     organisationId: v.id("organisations"),
-    state: documentState,
+    state: submissionState,
     count: v.number(),
   }).index("by_organisationId_and_state", ["organisationId", "state"]),
 });

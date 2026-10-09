@@ -26,7 +26,7 @@ export const rename = orgMutation({
   },
 });
 
-// The days a Document's data is kept after its last successful Delivery.
+// The days a Submission's data is kept after its last successful Delivery.
 export const DEFAULT_RETENTION_DAYS = 30;
 // The most the site promises: never kept longer than a year.
 export const MAX_RETENTION_DAYS = 365;

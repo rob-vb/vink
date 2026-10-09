@@ -2,7 +2,7 @@
   "swagger": "2.0",
   "info": {
     "title": "Vink",
-    "description": "Vink reads PDFs into the Fields of your Forms. Start a flow when a Document is approved, and send PDFs in to be read.",
+    "description": "Vink reads PDFs into the Fields of your Forms. Start a flow when a Submission is approved, and send PDFs in to be read.",
     "version": "1.0",
     "contact": {
       "name": "Vink",
@@ -64,10 +64,10 @@
         "x-ms-visibility": "internal"
       }
     },
-    "/forms/{form_id}/documents": {
+    "/forms/{form_id}/submissions": {
       "post": {
-        "operationId": "sendDocument",
-        "summary": "Send in a Document",
+        "operationId": "sendSubmission",
+        "summary": "Send in a Submission",
         "description": "Sends a PDF or a photo to a Form in Vink, as if it was uploaded in the app. Vink reads it; it is approved later, in Vink or by Auto-Send.",
         "consumes": [
           "application/octet-stream"
@@ -95,7 +95,7 @@
             "name": "filename",
             "in": "query",
             "required": false,
-            "description": "The name the Document shows in Vink, for example the attachment's name. Without it: document.pdf, or .jpg, .png or .heic for a photo.",
+            "description": "The name the Submission shows in Vink, for example the attachment's name. Without it: document.pdf, or .jpg, .png or .heic for a photo.",
             "type": "string",
             "x-ms-summary": "File name"
           },
@@ -115,7 +115,7 @@
           "201": {
             "description": "Vink accepted the file or email and is reading it.",
             "schema": {
-              "$ref": "#/definitions/SentDocument"
+              "$ref": "#/definitions/SentSubmission"
             }
           },
           "400": {
@@ -173,8 +173,8 @@
     "/subscriptions": {
       "post": {
         "operationId": "createSubscription",
-        "summary": "When a Document is approved",
-        "description": "Starts the flow every time a Document of the Form is approved in Vink. The outputs are the Form's Fields, under Data.",
+        "summary": "When a Submission is approved",
+        "description": "Starts the flow every time a Submission of the Form is approved in Vink. The outputs are the Form's Fields, under Data.",
         "consumes": [
           "application/json"
         ],
@@ -266,10 +266,10 @@
           }
         },
         "x-ms-trigger": "single",
-        "x-ms-trigger-hint": "To see it work, approve a Document of this Form in Vink."
+        "x-ms-trigger-hint": "To see it work, approve a Submission of this Form in Vink."
       },
       "x-ms-notification-content": {
-        "description": "The envelope of the approved Document.",
+        "description": "The envelope of the approved Submission.",
         "schema": {
           "type": "object",
           "x-ms-dynamic-schema": {
@@ -528,7 +528,7 @@
         }
       }
     },
-    "SentDocument": {
+    "SentSubmission": {
       "type": "object",
       "required": [
         "id",
@@ -537,7 +537,7 @@
       "properties": {
         "id": {
           "type": "string",
-          "description": "The Document's id."
+          "description": "The Submission's id."
         },
         "state": {
           "type": "string",

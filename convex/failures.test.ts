@@ -62,29 +62,29 @@ async function uploaded(t: Backend) {
   });
   fakePipeline.replay(workOrder);
   const organisationSlug = ann.slug;
-  const { key, url } = await ann.user.mutation(api.documents.generateUploadUrl, {
+  const { key, url } = await ann.user.mutation(api.submissions.generateUploadUrl, {
     organisationSlug,
   });
   putToUploadUrl(url, await pdfWithPages(1));
-  await ann.user.action(api.documents.create, {
+  await ann.user.action(api.submissions.create, {
     organisationSlug,
     formId,
     key,
     filename: "werkorder.pdf",
   });
   await settle(t);
-  const documentId = await t.run(
-    async (ctx) => (await ctx.db.query("documents").first())!._id,
+  const submissionId = await t.run(
+    async (ctx) => (await ctx.db.query("submissions").first())!._id,
   );
-  const read = () => ann.user.query(api.documents.get, { organisationSlug, documentId });
-  return { ...ann, documentId, read };
+  const read = () => ann.user.query(api.submissions.get, { organisationSlug, submissionId });
+  return { ...ann, submissionId, read };
 }
 
 const settle = (t: Backend) => t.finishAllScheduledFunctions(vi.runAllTimers);
 const steps = () => fakePipeline.calls.map((c) => c.step);
 
 test.each(["read", "match", "fill"] as const)(
-  "a %s failure is tried 4 times in all, then the Document is Extraction Failed",
+  "a %s failure is tried 4 times in all, then the Submission is Extraction Failed",
   async (step) => {
     const t = newBackend();
     fakePipeline.failTimes(step, 4);
@@ -92,22 +92,22 @@ test.each(["read", "match", "fill"] as const)(
     const { read, user, slug } = await uploaded(t);
 
     expect(steps().filter((s) => s === step)).toHaveLength(4);
-    const document = await read();
-    expect(document.state).toBe("extraction_failed");
-    expect(document.history.map((h) => h.event)).toEqual(["uploaded", "extraction_failed"]);
+    const submission = await read();
+    expect(submission.state).toBe("extraction_failed");
+    expect(submission.history.map((h) => h.event)).toEqual(["uploaded", "extraction_failed"]);
     // The screen gets a code, never the server's error text.
-    expect(document.failure).toBe("failed");
-    expect(JSON.stringify(document)).not.toContain(`${step} is down`);
-    const { counts, documents } = await user.query(api.documents.list, {
+    expect(submission.failure).toBe("failed");
+    expect(JSON.stringify(submission)).not.toContain(`${step} is down`);
+    const { counts, submissions } = await user.query(api.submissions.list, {
       organisationSlug: slug,
       state: "extraction_failed",
     });
     expect(counts).toMatchObject({ extracting: 0, extraction_failed: 1 });
-    expect(documents).toHaveLength(1);
+    expect(submissions).toHaveLength(1);
   },
 );
 
-test("an outage that heals within the retries still extracts the Document", async () => {
+test("an outage that heals within the retries still extracts the Submission", async () => {
   const t = newBackend();
   fakePipeline.failTimes("fill", 3);
 
@@ -119,17 +119,17 @@ test("an outage that heals within the retries still extracts the Document", asyn
 test("a retry after the Reading was stored resumes at Match, without reading the PDF again", async () => {
   const t = newBackend();
   fakePipeline.failTimes("match", 4);
-  const { user, slug, documentId, read } = await uploaded(t);
+  const { user, slug, submissionId, read } = await uploaded(t);
   fakePipeline.calls = [];
 
-  await user.mutation(api.extraction.retry, { organisationSlug: slug, documentId });
+  await user.mutation(api.extraction.retry, { organisationSlug: slug, submissionId });
   expect((await read()).state).toBe("extracting");
   await settle(t);
 
   expect(steps()).toEqual(["match", "fill", "verify"]);
-  const document = await read();
-  expect(document.state).toBe("needs_review");
-  expect(document.history.map((h) => h.event)).toEqual([
+  const submission = await read();
+  expect(submission.state).toBe("needs_review");
+  expect(submission.history.map((h) => h.event)).toEqual([
     "uploaded",
     "extraction_failed",
     "extraction_retried",
@@ -140,10 +140,10 @@ test("a retry after the Reading was stored resumes at Match, without reading the
 test("a retry with no Reading stored runs a full Extraction", async () => {
   const t = newBackend();
   fakePipeline.failTimes("read", 4);
-  const { user, slug, documentId, read } = await uploaded(t);
+  const { user, slug, submissionId, read } = await uploaded(t);
   fakePipeline.calls = [];
 
-  await user.mutation(api.extraction.retry, { organisationSlug: slug, documentId });
+  await user.mutation(api.extraction.retry, { organisationSlug: slug, submissionId });
   await settle(t);
 
   expect(steps()).toEqual(["read", "match", "fill", "verify"]);
@@ -153,31 +153,31 @@ test("a retry with no Reading stored runs a full Extraction", async () => {
 test("a Member can retry, but only an Extraction that failed", async () => {
   const t = newBackend();
   fakePipeline.failTimes("read", 4);
-  const { slug, documentId } = await uploaded(t);
+  const { slug, submissionId } = await uploaded(t);
   const bob = await addMembership(t, "bob", slug, "member");
 
-  await bob.mutation(api.extraction.retry, { organisationSlug: slug, documentId });
+  await bob.mutation(api.extraction.retry, { organisationSlug: slug, submissionId });
   await settle(t);
 
   await expect(
-    bob.mutation(api.extraction.retry, { organisationSlug: slug, documentId }),
+    bob.mutation(api.extraction.retry, { organisationSlug: slug, submissionId }),
   ).rejects.toThrow("Only a failed Extraction can be retried");
 });
 
 test("nobody can retry another Organisation's Extraction", async () => {
   const t = newBackend();
   fakePipeline.failTimes("read", 4);
-  const { documentId } = await uploaded(t);
+  const { submissionId } = await uploaded(t);
   const eve = await signUp(t, "eve", "Evil Corp");
 
   await expect(
-    eve.user.mutation(api.extraction.retry, { organisationSlug: eve.slug, documentId }),
+    eve.user.mutation(api.extraction.retry, { organisationSlug: eve.slug, submissionId }),
   ).rejects.toThrow("Submission not found");
 });
 
 test("a run that comes late never overwrites a user's corrections", async () => {
   const t = newBackend();
-  const { user, slug, documentId, read } = await uploaded(t);
+  const { user, slug, submissionId, read } = await uploaded(t);
   const mileage_km = (await read()).fieldValues.find((f) => f.key === "mileage_km")!;
   await user.mutation(api.review.correct, {
     organisationSlug: slug,
@@ -185,11 +185,11 @@ test("a run that comes late never overwrites a user's corrections", async () => 
     value: 9800,
   });
 
-  await t.action(internal.extractionRun.run, { documentId: documentId as Id<"documents"> });
+  await t.action(internal.extractionRun.run, { submissionId: submissionId as Id<"submissions"> });
 
-  const document = await read();
-  expect(document.fieldValues).toHaveLength(2);
-  expect(document.fieldValues.find((f) => f.key === "mileage_km")).toMatchObject({
+  const submission = await read();
+  expect(submission.fieldValues).toHaveLength(2);
+  expect(submission.fieldValues.find((f) => f.key === "mileage_km")).toMatchObject({
     value: 9800,
     review: { state: "corrected" },
   });

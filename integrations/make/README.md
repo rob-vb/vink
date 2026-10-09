@@ -8,9 +8,9 @@ component and the file of each code; the other files in `src/` are those codes.
 | --- | --- | --- |
 | Base | `general/base.iml.json` | `https://vink.page/v1`, `Authorization: Bearer <API Key>`, errors show `[status] message (error code: code)` from Vink's error body |
 | Connection | `vink` | Asks for an API key, checks it with `GET /v1/forms` |
-| Webhook (dedicated, attached) | `approvedDocuments` | Form dropdown; attach = `POST /v1/subscriptions`, detach = `DELETE /v1/subscriptions/{id}` |
-| Instant trigger | `watchApprovedDocuments` | "Watch approved Documents": outputs the envelope; `data` is built from the Form's Fields |
-| Action | `sendDocument` | "Send in a Document": Form dropdown, a file (name + data) sent as the multipart `file` part |
+| Webhook (dedicated, attached) | `approvedSubmissions` | Form dropdown; attach = `POST /v1/subscriptions`, detach = `DELETE /v1/subscriptions/{id}` |
+| Instant trigger | `watchApprovedSubmissions` | "Watch approved Submissions": outputs the envelope; `data` is built from the Form's Fields |
+| Action | `sendSubmission` | "Send in a Submission": Form dropdown, a file (name + data) sent as the multipart `file` part |
 | Universal module | `makeApiCall` | "Make an API call": any path on Base, with the connection's API Key |
 | RPC | `listForms` | The Form dropdown (`GET /v1/forms`), at most 500 Forms |
 | RPC | `formFields` | The trigger's `data` collection: `formFieldsSpec(body.data, webhook.formId)` |
@@ -88,18 +88,18 @@ the origin. Changes made in Make's web editor come back with **Pull All Componen
 
 Use a Vink Organisation with a Form and an API Key (Organisation settings → API Keys).
 
-1. New scenario → Vink → **Watch approved Documents**. Add a connection with the API Key;
+1. New scenario → Vink → **Watch approved Submissions**. Add a connection with the API Key;
    a wrong key must show Vink's message with status and code ("[401] This API Key doesn't
    exist or was revoked. (error code: invalid_api_key)").
 2. Add a webhook, pick the Form. In Vink, Settings → Integrations shows a new Webhook named
    after the API Key, attached to that Form.
 3. Before any run, the mapping panel shows the Form's Fields under `data` (a List Field as an
    array with its sub-Fields), and the sample comes from the sample endpoint.
-4. Run once, approve a Document of that Form in Vink: one bundle arrives with every Field.
+4. Run once, approve a Submission of that Form in Vink: one bundle arrives with every Field.
    A test-send from Vink arrives too, with `test: true`.
 5. Delete the webhook in Make: the Webhook in Vink is gone.
-6. Second scenario → **Send in a Document**: e.g. an HTTP "Get a file" of a PDF, then this
-   module with a Form. The Document shows in Vink with the API Key's name as its source.
+6. Second scenario → **Send in a Submission**: e.g. an HTTP "Get a file" of a PDF, then this
+   module with a Form. The Submission shows in Vink with the API Key's name as its source.
    Send a PNG, a 21-page PDF, and use an organisation without Items: each fails with Vink's
    message.
 7. Delete the Subscription's Webhook in Vink first, then delete the webhook in Make: Make

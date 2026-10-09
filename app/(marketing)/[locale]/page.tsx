@@ -14,12 +14,12 @@ import { FormMatch } from "@/components/marketing/form-match";
 import { JsonLd } from "@/components/marketing/json-ld";
 import { PlatformLogo } from "@/components/marketing/platform-logo";
 import { RetypingCalculator } from "@/components/marketing/retyping-calculator";
-import { seedDocuments } from "@/components/demo/demo-data";
-import type { DemoDocumentId } from "@/components/demo/demo-papers";
+import { seedSubmissions } from "@/components/demo/demo-data";
+import type { DemoSubmissionId } from "@/components/demo/demo-papers";
 import { ReviewStill } from "@/components/demo/demo-stills";
 import {
   CheckStill,
-  DocumentFieldsStill,
+  SubmissionFieldsStill,
   PapersRow,
   ReviewFrameTitle,
 } from "@/components/demo/home-stills";
@@ -111,9 +111,9 @@ function Hero() {
           </div>
           <p className="mt-3 text-sm text-muted-foreground">{tc("freeNote")}</p>
         </div>
-        <ScreenshotFrame title={<ReviewFrameTitle documentId="invoice" />}>
+        <ScreenshotFrame title={<ReviewFrameTitle submissionId="invoice" />}>
           <ScaledStill width={840} label={t("screenLabel")} className="aspect-[4/5] sm:aspect-[16/15]">
-            <ReviewStill documentId="invoice" />
+            <ReviewStill submissionId="invoice" />
           </ScaledStill>
         </ScreenshotFrame>
       </Container>
@@ -216,15 +216,15 @@ function Stop({
   );
 }
 
-/** Stop 2's example tabs, each one of the demo's Documents. */
+/** Stop 2's example tabs, each one of the demo's Submissions. */
 const exampleTabs = [
-  { tab: "invoice", documentId: "invoice" },
-  { tab: "claimForm", documentId: "claim" },
-  { tab: "handwritten", documentId: "service" },
-  { tab: "orderForm", documentId: "order" },
-] as const satisfies ReadonlyArray<{ tab: string; documentId: DemoDocumentId }>;
+  { tab: "invoice", submissionId: "invoice" },
+  { tab: "claimForm", submissionId: "claim" },
+  { tab: "handwritten", submissionId: "service" },
+  { tab: "orderForm", submissionId: "order" },
+] as const satisfies ReadonlyArray<{ tab: string; submissionId: DemoSubmissionId }>;
 
-const filename = (id: DemoDocumentId) => seedDocuments.find((d) => d.id === id)!.filename;
+const filename = (id: DemoSubmissionId) => seedSubmissions.find((d) => d.id === id)!.filename;
 
 function Journey() {
   const t = useTranslations("home");
@@ -249,7 +249,7 @@ function Journey() {
             }
             visual={
               <div className="light-island rounded-2xl bg-panel p-4 sm:p-6">
-                <PapersRow documentIds={["invoice", "claim", "service"]} label={t("journey.arrives.title")} />
+                <PapersRow submissionIds={["invoice", "claim", "service"]} label={t("journey.arrives.title")} />
               </div>
             }
           />
@@ -273,10 +273,10 @@ function Journey() {
                     </TabsTrigger>
                   ))}
                 </TabsList>
-                {exampleTabs.map(({ tab, documentId }) => (
+                {exampleTabs.map(({ tab, submissionId }) => (
                   <TabsContent key={tab} value={tab} keepMounted className="data-hidden:hidden">
                     <div className="light-island rounded-2xl bg-panel p-4 sm:p-5">
-                      <DocumentFieldsStill documentId={documentId} label={t(`tabs.${tab}`)} />
+                      <SubmissionFieldsStill submissionId={submissionId} label={t(`tabs.${tab}`)} />
                     </div>
                   </TabsContent>
                 ))}
@@ -289,7 +289,7 @@ function Journey() {
             title={t("journey.check.title")}
             body={t("journey.check.body")}
             visual={
-              <ScreenshotFrame title={<ReviewFrameTitle documentId="claim" />}>
+              <ScreenshotFrame title={<ReviewFrameTitle submissionId="claim" />}>
                 <CheckStill label={t("journey.check.title")} />
               </ScreenshotFrame>
             }

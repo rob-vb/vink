@@ -75,31 +75,31 @@ async function acme(t: Backend, autoSend: boolean, requiredPlate = true) {
   });
   const upload = async (recording: Recording) => {
     fakePipeline.replay(recording);
-    const { key, url } = await ann.user.mutation(api.documents.generateUploadUrl, { organisationSlug });
+    const { key, url } = await ann.user.mutation(api.submissions.generateUploadUrl, { organisationSlug });
     putToUploadUrl(url, await pdfWithPages(1));
-    await ann.user.action(api.documents.create, { organisationSlug, formId, key, filename: "werkorder.pdf" });
+    await ann.user.action(api.submissions.create, { organisationSlug, formId, key, filename: "werkorder.pdf" });
     await t.finishAllScheduledFunctions(vi.runAllTimers);
-    const documentId = await t.run(
-      async (ctx) => (await ctx.db.query("documents").order("desc").first())!._id,
+    const submissionId = await t.run(
+      async (ctx) => (await ctx.db.query("submissions").order("desc").first())!._id,
     );
-    const on = { organisationSlug, documentId };
-    return { on, read: () => ann.user.query(api.documents.get, on) };
+    const on = { organisationSlug, submissionId };
+    return { on, read: () => ann.user.query(api.submissions.get, on) };
   };
   return { ...ann, organisationSlug, formId, upload };
 }
 
-test("a clean, Jev-verified Document on a Form with Auto-Send on is approved automatically", async () => {
+test("a clean, Jev-verified Submission on a Form with Auto-Send on is approved automatically", async () => {
   const t = newBackend();
   const { user, organisationSlug, upload } = await acme(t, true);
 
   const { read } = await upload(clean);
 
-  const document = await read();
-  expect(document.state).toBe("approved");
-  expect(document.approval).toMatchObject({ mode: "auto", by: null });
-  expect(document.history.at(-1)).toMatchObject({ event: "approved", by: "Vink", detail: "Auto-Send" });
-  const { documents } = await user.query(api.documents.list, { organisationSlug, state: "approved" });
-  expect(documents).toEqual([expect.objectContaining({ approvalMode: "auto" })]);
+  const submission = await read();
+  expect(submission.state).toBe("approved");
+  expect(submission.approval).toMatchObject({ mode: "auto", by: null });
+  expect(submission.history.at(-1)).toMatchObject({ event: "approved", by: "Vink", detail: "Auto-Send" });
+  const { submissions } = await user.query(api.submissions.list, { organisationSlug, state: "approved" });
+  expect(submissions).toEqual([expect.objectContaining({ approvalMode: "auto" })]);
 });
 
 test("an automatic Approval sends to the attached Integrations", async () => {
@@ -135,32 +135,32 @@ test.each([
   expect((await read()).state).toBe("needs_review");
 });
 
-test("no Auto-Send when Jev didn't verify the Document", async () => {
+test("no Auto-Send when Jev didn't verify the Submission", async () => {
   const t = newBackend();
   const { upload } = await acme(t, true);
   fakePipeline.failOnce("verify");
 
   const { read } = await upload(clean);
 
-  const document = await read();
-  expect(document.jevVerified).toBe(false);
-  expect(document.state).toBe("needs_review");
+  const submission = await read();
+  expect(submission.jevVerified).toBe(false);
+  expect(submission.state).toBe("needs_review");
 });
 
-test("no Auto-Send when the Document doesn't fit the Form", async () => {
+test("no Auto-Send when the Submission doesn't fit the Form", async () => {
   const t = newBackend();
   // No required Fields, so an empty Reading leaves nothing Needs Review.
   const { upload } = await acme(t, true, false);
 
   const { read } = await upload({ reading: {}, matches: {}, fills: {} });
 
-  const document = await read();
-  expect(document.doesNotFit).toBe(true);
-  expect(document.needsReviewCount).toBe(0);
-  expect(document.state).toBe("needs_review");
+  const submission = await read();
+  expect(submission.doesNotFit).toBe(true);
+  expect(submission.needsReviewCount).toBe(0);
+  expect(submission.state).toBe("needs_review");
 });
 
-test("no Auto-Send when a user touched the Document: Change Form re-runs without it", async () => {
+test("no Auto-Send when a user touched the Submission: Change Form re-runs without it", async () => {
   const t = newBackend();
   const { user, organisationSlug, upload } = await acme(t, true);
   const { formId: other } = await user.mutation(api.forms.create, {
@@ -182,9 +182,9 @@ test("no Auto-Send when a user touched the Document: Change Form re-runs without
   await user.mutation(api.changeForm.changeForm, { ...on, formId: other as Id<"forms"> });
   await t.finishAllScheduledFunctions(vi.runAllTimers);
 
-  const document = await read();
-  expect(document).toMatchObject({ formName: "Work order v2", needsReviewCount: 0, userTouched: true });
-  expect(document.state).toBe("needs_review");
+  const submission = await read();
+  expect(submission).toMatchObject({ formName: "Work order v2", needsReviewCount: 0, userTouched: true });
+  expect(submission.state).toBe("needs_review");
 });
 
 test("Auto-Send is evaluated once: turning it on or checking values later approves nothing", async () => {
@@ -201,7 +201,7 @@ test("Auto-Send is evaluated once: turning it on or checking values later approv
   await t.finishAllScheduledFunctions(vi.runAllTimers);
 
   expect((await read()).state).toBe("needs_review");
-  expect(on.documentId).toBeDefined();
+  expect(on.submissionId).toBeDefined();
 });
 
 test("a successful manual retry is evaluated for Auto-Send", async () => {

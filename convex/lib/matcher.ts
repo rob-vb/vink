@@ -23,7 +23,7 @@ const WHOLE =
   "Pick a whole object only when the value needs several of its values together (e.g. a brand and a model kept apart); otherwise the one value.";
 
 // Jev answered none for a brand-and-model Field when only the model was on the
-// Document (eval, 2026-09-26); part of a value is worth a user's review.
+// Submission (eval, 2026-09-26); part of a value is worth a user's review.
 const PART =
   "When the Document holds only part of what the Field asks for (e.g. a model without its brand), pick that part rather than none.";
 

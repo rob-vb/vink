@@ -1,4 +1,4 @@
-// Hidden: fills the Form dropdowns of "Document Approved" and "Send in a Document".
+// Hidden: fills the Form dropdowns of "Submission Approved" and "Send in a Submission".
 const { API_URL } = require('../lib/api');
 
 const perform = async (z) => {

@@ -2,7 +2,7 @@
 // Worker (workers/intake-email) receives the mail, puts each PDF and image
 // attachment in R2 and calls `receive` over HTTP with the subject, date and
 // text. Every attachment passes the same checks as an upload, and Jev decides
-// whether the email is one Document or several (lib/mailPlan.ts, ADR 0010).
+// whether the email is one Submission or several (lib/mailPlan.ts, ADR 0010).
 // Mail to a Form's address is that Form's; mail to the Organisation's address
 // has no Form, and the Router picks it after Read.
 import { ConvexError, type ObjectType, v } from "convex/values";
@@ -17,7 +17,7 @@ import {
   type MutationCtx,
   type QueryCtx,
 } from "./_generated/server";
-import { checkPdf, createDocument } from "./documents";
+import { checkPdf, createSubmission } from "./submissions";
 import { escapeHtml, sendEmail } from "./email";
 import { chargeItems } from "./items";
 import { orgMutation, orgQuery } from "./lib/functions";
@@ -49,7 +49,7 @@ const MAX_FILENAME_CHARS = 255;
 const MAX_HEADER_CHARS = 320;
 const ALERT_EVERY = 24 * 60 * 60 * 1000;
 
-// Why an email part was refused without a Document: the texts of lib/inputLimits.ts.
+// Why an email part was refused without a Submission: the texts of lib/inputLimits.ts.
 export { UNSUPPORTED_TYPE };
 
 // Why the Worker skipped an attachment without storing it.
@@ -308,7 +308,7 @@ async function checkPart(
   }
 }
 
-/** One planned Document, ready for the mutation. */
+/** One planned Submission, ready for the mutation. */
 const planned = v.object({
   kind: v.union(v.literal("pdf"), v.literal("email"), v.literal("image")),
   mimeType: v.string(),
@@ -320,39 +320,39 @@ const planned = v.object({
 });
 
 /**
- * Creates the Documents of one email and charges their Items once, in one
+ * Creates the Submissions of one email and charges their Items once, in one
  * transaction: all of them, or (out of Items) none.
  */
 export const accept = internalMutation({
   args: {
     organisationId: v.id("organisations"),
     formId: v.optional(v.id("forms")),
-    documents: v.array(planned),
+    submissions: v.array(planned),
     /** What an out-of-Items refusal calls the input. */
     what: v.string(),
     split: v.optional(splitInfo),
     uploaderEmail: v.string(),
   },
-  handler: async (ctx, { documents, what, ...rest }) => {
+  handler: async (ctx, { submissions, what, ...rest }) => {
     await chargeItems(
       ctx,
       rest.organisationId,
-      documents.reduce((sum, d) => sum + d.items, 0),
+      submissions.reduce((sum, d) => sum + d.items, 0),
       what,
     );
-    for (const document of documents) {
-      await createDocument(ctx, {
+    for (const submission of submissions) {
+      await createSubmission(ctx, {
         organisationId: rest.organisationId,
         formId: rest.formId,
         split: rest.split,
         uploadedBy: "email",
         uploaderEmail: rest.uploaderEmail,
-        kind: document.kind,
-        mimeType: document.mimeType,
-        key: document.key,
-        filename: document.filename,
-        pageCount: document.pageCount,
-        attachmentKeys: document.attachmentKeys,
+        kind: submission.kind,
+        mimeType: submission.mimeType,
+        key: submission.key,
+        filename: submission.filename,
+        pageCount: submission.pageCount,
+        attachmentKeys: submission.attachmentKeys,
       });
     }
   },
@@ -373,13 +373,13 @@ const receiveArgs = {
 /**
  * One email from the Worker. Its text and each PDF or image attachment pass the
  * same checks as an upload (readable, at most 20 pages, fits the Items). Jev
- * decides whether the parts are one Document or several (lib/mailPlan.ts), and
+ * decides whether the parts are one Submission or several (lib/mailPlan.ts), and
  * the Items of the whole email are charged once; an email Vink cannot afford is
  * refused whole. A refused part creates nothing and is removed from R2. An
- * email with nothing to process creates no Document and costs nothing, and a
+ * email with nothing to process creates no Submission and costs nothing, and a
  * text Jev calls a cover note ("see attachment", at most 4000 characters) is
- * no Document and costs nothing either; its row in Recent emails says it was
- * not read. When anything fails before the Documents exist, every file the
+ * no Submission and costs nothing either; its row in Recent emails says it was
+ * not read. When anything fails before the Submissions exist, every file the
  * Worker stored is removed and the error goes back, so the sender retries. After
  * that the mail is accepted whatever else fails (a retry would charge twice).
  *
@@ -390,7 +390,7 @@ const receiveArgs = {
 export const receive = internalAction({
   args: receiveArgs,
   handler: async (ctx, args) => {
-    // Every file the Worker stored. Until the Documents exist, a failure here must not leave them in storage.
+    // Every file the Worker stored. Until the Submissions exist, a failure here must not leave them in storage.
     const stored = args.attachments.flatMap((a) => ("key" in a ? [a.key] : []));
     const emailKeys: string[] = [];
     let committed = false;
@@ -487,20 +487,20 @@ async function receiveMail(
       })
     : null;
   const plan = planMail(text, parts, decision);
-  // A cover note is no Document, but its row stays in Recent emails: it shows that the text was not read.
+  // A cover note is no Submission, but its row stays in Recent emails: it shows that the text was not read.
   if (plan.coverNote && textAt >= 0) {
     outcomes[textAt] = refusedOutcome(outcomes[textAt].filename, COVER_NOTE_NOT_READ);
     textAt = -1;
   }
 
-  const documents: Array<typeof planned.type> = [];
+  const submissions: Array<typeof planned.type> = [];
   let outOfItems = false;
   let accepted = false;
   try {
-    for (const d of plan.documents) {
+    for (const d of plan.submissions) {
       const items = itemsOfPlanned(d, text);
       if (d.kind !== "email") {
-        documents.push({
+        submissions.push({
           kind: d.kind,
           mimeType: d.part.mimeType,
           key: d.part.key,
@@ -527,7 +527,7 @@ async function receiveMail(
         ),
       );
       emailKeys.push(stored.key, ...stored.attachmentKeys);
-      documents.push({
+      submissions.push({
         kind: "email",
         mimeType: "application/json",
         key: stored.key,
@@ -538,23 +538,23 @@ async function receiveMail(
         items,
       });
     }
-    // However it is split, the Documents add up to the whole email (a cover note is no Document and costs nothing).
+    // However it is split, the Submissions add up to the whole email (a cover note is no Submission and costs nothing).
     const whole = itemsOfMail(text, parts, plan);
-    if (documents.reduce((sum, d) => sum + d.items, 0) !== whole) {
+    if (submissions.reduce((sum, d) => sum + d.items, 0) !== whole) {
       throw new Error("The Items of the split do not add up to the email's");
     }
-    if (documents.length > 0) {
-      const lone = documents.length === 1 ? documents[0] : null;
+    if (submissions.length > 0) {
+      const lone = submissions.length === 1 ? submissions[0] : null;
       await ctx.runMutation(internal.intake.accept, {
         organisationId: target.organisationId,
         formId: target.formId,
-        documents,
+        submissions,
         what: lone?.kind === "pdf" ? "PDF" : lone?.kind === "image" ? "image" : "email",
         ...(plan.unsure === null ? {} : { split: plan.unsure }),
         uploaderEmail: `email from ${from}`,
       });
     }
-    // From here the Documents exist: storage is not rolled back, and a failure below must not make the Worker retry (that would charge twice).
+    // From here the Submissions exist: storage is not rolled back, and a failure below must not make the Worker retry (that would charge twice).
     onCommitted();
     accepted = true;
   } catch (error) {
@@ -567,13 +567,13 @@ async function receiveMail(
     for (const part of parts) outcomes[part.outcomeAt] = refusedOutcome(part.filename, refused.reason);
   }
   if (accepted) {
-    // The attachments of an email Document were copied under its own key.
+    // The attachments of an email Submission were copied under its own key.
     try {
-      for (const part of plan.documents.flatMap((d) => (d.kind === "email" ? d.parts : []))) {
+      for (const part of plan.submissions.flatMap((d) => (d.kind === "email" ? d.parts : []))) {
         await pdfStore.remove(ctx, part.key);
       }
     } catch (error) {
-      // The Documents exist; a file left behind is only clutter. Not a reason to have the mail sent again.
+      // The Submissions exist; a file left behind is only clutter. Not a reason to have the mail sent again.
       console.error("Could not remove the stored attachments of an accepted email", error);
     }
   }
@@ -587,7 +587,7 @@ async function receiveMail(
     });
   } catch (error) {
     if (!accepted) throw error;
-    // The Documents exist, so the Worker must not retry; only the row in Recent emails is lost.
+    // The Submissions exist, so the Worker must not retry; only the row in Recent emails is lost.
     console.error("Could not record an accepted email in Recent emails", error);
   }
   return { found: true as const, attachments: outcomes };

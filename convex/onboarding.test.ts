@@ -137,7 +137,7 @@ test("a Member never sees the setup or the notice", async () => {
   ).rejects.toThrow("Forbidden");
 });
 
-test("a first Document ends the setup without finishing the Input step", async () => {
+test("a first Submission ends the setup without finishing the Input step", async () => {
   const t = newBackend();
   const { slug, makeForm, user, state } = await acme(t);
   const { formId } = await makeForm();
@@ -145,9 +145,9 @@ test("a first Document ends the setup without finishing the Input step", async (
 
   const pdf = await PDFDocument.create();
   pdf.addPage();
-  const { key, url } = await user.mutation(api.documents.generateUploadUrl, { organisationSlug: slug });
+  const { key, url } = await user.mutation(api.submissions.generateUploadUrl, { organisationSlug: slug });
   putToUploadUrl(url, await pdf.save());
-  await user.action(api.documents.create, { organisationSlug: slug, formId, key, filename: "invoice.pdf" });
+  await user.action(api.submissions.create, { organisationSlug: slug, formId, key, filename: "invoice.pdf" });
 
   expect(await state()).toEqual(over(true));
 });
