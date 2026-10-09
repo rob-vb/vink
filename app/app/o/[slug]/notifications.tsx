@@ -29,7 +29,8 @@ export function Notifications({ organisationSlug }: { organisationSlug: string }
     if (!match) return english;
     const [, document, integration] = match;
     return t("deliveryFailed", {
-      document: document === "A Document" ? t("aDocument") : document,
+      // "A Document" is the fallback stored in older notifications, "A Submission" in newer ones.
+      document: document === "A Document" || document === "A Submission" ? t("aDocument") : document,
       integration,
     });
   }

@@ -34,11 +34,11 @@ async function reviewable(
 ) {
   const document = await ctx.db.get(documentId);
   if (document === null || document.organisationId !== organisationId) {
-    throw new ConvexError("Document not found");
+    throw new ConvexError("Submission not found");
   }
-  if (document.state === "approved") throw new ConvexError("This Document is approved");
+  if (document.state === "approved") throw new ConvexError("This Submission is approved");
   if (document.state !== "needs_review") {
-    throw new ConvexError("This Document can't be reviewed now");
+    throw new ConvexError("This Submission can't be reviewed now");
   }
   return document;
 }

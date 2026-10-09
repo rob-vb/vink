@@ -60,12 +60,12 @@ const SPLIT_ANSWERS = {
 };
 
 function splitReason(split: SplitInfo): string {
-  return `Vink was not sure whether this email is one case or ${split.documents} separate papers (${split.percent}% sure of "${SPLIT_ANSWERS[split.answer]}"), so it made ${split.documents} Documents. Check whether they belong together.`;
+  return `Vink was not sure whether this email is one case or ${split.documents} separate papers (${split.percent}% sure of "${SPLIT_ANSWERS[split.answer]}"), so it made ${split.documents} Submissions. Check whether they belong together.`;
 }
 
 export const englishLabels = {
   documents: {
-    title: "Documents",
+    title: "Inbox",
     subtitle: "Status updates arrive here as soon as they happen.",
     tabs: {
       needs_review: "Needs Review",
@@ -76,26 +76,26 @@ export const englishLabels = {
     } satisfies Record<ListedState, string>,
     empty: {
       needs_review: "Nothing is waiting for review.",
-      no_form: "Every Document found its Form.",
-      approved: "No Documents have been approved yet.",
+      no_form: "Every Submission found its Form.",
+      approved: "No Submissions have been approved yet.",
       extraction_failed: "No Extractions have failed.",
-      rejected: "No Documents have been rejected.",
+      rejected: "No Submissions have been rejected.",
     } satisfies Record<ListedState, string>,
   },
   table: {
-    document: "Document",
+    document: "Submission",
     form: "Form",
     pages: "Pages",
     uploadedBy: "Uploaded by",
     uploaded: "Uploaded",
     retry: "Retry",
     autoSend: "Auto-Send",
-    noDocuments: "No Documents",
+    noDocuments: "No Submissions",
     deleted: "Deleted · ",
     rejectedBy: "Rejected by",
   },
   review: {
-    back: "Documents",
+    back: "Inbox",
     states: {
       extracting: "Extracting",
       needs_review: "Needs Review",
@@ -113,16 +113,16 @@ export const englishLabels = {
     approvedBy: (mode: "auto" | "manual", by: string | null) =>
       mode === "auto" ? "Automatically" : `By ${by}`,
     noForm: {
-      title: "No Form fits this Document",
+      title: "No Form fits this Submission",
       text: "Vink found no Form that fits it, so there is nothing to review yet. Use Change Form above to pick a Form to fill, or Reject to turn it away. Its Items are counted.",
-      empty: "No Fields yet. They appear when the Document has a Form.",
+      empty: "No Fields yet. They appear when the Submission has a Form.",
     },
     split: {
       title: "Vink split this email",
       // The specific reason already says what Vink was unsure of; the general sentence is only a fallback.
       text: (reason: string) =>
         reason.trim() ||
-        "Vink wasn't sure whether the parts of this email belong together, so it made separate Documents. Please check them.",
+        "Vink wasn't sure whether the parts of this email belong together, so it made separate Submissions. Please check them.",
       /** Why, from Jev's call: the words of an email split Vink was unsure about. */
       reason: (split: SplitInfo): string => splitReason(split),
     },
@@ -217,7 +217,7 @@ export const englishLabels = {
     signals: { match: "Match", fit: "Fit", support: "Support" } satisfies Record<Signal, string>,
     lowestSignal: "lowest signal",
     readOn: (pages: number[]) => `Read on ${pagesLabel(pages)}`,
-    notFound: "Not found on the Document",
+    notFound: "Not found in the Submission",
     filledByHand: "Filled in by hand",
     noValue: "No value",
     yes: "Yes",

@@ -163,7 +163,7 @@ test("deleting a Document whose Delivery is waiting to retry cancels it: the dat
   const [delivery] = (await read()).deliveries;
   expect(delivery).toMatchObject({
     state: "failed",
-    failureReason: "Cancelled: the Document was deleted",
+    failureReason: "Cancelled: the Submission was deleted",
     nextAttemptAt: null,
     canResend: false,
   });
@@ -225,7 +225,7 @@ test("an Admin of another Organisation can't delete it", async () => {
 
   await expect(
     eve.user.mutation(api.rejection.remove, { organisationSlug: eve.slug, documentId: on.documentId }),
-  ).rejects.toThrow("Document not found");
+  ).rejects.toThrow("Submission not found");
   expect(fakePdfStore.objects.has(key)).toBe(true);
   expect((await read()).dataDeleted).toBe(false);
 });

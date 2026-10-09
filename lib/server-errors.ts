@@ -34,7 +34,7 @@ const dutch: Record<string, string> = {
   // Not found
   "Not found": "Niet gevonden",
   "Organisation not found": "Organisatie niet gevonden",
-  "Document not found": "Document niet gevonden",
+  "Submission not found": "Inzending niet gevonden",
   "Form not found": "Formulier niet gevonden",
   "Form Version not found": "Formulierversie niet gevonden",
   "Form Proposal not found": "Formuliervoorstel niet gevonden",
@@ -48,16 +48,17 @@ const dutch: Record<string, string> = {
   "This file isn't a PDF Vink can read.": "Dit bestand is geen pdf die Vink kan lezen.",
   "The PDF is larger than 10 MB.": "De pdf is groter dan 10 MB.",
   "The PDF was deleted": "De pdf is verwijderd",
-  "This Document is approved": "Dit Document is goedgekeurd",
-  "This Document's Form can't be changed now": "Het Formulier van dit Document kan nu niet worden gewijzigd",
-  "The Document is already on this Form": "Het Document staat al op dit Formulier",
-  "This Document can't be reviewed now": "Dit Document kan nu niet worden gecontroleerd",
-  "This Document can't be rejected now": "Dit Document kan nu niet worden afgewezen",
-  "Only a Rejected Document can be reopened": "Alleen een Afgewezen Document kan worden heropend",
-  "This Document's PDF is gone, so it can't be reopened":
-    "De pdf van dit Document is weg, dus het kan niet worden heropend",
-  "This Document's data was deleted": "De gegevens van dit Document zijn verwijderd",
-  "This Document's data was already deleted": "De gegevens van dit Document zijn al verwijderd",
+  "This Submission is approved": "Deze Inzending is goedgekeurd",
+  "This Submission has no Form": "Deze Inzending heeft geen Formulier",
+  "This Submission's Form can't be changed now": "Het Formulier van deze Inzending kan nu niet worden gewijzigd",
+  "The Submission is already on this Form": "De Inzending staat al op dit Formulier",
+  "This Submission can't be reviewed now": "Deze Inzending kan nu niet worden gecontroleerd",
+  "This Submission can't be rejected now": "Deze Inzending kan nu niet worden afgewezen",
+  "Only a Rejected Submission can be reopened": "Alleen een Afgewezen Inzending kan worden heropend",
+  "This Submission's PDF is gone, so it can't be reopened":
+    "De pdf van deze Inzending is weg, dus de Inzending kan niet worden heropend",
+  "This Submission's data was deleted": "De gegevens van deze Inzending zijn verwijderd",
+  "This Submission's data was already deleted": "De gegevens van deze Inzending zijn al verwijderd",
   "Only a failed Extraction can be retried": "Alleen een mislukte Extractie kan opnieuw worden geprobeerd",
 
   // Forms
@@ -75,8 +76,8 @@ const dutch: Record<string, string> = {
   // Integrations and Deliveries
   "An Integration needs a name": "Een Koppeling heeft een naam nodig",
   "The endpoint must be an https URL": "Het endpoint moet een https-URL zijn",
-  "Choose an Approved Document of this Form": "Kies een Goedgekeurd Document van dit Formulier",
-  "Only an Approved Document can be test-sent": "Alleen een Goedgekeurd Document kan als test worden verstuurd",
+  "Choose an Approved Submission of this Form": "Kies een Goedgekeurde Inzending van dit Formulier",
+  "Only an Approved Submission can be test-sent": "Alleen een Goedgekeurde Inzending kan als test worden verstuurd",
   "Only a failed Delivery can be sent again": "Alleen een mislukte Levering kan opnieuw worden verstuurd",
   "Integration removed: this Delivery can't be sent again":
     "Koppeling verwijderd: deze Levering kan niet opnieuw worden verstuurd",
@@ -116,8 +117,13 @@ const dutchPatterns: [RegExp, (...groups: string[]) => string][] = [
   [/^1 value still needs review$/, () => "1 waarde moet nog gecontroleerd worden"],
   [/^(\d+) values still need review$/, (n) => `${n} waarden moeten nog gecontroleerd worden`],
   [
+    /^This PDF has (\d+) pages\. Vink reads up to (\d+) pages per PDF\.$/,
+    (pages, max) => `Deze pdf heeft ${pages} pagina's. Vink leest maximaal ${max} pagina's per pdf.`,
+  ],
+  // The same, as worded in intake skip reasons stored before it said "per PDF".
+  [
     /^This PDF has (\d+) pages\. Vink reads up to (\d+) pages per Document\.$/,
-    (pages, max) => `Deze pdf heeft ${pages} pagina's. Vink leest maximaal ${max} pagina's per Document.`,
+    (pages, max) => `Deze pdf heeft ${pages} pagina's. Vink leest maximaal ${max} pagina's per pdf.`,
   ],
   [/^Keep data from 1 to (\d+) days$/, (max) => `Bewaar data 1 tot ${max} dagen`],
   [

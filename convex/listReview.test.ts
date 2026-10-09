@@ -206,7 +206,7 @@ test("Approval waits for the List's completeness and its sub-Fields, then goes t
   await user.mutation(api.review.approve, { organisationSlug: on.organisationSlug, documentId: on.documentId });
 
   expect((await read()).state).toBe("approved");
-  await expect(user.mutation(api.review.addEntry, on)).rejects.toThrow("This Document is approved");
+  await expect(user.mutation(api.review.addEntry, on)).rejects.toThrow("This Submission is approved");
 });
 
 test("nobody can change another Organisation's List entries", async () => {
@@ -215,5 +215,5 @@ test("nobody can change another Organisation's List entries", async () => {
 
   await expect(
     eve.user.mutation(api.review.addEntry, { ...on, organisationSlug: eve.slug }),
-  ).rejects.toThrow("Document not found");
+  ).rejects.toThrow("Submission not found");
 });

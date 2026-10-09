@@ -38,7 +38,7 @@ test("an older event without a code still shows its stored text", () => {
 test("the split reason comes from the code, with the old text as the fallback", () => {
   const split = { answer: "apart", percent: 60, documents: 3 } as const;
   expect(splitReasonText({ split, splitReason: null }, dutchLabels)).toContain("60% zeker van \"aparte papieren\"");
-  expect(splitReasonText({ split, splitReason: null }, dutchLabels)).toContain("3 Documenten");
+  expect(splitReasonText({ split, splitReason: null }, dutchLabels)).toContain("3 Inzendingen");
   expect(splitReasonText({ split, splitReason: null }, englishLabels)).toContain("60% sure of \"separate papers\"");
   expect(splitReasonText({ split: null, splitReason: "Vink was not sure …" }, dutchLabels)).toBe("Vink was not sure …");
   expect(splitReasonText({ split: null, splitReason: null }, dutchLabels)).toBeNull();

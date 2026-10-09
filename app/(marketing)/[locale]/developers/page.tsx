@@ -304,7 +304,7 @@ export default async function DevelopersPage({ params }: PageProps<"/[locale]/de
           <p>{t.rich("delivery.headers", rich)}</p>
           <Screenshot
             name="delivery-retry"
-            title="Vink · Document · Deliveries"
+            title={t("delivery.frameTitle")}
             width={831}
             height={341}
             alt={t("delivery.screenshot")}

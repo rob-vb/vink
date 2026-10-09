@@ -93,7 +93,7 @@ test("a PDF over 20 pages is refused with a clear message, and nothing is stored
 
   await expect(
     upload(cas, slug, formId, "bundle.pdf", await pdfWithPages(21)),
-  ).rejects.toThrow("This PDF has 21 pages. Vink reads up to 20 pages per Document.");
+  ).rejects.toThrow("This PDF has 21 pages. Vink reads up to 20 pages per PDF.");
 
   expect(fakePdfStore.objects.size).toBe(0);
   expect(
@@ -275,7 +275,7 @@ test("a user without a Membership in the Organisation gets no URL for its PDF", 
       organisationSlug: bob.slug,
       documentId: document.id,
     }),
-  ).rejects.toThrow("Document not found");
+  ).rejects.toThrow("Submission not found");
 });
 
 test("a Document's history records who uploaded it and when", async () => {
@@ -320,7 +320,7 @@ test("a user can't read a Document of an Organisation they have no Membership in
 
   await expect(
     bob.user.query(api.documents.get, { organisationSlug: bob.slug, documentId: id }),
-  ).rejects.toThrow("Document not found");
+  ).rejects.toThrow("Submission not found");
 });
 
 test("create refuses a key that is not an unused upload of this Organisation, and deletes nothing", async () => {

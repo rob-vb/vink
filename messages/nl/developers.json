@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "Developers: webhook, Payload en handtekening",
-    "description": "Hoe Vink goedgekeurde documentdata naar je systeem stuurt: de JSON-envelope, HMAC-SHA256-controle, nieuwe pogingen, test-send en standaard koppelingen met Google Sheets, n8n, Make en Zapier."
+    "description": "Hoe Vink goedgekeurde data naar je systeem stuurt: de JSON-envelope, HMAC-SHA256-controle, nieuwe pogingen, test-send en standaard koppelingen met Google Sheets, n8n, Make en Zapier."
   },
   "og": {
     "title": "Eén ondertekende webhook. Schone JSON, met je eigen velden als sleutels.",
@@ -20,12 +20,12 @@
   "header": {
     "eyebrow": "Developers",
     "title": "Eén ondertekende webhook. Schone JSON, met je eigen velden als sleutels.",
-    "subtitle": "Als een document is goedgekeurd, stuurt Vink de data als één JSON-POST naar je endpoint. Op deze pagina staat alles wat je nodig hebt om de ontvanger te bouwen."
+    "subtitle": "Als een inzending is goedgekeurd, stuurt Vink de data als één JSON-POST naar je endpoint. Op deze pagina staat alles wat je nodig hebt om de ontvanger te bouwen."
   },
   "overview": {
     "title": "Overzicht",
-    "p1": "Een Integration is een HTTPS-endpoint dat je in Vink toevoegt en aan één of meer formulieren koppelt. Als een document van dat formulier wordt goedgekeurd, door een mens of door Auto-Send, stuurt Vink één Delivery naar elke gekoppelde Integration.",
-    "p2": "De body is de Payload: de waarden van het document met de velden van het formulier als sleutels, in een kleine envelope. Elk verzoek is ondertekend, zodat je ontvanger kan controleren dat het van Vink komt.",
+    "p1": "Een Integration is een HTTPS-endpoint dat je in Vink toevoegt en aan één of meer formulieren koppelt. Als een inzending van dat formulier wordt goedgekeurd, door een mens of door Auto-Send, stuurt Vink één Delivery naar elke gekoppelde Integration.",
+    "p2": "De body is de Payload: de waarden van de inzending met de velden van het formulier als sleutels, in een kleine envelope. Elk verzoek is ondertekend, zodat je ontvanger kan controleren dat het van Vink komt.",
     "facts": {
       "method": "Eén <code>POST</code> per Delivery, <code>Content-Type: application/json</code>",
       "signed": "Ondertekend met HMAC-SHA256 in de header <code>X-Vink-Signature</code>",
@@ -34,12 +34,12 @@
     },
     "reading": "Vink leest PDF's met Gemini op Vertex AI, EU-regio.",
     "apiReference": "Vink aanroepen vanuit je eigen code? De <link>API-referentie</link> beschrijft de publieke API en de API-sleutels.",
-    "inboundTitle": "Documenten naar binnen krijgen",
-    "inbound": "Documenten komen vandaag via de app binnen: upload meerdere PDF's tegelijk, of mail ze in. Geen code? Laat een systeem mailen naar het Intake Address van het formulier, en elke PDF-bijlage wordt een document. Een programma kan PDF's ook via de API insturen: <link>POST /v1/forms/'{form_id}'/documents</link>."
+    "inboundTitle": "Bestanden naar binnen krijgen",
+    "inbound": "Bestanden komen vandaag via de app binnen: upload meerdere PDF's en foto's tegelijk, of mail ze in. Geen code? Laat een systeem mailen naar het Intake Address van het formulier. Vink maakt van elke e-mail één of meer inzendingen. Een programma kan PDF's ook via de API insturen: <link>POST /v1/forms/'{form_id}'/documents</link>."
   },
   "platforms": {
     "title": "Standaard koppelingen",
-    "intro": "Geen developer? Voor deze vier diensten is er een standaard koppeling. Google Sheets zit in Vink zelf: Vink zet elk goedgekeurd document als rijen in een sheet. n8n, Make en Zapier ontvangen de webhook, en daar bouw je de rest van de flow: een bericht aan je team, een boeking in je boekhoudpakket.",
+    "intro": "Geen developer? Voor deze vier diensten is er een standaard koppeling. Google Sheets zit in Vink zelf: Vink zet elke goedgekeurde inzending als rijen in een sheet. n8n, Make en Zapier ontvangen de webhook, en daar bouw je de rest van de flow: een bericht aan je team, een boeking in je boekhoudpakket.",
     "other": "Staat je systeem er niet tussen? Dat is geen probleem. De webhook werkt met elk systeem dat een HTTPS-verzoek kan ontvangen. Geen developer? Dan <link>bouwen wij de koppeling</link>.",
     "listLabel": "Standaard koppelingen die vandaag met Vink werken",
     "native": "ingebouwd",
@@ -52,7 +52,7 @@
       "zapier": "Betaald abonnement"
     },
     "howTitle": "Zo werkt de webhook in n8n, Make en Zapier",
-    "how": "Je maakt een ontvangst-URL in het platform. In Vink plak je die in een nieuwe Koppeling, en die Koppeling koppel je aan een formulier. Een test-send laat het platform je velden zien, zodat je ze in de volgende stap kunt gebruiken. Daarna gaat elk goedgekeurd document van dat formulier daarheen.",
+    "how": "Je maakt een ontvangst-URL in het platform. In Vink plak je die in een nieuwe Koppeling, en die Koppeling koppel je aan een formulier. Een test-send laat het platform je velden zien, zodat je ze in de volgende stap kunt gebruiken. Daarna gaat elke goedgekeurde inzending van dat formulier daarheen.",
     "testFlag": "Een test-send heeft <code>\"test\": true</code>. Zet vóór een stap die echte data wegschrijft een filter dat alleen <code>test</code> = <code>false</code> doorlaat. Dan komen tests nooit in je administratie.",
     "secret": "<b>De URL is de sleutel.</b> Deze platforms kunnen de header <code>X-Vink-Signature</code> niet makkelijk controleren, dus iedereen die de URL heeft, kan er data naartoe sturen. Zet de URL niet in mails, tickets of screenshots. Uitgelekt? Maak een nieuwe URL in het platform en plak die in de Koppeling in Vink.",
     "stepsLabel": "Stappen voor {name}",
@@ -66,11 +66,11 @@
           "connect": "Kies <b>Google-account koppelen</b> en log in bij Google. Vink maakt een nieuwe sheet in je Google Drive. Daarna kom je terug in Vink.",
           "attach": "Kies <b>Aan een Formulier koppelen</b> en kies het formulier.",
           "test": "Kies <b>Test versturen</b> om te zien hoe de rijen eruitzien. Testrijen hebben <code>[test]</code> voor de bestandsnaam. Verwijder ze daarna uit de sheet.",
-          "live": "Klaar. Elk goedgekeurd document van dat formulier komt nu als nieuwe rijen in de sheet."
+          "live": "Klaar. Elke goedgekeurde inzending van dat formulier komt nu als nieuwe rijen in de sheet."
         },
-        "lists": "<b>Lijstvelden:</b> Vink maakt één rij per regel van het eerste lijstveld. De andere waarden van het document staan op elke rij. Een document zonder regels geeft één rij. Een tweede lijstveld komt als JSON in één cel.",
+        "lists": "<b>Lijstvelden:</b> Vink maakt één rij per regel van het eerste lijstveld. De andere waarden van de inzending staan op elke rij. Een inzending zonder regels geeft één rij. Een tweede lijstveld komt als JSON in één cel.",
         "security": "<b>Toegang:</b> Vink kan alleen de sheet openen die Vink zelf maakt. Je andere bestanden in Google Drive blijven dicht.",
-        "note": "<b>Kolommen:</b> eerst <code>document</code>, dan je velden met hun sleutel als kop, en rechts <code>approved_at</code>, <code>approved_by</code> en <code>delivery_id</code>. Een nieuw veld krijgt een nieuwe kolom vóór <code>approved_at</code>. Verander de koppen niet, want Vink zet elke waarde onder de kolom met dezelfde kop. Kan Vink niet meer in de sheet schrijven? Kies dan <b>Google-account opnieuw koppelen</b> en verstuur de mislukte Delivery opnieuw vanuit het document."
+        "note": "<b>Kolommen:</b> eerst <code>document</code>, dan je velden met hun sleutel als kop, en rechts <code>approved_at</code>, <code>approved_by</code> en <code>delivery_id</code>. Een nieuw veld krijgt een nieuwe kolom vóór <code>approved_at</code>. Verander de koppen niet, want Vink zet elke waarde onder de kolom met dezelfde kop. Kan Vink niet meer in de sheet schrijven? Kies dan <b>Google-account opnieuw koppelen</b> en verstuur de mislukte Delivery opnieuw vanuit de inzending."
       },
       "n8n": {
         "title": "n8n",
@@ -98,7 +98,7 @@
         },
         "lists": "<b>Lijstvelden:</b> een lijstveld komt binnen als array, met één object per regel. Wil je elke regel apart verwerken, bijvoorbeeld één spreadsheetregel per factuurregel? Zet dan een <b>Iterator</b> op die array vóór de volgende module.",
         "security": "<b>Extra slot:</b> Make kan een API-sleutel controleren. Voeg er een toe aan de webhook in Make. Voeg in Vink de header <code>x-make-apikey</code> met die sleutel toe aan de Koppeling, en markeer hem als <b>Geheim</b>. Dan is de URL alleen niet meer genoeg.",
-        "note": "Make antwoordt meteen met <code>200</code> en zet de data in een wachtrij. Is de wachtrij van de webhook vol, dan antwoordt Make <code>400</code>. Vink markeert de Delivery dan als mislukt, en een Admin kan hem opnieuw versturen vanuit het document."
+        "note": "Make antwoordt meteen met <code>200</code> en zet de data in een wachtrij. Is de wachtrij van de webhook vol, dan antwoordt Make <code>400</code>. Vink markeert de Delivery dan als mislukt, en een Admin kan hem opnieuw versturen vanuit de inzending."
       },
       "zapier": {
         "title": "Zapier",
@@ -111,7 +111,7 @@
         },
         "lists": "<b>Lijstvelden:</b> een lijstveld komt binnen als array van objecten. Zapier toont de regels als line items: een actie die line items ondersteunt, neemt ze allemaal tegelijk. Wil je één actie per regel? Gebruik dan <b>Looping by Zapier</b>.",
         "security": "<b>Slot:</b> een Catch Hook controleert geen headers, dus de geheime URL is het enige slot. Behandel hem als een wachtwoord.",
-        "note": "Een Zap die uit staat of verwijderd is, antwoordt na een tijdje <code>404</code>. Vink markeert de Delivery dan als mislukt. Zet de Zap aan, en een Admin verstuurt de mislukte Delivery opnieuw vanuit het document."
+        "note": "Een Zap die uit staat of verwijderd is, antwoordt na een tijdje <code>404</code>. Vink markeert de Delivery dan als mislukt. Zet de Zap aan, en een Admin verstuurt de mislukte Delivery opnieuw vanuit de inzending."
       }
     }
   },
@@ -130,8 +130,8 @@
       "event": "Altijd <code>document.approved</code>.",
       "delivery_id": "Uniek per Delivery. Blijft gelijk als een Delivery opnieuw wordt geprobeerd of opnieuw verstuurd, dus gebruik het om te ontdubbelen.",
       "test": "<code>true</code> bij een test-send, <code>false</code> bij een echte Delivery.",
-      "document": "Het id van het document, de bestandsnaam en wanneer het is geüpload (ISO 8601, UTC).",
-      "form": "Het id van het formulier en de formulierversie waarmee het document is gelezen.",
+      "document": "De inzending: het id, de bestandsnaam en wanneer ze is geüpload (ISO 8601, UTC).",
+      "form": "Het id van het formulier en de formulierversie waarmee de inzending is gelezen.",
       "approval": "<code>manual</code> of <code>auto</code> (Auto-Send), het id van de gebruiker die goedkeurde (<code>null</code> bij Auto-Send) en wanneer.",
       "data": "De waarden, per veld. Getallen zijn getallen, datums zijn <code>YYYY-MM-DD</code>, ja/nee-velden zijn booleans en lijsten zijn arrays van objecten."
     }
@@ -150,6 +150,7 @@
     "tabs": "Voorbeelden van de controle"
   },
   "delivery": {
+    "frameTitle": "Vink · Inzending · Deliveries",
     "title": "Bezorging en nieuwe pogingen",
     "intro": "Vink wacht maximaal 15 seconden op je antwoord.",
     "table": {
@@ -167,13 +168,13 @@
     "atLeastOnce": "Bezorging is at-least-once. Dezelfde Delivery kan twee keer aankomen, bijvoorbeeld als je ontvanger hem opsloeg maar een timeout gaf voordat hij antwoordde. Bewaar <code>delivery_id</code> en sla een Delivery over die je al hebt verwerkt.",
     "headersTitle": "Headers",
     "headers": "Je kunt eigen headers aan een Integration toevoegen, zoals een API-sleutel of Basic auth. Markeer een header als geheim en de waarde wordt versleuteld opgeslagen en daarna alleen gemaskeerd getoond. Vink zet <code>Content-Type</code> en <code>X-Vink-Signature</code> zelf.",
-    "screenshot": "De bezorgstatus van een document in Vink, met een nieuwe poging"
+    "screenshot": "De bezorgstatus van een inzending in Vink, met een nieuwe poging"
   },
   "testSend": {
     "title": "Test-send",
-    "body": "Stuur vanuit een Integration een test naar je endpoint voordat er een echt document weggaat. Kies voorbeeldwaarden voor elk veld, of lege waarden zodat je ontvanger <code>null</code> en <code>[]</code> ziet. Je kunt ook een goedgekeurd document opnieuw als test versturen.",
-    "flag": "Een test heeft <code>\"test\": true</code>, is net zo ondertekend als een echte en is nooit een Delivery: hij wordt niet opnieuw geprobeerd en staat niet in de bezorglog van een document. Het antwoord van je endpoint zie je meteen.",
-    "screenshot": "Een Integration in Vink met de uitkomst van een test-send"
+    "body": "Stuur vanuit een Integration een test naar je endpoint voordat er een echte inzending weggaat. Kies voorbeeldwaarden voor elk veld, of lege waarden zodat je ontvanger <code>null</code> en <code>[]</code> ziet. Je kunt ook een goedgekeurde inzending opnieuw als test versturen.",
+    "flag": "Een test heeft <code>\"test\": true</code>, is net zo ondertekend als een echte en is nooit een Delivery: hij wordt niet opnieuw geprobeerd en staat niet in de bezorglog van een inzending. Het antwoord van je endpoint zie je meteen.",
+    "screenshot": "Het venster om vanuit een Integration in Vink een test te versturen"
   },
   "service": {
     "title": "Koppelservice",
@@ -182,20 +183,20 @@
     "includes": {
       "title": "Wat je krijgt",
       "receiver": "Een ontvanger die de handtekening controleert en de data in je systeem zet",
-      "forms": "Je formulieren en velden samen ingericht, getest op je eigen documenten",
+      "forms": "Je formulieren en velden samen ingericht, getest op je eigen bestanden",
       "hosting": "Jij host het, of wij hosten het op verzoek voor een vast bedrag per maand",
       "changes": "Onderhoud en aanpassingen later, per klus gefactureerd"
     },
     "need": {
       "title": "Wat we van je nodig hebben",
       "system": "In welk systeem de data moet komen, en toegang tot een testomgeving",
-      "documents": "Een paar voorbeelddocumenten",
+      "documents": "Een paar voorbeeldbestanden",
       "contact": "Eén persoon die weet hoe de data gebruikt wordt"
     },
     "price": "Vanaf €950 per koppeling, excl. btw",
     "priceNote": "Een vaste prijs, afgesproken voordat we beginnen.",
     "formTitle": "Vraag naar een koppeling",
-    "formBody": "Vertel ons iets over je systeem en documenten. We antwoorden persoonlijk."
+    "formBody": "Vertel ons iets over je systeem en je papierwerk. We antwoorden persoonlijk."
   },
   "code": {
     "copy": "Kopiëren",

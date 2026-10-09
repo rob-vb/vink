@@ -57,7 +57,7 @@ const MAX_PAGES = 20;
 // (lib/server-errors.ts); the public API maps them to its codes.
 export const NOT_A_PDF = "This file isn't a PDF Vink can read.";
 export const tooManyPages = (pages: number) =>
-  `This PDF has ${pages} pages. Vink reads up to ${MAX_PAGES} pages per Document.`;
+  `This PDF has ${pages} pages. Vink reads up to ${MAX_PAGES} pages per PDF.`;
 
 /** Step 1 of an upload: where the browser PUTs the PDF. */
 export const generateUploadUrl = orgMutation({
@@ -490,7 +490,7 @@ async function getDocument(
   const document = await ctx.db.get(documentId);
   // Another Organisation's Document looks the same as a missing one.
   if (document === null || document.organisationId !== organisationId) {
-    throw new ConvexError("Document not found");
+    throw new ConvexError("Submission not found");
   }
   return document;
 }

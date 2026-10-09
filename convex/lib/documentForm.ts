@@ -7,7 +7,7 @@ import type { Doc, Id } from "../_generated/dataModel";
 
 export function formOf(document: Doc<"documents">): { formId: Id<"forms">; formVersion: number } {
   if (document.formId === undefined || document.formVersion === undefined) {
-    throw new ConvexError("This Document has no Form");
+    throw new ConvexError("This Submission has no Form");
   }
   return { formId: document.formId, formVersion: document.formVersion };
 }

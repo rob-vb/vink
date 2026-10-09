@@ -12,20 +12,20 @@
     "extracting": "Wordt gelezen",
     "noSystem": {
       "title": "Nog geen systeem gekoppeld",
-      "description": "Goedgekeurde Documenten blijven in Vink. Koppel een systeem om ze door te sturen.",
+      "description": "Goedgekeurde Inzendingen blijven in Vink. Koppel een systeem om ze door te sturen.",
       "action": "Systeem koppelen"
     }
   },
   "emailIn": {
     "button": "Per e-mail",
-    "title": "Documenten per e-mail insturen",
+    "title": "Bestanden per e-mail insturen",
     "description": "De Organisatie heeft een e-mailadres, en elk Formulier kan er ook een hebben. Post aan het adres van de Organisatie gaat naar het Formulier dat past; post aan het adres van een Formulier gaat naar dat Formulier.",
     "organisation": "Alle Formulieren (Vink kiest het Formulier)"
   },
   "upload": {
     "button": "Uploaden",
-    "title": "Documenten uploaden",
-    "description": "Elk bestand en elke e-mail wordt een eigen Document. Vink vult het Formulier dat je kiest, of kiest zelf het Formulier.",
+    "title": "Bestanden uploaden",
+    "description": "Elk bestand en elke e-mail wordt een eigen Inzending. Vink vult het Formulier dat je kiest, of kiest zelf het Formulier.",
     "files": "Bestanden",
     "drop": "Sleep bestanden hierheen, of <browse>kies bestanden</browse>",
     "limit": "Pdf, JPG, PNG, HEIC of een .eml-mail, maximaal 10 MB per bestand. Een pdf mag maximaal 20 pagina's hebben.",
@@ -34,7 +34,7 @@
     "failed": "We konden dit bestand niet uploaden. Probeer het opnieuw.",
     "emailFailed": "We konden deze e-mail niet uploaden. Probeer het opnieuw.",
     "outOfItems": "Je hebt nog {remaining} {remaining, plural, one {item} other {items}}; hiervoor zijn er {needed} nodig.",
-    "uploaded": "{count, plural, one {# document geüpload} other {# documenten geüpload}}",
+    "uploaded": "{count, plural, one {# Inzending toegevoegd} other {# Inzendingen toegevoegd}}",
     "readingNow": "Vink leest ze nu.",
     "view": "Bekijken",
     "close": "Sluiten",
@@ -51,25 +51,25 @@
   },
   "extracting": {
     "metaTitle": "Wordt gelezen · Vink",
-    "back": "Documenten",
+    "back": "Inbox",
     "title": "Wordt gelezen",
-    "description": "Vink leest deze nu. Als het klaar is, gaat elk Document naar Te controleren of Goedgekeurd, of naar Mislukt.",
+    "description": "Vink leest deze nu. Als het klaar is, gaat elke Inzending naar Te controleren of Goedgekeurd, of naar Mislukt.",
     "empty": "Er wordt nu niets gelezen."
   },
   "review": {
     "metaTitle": "Controleren · Vink",
     "notVerified": "Niet geverifieerd",
-    "notVerifiedTip": "Dit Document kon niet worden geverifieerd, dus het wordt nooit automatisch goedgekeurd.",
+    "notVerifiedTip": "Deze Inzending kon niet worden geverifieerd, dus ze wordt nooit automatisch goedgekeurd.",
     "approvedToast": "{filename} is goedgekeurd.",
     "nothingElse": "Er is niets meer te controleren.",
     "approvalFailed": "Goedkeuren is niet gelukt. Probeer het opnieuw.",
     "doesNotFit": "Past niet bij dit Formulier",
-    "doesNotFitText": "Van de verplichte Velden van {form} zijn er te weinig op gevonden. Misschien is het bij het verkeerde Formulier geüpload, of is het geen bruikbaar Document.",
+    "doesNotFitText": "Van de verplichte Velden van {form} zijn er te weinig op gevonden. Misschien is het bestand bij het verkeerde Formulier geüpload, of is het geen bruikbaar document.",
     "rejected": "Afgewezen",
     "rejectedAndDeleted": "Afgewezen en verwijderd",
     "rejectedBy": "Door {name}, {date}",
     "gone": "Het bestand en de gegevens zijn weg; alleen dit record en de geschiedenis blijven bewaard.",
-    "failedTitle": "Vink kon dit Document niet lezen",
+    "failedTitle": "Vink kon deze Inzending niet lezen",
     "failedText": "Vink heeft het vier keer geprobeerd. Meestal is dit een tijdelijke storing, dus probeer het opnieuw. Als er al een Reading is opgeslagen, gaat de nieuwe poging daar verder en wordt het bestand niet opnieuw gelezen.",
     "failedUnreadable": "Dit bestand is niet bruikbaar: het is beschadigd of van een type dat Vink niet leest. Een nieuwe poging helpt niet. Upload het opnieuw of wijs het af.",
     "retry": "Opnieuw proberen",
@@ -78,13 +78,13 @@
     "dataDeletedRetention": "Het bestand, wat Vink las en de waarden zijn op {date} verwijderd volgens de bewaartermijn van de Organisatie. Alleen dit record, de geschiedenis en het leveringslog blijven bewaard.",
     "pdfDeleted": "Het bestand is verwijderd.",
     "pdfFailed": "Het bestand kon niet worden geladen.",
-    "reading": "Vink leest dit Document",
+    "reading": "Vink leest deze Inzending",
     "readingText": "Dit kan tot een minuut duren. De Velden worden hier ingevuld zodra het klaar is."
   },
   "changeForm": {
     "button": "Formulier wijzigen",
     "title": "Het Formulier wijzigen",
-    "description": "Vink vult het nieuwe Formulier met wat het al op het Document heeft gelezen. Alleen als het nog niet gelezen is, leest het het bestand opnieuw.",
+    "description": "Vink vult het nieuwe Formulier met wat het al in de Inzending heeft gelezen. Alleen als ze nog niet gelezen is, leest het het bestand opnieuw.",
     "newForm": "Nieuw Formulier",
     "noOtherForms": "Geen andere Formulieren",
     "lost": "{count, plural, one {# correctie gaat verloren.} other {# correcties gaan verloren.}}",
@@ -92,12 +92,12 @@
   },
   "reject": {
     "button": "Afwijzen",
-    "title": "Dit Document afwijzen?",
+    "title": "Deze Inzending afwijzen?",
     "description": "{filename} wordt nooit goedgekeurd of verstuurd. Het blijft in de lijst Afgewezen staan, en je kunt het heropenen zolang het bestand bewaard wordt.",
     "reason": "Reden (optioneel)",
     "placeholder": "Lege scan, onleesbaar, geen werkbon…",
-    "reasonHelp": "Je team ziet dit naast het Document.",
-    "submit": "Document afwijzen",
+    "reasonHelp": "Je team ziet dit naast de Inzending.",
+    "submit": "Inzending afwijzen",
     "toast": "{filename} is afgewezen.",
     "reopen": "Heropenen"
   },
@@ -140,21 +140,21 @@
       "system": {
         "name": "Systeem",
         "title": "Koppel je systeem",
-        "description": "Een Koppeling stuurt elk goedgekeurd Document naar het systeem waarin je werkt. Je kunt dit ook later doen.",
+        "description": "Een Koppeling stuurt elke goedgekeurde Inzending naar het systeem waarin je werkt. Je kunt dit ook later doen.",
         "action": "Systeem koppelen",
         "skip": "Nu overslaan"
       },
       "input": {
         "name": "Input",
-        "title": "Kies hoe documenten binnenkomen",
+        "title": "Kies hoe Inzendingen binnenkomen",
         "description": "Kies er één of meer. Je kunt dit altijd aanpassen.",
         "uploadTitle": "Uploaden",
         "uploadDescription": "Voeg pdf's, foto's of een e-mail met de hand toe. Handig voor een eerste test.",
         "apiTitle": "API",
-        "apiDescription": "Stuur documenten vanuit je eigen software. Maak een API-sleutel bij Instellingen.",
+        "apiDescription": "Stuur Inzendingen vanuit je eigen software. Maak een API-sleutel bij Instellingen.",
         "apiAction": "Naar Instellingen",
         "finish": "Installatie afronden",
-        "finishHint": "Daarna is Documenten je startpagina."
+        "finishHint": "Daarna is de Inbox je startpagina."
       }
     }
   }

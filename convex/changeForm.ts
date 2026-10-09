@@ -17,15 +17,15 @@ async function changeable(
 ) {
   const document = await ctx.db.get(documentId);
   if (document === null || document.organisationId !== organisationId) {
-    throw new ConvexError("Document not found");
+    throw new ConvexError("Submission not found");
   }
-  if (document.state === "approved") throw new ConvexError("This Document is approved");
+  if (document.state === "approved") throw new ConvexError("This Submission is approved");
   if (
     document.state !== "needs_review" &&
     document.state !== "extraction_failed" &&
     document.state !== "no_form"
   ) {
-    throw new ConvexError("This Document's Form can't be changed now");
+    throw new ConvexError("This Submission's Form can't be changed now");
   }
   return document;
 }
@@ -51,7 +51,7 @@ export const changeForm = orgMutation({
     if (form === null || form.organisationId !== ctx.organisationId) {
       throw new ConvexError("Form not found");
     }
-    if (formId === document.formId) throw new ConvexError("The Document is already on this Form");
+    if (formId === document.formId) throw new ConvexError("The Submission is already on this Form");
     const oldForm = document.formId === undefined ? null : await ctx.db.get(document.formId);
 
     for (const table of ["fieldValues", "listValues"] as const) {

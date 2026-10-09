@@ -4,8 +4,8 @@
     "description": "Stop met PDF's overtikken. Vink leest facturen, schadeformulieren en werkbonnen, ook handgeschreven, en zet de gegevens in je systeem. 20 pagina's gratis."
   },
   "og": {
-    "title": "Document. Vink. Klaar.",
-    "alt": "Vink. Document. Vink. Klaar. Geen PDF's meer overtikken."
+    "title": "Papier. Vink. Klaar.",
+    "alt": "Vink. Papier. Vink. Klaar. Geen papierwerk meer overtikken."
   },
   "hero": {
     "title": "Niemand hoeft meer PDF's over te tikken.",
@@ -21,7 +21,7 @@
   "forms": {
     "eyebrow": "Jouw formulieren",
     "title": "Jij maakt het formulier. Vink vult het in.",
-    "subtitle": "Een formulier is jouw lijst met velden. Vink koppelt elk document aan die velden, en stuurt de gegevens naar je eigen applicatie.",
+    "subtitle": "Een formulier is jouw lijst met velden. Vink koppelt elke PDF, e-mail of foto aan die velden, en stuurt de gegevens naar je eigen applicatie.",
     "pick": "Kies een factuur:",
     "invoices": {
       "hoekstra": {
@@ -46,7 +46,7 @@
         "body": "Kies de velden die je nodig hebt: tekst, getal, datum of een lijst met regels. Of upload één voorbeeld-PDF. Vink stelt de velden dan voor."
       },
       "match": {
-        "title": "Vink koppelt elk document.",
+        "title": "Vink koppelt elke factuur.",
         "body": "Elke leverancier heeft een andere opmaak. Vink vindt je velden toch, ook op een scan of in handschrift. Je bouwt geen sjabloon per leverancier."
       },
       "send": {
@@ -92,8 +92,8 @@
   "calculator": {
     "title": "Wat overtikken je nu kost.",
     "subtitle": "Vul je eigen cijfers in. Je ziet wat overtikken per maand kost, en wat Vink kost.",
-    "documentsLabel": "Documenten per dag",
-    "minutesLabel": "Minuten overtikken per document",
+    "documentsLabel": "PDF's per dag",
+    "minutesLabel": "Minuten overtikken per PDF",
     "minutesValue": "{count} min",
     "hourlyLabel": "Loonkosten per uur",
     "hoursLabel": "Uren overtikken per maand",
@@ -102,7 +102,7 @@
     "withVink": "Met Vink ({plan})",
     "perMonth": "/mnd",
     "from": "vanaf",
-    "note": "Uitgaande van {days} werkdagen per maand en 1 pagina per document. Je team besteedt nog wel tijd aan de waarden die Vink markeert."
+    "note": "Uitgaande van {days} werkdagen per maand en 1 pagina per PDF. Je team besteedt nog wel tijd aan de waarden die Vink markeert."
   },
   "journey": {
     "title": "Van PDF tot in je systeem.",
@@ -116,7 +116,7 @@
     "reads": {
       "kicker": "Vink leest het",
       "title": "Vink vult je velden in.",
-      "body": "Bij de meeste documenten staan factuurnummer, bedragen en regels binnen een minuut klaar. Bij elke waarde zie je op welke pagina Vink hem vond.",
+      "body": "Bij de meeste facturen staan factuurnummer, bedragen en regels binnen een minuut klaar. Bij elke waarde zie je op welke pagina Vink hem vond.",
       "demo": "Probeer de demo"
     },
     "check": {
@@ -127,11 +127,11 @@
     "lands": {
       "kicker": "Het komt aan",
       "title": "De gegevens staan in je systeem.",
-      "body": "Na akkoord gaan de gegevens naar je boekhouding, ERP of database. Zet je Auto-Send aan, dan stuurt Vink documenten zonder twijfelgevallen zelf door."
+      "body": "Na akkoord gaan de gegevens naar je boekhouding, ERP of database. Zet je Auto-Send aan, dan stuurt Vink ze zelf door als er niets te controleren is."
     }
   },
   "tabs": {
-    "label": "Voorbeelddocumenten",
+    "label": "Voorbeelden",
     "invoice": "Factuur",
     "claimForm": "Schadeformulier",
     "handwritten": "Handgeschreven formulier",
@@ -151,7 +151,7 @@
       "title": "Wij koppelen het voor je.",
       "body": "Vertel ons welk systeem je data moet bereiken. Wij bouwen en testen de koppeling, voor een vaste prijs die we vooraf afspreken.",
       "point1": "Je ERP, boekhoudpakket, spreadsheet of database",
-      "point2": "Getest met je eigen documenten",
+      "point2": "Getest met je eigen bestanden",
       "point3": "Eén prijs, afgesproken voordat we beginnen",
       "cta": "Vraag naar een koppeling"
     },
@@ -184,8 +184,8 @@
       "a": "Je ziet elke waarde waar Vink niet zeker van is, met wat er gelezen is en op welke pagina. Er wordt niets verstuurd tot iemand het goedkeurt."
     },
     "messy": {
-      "q": "Onze documenten zijn rommelig, of handgeschreven.",
-      "a": "Probeer het op je eigen documenten. De eerste 20 pagina's zijn gratis, zonder creditcard."
+      "q": "Onze papieren zijn rommelig, of handgeschreven.",
+      "a": "Probeer het met je eigen papieren. De eerste 20 pagina's zijn gratis, zonder creditcard."
     },
     "developer": {
       "q": "We hebben geen developer.",
@@ -193,7 +193,7 @@
     },
     "templates": {
       "q": "Moet ik templates instellen?",
-      "a": "Nee. Beschrijf je velden, of laat Vink ze voorstellen op basis van één voorbeeld. Daarna koppelt Vink elk nieuw document zelf aan je velden, welke opmaak het ook heeft. Vink leest PDF's tot 10 MB en 20 pagina's."
+      "a": "Nee. Beschrijf je velden, of laat Vink ze voorstellen op basis van één voorbeeld. Daarna koppelt Vink elke nieuwe PDF, e-mail of foto zelf aan je velden, welke opmaak die ook heeft. Vink leest PDF's tot 10 MB en 20 pagina's."
     }
   }
 }

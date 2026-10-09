@@ -31,8 +31,12 @@ A draft set of Fields that Vink proposes, before it is a Form (or before it is a
 _Avoid_: template, template agent, form suggestion
 
 **Document**:
-An incoming PDF, email or image, processed against at most one Form. All its pages together fill one set of Field Values; a PDF or an image is never split into several Documents. Jev decides whether an email becomes one Document or several; when unsure it splits the email and marks the Documents Needs Review. A Document that no Form fits is in No Form.
+An incoming PDF, email or image, processed against at most one Form. All its pages together fill one set of Field Values; a PDF or an image is never split into several Documents. Jev decides whether an email becomes one Document or several; when unsure it splits the email and marks the Documents Needs Review. A Document that no Form fits is in No Form. In the app a Document is shown as a Submission (nl: Inzending), and the page that lists them is the Inbox.
 _Avoid_: upload, file
+
+**Inbox**:
+The app page that lists an Organisation's Documents, shown to users as Submissions. It is a page, not an email address: email reaches Vink through an Intake Address.
+_Avoid_: Documents page, Documenten
 
 **Form Intake Address**:
 An email address that belongs to one Form: each email sent to it becomes one or more Documents of that Form, and the Router does not run. Anyone who knows the address can send to it, so it is treated as a secret: an Admin switches it on and can replace it, which stops the old address at once. Vink never replies to the sender; an attachment of another file type, one that is too long, or one over the Organisation's Items is refused and creates no Document.
@@ -154,3 +158,4 @@ _Avoid_: webhook call, send
 ## Flagged ambiguities
 
 - "koppeling" was used for both the Integration and the act of mapping Fields — resolved: **Integration** is the endpoint; the Payload is keyed by the Form's own Fields, so there is no separate mapping step in this version. Deciding which part of a Document belongs to which Field is **Match**, not mapping.
+- "Document" in the app (nl: "Document", "Documenten") also named emails and photos, which are not documents to users — resolved: the domain and the code keep **Document**; the app shows it as Submission (nl: Inzending) and the list page as the **Inbox**. Marketing and legal copy still say "documents" in the general sense.

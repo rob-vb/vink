@@ -2,7 +2,7 @@
   "frame": {
     "label": "Vink demo with demo data",
     "organisation": "Kantoor Noord",
-    "documents": "Documents",
+    "documents": "Inbox",
     "forms": "Forms",
     "integrations": "Integrations",
     "members": "Members",
@@ -24,16 +24,16 @@
   "toast": {
     "approved": "{filename} is approved.",
     "nothingElse": "Nothing else needs review.",
-    "ownAccount": "Uploading and emailing documents in work in your own account.",
-    "extracting": "Nothing is being read right now. New documents show here while Vink reads them.",
-    "noForm": "Moving a document to a Form or rejecting it works in your own account."
+    "ownAccount": "Uploading and emailing happen in your own account.",
+    "extracting": "Nothing is being read right now. New Submissions show here while Vink reads them.",
+    "noForm": "Moving a Submission to a Form or rejecting it works in your own account."
   },
   "delivery": {
     "integration": "Sent to your system"
   },
   "done": {
     "eyebrow": "Needs Review is empty",
-    "title": "Seven documents in. Nothing retyped.",
+    "title": "Seven Submissions in. Nothing retyped.",
     "time": "your time",
     "checked": "values you checked",
     "read": "values Vink read",

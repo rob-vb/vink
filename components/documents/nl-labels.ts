@@ -12,7 +12,7 @@ const SPLIT_ANSWERS = {
 };
 
 function splitReason(split: SplitInfo): string {
-  return `Vink wist niet zeker of deze e-mail één zaak is of ${split.documents} aparte papieren (${split.percent}% zeker van "${SPLIT_ANSWERS[split.answer]}"), dus er zijn ${split.documents} Documenten gemaakt. Controleer of ze bij elkaar horen.`;
+  return `Vink wist niet zeker of deze e-mail één zaak is of ${split.documents} aparte papieren (${split.percent}% zeker van "${SPLIT_ANSWERS[split.answer]}"), dus er zijn ${split.documents} Inzendingen gemaakt. Controleer of ze bij elkaar horen.`;
 }
 
 /**
@@ -22,7 +22,7 @@ function splitReason(split: SplitInfo): string {
  */
 export const dutchLabels: DocumentsLabels = {
   documents: {
-    title: "Documenten",
+    title: "Inbox",
     subtitle: "Statuswijzigingen verschijnen hier zodra ze gebeuren.",
     tabs: {
       needs_review: "Te controleren",
@@ -33,26 +33,26 @@ export const dutchLabels: DocumentsLabels = {
     },
     empty: {
       needs_review: "Er wacht niets op controle.",
-      no_form: "Elk Document heeft een Formulier gevonden.",
-      approved: "Er zijn nog geen Documenten goedgekeurd.",
+      no_form: "Elke Inzending heeft een Formulier gevonden.",
+      approved: "Er zijn nog geen Inzendingen goedgekeurd.",
       extraction_failed: "Er zijn geen Extracties mislukt.",
-      rejected: "Er zijn geen Documenten afgewezen.",
+      rejected: "Er zijn geen Inzendingen afgewezen.",
     },
   },
   table: {
-    document: "Document",
+    document: "Inzending",
     form: "Formulier",
     pages: "Pagina's",
     uploadedBy: "Geüpload door",
     uploaded: "Geüpload",
     retry: "Opnieuw",
     autoSend: "Auto-Send",
-    noDocuments: "Geen Documenten",
+    noDocuments: "Geen Inzendingen",
     deleted: "Verwijderd · ",
     rejectedBy: "Afgewezen door",
   },
   review: {
-    back: "Documenten",
+    back: "Inbox",
     states: {
       extracting: "Wordt gelezen",
       needs_review: "Te controleren",
@@ -68,16 +68,16 @@ export const dutchLabels: DocumentsLabels = {
     approved: "Goedgekeurd",
     approvedBy: (mode, by) => (mode === "auto" ? "Automatisch" : `Door ${by}`),
     noForm: {
-      title: "Geen Formulier past bij dit Document",
-      text: "Vink vond geen Formulier dat past, dus er valt nog niets te controleren. Kies hierboven met Formulier wijzigen een Formulier om in te vullen, of wijs het af met Afwijzen. De items zijn wel geteld.",
-      empty: "Nog geen velden. Ze verschijnen zodra het Document een Formulier heeft.",
+      title: "Geen Formulier past bij deze Inzending",
+      text: "Vink vond geen Formulier dat past, dus er valt nog niets te controleren. Kies hierboven met Formulier wijzigen een Formulier om in te vullen, of wijs de Inzending af met Afwijzen. De items zijn wel geteld.",
+      empty: "Nog geen velden. Ze verschijnen zodra de Inzending een Formulier heeft.",
     },
     split: {
       title: "Vink heeft deze e-mail gesplitst",
       // The specific reason already says what Vink was unsure of; the general sentence is only a fallback.
       text: (reason) =>
         reason.trim() ||
-        "Vink wist niet zeker of de delen van deze e-mail bij elkaar horen, dus het maakte aparte Documenten. Controleer ze goed.",
+        "Vink wist niet zeker of de delen van deze e-mail bij elkaar horen, dus het maakte aparte Inzendingen. Controleer ze goed.",
       reason: splitReason,
     },
     fields: "Velden",
@@ -172,7 +172,7 @@ export const dutchLabels: DocumentsLabels = {
     signals: { match: "Match", fit: "Fit", support: "Support" },
     lowestSignal: "laagste signaal",
     readOn: (pages) => `Gelezen op ${pagesLabel(pages)}`,
-    notFound: "Niet gevonden op het Document",
+    notFound: "Niet gevonden in de Inzending",
     filledByHand: "Met de hand ingevuld",
     noValue: "Geen waarde",
     yes: "Ja",

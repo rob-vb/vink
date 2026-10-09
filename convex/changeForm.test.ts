@@ -205,7 +205,7 @@ test("Change Form is refused after Approval", async () => {
 
   await expect(
     user.mutation(api.changeForm.changeForm, { ...on, formId: invoiceForm }),
-  ).rejects.toThrow("This Document is approved");
+  ).rejects.toThrow("This Submission is approved");
 });
 
 test("a Document can't be moved to its own Form or another Organisation's", async () => {

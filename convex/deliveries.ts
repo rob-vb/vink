@@ -239,7 +239,7 @@ async function notifyFailed(ctx: MutationCtx, delivery: Doc<"deliveries">) {
   const document = await ctx.db.get(delivery.documentId);
   await ctx.db.insert("notifications", {
     organisationId: delivery.organisationId,
-    text: `${document?.filename ?? "A Document"} couldn't be delivered to ${delivery.integrationName}`,
+    text: `${document?.filename ?? "A Submission"} couldn't be delivered to ${delivery.integrationName}`,
     documentId: delivery.documentId,
     at: Date.now(),
     readBy: [],
@@ -259,7 +259,7 @@ export const resend = orgMutation({
       throw new ConvexError("Integration removed: this Delivery can't be sent again");
     }
     if (delivery.state !== "failed") throw new ConvexError("Only a failed Delivery can be sent again");
-    if (delivery.envelope === undefined) throw new ConvexError("This Document's data was deleted");
+    if (delivery.envelope === undefined) throw new ConvexError("This Submission's data was deleted");
     await ctx.db.patch(id, {
       state: "pending",
       failureReason: undefined,

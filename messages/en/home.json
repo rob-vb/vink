@@ -4,8 +4,8 @@
     "description": "Stop retyping PDFs. Vink reads invoices, claim forms and work orders, even handwritten ones, and puts the data in your system. 20 free pages."
   },
   "og": {
-    "title": "Document. Vink. Done.",
-    "alt": "Vink. Document. Vink. Done. No more retyping PDFs."
+    "title": "Paper. Vink. Done.",
+    "alt": "Vink. Paper. Vink. Done. No more retyping paperwork."
   },
   "hero": {
     "title": "Nobody has to retype PDFs anymore.",
@@ -21,7 +21,7 @@
   "forms": {
     "eyebrow": "Your Forms",
     "title": "You make the Form. Vink fills it in.",
-    "subtitle": "A Form is your list of fields. Vink matches every document to those fields, and sends the data to your own application.",
+    "subtitle": "A Form is your list of fields. Vink matches every PDF, email or photo to those fields, and sends the data to your own application.",
     "pick": "Pick an invoice:",
     "invoices": {
       "hoekstra": {
@@ -46,7 +46,7 @@
         "body": "Pick the fields you need: text, number, date, or a list of lines. Or upload one sample PDF, and Vink proposes the fields."
       },
       "match": {
-        "title": "Vink matches every document.",
+        "title": "Vink matches every invoice.",
         "body": "Every supplier uses a different layout. Vink still finds your fields, also on a scan or in handwriting. You build no template per supplier."
       },
       "send": {
@@ -92,8 +92,8 @@
   "calculator": {
     "title": "What retyping costs you now.",
     "subtitle": "Fill in your own numbers. You see what retyping costs per month, and what Vink costs.",
-    "documentsLabel": "Documents per day",
-    "minutesLabel": "Minutes of retyping per document",
+    "documentsLabel": "PDFs per day",
+    "minutesLabel": "Minutes of retyping per PDF",
     "minutesValue": "{count} min",
     "hourlyLabel": "Labour cost per hour",
     "hoursLabel": "Hours of retyping per month",
@@ -102,7 +102,7 @@
     "withVink": "With Vink ({plan})",
     "perMonth": "/mo",
     "from": "from",
-    "note": "Based on {days} working days a month and 1 page per document. Your team still spends some time on the values Vink flags."
+    "note": "Based on {days} working days a month and 1 page per PDF. Your team still spends some time on the values Vink flags."
   },
   "journey": {
     "title": "From PDF to your system.",
@@ -116,7 +116,7 @@
     "reads": {
       "kicker": "Vink reads it",
       "title": "Vink fills in your fields.",
-      "body": "For most documents, the invoice number, amounts and lines are ready within a minute. Each value shows the page Vink found it on.",
+      "body": "For most invoices, the invoice number, amounts and lines are ready within a minute. Each value shows the page Vink found it on.",
       "demo": "Try the demo"
     },
     "check": {
@@ -127,11 +127,11 @@
     "lands": {
       "kicker": "It lands",
       "title": "The data is in your system.",
-      "body": "After approval, the data goes to your accounting, ERP or database. Turn on Auto-Send, and Vink sends documents with nothing to check by itself."
+      "body": "After approval, the data goes to your accounting, ERP or database. Turn on Auto-Send, and Vink sends it by itself when there is nothing to check."
     }
   },
   "tabs": {
-    "label": "Example documents",
+    "label": "Examples",
     "invoice": "Invoice",
     "claimForm": "Claim form",
     "handwritten": "Handwritten form",
@@ -151,7 +151,7 @@
       "title": "We connect it for you.",
       "body": "Tell us which system your data needs to reach. We build and test the connection, for a fixed price agreed up front.",
       "point1": "Your ERP, accounting package, spreadsheet or database",
-      "point2": "Tested with your own documents",
+      "point2": "Tested with your own files",
       "point3": "One price, agreed before we start",
       "cta": "Ask about a connection"
     },
@@ -184,8 +184,8 @@
       "a": "You see every value Vink isn't sure about, with what it read and on which page. Nothing is sent until someone approves it."
     },
     "messy": {
-      "q": "Our documents are messy, or handwritten.",
-      "a": "Try it on your own documents. The first 20 pages are free, no credit card needed."
+      "q": "Our paperwork is messy, or handwritten.",
+      "a": "Try it on your own papers. The first 20 pages are free, no credit card needed."
     },
     "developer": {
       "q": "We don't have a developer.",
@@ -193,7 +193,7 @@
     },
     "templates": {
       "q": "Do I need to set up templates?",
-      "a": "No. Describe your fields, or let Vink propose them from one example. After that, Vink matches every new document to your fields by itself, whatever the layout. It reads PDFs of up to 10 MB and 20 pages."
+      "a": "No. Describe your fields, or let Vink propose them from one example. After that, Vink matches every new PDF, email or photo to your fields by itself, whatever the layout. It reads PDFs of up to 10 MB and 20 pages."
     }
   }
 }

@@ -192,7 +192,7 @@ test("a Rejected Document's data goes 30 days after Reject, and it can no longer
     rejection: { reason: "Duplicate" },
   });
   await expect(user.mutation(api.rejection.reopen, on)).rejects.toThrow(
-    "This Document's PDF is gone, so it can't be reopened",
+    "This Submission's PDF is gone, so it can't be reopened",
   );
 });
 

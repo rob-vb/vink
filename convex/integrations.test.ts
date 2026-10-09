@@ -366,7 +366,7 @@ test("a Document still in Needs Review is never test-sent: unchecked data doesn'
       mode: "examples",
       documentId,
     }),
-  ).rejects.toThrow("Only an Approved Document can be test-sent");
+  ).rejects.toThrow("Only an Approved Submission can be test-sent");
   expect(fakeHttp.requests).toEqual([]);
 });
 

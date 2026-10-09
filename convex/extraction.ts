@@ -83,7 +83,7 @@ export const retry = orgMutation({
   handler: async (ctx, { documentId }) => {
     const document = await ctx.db.get(documentId);
     if (document === null || document.organisationId !== ctx.organisationId) {
-      throw new ConvexError("Document not found");
+      throw new ConvexError("Submission not found");
     }
     if (document.state !== "extraction_failed") {
       throw new ConvexError("Only a failed Extraction can be retried");
@@ -305,7 +305,7 @@ export const finish = internalMutation({
     // never overwrites a user's corrections.
     if (document.state !== "extracting") return;
     if (document.formId === undefined) {
-      if (routed === undefined) throw new ConvexError("A Document without a Form needs the Router's pick");
+      if (routed === undefined) throw new ConvexError("A Submission without a Form needs the Router's pick");
       const picked = (await ctx.db.get(routed.formId))!;
       // The fit check gates Jev's pick: a Document that does not fit it has no Form.
       // Too, when no Field matched at all: a Form with no required Fields would

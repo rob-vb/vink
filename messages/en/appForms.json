@@ -75,7 +75,7 @@
   "editor": {
     "metaTitle": "Form · Vink",
     "savedAsVersion": "Saved as version {version}",
-    "createdWithSample": "Form created. {filename} is being read as its first Document.",
+    "createdWithSample": "Form created. {filename} is being read as its first Submission.",
     "created": "Form created as version 1",
     "saveFailed": "Couldn't save the Form",
     "nameInSettings": "Name the Form in Settings",
@@ -111,8 +111,8 @@
     "namePlaceholder": "Work order",
     "description": "Description",
     "descriptionPlaceholder": "Optional. Which documents this Form is for.",
-    "processSample": "Also process this sample as a Document",
-    "processSampleOn": "{filename} becomes this Form's first Document, from what Vink already read.",
+    "processSample": "Also process this sample as a Submission",
+    "processSampleOn": "{filename} becomes this Form's first Submission, from what Vink already read.",
     "processSampleOff": "{filename} and what Vink read from it are deleted when you create the Form.",
     "required": "Required"
   },
@@ -130,9 +130,9 @@
     "descriptionPlaceholder": "Other words the paper may use, e.g. invoice date, Rechnungsdatum, date de facturation",
     "descriptionHelp": "Optional. Synonyms and other languages help Vink find this Field on differently worded documents.",
     "required": "Required",
-    "requiredList": "A Document without at least one entry always needs review before it is sent.",
-    "requiredSubField": "An entry without it always needs review before the Document is sent.",
-    "requiredField": "A Document without it always needs review before it is sent.",
+    "requiredList": "A Submission without at least one entry always needs review before it is sent.",
+    "requiredSubField": "An entry without it always needs review before the Submission is sent.",
+    "requiredField": "A Submission without it always needs review before it is sent.",
     "options": "Options",
     "optionsDescription": "The value is what your system receives. The description lists what the paper may say instead: synonyms, abbreviations, other languages.",
     "optionValue": "Option {number} value",
@@ -153,15 +153,15 @@
     "reviewThreshold": "Review Threshold",
     "reviewThresholdDescription": "From 0 to 1. A value whose confidence is below it needs review.",
     "autoSend": "Auto-Send",
-    "autoSendDescription": "Approve and send a Document by itself right after it is read, when nothing on it needs review, it has been verified, it fits this Form and nobody has changed it. Applies to Documents read from now on.",
+    "autoSendDescription": "Approve and send a Submission by itself right after it is read, when nothing on it needs review, it has been verified, it fits this Form and nobody has changed it. Applies to Submissions read from now on.",
     "save": "Save settings"
   },
   "intake": {
     "copy": "Copy address",
     "legend": "Email in",
-    "description": "An email sent to this address becomes a Document of this Form: its text, with the PDFs and photos (JPG, PNG, HEIC) attached to it. When the attachments are separate papers, each becomes its own Document. Up to 10 attachments, 12 MB together, and 20 pages per PDF. Vink never replies to the sender. Anyone who knows the address can send to it, so share it only with the people and systems that send you these documents.",
+    "description": "An email sent to this address becomes a Submission of this Form: its text, with the PDFs and photos (JPG, PNG, HEIC) attached to it. When the attachments are separate papers, each becomes its own Submission. Up to 10 attachments, 12 MB together, and 20 pages per PDF. Vink never replies to the sender. Anyone who knows the address can send to it, so share it only with the people and systems that send you these documents.",
     "organisationLegend": "Email in for all Forms",
-    "organisationDescription": "An email sent to this address becomes one or more Documents, and Vink picks the Form for each. One that fits no Form waits under No Form. The Forms' own addresses skip this choice. Vink never replies to the sender. Anyone who knows the address can send to it, so share it only with the people and systems that send you mail to process.",
+    "organisationDescription": "An email sent to this address becomes one or more Submissions, and Vink picks the Form for each. One that fits no Form waits under No Form. The Forms' own addresses skip this choice. Vink never replies to the sender. Anyone who knows the address can send to it, so share it only with the people and systems that send you mail to process.",
     "organisationAdminCanSwitchOn": "An Admin can switch on an email address for the Organisation.",
     "organisationReplaceDescription": "The current address stops working at once. Give the new one to everyone who sends mail to the Organisation.",
     "switchOn": "Switch on email in",
@@ -178,7 +178,7 @@
     "recent": "Recent emails",
     "noEmails": "No emails have arrived yet.",
     "noAttachments": "No attachments.",
-    "created": "Document created"
+    "created": "Submission created"
   },
   "proposal": {
     "metaTitle": "Proposed Fields · Vink",

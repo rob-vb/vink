@@ -195,7 +195,7 @@ test("a PDF over 20 pages is refused with 422", async () => {
   expect({ status, body }).toEqual({
     status: 422,
     body: {
-      error: { code: "too_many_pages", message: "This PDF has 21 pages. Vink reads up to 20 pages per Document." },
+      error: { code: "too_many_pages", message: "This PDF has 21 pages. Vink reads up to 20 pages per PDF." },
     },
   });
   await nothingCreated(t);
