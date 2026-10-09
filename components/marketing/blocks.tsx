@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { LogInLink, StartFreeLink } from "./cta-links";
 import { Container } from "./section";
 
-/** "Start free" with "20 free pages. No credit card." underneath. */
+/** "Start free" with "20 free items. No credit card." underneath. */
 export function StartFree({
   location,
   size = "lg",
@@ -55,7 +55,7 @@ export function TrustRow({ className }: { className?: string }) {
   );
 }
 
-/** The navy closing card: "Stop retyping. Start with 20 pages." */
+/** The navy closing card: "Stop retyping. Start with 20 free items." */
 export function ClosingCard({ location, title }: { location: string; title?: string }) {
   const t = useTranslations("common");
   return (

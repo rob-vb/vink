@@ -19,7 +19,7 @@
   },
   "cta": {
     "startFree": "Gratis starten",
-    "freeNote": "20 gratis pagina's. Geen creditcard nodig."
+    "freeNote": "20 gratis items. Geen creditcard nodig."
   },
   "trust": {
     "anyPdf": "Ook gescand en handgeschreven",
@@ -27,7 +27,7 @@
     "approval": "Niets wordt verstuurd zonder jouw akkoord"
   },
   "closing": {
-    "title": "Stop met overtikken. Begin met 20 pagina's.",
+    "title": "Stop met overtikken. Begin met 20 gratis items.",
     "customer": "Al klant?",
     "logIn": "Inloggen"
   },
@@ -57,7 +57,7 @@
     "systemPlaceholder": "Bijvoorbeeld Exact Online, AFAS, een spreadsheet of je eigen database",
     "documents": "Wat moet Vink lezen?",
     "documentsPlaceholder": "Bijvoorbeeld inkoopfacturen en schadeformulieren",
-    "pagesPerMonth": "Ongeveer hoeveel pagina's per maand?",
+    "pagesPerMonth": "Ongeveer hoeveel pdf-pagina's, e-mails en foto's per maand?",
     "pagesChoose": "Kies een schatting",
     "pages": {
       "under300": "Minder dan 300",

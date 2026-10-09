@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "Vink: AI-data-extractie uit documenten voor operationele teams",
-    "description": "Stop met PDF's overtikken. Vink leest facturen, schadeformulieren en werkbonnen, ook handgeschreven, en zet de gegevens in je systeem. 20 pagina's gratis."
+    "description": "Stop met PDF's overtikken. Vink leest facturen, schadeformulieren en werkbonnen, ook handgeschreven, en zet de gegevens in je systeem. 20 items gratis."
   },
   "og": {
     "title": "Papier. Vink. Klaar.",
@@ -166,15 +166,15 @@
   },
   "pricing": {
     "title": "Elk abonnement bevat alles.",
-    "subtitle": "Je kiest alleen hoeveel pagina's. Prijzen excl. btw.",
+    "subtitle": "Je kiest alleen hoeveel items. Een item is een pdf-pagina, een e-mail of een foto. Prijzen excl. btw.",
     "perMonth": "/mnd",
     "from": "vanaf",
-    "pages": "{count} pagina's",
-    "customPages": "{count}+ pagina's",
-    "perPage": "{price} per pagina",
+    "pages": "{count} items",
+    "customPages": "{count}+ items",
+    "perPage": "{price} per item",
     "customNote": "Volumeprijs, betalen op factuur",
     "popular": "Meest gekozen",
-    "free": "Begin met 20 gratis pagina's. Geen creditcard nodig.",
+    "free": "Begin met 20 gratis items. Geen creditcard nodig.",
     "link": "Bekijk prijzen"
   },
   "faq": {
@@ -185,7 +185,7 @@
     },
     "messy": {
       "q": "Onze papieren zijn rommelig, of handgeschreven.",
-      "a": "Probeer het met je eigen papieren. De eerste 20 pagina's zijn gratis, zonder creditcard."
+      "a": "Probeer het met je eigen papieren. De eerste 20 items zijn gratis, zonder creditcard."
     },
     "developer": {
       "q": "We hebben geen developer.",
