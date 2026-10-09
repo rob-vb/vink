@@ -118,9 +118,11 @@ Each step ends green on `npm run typecheck`, `npm run lint` and `npm test`. Each
 
 `[~]` = built and green on fakes; the browser e2e is still open.
 
-## Assumptions to confirm with the user
+## Decided after the plan (user, 2026-10-09)
 
-- **Items for an email** (not fixed above): a Document counts the sum of its parts. Email body with content = 1, each PDF attachment = its `pageCount`, each image = 1. So a newsletter = 1, complaint + photo = 2, empty body + 3 PDFs = their pages. This closes the "attach 20 pages to one email = 1 Item" gap.
+- **Items for an email:** a Document counts the sum of its parts. Email text with content = 1, each PDF attachment = its `pageCount`, each image = 1. A text Jev calls only a cover note = 0. Small inline signature images (< 50 KB) are dropped and cost nothing.
+- **Describe in words** gets a daily cap per Organisation.
+- **Dev push** for the browser e2e is OK.
 
 ## Open checks (need a deployment, a real service or the user)
 
@@ -153,7 +155,6 @@ Each step ends green on `npm run typecheck`, `npm run lint` and `npm test`. Each
 
 - **Live demo is transport-flavoured (found 10-08, not changed: marketing gate).** The demo and home page use a "pakbon" from "Van Dijk Logistiek" with pallets and "1 pallet corner damaged": `components/demo/demo-data.ts:148-158`, `demo-papers.tsx:147-183,413`, `home-stills.tsx:141-150`, `demo-state.ts:104`, `app/(marketing)/[locale]/page.tsx:222,252,292,302`, `features/page.tsx:166`, `messages/*/home.json` (lines 4, 12, 84, 136), `messages/*/features.json` (alts 75, 106); Orders "Leverdatum"/"Please deliver" (`demo-data.ts:186`, `demo-papers.tsx:243,254`); newsletter "gratis bezorging". Proposal: replace with a quote or service report in step 13 (or earlier if the user wants it off prod now). Tests still use tyre/kenteken/Acme Fleet data (not visible to customers).
 
-- "Describe in words" costs model tokens but no Items, and has no limit per Organisation. Add a daily cap?
 
 ## Review follow-ups (from the step 6–10 review)
 

@@ -103,10 +103,8 @@ export type CountedInput =
  * (itemsOfMail in lib/mailPlan.ts does). So "Zie bijlage" with three PDFs costs
  * the pages of the three PDFs, a complaint with a photo costs 2, and a complaint
  * with two photos sent as separate papers costs 3.
- * ASSUMPTION, NOT CONFIRMED BY THE USER YET: ADR 0010 says "1 email = 1 Item".
- * Read as "the email's own text is 1 Item", the attachments count as the PDFs
- * and photos they are. If the user decides otherwise (say, 1 per email whatever
- * it holds), change only the `email` case and itemsOfMail.
+ * Confirmed by the user on 2026-10-09 (ADR 0010, GLOSSARY "Item"). To change
+ * it, change only the `email` case and itemsOfMail.
  */
 export function itemCountOf(input: CountedInput): number {
   switch (input.kind) {
