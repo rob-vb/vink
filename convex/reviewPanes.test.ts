@@ -152,5 +152,5 @@ test("attachmentUrl signs only the Document's own attachments, for members of it
   const eve = await signUp(t, "eve", "Eve BV");
   await expect(
     eve.user.mutation(api.documents.attachmentUrl, { organisationSlug: eve.slug, documentId: document._id, index: 0 }),
-  ).rejects.toThrow("Document not found");
+  ).rejects.toThrow("Submission not found");
 });

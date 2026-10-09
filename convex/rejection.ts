@@ -14,9 +14,9 @@ async function ownDocument(
 ) {
   const document = await ctx.db.get(documentId);
   if (document === null || document.organisationId !== organisationId) {
-    throw new ConvexError("Document not found");
+    throw new ConvexError("Submission not found");
   }
-  if (document.state === "approved") throw new ConvexError("This Document is approved");
+  if (document.state === "approved") throw new ConvexError("This Submission is approved");
   return document;
 }
 
@@ -41,7 +41,7 @@ async function logged(
 
 function requireRejected(document: Doc<"documents">) {
   if (document.state !== "rejected" || document.rejection === undefined) {
-    throw new ConvexError("Only a Rejected Document can be reopened");
+    throw new ConvexError("Only a Rejected Submission can be reopened");
   }
   return document.rejection;
 }
@@ -55,7 +55,7 @@ export const reject = orgMutation({
       document.state !== "extraction_failed" &&
       document.state !== "no_form"
     ) {
-      throw new ConvexError("This Document can't be rejected now");
+      throw new ConvexError("This Submission can't be rejected now");
     }
     const text = reason?.trim() || null;
     const who = await logged(ctx, document, ctx.userId, "rejected", text ?? undefined);
@@ -73,7 +73,7 @@ export const reopen = orgMutation({
     const document = await ownDocument(ctx, ctx.organisationId, documentId);
     const { priorState } = requireRejected(document);
     if (document.dataDeletedAt !== undefined) {
-      throw new ConvexError("This Document's PDF is gone, so it can't be reopened");
+      throw new ConvexError("This Submission's PDF is gone, so it can't be reopened");
     }
     await ctx.db.patch(documentId, { rejection: undefined, userTouched: true });
     await moveTo(ctx, document, priorState);
@@ -93,10 +93,10 @@ export const remove = orgMutation({
   handler: async (ctx, { documentId }) => {
     const document = await ctx.db.get(documentId);
     if (document === null || document.organisationId !== ctx.organisationId) {
-      throw new ConvexError("Document not found");
+      throw new ConvexError("Submission not found");
     }
     if (document.state === "deleted" || document.dataDeletedAt !== undefined) {
-      throw new ConvexError("This Document's data was already deleted");
+      throw new ConvexError("This Submission's data was already deleted");
     }
     await deleteData(ctx, document);
     if (document.state !== "approved") await moveTo(ctx, document, "deleted");
@@ -130,7 +130,7 @@ export async function deleteData(ctx: MutationCtx, document: Doc<"documents">) {
       attempts: delivery.attempts.map((attempt) => ({ ...attempt, body: null })),
       ...(open && {
         state: "failed" as const,
-        failureReason: "Cancelled: the Document was deleted",
+        failureReason: "Cancelled: the Submission was deleted",
         nextAttemptAt: undefined,
       }),
     });

@@ -75,7 +75,7 @@
   "editor": {
     "metaTitle": "Formulier · Vink",
     "savedAsVersion": "Opgeslagen als versie {version}",
-    "createdWithSample": "Formulier aangemaakt. {filename} wordt gelezen als het eerste Document.",
+    "createdWithSample": "Formulier aangemaakt. {filename} wordt gelezen als de eerste Inzending.",
     "created": "Formulier aangemaakt als versie 1",
     "saveFailed": "Het Formulier kon niet worden opgeslagen",
     "nameInSettings": "Geef het Formulier een naam bij Instellingen",
@@ -111,8 +111,8 @@
     "namePlaceholder": "Werkbon",
     "description": "Omschrijving",
     "descriptionPlaceholder": "Optioneel. Voor welke documenten dit Formulier is.",
-    "processSample": "Dit voorbeeld ook verwerken als Document",
-    "processSampleOn": "{filename} wordt het eerste Document van dit Formulier, vanuit wat Vink al heeft gelezen.",
+    "processSample": "Dit voorbeeld ook verwerken als Inzending",
+    "processSampleOn": "{filename} wordt de eerste Inzending van dit Formulier, vanuit wat Vink al heeft gelezen.",
     "processSampleOff": "{filename} en wat Vink eruit heeft gelezen, worden verwijderd als je het Formulier aanmaakt.",
     "required": "Verplicht"
   },
@@ -130,9 +130,9 @@
     "descriptionPlaceholder": "Andere woorden die op het papier kunnen staan, bijv. factuurdatum, Rechnungsdatum, date de facturation",
     "descriptionHelp": "Optioneel. Synoniemen en andere talen helpen Vink dit Veld te vinden op documenten met andere bewoordingen.",
     "required": "Verplicht",
-    "requiredList": "Een Document zonder minstens één regel moet altijd gecontroleerd worden voordat het wordt verstuurd.",
-    "requiredSubField": "Een regel zonder dit subveld moet altijd gecontroleerd worden voordat het Document wordt verstuurd.",
-    "requiredField": "Een Document zonder dit Veld moet altijd gecontroleerd worden voordat het wordt verstuurd.",
+    "requiredList": "Een Inzending zonder minstens één regel moet altijd gecontroleerd worden voordat ze wordt verstuurd.",
+    "requiredSubField": "Een regel zonder dit subveld moet altijd gecontroleerd worden voordat de Inzending wordt verstuurd.",
+    "requiredField": "Een Inzending zonder dit Veld moet altijd gecontroleerd worden voordat ze wordt verstuurd.",
     "options": "Opties",
     "optionsDescription": "De waarde is wat je systeem ontvangt. De omschrijving somt op wat er in plaats daarvan op het papier kan staan: synoniemen, afkortingen, andere talen.",
     "optionValue": "Waarde van optie {number}",
@@ -153,15 +153,15 @@
     "reviewThreshold": "Controledrempel",
     "reviewThresholdDescription": "Van 0 tot 1. Een waarde met een betrouwbaarheid daaronder moet gecontroleerd worden.",
     "autoSend": "Auto-Send",
-    "autoSendDescription": "Een Document vanzelf goedkeuren en versturen zodra het is gelezen, als er niets op te controleren is, het is geverifieerd, het bij dit Formulier past en niemand het heeft gewijzigd. Geldt voor Documenten die vanaf nu worden gelezen.",
+    "autoSendDescription": "Een Inzending vanzelf goedkeuren en versturen zodra ze is gelezen, als er niets op te controleren is, ze is geverifieerd, ze bij dit Formulier past en niemand ze heeft gewijzigd. Geldt voor Inzendingen die vanaf nu worden gelezen.",
     "save": "Instellingen opslaan"
   },
   "intake": {
     "copy": "Adres kopiëren",
     "legend": "Per e-mail",
-    "description": "Een e-mail aan dit adres wordt een Document van dit Formulier: de tekst, met de pdf's en foto's (JPG, PNG, HEIC) die erbij zitten. Zijn de bijlagen losse papieren, dan wordt elke bijlage een eigen Document. Maximaal 10 bijlagen, samen 12 MB, en 20 pagina's per pdf. Vink antwoordt nooit aan de afzender. Iedereen die het adres kent, kan ernaar mailen, dus deel het alleen met de mensen en systemen die je deze documenten sturen.",
+    "description": "Een e-mail aan dit adres wordt een Inzending van dit Formulier: de tekst, met de pdf's en foto's (JPG, PNG, HEIC) die erbij zitten. Zijn de bijlagen losse papieren, dan wordt elke bijlage een eigen Inzending. Maximaal 10 bijlagen, samen 12 MB, en 20 pagina's per pdf. Vink antwoordt nooit aan de afzender. Iedereen die het adres kent, kan ernaar mailen, dus deel het alleen met de mensen en systemen die je deze documenten sturen.",
     "organisationLegend": "Per e-mail voor alle Formulieren",
-    "organisationDescription": "Een e-mail aan dit adres wordt een of meer Documenten, en Vink kiest voor elk het Formulier. Past er geen Formulier, dan wacht het onder Geen Formulier. De adressen van de Formulieren slaan deze keuze over. Vink antwoordt nooit aan de afzender. Iedereen die het adres kent, kan ernaar mailen, dus deel het alleen met de mensen en systemen die je post sturen om te verwerken.",
+    "organisationDescription": "Een e-mail aan dit adres wordt een of meer Inzendingen, en Vink kiest voor elke Inzending het Formulier. Past er geen Formulier, dan wacht die Inzending onder Geen Formulier. De adressen van de Formulieren slaan deze keuze over. Vink antwoordt nooit aan de afzender. Iedereen die het adres kent, kan ernaar mailen, dus deel het alleen met de mensen en systemen die je post sturen om te verwerken.",
     "organisationAdminCanSwitchOn": "Een Admin kan een e-mailadres aanzetten voor de Organisatie.",
     "organisationReplaceDescription": "Het huidige adres werkt meteen niet meer. Geef het nieuwe aan iedereen die post naar de Organisatie stuurt.",
     "switchOn": "E-mail-in aanzetten",
@@ -178,7 +178,7 @@
     "recent": "Recente e-mails",
     "noEmails": "Er zijn nog geen e-mails binnengekomen.",
     "noAttachments": "Geen bijlagen.",
-    "created": "Document aangemaakt"
+    "created": "Inzending aangemaakt"
   },
   "proposal": {
     "metaTitle": "Voorgestelde Velden · Vink",

@@ -11,7 +11,7 @@
     "signIn": "Inloggen · Vink",
     "signUp": "Aanmelden · Vink",
     "invitation": "Uitnodiging · Vink",
-    "documents": "Documenten · Vink",
+    "documents": "Inbox · Vink",
     "members": "Leden · Vink"
   },
   "roles": {
@@ -96,7 +96,7 @@
   "shell": {
     "home": "Home",
     "nav": {
-      "documents": "Documenten",
+      "documents": "Inbox",
       "forms": "Formulieren",
       "integrations": "Koppelingen",
       "members": "Leden"
@@ -113,7 +113,7 @@
     "markAllRead": "Alles als gelezen markeren",
     "empty": "Niets nieuws.",
     "deliveryFailed": "{document} kon niet worden afgeleverd bij {integration}",
-    "aDocument": "Een Document"
+    "aDocument": "Een Inzending"
   },
   "items": {
     "upgrade": "Upgraden",
@@ -121,7 +121,7 @@
     "resets": " · vernieuwt {date}",
     "noneLeftTitle": "Je Organisatie heeft geen items meer",
     "leftTitle": "{remaining, plural, one {Je Organisatie heeft nog # item} other {Je Organisatie heeft nog # items}}",
-    "noneLeft": "Nieuwe bestanden worden geweigerd tot je upgradet. Documenten die al zijn geüpload blijven werken.",
+    "noneLeft": "Nieuwe bestanden worden geweigerd tot je upgradet. Inzendingen die er al zijn, blijven werken.",
     "almostOut": "Je hebt 80% van je items gebruikt. Upgrade op tijd, zodat nieuwe bestanden niet worden geweigerd.",
     "resetsOn": " Je items vernieuwen op {date}."
   }

@@ -454,11 +454,11 @@ export const testSendInput = internalQuery({
     if (documentId) {
       const document = await ctx.db.get(documentId);
       if (document === null || document.formId !== formId || document.dataDeletedAt !== undefined) {
-        throw new ConvexError("Choose an Approved Document of this Form");
+        throw new ConvexError("Choose an Approved Submission of this Form");
       }
       // Unchecked values never leave Vink, not even in a test.
       if (document.state !== "approved") {
-        throw new ConvexError("Only an Approved Document can be test-sent");
+        throw new ConvexError("Only an Approved Submission can be test-sent");
       }
       envelope = envelopeOf({
         deliveryId: `test_${crypto.randomUUID()}`,

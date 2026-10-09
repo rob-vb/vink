@@ -55,7 +55,7 @@
     "companyOptional": "Company (optional)",
     "system": "Which system should it land in?",
     "systemPlaceholder": "For example Exact Online, AFAS, a spreadsheet or your own database",
-    "documents": "What documents?",
+    "documents": "What should Vink read?",
     "documentsPlaceholder": "For example purchase invoices and claim forms",
     "pagesPerMonth": "Roughly how many pages a month?",
     "pagesChoose": "Choose a rough number",

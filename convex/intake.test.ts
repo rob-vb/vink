@@ -202,7 +202,7 @@ test("each attachment has its own outcome in Recent emails; refused PDFs are del
       {
         filename: "manual.pdf",
         outcome: "refused",
-        reason: "This PDF has 21 pages. Vink reads up to 20 pages per Document.",
+        reason: "This PDF has 21 pages. Vink reads up to 20 pages per PDF.",
       },
       { filename: "broken.pdf", outcome: "refused", reason: "This file isn't a PDF Vink can read." },
       { filename: "photo.jpg", outcome: "refused", reason: UNSUPPORTED_TYPE },

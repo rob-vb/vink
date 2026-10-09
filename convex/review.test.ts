@@ -229,10 +229,10 @@ test("an approved Document can't be corrected, checked or approved again", async
       fieldValueId: await idOf("mileage_km"),
       value: 1,
     }),
-  ).rejects.toThrow("This Document is approved");
+  ).rejects.toThrow("This Submission is approved");
   await expect(
     user.mutation(api.review.approve, { organisationSlug: slug, documentId }),
-  ).rejects.toThrow("This Document is approved");
+  ).rejects.toThrow("This Submission is approved");
 });
 
 test("\"Approve and next\" gets the next Document that needs review", async () => {
@@ -290,5 +290,5 @@ test("nobody can review another Organisation's Field Values", async () => {
   ).rejects.toThrow("Not found");
   await expect(
     eve.user.mutation(api.review.approve, { organisationSlug: eve.slug, documentId }),
-  ).rejects.toThrow("Document not found");
+  ).rejects.toThrow("Submission not found");
 });

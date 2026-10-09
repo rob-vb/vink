@@ -92,7 +92,7 @@ const responses = (formInPath: boolean): Operation["responses"] => ({
   "422": refusal(
     "The PDF has more than 20 pages (`too_many_pages`), an email has more than 10 attachments (`too_many_attachments`) or no text and no attachments (`empty_email`).",
     "too_many_pages",
-    "This PDF has 21 pages. Vink reads up to 20 pages per Document.",
+    "This PDF has 21 pages. Vink reads up to 20 pages per PDF.",
   ),
   "500": { $ref: "#/components/responses/InternalError" },
 });

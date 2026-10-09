@@ -455,7 +455,7 @@ test("several PDFs uploaded at once: a refused one never blocks the others", asy
 
   expect(outcomes).toEqual([
     "created",
-    "This PDF has 21 pages. Vink reads up to 20 pages per Document.",
+    "This PDF has 21 pages. Vink reads up to 20 pages per PDF.",
     "created",
     "You have 6 items left; this PDF needs 9.",
     "created",

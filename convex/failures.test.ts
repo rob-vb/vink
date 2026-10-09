@@ -172,7 +172,7 @@ test("nobody can retry another Organisation's Extraction", async () => {
 
   await expect(
     eve.user.mutation(api.extraction.retry, { organisationSlug: eve.slug, documentId }),
-  ).rejects.toThrow("Document not found");
+  ).rejects.toThrow("Submission not found");
 });
 
 test("a run that comes late never overwrites a user's corrections", async () => {

@@ -8,7 +8,7 @@ export const dynamic = "force-static";
 
 // What each platform needs on its own side.
 const platformPlan: Record<Platform["key"], string> = {
-  googleSheets: "built into Vink, needs a free Google account; Vink adds each approved Document as rows to a sheet it makes in your Google Drive",
+  googleSheets: "built into Vink, needs a free Google account; Vink adds each approved Submission as rows to a sheet it makes in your Google Drive",
   n8n: "free when self-hosted, n8n Cloud is paid (Webhook node)",
   make: "works on Make's free plan (Webhooks app, Custom webhook trigger); a Vink app for Make is coming soon",
   zapier: "needs a paid Zapier plan (Webhooks by Zapier, Catch Hook trigger); a Vink app for Zapier is coming soon",
@@ -31,7 +31,7 @@ export function GET() {
     "",
     "## Integrations",
     "",
-    "Approved Documents go out as a signed JSON POST (the Webhook) to any HTTPS endpoint attached to their Form, so Vink connects to any system that can receive HTTPS. These standard integrations work today, each with a step-by-step guide on the Developers page:",
+    "Approved Submissions go out as a signed JSON POST (the Webhook) to any HTTPS endpoint attached to their Form, so Vink connects to any system that can receive HTTPS. These standard integrations work today, each with a step-by-step guide on the Developers page:",
     "",
     ...platforms.map(
       (p) =>

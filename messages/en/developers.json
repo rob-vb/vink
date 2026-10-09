@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "Developers: webhook, Payload and signature",
-    "description": "How Vink sends approved document data to your system: the JSON envelope, HMAC-SHA256 signature checks, retries, test-send, and standard integrations with Google Sheets, n8n, Make and Zapier."
+    "description": "How Vink sends approved data to your system: the JSON envelope, HMAC-SHA256 signature checks, retries, test-send, and standard integrations with Google Sheets, n8n, Make and Zapier."
   },
   "og": {
     "title": "One signed webhook. Clean JSON, keyed by your own Fields.",
@@ -20,12 +20,12 @@
   "header": {
     "eyebrow": "Developers",
     "title": "One signed webhook. Clean JSON, keyed by your own Fields.",
-    "subtitle": "When a Document is approved, Vink sends its data to your endpoint as one JSON POST. This page is everything you need to build the receiver."
+    "subtitle": "When a Submission is approved, Vink sends its data to your endpoint as one JSON POST. This page is everything you need to build the receiver."
   },
   "overview": {
     "title": "Overview",
-    "p1": "An Integration is an HTTPS endpoint you add in Vink and attach to one or more Forms. When a Document of that Form is approved, by a person or by Auto-Send, Vink sends one Delivery to each attached Integration.",
-    "p2": "The body is the Payload: the Document's values keyed by the Form's own Fields, inside a small envelope. Every request is signed, so your receiver can check that Vink sent it.",
+    "p1": "An Integration is an HTTPS endpoint you add in Vink and attach to one or more Forms. When a Submission of that Form is approved, by a person or by Auto-Send, Vink sends one Delivery to each attached Integration.",
+    "p2": "The body is the Payload: the Submission's values keyed by the Form's own Fields, inside a small envelope. Every request is signed, so your receiver can check that Vink sent it.",
     "facts": {
       "method": "One <code>POST</code> per Delivery, <code>Content-Type: application/json</code>",
       "signed": "Signed with HMAC-SHA256 in the <code>X-Vink-Signature</code> header",
@@ -34,12 +34,12 @@
     },
     "reading": "Vink reads PDFs with Gemini on Vertex AI, EU region.",
     "apiReference": "Calling Vink from your own code? The <link>API reference</link> describes the public API and its API Keys.",
-    "inboundTitle": "Getting documents in",
-    "inbound": "Documents come in through the app today: upload several PDFs at once, or email them in. No code? Point any system's email at the Form's Intake Address, and each PDF attachment becomes a Document. A program can also send PDFs in through the API: <link>POST /v1/forms/'{form_id}'/documents</link>."
+    "inboundTitle": "Getting files in",
+    "inbound": "Files come in through the app today: upload several PDFs and photos at once, or email them in. No code? Point any system's email at the Form's Intake Address. Vink turns each email into one or more Submissions. A program can also send PDFs in through the API: <link>POST /v1/forms/'{form_id}'/documents</link>."
   },
   "platforms": {
     "title": "Standard integrations",
-    "intro": "No developer? These four services have a standard integration. Google Sheets is built into Vink: Vink adds each approved Document to a sheet as rows. n8n, Make and Zapier receive the Webhook, and you build the rest of the flow there: a message to your team, a record in your accounting package.",
+    "intro": "No developer? These four services have a standard integration. Google Sheets is built into Vink: Vink adds each approved Submission to a sheet as rows. n8n, Make and Zapier receive the Webhook, and you build the rest of the flow there: a message to your team, a record in your accounting package.",
     "other": "Is your system not on this list? That's fine. The Webhook works with any system that can receive an HTTPS request. No developer? Then <link>we build the connection</link>.",
     "listLabel": "Standard integrations that work with Vink today",
     "native": "built in",
@@ -52,7 +52,7 @@
       "zapier": "Paid plan"
     },
     "howTitle": "How the Webhook works in n8n, Make and Zapier",
-    "how": "You make a receiving URL in the platform. In Vink, you paste it into a new Integration and attach that Integration to a Form. A test-send shows the platform your Fields, so you can map them to the next step. From then on, every approved Document of that Form goes there.",
+    "how": "You make a receiving URL in the platform. In Vink, you paste it into a new Integration and attach that Integration to a Form. A test-send shows the platform your Fields, so you can map them to the next step. From then on, every approved Submission of that Form goes there.",
     "testFlag": "A test-send carries <code>\"test\": true</code>. Before a step that writes real data, add a filter that only lets <code>test</code> = <code>false</code> through. Then tests never end up in your books.",
     "secret": "<b>The URL is the key.</b> These platforms can't easily check the <code>X-Vink-Signature</code> header, so anyone who has the URL can send data to it. Keep the URL out of emails, tickets and screenshots. If it leaks, make a new URL in the platform and paste it into the Integration in Vink.",
     "stepsLabel": "Steps for {name}",
@@ -66,11 +66,11 @@
           "connect": "Choose <b>Connect Google account</b> and sign in with Google. Vink makes a new sheet in your Google Drive. Then you come back to Vink.",
           "attach": "Choose <b>Attach to a Form</b> and pick the Form.",
           "test": "Choose <b>Send test</b> to see what the rows look like. Test rows have <code>[test]</code> before the filename. Delete them from the sheet afterwards.",
-          "live": "Done. Every approved Document of that Form now goes into the sheet as new rows."
+          "live": "Done. Every approved Submission of that Form now goes into the sheet as new rows."
         },
-        "lists": "<b>List Fields:</b> Vink writes one row per entry of the Form's first List Field, and repeats the Document's other values on each row. A Document without entries gives one row. A second List Field goes into one cell as JSON.",
+        "lists": "<b>List Fields:</b> Vink writes one row per entry of the Form's first List Field, and repeats the Submission's other values on each row. A Submission without entries gives one row. A second List Field goes into one cell as JSON.",
         "security": "<b>Access:</b> Vink can only open the sheet it makes itself. Your other files in Google Drive stay closed to it.",
-        "note": "<b>Columns:</b> first <code>document</code>, then your Fields headed by their keys, and on the right <code>approved_at</code>, <code>approved_by</code> and <code>delivery_id</code>. A new Field gets a new column just before <code>approved_at</code>. Don't change the headers, because Vink puts each value under the column with the same header. Can Vink no longer write to the sheet? Choose <b>Reconnect Google account</b>, then send the failed Delivery again from the Document."
+        "note": "<b>Columns:</b> first <code>document</code>, then your Fields headed by their keys, and on the right <code>approved_at</code>, <code>approved_by</code> and <code>delivery_id</code>. A new Field gets a new column just before <code>approved_at</code>. Don't change the headers, because Vink puts each value under the column with the same header. Can Vink no longer write to the sheet? Choose <b>Reconnect Google account</b>, then send the failed Delivery again from the Submission."
       },
       "n8n": {
         "title": "n8n",
@@ -98,7 +98,7 @@
         },
         "lists": "<b>List Fields:</b> a List Field arrives as an array, one object per entry. To handle each entry, for example one spreadsheet row per invoice line, put an <b>Iterator</b> on that array before the next module.",
         "security": "<b>Extra lock:</b> Make can check an API key. Add one to the webhook in Make. In Vink, add the header <code>x-make-apikey</code> with that key to the Integration, and mark it <b>Secret</b>. Now the URL alone is not enough.",
-        "note": "Make answers <code>200</code> at once and queues the data. If the webhook's queue is full, Make answers <code>400</code>: Vink then marks the Delivery failed, and an Admin can send it again from the Document."
+        "note": "Make answers <code>200</code> at once and queues the data. If the webhook's queue is full, Make answers <code>400</code>: Vink then marks the Delivery failed, and an Admin can send it again from the Submission."
       },
       "zapier": {
         "title": "Zapier",
@@ -111,7 +111,7 @@
         },
         "lists": "<b>List Fields:</b> a List Field arrives as an array of objects. Zapier shows its entries as line items: an action that supports line items takes them all at once. For one action per entry, use <b>Looping by Zapier</b>.",
         "security": "<b>Lock:</b> a Catch Hook doesn't check headers, so the secret URL is the only lock. Treat it like a password.",
-        "note": "A Zap that is off or deleted answers <code>404</code> after a while. Vink then marks the Delivery failed. Turn the Zap on, and an Admin sends the failed Delivery again from the Document."
+        "note": "A Zap that is off or deleted answers <code>404</code> after a while. Vink then marks the Delivery failed. Turn the Zap on, and an Admin sends the failed Delivery again from the Submission."
       }
     }
   },
@@ -130,8 +130,8 @@
       "event": "Always <code>document.approved</code>.",
       "delivery_id": "Unique per Delivery. It stays the same when a Delivery is retried or sent again, so use it to deduplicate.",
       "test": "<code>true</code> for a test-send, <code>false</code> for a real Delivery.",
-      "document": "The Document's id, its file name and when it was uploaded (ISO 8601, UTC).",
-      "form": "The Form's id and the Form Version the Document was read with.",
+      "document": "The Submission: its id, its file name and when it was uploaded (ISO 8601, UTC).",
+      "form": "The Form's id and the Form Version the Submission was read with.",
       "approval": "<code>manual</code> or <code>auto</code> (Auto-Send), the approving user's id (<code>null</code> for Auto-Send) and when it was approved.",
       "data": "The values, keyed by Field. Numbers are numbers, dates are <code>YYYY-MM-DD</code>, yes/no Fields are booleans and Lists are arrays of objects."
     }
@@ -150,6 +150,7 @@
     "tabs": "Verification examples"
   },
   "delivery": {
+    "frameTitle": "Vink · Submission · Deliveries",
     "title": "Delivery and retries",
     "intro": "Vink waits up to 15 seconds for your answer.",
     "table": {
@@ -167,13 +168,13 @@
     "atLeastOnce": "Delivery is at-least-once. The same Delivery can arrive twice, for example when your receiver saved it but timed out before answering. Store <code>delivery_id</code> and skip one you have already handled.",
     "headersTitle": "Headers",
     "headers": "You can add your own headers to an Integration, such as an API key or Basic auth. Mark a header as secret and its value is stored encrypted and only shown masked afterwards. Vink sets <code>Content-Type</code> and <code>X-Vink-Signature</code> itself.",
-    "screenshot": "A Document's Delivery status in Vink, showing a retry"
+    "screenshot": "A Submission's Delivery status in Vink, showing a retry"
   },
   "testSend": {
     "title": "Test-send",
-    "body": "From an Integration, send a test to your endpoint before any real Document goes out. Choose example values for every Field, or empty values so your receiver sees <code>null</code> and <code>[]</code>. You can also send an approved Document again as a test.",
-    "flag": "A test carries <code>\"test\": true</code>, is signed like a real one and is never a Delivery: it isn't retried and doesn't appear in a Document's Delivery log. The answer from your endpoint is shown right away.",
-    "screenshot": "An Integration in Vink with the result of a test-send"
+    "body": "From an Integration, send a test to your endpoint before any real Submission goes out. Choose example values for every Field, or empty values so your receiver sees <code>null</code> and <code>[]</code>. You can also send an approved Submission again as a test.",
+    "flag": "A test carries <code>\"test\": true</code>, is signed like a real one and is never a Delivery: it isn't retried and doesn't appear in a Submission's Delivery log. The answer from your endpoint is shown right away.",
+    "screenshot": "The window for sending a test from an Integration in Vink"
   },
   "service": {
     "title": "Integration service",
@@ -182,20 +183,20 @@
     "includes": {
       "title": "What you get",
       "receiver": "A receiver that verifies the signature and writes the data into your system",
-      "forms": "Your Forms and Fields set up with you, tested on your own documents",
+      "forms": "Your Forms and Fields set up with you, tested on your own files",
       "hosting": "You host it, or we host it for a monthly fee on request",
       "changes": "Maintenance and changes later, billed per job"
     },
     "need": {
       "title": "What we need from you",
       "system": "Which system the data should land in, and access to a test environment",
-      "documents": "A few example documents",
+      "documents": "A few example files",
       "contact": "One person who knows how the data is used"
     },
     "price": "From €950 per connection, excl. VAT",
     "priceNote": "A fixed price, agreed before we start.",
     "formTitle": "Ask about a connection",
-    "formBody": "Tell us a little about your system and documents. We reply personally."
+    "formBody": "Tell us a little about your system and paperwork. We reply personally."
   },
   "code": {
     "copy": "Copy",

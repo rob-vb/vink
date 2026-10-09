@@ -150,14 +150,14 @@ test("an approved Document can't be rejected", async () => {
   await user.mutation(api.review.check, { organisationSlug: on.organisationSlug, fieldValueId: mileage_km.id });
   await user.mutation(api.review.approve, on);
 
-  await expect(user.mutation(api.rejection.reject, on)).rejects.toThrow("This Document is approved");
+  await expect(user.mutation(api.rejection.reject, on)).rejects.toThrow("This Submission is approved");
 });
 
 test("only a Rejected Document can be reopened", async () => {
   const t = newBackend();
   const { user, on } = await uploaded(t);
 
-  await expect(user.mutation(api.rejection.reopen, on)).rejects.toThrow("Only a Rejected Document");
+  await expect(user.mutation(api.rejection.reopen, on)).rejects.toThrow("Only a Rejected Submission");
 });
 
 test("a Member can't delete a Document", async () => {
@@ -189,7 +189,7 @@ test("an Admin deletes a Rejected Document: the PDF and its data go, the metadat
     fieldValues: await ctx.db.query("fieldValues").collect(),
   }));
   expect(leftovers).toEqual({ readings: [], fieldValues: [] });
-  await expect(user.mutation(api.rejection.reopen, on)).rejects.toThrow("Only a Rejected Document");
+  await expect(user.mutation(api.rejection.reopen, on)).rejects.toThrow("Only a Rejected Submission");
   await expect(user.mutation(api.documents.pdfUrl, on)).rejects.toThrow("The PDF was deleted");
 });
 
@@ -215,5 +215,5 @@ test("nobody can reject another Organisation's Document", async () => {
 
   await expect(
     eve.user.mutation(api.rejection.reject, { organisationSlug: eve.slug, documentId }),
-  ).rejects.toThrow("Document not found");
+  ).rejects.toThrow("Submission not found");
 });

@@ -11,7 +11,7 @@
     "signIn": "Sign in · Vink",
     "signUp": "Sign up · Vink",
     "invitation": "Invitation · Vink",
-    "documents": "Documents · Vink",
+    "documents": "Inbox · Vink",
     "members": "Members · Vink"
   },
   "roles": {
@@ -96,7 +96,7 @@
   "shell": {
     "home": "Home",
     "nav": {
-      "documents": "Documents",
+      "documents": "Inbox",
       "forms": "Forms",
       "integrations": "Integrations",
       "members": "Members"
@@ -113,7 +113,7 @@
     "markAllRead": "Mark all as read",
     "empty": "Nothing new.",
     "deliveryFailed": "{document} couldn't be delivered to {integration}",
-    "aDocument": "A Document"
+    "aDocument": "A Submission"
   },
   "items": {
     "upgrade": "Upgrade",
@@ -121,7 +121,7 @@
     "resets": " · resets {date}",
     "noneLeftTitle": "Your Organisation has no items left",
     "leftTitle": "{remaining, plural, one {Your Organisation has # item left} other {Your Organisation has # items left}}",
-    "noneLeft": "New files are refused until you upgrade. Documents already uploaded keep working.",
+    "noneLeft": "New files are refused until you upgrade. Submissions you already have keep working.",
     "almostOut": "You've used 80% of your items. Upgrade in time so new files aren't refused.",
     "resetsOn": " Your items reset on {date}."
   }

@@ -29,8 +29,8 @@
     "vat": "excl. btw"
   },
   "plans": {
-    "starter": "Voor een team dat een paar documenten per dag verwerkt.",
-    "team": "Voor een team dat elk uur documenten verwerkt.",
+    "starter": "Voor een team dat een paar stukken per dag verwerkt.",
+    "team": "Voor een team dat elk uur nieuwe post verwerkt.",
     "business": "Voor afdelingen met een vaste stroom papierwerk."
   },
   "free": "Begin met 20 gratis pagina's. Geen creditcard nodig.",
@@ -73,7 +73,7 @@
     },
     "page": {
       "q": "Wat is een pagina?",
-      "a": "Eén pagina van een PDF. Een document telt zijn pagina's één keer, wanneer Vink het accepteert om te lezen. Opnieuw proberen na een mislukte lezing is gratis. Een document naar een ander formulier verplaatsen is ook gratis."
+      "a": "Eén pagina van een PDF. Vink telt de pagina's van een inzending één keer: wanneer Vink de inzending accepteert om te lezen. Opnieuw proberen na een mislukte lezing is gratis. Een inzending naar een ander formulier verplaatsen is ook gratis."
     },
     "runOut": {
       "q": "Wat gebeurt er als onze pagina's op zijn?",
@@ -92,8 +92,8 @@
       "a": "Ja, je kunt op elk moment opzeggen. Je abonnement loopt dan door tot het einde van de lopende maand of het lopende jaar. Daarna betaal je niets meer. De 20 gratis pagina's vragen geen creditcard en verlopen niet."
     },
     "intake": {
-      "q": "Hoe komen documenten binnen?",
-      "a": "Upload meerdere PDF's tegelijk in de app, of mail ze naar het eigen adres van een formulier. Elke PDF-bijlage wordt een document. Pdf's tot 10 MB en 20 pagina's. Andere bronnen? <link>Laat het ons weten</link>."
+      "q": "Hoe komt je papierwerk binnen?",
+      "a": "Upload meerdere PDF's en foto's tegelijk in de app, of mail ze naar het eigen adres van een formulier. Vink maakt van elke e-mail één of meer inzendingen. Pdf's tot 10 MB en 20 pagina's. Andere bronnen? <link>Laat het ons weten</link>."
     }
   },
   "jsonld": {

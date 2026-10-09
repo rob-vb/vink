@@ -29,8 +29,8 @@
     "vat": "excl. VAT"
   },
   "plans": {
-    "starter": "For a team that handles a few documents a day.",
-    "team": "For a team that processes documents every hour.",
+    "starter": "For a team that handles a few papers a day.",
+    "team": "For a team that processes new mail every hour.",
     "business": "For departments with a steady stream of paperwork."
   },
   "free": "Start with 20 free pages. No credit card.",
@@ -73,7 +73,7 @@
     },
     "page": {
       "q": "What is a page?",
-      "a": "One page of a PDF. A Document counts its pages once, when Vink accepts it for reading. Retries after a failed read are free. Moving a Document to another Form is free too."
+      "a": "One page of a PDF. A Submission counts its pages once, when Vink accepts it for reading. Retries after a failed read are free. Moving a Submission to another Form is free too."
     },
     "runOut": {
       "q": "What happens when our pages run out?",
@@ -92,8 +92,8 @@
       "a": "Yes, you can cancel at any time. Your plan then runs until the end of the current month or year. After that, you pay nothing more. The 20 free pages need no card and have no end date."
     },
     "intake": {
-      "q": "How do documents get in?",
-      "a": "Upload several PDFs at once in the app, or email them to a Form's own address. Each PDF attachment becomes a Document. PDFs of up to 10 MB and 20 pages. Other sources? <link>Tell us</link>."
+      "q": "How does your paperwork get in?",
+      "a": "Upload several PDFs and photos at once in the app, or email them to a Form's own address. Vink turns each email into one or more Submissions. PDFs of up to 10 MB and 20 pages. Other sources? <link>Tell us</link>."
     }
   },
   "jsonld": {

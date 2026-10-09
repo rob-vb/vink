@@ -20,12 +20,12 @@
   "retention": {
     "title": "Hoe lang we het bewaren, en verwijderen",
     "default": "<b>30 dagen na versturen</b>, standaard. Je Admin kan alles van 1 tot 365 dagen instellen.",
-    "neverApproved": "Documenten die nooit zijn goedgekeurd, worden 90 dagen na uploaden verwijderd.",
-    "rejected": "Afgewezen documenten worden 30 dagen na afwijzing verwijderd.",
+    "neverApproved": "Inzendingen die nooit zijn goedgekeurd, worden 90 dagen na uploaden verwijderd.",
+    "rejected": "Afgewezen inzendingen worden 30 dagen na afwijzing verwijderd.",
     "proposals": "Niet-opgeslagen formuliervoorstellen worden na 7 dagen verwijderd, met hun voorbeeld-PDF.",
     "what": "Verwijderen haalt de PDF weg, wat Vink gelezen heeft, alle waarden en de Payload.",
-    "kept": "We houden een kort overzicht (bestandsnaam, wie het uploadde en goedkeurde, datums, bezorgstatus), nooit het document of de waarden.",
-    "now": "Een Admin kan elk document direct verwijderen, ook goedgekeurde. Openstaande nieuwe pogingen worden dan geannuleerd.",
+    "kept": "We houden een kort overzicht (bestandsnaam, wie het uploadde en goedkeurde, datums, bezorgstatus), nooit het bestand of de waarden.",
+    "now": "Een Admin kan elke inzending direct verwijderen, ook goedgekeurde. Openstaande nieuwe pogingen worden dan geannuleerd.",
     "account": "Je account verwijder je zelf via het accountmenu. Een Admin verwijdert de organisatie bij Instellingen, onder Danger Zone. Alles is dan direct weg."
   },
   "subprocessors": {
@@ -72,7 +72,7 @@
         "data": "E-mailadres en die mails"
       },
       "email": {
-        "purpose": "Documenten ontvangen die naar een Intake Address zijn gemaild",
+        "purpose": "E-mails ontvangen die naar een Intake Address zijn gestuurd",
         "region": "Nog te bevestigen",
         "data": "Mails naar een Intake Address, met hun PDF-bijlagen"
       },
@@ -86,16 +86,16 @@
   },
   "access": {
     "title": "Toegang en accounts",
-    "isolation": "Elke organisatie ziet alleen haar eigen documenten. Elk verzoek wordt gecontroleerd tegen een lidmaatschap, en dat wordt gedekt door automatische tests.",
+    "isolation": "Elke organisatie ziet alleen haar eigen gegevens. Elk verzoek wordt gecontroleerd tegen een lidmaatschap, en dat wordt gedekt door automatische tests.",
     "roles": "Er zijn twee rollen, Admin en Member. Alleen Admins kunnen:",
     "admin": {
       "members": "leden uitnodigen en verwijderen, en rollen wijzigen",
       "forms": "formulieren maken en wijzigen, inclusief Auto-Send en de Review Threshold",
       "integrations": "Integrations toevoegen, wijzigen en verwijderen, en hun secrets zien",
       "retention": "de naam en bewaartermijn van de organisatie wijzigen",
-      "delete": "documenten verwijderen en mislukte Deliveries opnieuw versturen"
+      "delete": "Inzendingen verwijderen en mislukte Deliveries opnieuw versturen"
     },
-    "autoSend": "Auto-Send staat standaard uit. Een Admin zet het per formulier aan, en het verstuurt alleen documenten zonder onzekere waarden.",
+    "autoSend": "Auto-Send staat standaard uit. Een Admin zet het per formulier aan, en het verstuurt alleen inzendingen zonder onzekere waarden.",
     "signIn": "Inloggen gaat met een e-maillink, die na 5 minuten verloopt, of met een wachtwoord. Sessies duren 7 dagen."
   },
   "transit": {
@@ -106,7 +106,7 @@
     "secrets": "Secrets van Integrations zijn versleuteld (AES-256-GCM) met een sleutel die buiten de database bewaard wordt.",
     "rest": "Opgeslagen data wordt door de providers versleuteld.",
     "signed": "Payloads worden ondertekend met HMAC-SHA256, met één secret per Integration en een tijdstempel tegen herhaling. Zie <link>Handtekening controleren</link>.",
-    "testSend": "Een test-send verstuurt alleen voorbeeldwaarden of een goedgekeurd document."
+    "testSend": "Een test-send verstuurt alleen voorbeeldwaarden of een goedgekeurde inzending."
   },
   "notYet": {
     "title": "Wat we nog niet hebben",

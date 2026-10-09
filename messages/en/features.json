@@ -1,12 +1,12 @@
 {
   "meta": {
     "title": "Features",
-    "description": "How Vink turns any PDF, typed, scanned or handwritten, into clean data for your systems: upload or email it in, AI document data extraction into your own fields, you check only what's unsure, and approved data goes out as JSON."
+    "description": "How Vink turns any PDF, typed, scanned or handwritten, into clean data for your systems: upload or email it in, AI data extraction into your own fields, you check only what's unsure, and approved data goes out as JSON."
   },
   "hero": {
     "eyebrow": "Features",
     "title": "Everything between the PDF and your system.",
-    "lede": "This is how Vink takes over the retyping. Watch one document go through, then open each step.",
+    "lede": "This is how Vink takes over the retyping. Watch one Submission go through, then open each step.",
     "startFree": "Start free",
     "tryDemo": "Try the demo",
     "note": "20 free pages. No credit card."
@@ -27,13 +27,13 @@
   "stops": {
     "arrives": {
       "label": "It arrives",
-      "title": "Getting documents in.",
+      "title": "Getting paperwork in.",
       "lede": "Upload a stack or email them in. Any PDF, typed, scanned or handwritten."
     },
     "reads": {
       "label": "Vink reads it",
       "title": "Your fields, filled from the page.",
-      "lede": "You say once what you need. Vink finds it on every document, whatever the layout."
+      "lede": "You say once what you need. Vink finds it in every PDF, email or photo, whatever the layout."
     },
     "check": {
       "label": "You check",
@@ -48,12 +48,12 @@
     "around": {
       "label": "Around it",
       "title": "For the whole team.",
-      "lede": "Everyone who handles the documents, on every plan."
+      "lede": "Everyone who handles the paperwork, on every plan."
     }
   },
   "intake": {
     "title": "Upload it or email it in.",
-    "text": "Drag in several PDFs at once, or give a Form its own email address and let suppliers, scanners or other systems send documents straight in.",
+    "text": "Drag in several PDFs at once, or give a Form its own email address and let suppliers, scanners or other systems send their files straight in.",
     "bullets": [
       "Several PDFs in one go, each with its own progress and errors",
       "One email address per Form, switched on by an Admin",
@@ -61,18 +61,18 @@
       "PDFs up to 10 MB and 20 pages each"
     ],
     "otherSources": "Other sources? Tell us.",
-    "alt": "The upload dialog with three PDFs, one of them refused for having more than 20 pages, next to a Form's email address and its recent emails.",
+    "alt": "The upload dialog with two PDFs ready to go, next to a Form's email settings and its recent emails. One attachment was refused for having more than 20 pages.",
     "placeholder": "Upload dialog and Intake Address"
   },
   "anyPdf": {
     "title": "Even scanned or filled in by hand.",
-    "text": "Typed, scanned, faxed or filled in by hand; one page or a bundle of papers. All pages of a document fill one set of values.",
+    "text": "Typed, scanned, faxed or filled in by hand; one page or a bundle of papers. All pages of a Submission fill one set of values.",
     "bullets": [
       "Handwriting, stamps and crossed-out numbers",
       "Tables become lists: one entry per invoice line or order line",
       "No template per layout: a new supplier's invoice just works"
     ],
-    "alt": "Four documents: a typed invoice, a claim form filled in on a computer, a handwritten service request and a faxed order form."
+    "alt": "Four examples: a typed invoice, a claim form filled in on a computer, a handwritten service request and a faxed order form."
   },
   "fields": {
     "title": "Your fields, not a template.",
@@ -80,9 +80,9 @@
     "bullets": [
       "Text, number, date, yes/no, choice and list fields",
       "A short description per field guides the reading",
-      "Change a Form any time; each Document keeps the version it came in with"
+      "Change a Form any time; each Submission keeps the version it came in with"
     ],
-    "alt": "The Form editor for Invoices with six fields, one of them a list, and the option to propose fields from a sample PDF.",
+    "alt": "The Form editor for Invoices with six fields, one of them a list, and the option to propose fields from a sample.",
     "placeholder": "Form editor"
   },
   "source": {
@@ -107,18 +107,18 @@
   },
   "approve": {
     "title": "Nothing is sent without approval.",
-    "text": "Someone on your team approves each Document before it's sent. For Forms you trust, switch on Auto-Send: a Document then goes out by itself, but only when nothing on it needs review.",
+    "text": "Someone on your team approves each Submission before it's sent. For Forms you trust, switch on Auto-Send: a Submission then goes out by itself, but only when nothing in it needs review.",
     "bullets": [
-      "Approve, or reject a blank or wrong document with a reason",
+      "Approve, or reject a blank or wrong Submission with a reason",
       "Auto-Send is set per Form, and off until you switch it on",
       "Every Approval records who and when"
     ],
-    "alt": "The Approved tab of the Documents page: an invoice approved by hand and a receipt sent by Auto-Send."
+    "alt": "The Approved tab of the Inbox: an invoice approved by hand and a receipt sent by Auto-Send."
   },
   "demo": {
     "eyebrow": "Try it · demo data",
-    "title": "This morning's documents. Clear them.",
-    "text": "Eight documents came in. One was already approved automatically and one fits no Form. Open the others, check what Vink flagged, and approve. This is the app itself, with demo data.",
+    "title": "This morning's Inbox. Clear it.",
+    "text": "Eight Submissions came in. One was already approved automatically and one fits no Form. Open the others, check what Vink flagged, and approve. This is the app itself, with demo data.",
     "hint": "Click a value to turn to its page. Works on your phone too."
   },
   "deliver": {
@@ -142,7 +142,7 @@
       "Several Organisations under one login",
       "Each Organisation's data is kept apart"
     ],
-    "alt": "The Members page with three people and a pending invitation.",
+    "alt": "The Members page with four people and a pending invitation.",
     "placeholder": "Members"
   },
   "plans": {
