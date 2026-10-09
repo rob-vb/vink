@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "Vink: AI document data extraction for operations teams",
-    "description": "Stop retyping PDFs. Vink reads invoices, delivery notes and work orders, even handwritten ones, and puts the data in your system. 20 free pages."
+    "description": "Stop retyping PDFs. Vink reads invoices, claim forms and work orders, even handwritten ones, and puts the data in your system. 20 free pages."
   },
   "og": {
     "title": "Document. Vink. Done.",
@@ -9,7 +9,7 @@
   },
   "hero": {
     "title": "Nobody has to retype PDFs anymore.",
-    "subtitle": "Vink reads invoices, delivery notes and work orders, even handwritten ones, and puts the data in your system. Your team only checks what Vink isn't sure about.",
+    "subtitle": "Vink reads invoices, claim forms and work orders, even handwritten ones, and puts the data in your system. Your team only checks what Vink isn't sure about.",
     "watch": "Watch 30 seconds",
     "screenLabel": "The Vink review screen with one value that needs review"
   },
@@ -81,7 +81,7 @@
       "body": "Make as many Forms as you need. Each Form has its own fields, its own email address and its own integrations.",
       "list": [
         "Invoices",
-        "Delivery notes",
+        "Damage claims",
         "Work orders",
         "Order forms",
         "Inspection reports",
@@ -133,7 +133,7 @@
   "tabs": {
     "label": "Example documents",
     "invoice": "Invoice",
-    "deliveryNote": "Delivery note",
+    "claimForm": "Claim form",
     "handwritten": "Handwritten form",
     "orderForm": "Order form"
   },

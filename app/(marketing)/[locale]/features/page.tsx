@@ -161,9 +161,9 @@ export default async function FeaturesPage() {
               "review",
               "review",
               still(
-                t("frames.delivery"),
+                t("frames.claim"),
                 t("review.alt"),
-                <ReviewStill documentId="delivery" filter="needs_review" />,
+                <ReviewStill documentId="claim" filter="needs_review" />,
               ),
             ),
             feature(

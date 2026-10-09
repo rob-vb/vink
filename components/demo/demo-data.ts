@@ -1,13 +1,14 @@
 import type { FieldValueType, Value } from "@/components/documents/field-row-view";
 import type { ReviewReason, Signal } from "@/components/documents/labels";
-import type { DemoDocumentId, DemoPhotoId } from "./demo-papers";
+import type { DemoDocumentId, DemoPdfId, DemoPhotoId } from "./demo-papers";
 
 /*
  * The demo's eight Documents: hand-written values and confidences, not
- * pipeline output. Six wait in Needs Review (a complaint email with a photo and
- * a photographed work order among them); the receipt was approved by
- * Auto-Send; a newsletter is in No Form, because no Form fits it. Demo
- * companies only (Kantoor Noord, Hoekstra, Van Dijk, Het Anker).
+ * pipeline output. Six wait in Needs Review (a complaint email with a photo, a
+ * damage claim email with a PDF form and two photos, and a photographed work
+ * order among them); the receipt was approved by Auto-Send; a newsletter is in
+ * No Form, because no Form fits it. Demo companies and people only (Kantoor
+ * Noord, Hoekstra, Het Anker, De Meerkoet).
  */
 
 type Words = { en: string; nl: string };
@@ -17,6 +18,8 @@ export type SeedField = {
   label: Words;
   type: FieldValueType;
   required?: boolean;
+  /** A choice Field's options: the Form's own words, so the same in both languages. */
+  options?: string[];
   /** A value in both languages (`Words`) is one Vink wrote itself, e.g. what it saw in a photo; a value read off a paper is that paper's own words. */
   value: Value | Words;
   readText: string | Words | null;
@@ -33,18 +36,22 @@ export type SeedList = {
   completeness: number;
   page: number;
   subFields: Array<{ key: string; label: Words; type: FieldValueType }>;
-  entries: Array<Record<string, { value: Value; readText: string; confidence: number }>>;
+  entries: Array<Record<string, { value: Value; readText: string; confidence: number; reasons?: ReviewReason[] }>>;
 };
 
-/** An email Document: the email's headers and body, and its attachments (each a drawn photo). */
+/** An email Document: the email's headers and body, and its attachments (each a drawn photo or drawn PDF pages). */
 export type SeedEmail = {
   from: string;
   /** ISO, so the pane shows it like the app does. */
   date: string;
   /** The read text of every value read on the body appears in it word for word, in both languages. */
   body: Words;
-  attachments: Array<{ filename: string; mimeType: string; photo: DemoPhotoId; alt: Words }>;
+  attachments: SeedAttachment[];
 };
+
+export type SeedAttachment =
+  | { filename: string; mimeType: string; photo: DemoPhotoId; alt: Words }
+  | { filename: string; mimeType: "application/pdf"; pdf: DemoPdfId };
 
 /** A seed value in the visitor's language; a plain value is the same in both. */
 export function inLocale<T extends Value>(value: T | Words, locale: "en" | "nl"): T {
@@ -77,6 +84,21 @@ export const DEMO_THRESHOLD = 0.8;
 export const DEMO_FORM_VERSION = 3;
 /** Who the visitor is in the demo's history and badges. */
 export const DEMO_USER = "demo@kantoornoord.nl";
+
+/** The damage claim email's text, word for word what the customer typed. */
+const CLAIM_BODY =
+  "Beste mevrouw, meneer,\n\nAfgelopen zaterdag hebben we waterschade gehad in de keuken en de woonkamer. Bijgaand het schadeformulier en twee foto's. Ons polisnummer is WH-2048-7731.\n\nKunt u laten weten of er een expert langskomt?\n\nMet vriendelijke groet,\nMarieke Bosman";
+
+/** The claim form's table of damaged items: as typed, and how sure Vink is of the year. */
+export const CLAIM_ITEMS: Array<[string, string, string, string, number]> = [
+  ["Laminaat woonkamer (24 m²)", "± 2019", "1.150,00", "860,00", 0.72],
+  ["Onderkast keuken", "2017", "640,00", "410,00", 0.93],
+  ["Vloerkleed", "2022", "320,00", "240,00", 0.94],
+  ["Plinten en ondervloer", "2019", "210,00", "175,00", 0.92],
+];
+
+/** A Dutch amount as typed ("1.150,00") as a number. */
+const amount = (typed: string) => Number(typed.replace(/\./g, "").replace(",", "."));
 
 export const seedDocuments: SeedDocument[] = [
   {
@@ -151,18 +173,79 @@ export const seedDocuments: SeedDocument[] = [
     ],
   },
   {
-    id: "delivery",
-    filename: "pakbon-PB-77120.pdf",
-    form: { en: "Delivery notes", nl: "Pakbonnen" },
-    uploadedBy: { en: "sem@kantoornoord.nl", nl: "sem@kantoornoord.nl" },
+    id: "claim",
+    filename: "Schademelding waterschade WH-2048-7731",
+    kind: "email",
+    form: { en: "Damage claims", nl: "Schademeldingen" },
+    uploadedBy: { en: "email from marieke.bosman@mailbox.nl", nl: "e-mail van marieke.bosman@mailbox.nl" },
     minutesAgo: 9,
+    routed: 0.93,
+    // What the customer sent is Dutch, whatever the visitor's language.
+    email: {
+      from: "Marieke Bosman <marieke.bosman@mailbox.nl>",
+      date: "2026-09-30T06:05:00Z",
+      body: {
+        en: CLAIM_BODY,
+        nl: CLAIM_BODY,
+      },
+      attachments: [
+        { filename: "schademeldingsformulier.pdf", mimeType: "application/pdf", pdf: "claim" },
+        {
+          filename: "laminaat-woonkamer.jpg",
+          mimeType: "image/jpeg",
+          photo: "claimFloor",
+          alt: {
+            en: "Photo of a wet laminate floor with swollen, raised seams",
+            nl: "Foto van een nat laminaat met opgezwollen, omhoog staande naden",
+          },
+        },
+        {
+          filename: "onderkast-keuken.jpg",
+          mimeType: "image/jpeg",
+          photo: "claimCabinet",
+          alt: {
+            en: "Photo of the base of a kitchen cabinet with a dark water stain",
+            nl: "Foto van de onderkant van een keukenkast met een donkere watervlek",
+          },
+        },
+      ],
+    },
     fields: [
-      { key: "delivery_number", label: { en: "Delivery number", nl: "Pakbonnummer" }, type: "text", required: true, value: "PB-77120", readText: "PB-77120", page: 1, confidence: 0.94, lowestSignal: "match" },
-      { key: "delivery_date", label: { en: "Delivery date", nl: "Leverdatum" }, type: "date", value: "2026-09-22", readText: "22-09-2026", page: 1, confidence: 0.91, lowestSignal: "fit" },
-      { key: "customer_reference", label: { en: "Customer reference", nl: "Referentie klant" }, type: "text", value: "PO 4471", readText: "PO 4471", page: 1, confidence: 0.88, lowestSignal: "support" },
-      { key: "pallets", label: { en: "Pallets", nl: "Pallets" }, type: "number", value: 6, readText: "5 6", page: 1, confidence: 0.71, lowestSignal: "fit", reasons: ["conflicting"] },
-      { key: "remarks", label: { en: "Remarks", nl: "Opmerkingen" }, type: "text", value: "1 pallet corner damaged", readText: "1 pallet corner damaged", page: 2, confidence: 0.84, lowestSignal: "support" },
-      { key: "received_by", label: { en: "Received by", nl: "Ontvangen door" }, type: "text", value: "M. Jansen", readText: "M. Jansen", page: 2, confidence: 0.58, lowestSignal: "match", reasons: ["unsure"] },
+      { key: "policy_number", label: { en: "Policy number", nl: "Polisnummer" }, type: "text", required: true, value: "WH-2048-7731", readText: "WH-2048-7731", page: 1, confidence: 0.97, lowestSignal: "match" },
+      { key: "insured_name", label: { en: "Insured name", nl: "Naam verzekerde" }, type: "text", required: true, value: "Marieke Bosman", readText: "Marieke Bosman", page: 2, confidence: 0.96, lowestSignal: "support" },
+      { key: "risk_address", label: { en: "Risk address", nl: "Risicoadres" }, type: "text", value: "Klaprooslaan 14, 3824 XK Amersfoort", readText: "Klaprooslaan 14, 3824 XK Amersfoort", page: 2, confidence: 0.94, lowestSignal: "fit" },
+      { key: "damage_date", label: { en: "Date of damage", nl: "Schadedatum" }, type: "date", required: true, value: "2026-09-27", readText: "27-09-2026", page: 2, confidence: 0.95, lowestSignal: "fit" },
+      { key: "cause", label: { en: "Cause", nl: "Oorzaak" }, type: "choice", options: ["Lekkage leiding", "Wasmachine of vaatwasser", "Neerslag", "Overig"], value: "Wasmachine of vaatwasser", readText: "mogelijk de afvoer van de vaatwasser", page: 2, confidence: 0.66, lowestSignal: "support", reasons: ["unsure"] },
+      { key: "description", label: { en: "Description", nl: "Toelichting" }, type: "text", value: "Zaterdagochtend stond er water onder het aanrecht en in de woonkamer. Het water kwam onder de keukenkast vandaan, mogelijk de afvoer van de vaatwasser.", readText: "Zaterdagochtend stond er water onder het aanrecht en in de woonkamer. Het water kwam onder de keukenkast vandaan, mogelijk de afvoer van de vaatwasser.", page: 2, confidence: 0.9, lowestSignal: "support" },
+      { key: "total_claimed", label: { en: "Total claimed", nl: "Totaal geclaimd" }, type: "number", required: true, value: 1685, readText: "1.685,00", page: 2, confidence: 0.96, lowestSignal: "match" },
+      { key: "iban", label: { en: "IBAN", nl: "IBAN" }, type: "text", value: "NL91ABNA0417164300", readText: "NL91 ABNA 0417 1643 00", page: 2, confidence: 0.95, lowestSignal: "fit" },
+      { key: "photos_attached", label: { en: "Photos attached", nl: "Foto's bijgevoegd" }, type: "boolean", value: true, readText: "☒ Ja", page: 2, confidence: 0.93, lowestSignal: "match" },
+    ],
+    lists: [
+      {
+        key: "damaged_items",
+        label: { en: "Damaged items", nl: "Beschadigde zaken" },
+        required: true,
+        completeness: 0.92,
+        page: 2,
+        subFields: [
+          { key: "description", label: { en: "Description", nl: "Omschrijving" }, type: "text" },
+          { key: "purchase_year", label: { en: "Year bought", nl: "Aanschafjaar" }, type: "number" },
+          { key: "purchase_value", label: { en: "Purchase value", nl: "Aanschafwaarde" }, type: "number" },
+          { key: "claimed", label: { en: "Amount claimed", nl: "Geclaimd bedrag" }, type: "number" },
+        ],
+        entries: CLAIM_ITEMS.map(([description, year, value, claimed, yearConfidence]) => ({
+          description: { value: description, readText: description, confidence: 0.95 },
+          purchase_year: {
+            value: Number(year.replace(/\D/g, "")),
+            readText: year,
+            confidence: yearConfidence,
+            ...(yearConfidence < DEMO_THRESHOLD ? { reasons: ["below_threshold" as const] } : {}),
+          },
+          purchase_value: { value: amount(value), readText: value, confidence: 0.94 },
+          claimed: { value: amount(claimed), readText: claimed, confidence: 0.94 },
+        })),
+      },
     ],
   },
   {
@@ -189,7 +272,7 @@ export const seedDocuments: SeedDocument[] = [
     fields: [
       { key: "customer", label: { en: "Customer", nl: "Klant" }, type: "text", required: true, value: "Café Het Anker", readText: "Café Het Anker", page: 1, confidence: 0.95, lowestSignal: "match" },
       { key: "order_date", label: { en: "Order date", nl: "Besteldatum" }, type: "date", value: "2026-09-28", readText: "28-09-2026", page: 1, confidence: 0.94, lowestSignal: "fit" },
-      { key: "delivery_date", label: { en: "Delivery date", nl: "Leverdatum" }, type: "date", value: "2026-10-02", readText: "02-10-2026 · Wed 1/10", page: 1, confidence: 0.69, lowestSignal: "support", reasons: ["conflicting"] },
+      { key: "phone", label: { en: "Phone", nl: "Telefoon" }, type: "text", value: "050 311 2044", readText: "050 311 2040 · New no. 050 311 2044", page: 1, confidence: 0.69, lowestSignal: "support", reasons: ["conflicting"] },
     ],
     lists: [
       {
@@ -237,8 +320,8 @@ export const seedDocuments: SeedDocument[] = [
       from: "Groothandel Bakker <news@groothandelbakker.nl>",
       date: "2026-09-30T05:55:00Z",
       body: {
-        en: "Autumn offers at Groothandel Bakker\n\nThis week: paper cups 250 ml at 8% off, and free delivery on orders over 150 euro.\n\nSee all offers on our website. You receive this newsletter because you are a customer.",
-        nl: "Herfstacties bij Groothandel Bakker\n\nDeze week: koffiebekers 250 ml met 8% korting, en gratis bezorging bij bestellingen boven 150 euro.\n\nBekijk alle acties op onze website. Je ontvangt deze nieuwsbrief omdat je klant bent.",
+        en: "Autumn offers at Groothandel Bakker\n\nThis week: paper cups 250 ml at 8% off, and a free bag of beans with orders over 150 euro.\n\nSee all offers on our website. You receive this newsletter because you are a customer.",
+        nl: "Herfstacties bij Groothandel Bakker\n\nDeze week: koffiebekers 250 ml met 8% korting, en een gratis zak bonen bij bestellingen boven 150 euro.\n\nBekijk alle acties op onze website. Je ontvangt deze nieuwsbrief omdat je klant bent.",
       },
       attachments: [],
     },

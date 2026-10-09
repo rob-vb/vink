@@ -18,8 +18,6 @@ import { demoReducer, initialDocuments, type DemoAction, type DemoDocument, type
  */
 
 const nothing = () => {};
-// A fixed moment, so the pictures render the same on the server and in the browser.
-const AT = Date.UTC(2026, 8, 30, 6, 20);
 
 function useDemoDocument(documentId: DemoDocumentId, steps: DemoAction[] = []) {
   const locale = useLocale() as Locale;
@@ -138,16 +136,14 @@ export function DocumentFieldsStill({ documentId, label }: { documentId: DemoPdf
   );
 }
 
-/** The delivery note's flagged Fields, one of them already checked. */
+/** The damage claim's Fields around its vague cause, the one value to check. */
 export function CheckStill({ label }: { label: string }) {
-  const document = useDemoDocument("delivery", [
-    { type: "check", documentId: "delivery", fieldValueId: "delivery.received_by", at: AT },
-  ]);
+  const document = useDemoDocument("claim");
   return (
     <ScaledStill width={760} fade={false} label={label} className="bg-transparent">
       <DemoLabels>
         <div className="p-4">
-          <Fields document={document} keys={["customer_reference", "pallets", "received_by"]} prefix="home-check" />
+          <Fields document={document} keys={["damage_date", "cause", "total_claimed"]} prefix="home-check" />
         </div>
       </DemoLabels>
     </ScaledStill>

@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "Vink: AI-data-extractie uit documenten voor operationele teams",
-    "description": "Stop met PDF's overtikken. Vink leest facturen, pakbonnen en werkbonnen, ook handgeschreven, en zet de gegevens in je systeem. 20 pagina's gratis."
+    "description": "Stop met PDF's overtikken. Vink leest facturen, schadeformulieren en werkbonnen, ook handgeschreven, en zet de gegevens in je systeem. 20 pagina's gratis."
   },
   "og": {
     "title": "Document. Vink. Klaar.",
@@ -9,7 +9,7 @@
   },
   "hero": {
     "title": "Niemand hoeft meer PDF's over te tikken.",
-    "subtitle": "Vink leest facturen, pakbonnen en werkbonnen, ook handgeschreven, en zet de gegevens in je systeem. Je team controleert alleen wat Vink niet zeker weet.",
+    "subtitle": "Vink leest facturen, schadeformulieren en werkbonnen, ook handgeschreven, en zet de gegevens in je systeem. Je team controleert alleen wat Vink niet zeker weet.",
     "watch": "Bekijk 30 seconden",
     "screenLabel": "Het controlescherm van Vink met één waarde die gecontroleerd moet worden"
   },
@@ -81,7 +81,7 @@
       "body": "Maak zoveel formulieren als je nodig hebt. Elk formulier heeft eigen velden, een eigen e-mailadres en eigen koppelingen.",
       "list": [
         "Facturen",
-        "Pakbonnen",
+        "Schademeldingen",
         "Werkbonnen",
         "Bestelformulieren",
         "Keuringsrapporten",
@@ -133,7 +133,7 @@
   "tabs": {
     "label": "Voorbeelddocumenten",
     "invoice": "Factuur",
-    "deliveryNote": "Pakbon",
+    "claimForm": "Schadeformulier",
     "handwritten": "Handgeschreven formulier",
     "orderForm": "Bestelformulier"
   },

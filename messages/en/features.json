@@ -18,7 +18,7 @@
   "frames": {
     "documents": "/app/o/kantoor-noord",
     "invoice": "/app/o/kantoor-noord/documents/jd72q8vn",
-    "delivery": "/app/o/kantoor-noord/documents/jd7f4mx1",
+    "claim": "/app/o/kantoor-noord/documents/jd7f4mx1",
     "upload": "/app/o/kantoor-noord/forms/invoices",
     "form": "/app/o/kantoor-noord/forms/invoices",
     "integration": "/app/o/kantoor-noord/integrations",
@@ -72,7 +72,7 @@
       "Tables become lists: one entry per invoice line or order line",
       "No template per layout: a new supplier's invoice just works"
     ],
-    "alt": "Four documents: a typed invoice, a scanned two-page delivery note, a handwritten service request and a faxed order form."
+    "alt": "Four documents: a typed invoice, a claim form filled in on a computer, a handwritten service request and a faxed order form."
   },
   "fields": {
     "title": "Your fields, not a template.",
@@ -103,7 +103,7 @@
       "The reason next to every flag",
       "Your corrections are never overwritten"
     ],
-    "alt": "A demo delivery note with two values in Needs Review, each with its reason and a button to confirm it."
+    "alt": "A demo damage claim email with a PDF form and two photos, and two values in Needs Review, each with its reason and a button to confirm it."
   },
   "approve": {
     "title": "Nothing is sent without approval.",

@@ -18,7 +18,7 @@
   "frames": {
     "documents": "/app/o/kantoor-noord",
     "invoice": "/app/o/kantoor-noord/documents/jd72q8vn",
-    "delivery": "/app/o/kantoor-noord/documents/jd7f4mx1",
+    "claim": "/app/o/kantoor-noord/documents/jd7f4mx1",
     "upload": "/app/o/kantoor-noord/forms/invoices",
     "form": "/app/o/kantoor-noord/forms/invoices",
     "integration": "/app/o/kantoor-noord/integrations",
@@ -72,7 +72,7 @@
       "Tabellen worden lijsten: één regel per factuur- of bestelregel",
       "Geen sjabloon per lay-out: de factuur van een nieuwe leverancier werkt meteen"
     ],
-    "alt": "Vier documenten: een getypte factuur, een gescande pakbon van twee pagina's, een handgeschreven serviceverzoek en een gefaxt bestelformulier."
+    "alt": "Vier documenten: een getypte factuur, een schadeformulier dat op de computer is ingevuld, een handgeschreven serviceverzoek en een gefaxt bestelformulier."
   },
   "fields": {
     "title": "Jouw velden, geen sjabloon.",
@@ -103,7 +103,7 @@
       "De reden naast elke markering",
       "Jouw correcties worden nooit overschreven"
     ],
-    "alt": "Een demopakbon met twee waarden om te controleren, elk met de reden en een knop om hem te bevestigen."
+    "alt": "Een demo-schademelding per e-mail met een pdf-formulier en twee foto's, en twee waarden om te controleren, elk met de reden en een knop om hem te bevestigen."
   },
   "approve": {
     "title": "Niets wordt verstuurd zonder goedkeuring.",

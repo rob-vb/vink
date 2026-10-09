@@ -4,7 +4,7 @@ import type { DocumentEvent, DocumentState, ReviewReason } from "@/components/do
 import type { ListData } from "@/components/documents/list-group-view";
 import type { EventInfo } from "@/convex/lib/eventInfo";
 import { DEMO_USER, inLocale, seedDocuments, type SeedField } from "./demo-data";
-import type { DemoDocumentId, DemoPhotoId } from "./demo-papers";
+import { demoPages, type DemoDocumentId, type DemoPdfId, type DemoPhotoId } from "./demo-papers";
 
 /*
  * The demo's Documents and what the visitor did to them. The rules follow the
@@ -30,14 +30,17 @@ export type DemoEvent = {
 /** A drawn photo and its alt text. */
 export type DemoPhoto = { id: DemoPhotoId; alt: string };
 
+/** What an email attachment shows: a drawn photo, or a PDF's drawn pages. */
+export type DemoAttachment = { photo: DemoPhoto } | { pdf: DemoPdfId };
+
 export type DemoDocument = {
   id: DemoDocumentId;
   filename: string;
   /** Picks the pane: the PDF pane, the email pane or the image pane. */
   kind: "pdf" | "email" | "image";
-  /** An email Document's email; its attachments' photos are `attachmentPhotos`, in order. */
+  /** An email Document's email; what its attachments show is `attachmentViews`, in order. */
   email: EmailData | null;
-  attachmentPhotos: DemoPhoto[];
+  attachmentViews: DemoAttachment[];
   /** A photo Document's picture. */
   photo: DemoPhoto | null;
   /** The history's "Form picked" detail, when Vink picked the Form. */
@@ -58,7 +61,7 @@ export type DemoDocument = {
 
 function fieldValue(
   id: string,
-  seed: Pick<SeedField, "key" | "type" | "page" | "confidence" | "lowestSignal" | "reasons" | "required"> & {
+  seed: Pick<SeedField, "key" | "type" | "page" | "confidence" | "lowestSignal" | "reasons" | "required" | "options"> & {
     value: Value;
     readText: string | null;
   },
@@ -71,7 +74,7 @@ function fieldValue(
     label,
     type: seed.type,
     required: seed.required ?? false,
-    options: null,
+    options: seed.options ?? null,
     value: seed.value,
     extracted: seed.value,
     readText: seed.readText,
@@ -99,11 +102,16 @@ export function initialDocuments(locale: Locale): DemoDocument[] {
           from: seed.email.from,
           date: seed.email.date,
           body: seed.email.body[locale],
-          // The page counts a PDF attachment would show; the demo's attachments are photos.
-          attachments: seed.email.attachments.map((a) => ({ filename: a.filename, mimeType: a.mimeType })),
+          attachments: seed.email.attachments.map((a) =>
+            "pdf" in a
+              ? { filename: a.filename, mimeType: a.mimeType, pageCount: demoPages[a.pdf].length }
+              : { filename: a.filename, mimeType: a.mimeType },
+          ),
         }
       : null,
-    attachmentPhotos: (seed.email?.attachments ?? []).map((a) => ({ id: a.photo, alt: a.alt[locale] })),
+    attachmentViews: (seed.email?.attachments ?? []).map((a) =>
+      "pdf" in a ? { pdf: a.pdf } : { photo: { id: a.photo, alt: a.alt[locale] } },
+    ),
     photo:
       seed.kind === "image" && seed.photoAlt
         ? { id: seed.id as DemoPhotoId, alt: seed.photoAlt[locale] }
@@ -114,7 +122,8 @@ export function initialDocuments(locale: Locale): DemoDocument[] {
         : { code: "routed", form: seed.form[locale], percent: Math.round(seed.routed * 100) },
     noFormInfo: seed.noForm ? { code: "no_fit", form: seed.noForm[locale] } : null,
     state: seed.noForm ? "no_form" : seed.autoSent ? "approved" : "needs_review",
-    pageCount: seed.id === "delivery" ? 2 : 1,
+    // Like the app: an email or a photo is one page; its attachments are pages of the email, not of the Document.
+    pageCount: (seed.kind ?? "pdf") === "pdf" ? demoPages[seed.id as DemoPdfId].length : 1,
     approval: seed.autoSent ? { mode: "auto", by: null, at: null } : null,
     fieldValues: seed.fields.map((f) =>
       fieldValue(
@@ -148,6 +157,7 @@ export function initialDocuments(locale: Locale): DemoDocument[] {
               page: list.page,
               confidence: entry[sub.key].confidence,
               lowestSignal: "match",
+              reasons: entry[sub.key].reasons,
             },
             sub.label[locale],
           ),
