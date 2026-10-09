@@ -84,3 +84,17 @@ Each step ends green on `npm run typecheck`, `npm run lint` and `npm test`.
 - Any deploy without the user's OK.
 
 ## Comments
+
+### Step 1: chosen values (2026-10-09)
+
+- Office: **Assurantiekantoor De Meerkoet**, Stationsweg 8, Amersfoort. Web check: a search for the exact name found no firm (closest hits: Assurantiekantoor Vermeij, Van der Sluijs; unrelated).
+- Customer: **Marieke Bosman**, marieke.bosman@mailbox.nl. Risk address: **Klaprooslaan 14, 3824 XK Amersfoort**.
+- Policy number: **WH-2048-7731**. Damage date: **27-09-2026** (Saturday). Form signed 29-09-2026; email sent 30-09-2026.
+- Cause: no box ticked on the form; the explanation says the water came from under the sink, "mogelijk de afvoer van de vaatwasser". Vink picks "Wasmachine of vaatwasser" at 0.66 → Te controleren (unsure).
+- Damaged items (omschrijving / aanschafjaar / aanschafwaarde / geclaimd):
+  - Laminaat woonkamer (24 m²) / ± 2019 / 1.150,00 / 860,00 — the "± 2019" is read at 0.72 → Te controleren
+  - Onderkast keuken / 2017 / 640,00 / 410,00
+  - Vloerkleed / 2022 / 320,00 / 240,00
+  - Plinten en ondervloer / 2019 / 210,00 / 175,00
+- Total claimed: **1.685,00**. IBAN: NL91 ABNA 0417 1643 00. Photos attached: yes.
+- Items: the email text names the policy number and what happened, so it is read and is not a cover note. Total: text 1 + PDF 1 + 2 photos = **4 Items**.
