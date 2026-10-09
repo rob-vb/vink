@@ -17,8 +17,9 @@ export type SeedField = {
   label: Words;
   type: FieldValueType;
   required?: boolean;
-  value: Value;
-  readText: string | null;
+  /** A value in both languages (`Words`) is one Vink wrote itself, e.g. what it saw in a photo; a value read off a paper is that paper's own words. */
+  value: Value | Words;
+  readText: string | Words | null;
   page: number;
   confidence: number;
   lowestSignal: Signal;
@@ -45,6 +46,11 @@ export type SeedEmail = {
   attachments: Array<{ filename: string; mimeType: string; photo: DemoPhotoId; alt: Words }>;
 };
 
+/** A seed value in the visitor's language; a plain value is the same in both. */
+export function inLocale<T extends Value>(value: T | Words, locale: "en" | "nl"): T {
+  return value !== null && typeof value === "object" ? (value[locale] as T) : value;
+}
+
 export type SeedDocument = {
   id: DemoDocumentId;
   /** An email's name is its subject. */
@@ -56,8 +62,8 @@ export type SeedDocument = {
   photoAlt?: Words;
   /** Vink's pick of the Form for input that came without one: its probability. The history shows "Form picked". */
   routed?: number;
-  /** In No Form, because no Form fits: what the history says. */
-  noForm?: string;
+  /** In No Form, because the Router's pick (this Form) did not fit: the history says "Does not fit …". */
+  noForm?: Words;
   form: Words;
   uploadedBy: Words;
   /** How long before the visitor arrived it came in. */
@@ -106,7 +112,7 @@ export const seedDocuments: SeedDocument[] = [
       { key: "order_number", label: { en: "Order number", nl: "Bestelnummer" }, type: "text", required: true, value: "ORD-3318", readText: "ORD-3318", page: 1, confidence: 0.78, lowestSignal: "fit", reasons: ["below_threshold"] },
       { key: "order_date", label: { en: "Order date", nl: "Besteldatum" }, type: "date", value: "2026-09-21", readText: "21-09-2026", page: 1, confidence: 0.94, lowestSignal: "fit" },
       { key: "product", label: { en: "Product", nl: "Product" }, type: "text", value: "Lumo E2", readText: "Lumo E2", page: 1, confidence: 0.91, lowestSignal: "support" },
-      { key: "problem", label: { en: "Problem seen", nl: "Probleem op de foto" }, type: "text", value: "Puddle under the machine", readText: "Puddle under the machine", page: 2, confidence: 0.74, lowestSignal: "support", reasons: ["below_threshold"] },
+      { key: "problem", label: { en: "Problem seen", nl: "Probleem op de foto" }, type: "text", value: { en: "Puddle under the machine", nl: "Plas water onder de machine" }, readText: { en: "Puddle under the machine", nl: "Plas water onder de machine" }, page: 2, confidence: 0.74, lowestSignal: "support", reasons: ["below_threshold"] },
     ],
   },
   {
@@ -139,9 +145,9 @@ export const seedDocuments: SeedDocument[] = [
     fields: [
       { key: "customer", label: { en: "Customer", nl: "Klant" }, type: "text", required: true, value: "Café Het Anker", readText: "Café Het Anker", page: 1, confidence: 0.93, lowestSignal: "match" },
       { key: "work_date", label: { en: "Date", nl: "Datum" }, type: "date", value: "2026-09-30", readText: "30/9/26", page: 1, confidence: 0.9, lowestSignal: "fit" },
-      { key: "work", label: { en: "Work done", nl: "Uitgevoerd werk" }, type: "text", value: "Tap replaced", readText: "Tap vervangen", page: 1, confidence: 0.88, lowestSignal: "support" },
+      { key: "work", label: { en: "Work done", nl: "Uitgevoerd werk" }, type: "text", value: "Kraan vervangen", readText: "Kraan vervangen", page: 1, confidence: 0.88, lowestSignal: "support" },
       { key: "hours", label: { en: "Hours", nl: "Uren" }, type: "number", value: 2.5, readText: "2,5 u", page: 1, confidence: 0.64, lowestSignal: "fit", reasons: ["unsure"] },
-      { key: "materials", label: { en: "Materials", nl: "Materiaal" }, type: "text", value: "Mixer tap + hoses", readText: "mengkraan + slangen", page: 1, confidence: 0.86, lowestSignal: "support" },
+      { key: "materials", label: { en: "Materials", nl: "Materiaal" }, type: "text", value: "mengkraan + slangen", readText: "mengkraan + slangen", page: 1, confidence: 0.86, lowestSignal: "support" },
     ],
   },
   {
@@ -226,7 +232,7 @@ export const seedDocuments: SeedDocument[] = [
     form: { en: "", nl: "" },
     uploadedBy: { en: "email from news@groothandelbakker.nl", nl: "e-mail van news@groothandelbakker.nl" },
     minutesAgo: 12,
-    noForm: "Does not fit Invoices",
+    noForm: { en: "Invoices", nl: "Facturen" },
     email: {
       from: "Groothandel Bakker <news@groothandelbakker.nl>",
       date: "2026-09-30T05:55:00Z",

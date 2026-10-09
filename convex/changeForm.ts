@@ -77,6 +77,7 @@ export const changeForm = orgMutation({
       documentId,
       event: "form_changed",
       detail: `${oldForm?.name ?? "No Form"} → ${form.name}`,
+      info: { code: "form_changed", from: oldForm?.name ?? null, to: form.name },
       by: ctx.userId,
       byEmail: identity?.email?.toLowerCase() ?? "",
       at: Date.now(),

@@ -203,9 +203,7 @@ export function ProposalScreen({
           <CircleAlert />
           <AlertTitle>{t("proposal.failedTitle")}</AlertTitle>
           <AlertDescription>
-            {proposal.error && (
-              <p className="line-clamp-2 font-mono text-xs break-all opacity-80">{proposal.error}</p>
-            )}
+            <p>{t(proposal.failure === "unreadable" ? "proposal.failedUnreadable" : "proposal.failedText")}</p>
             <div className="mt-2 flex flex-wrap gap-2">
               <Button size="sm" onClick={() => retry({ organisationSlug, proposalId }).catch(failed)}>
                 <RotateCcw />

@@ -121,8 +121,8 @@
     "resets": " · vernieuwt {date}",
     "noneLeftTitle": "Je Organisatie heeft geen items meer",
     "leftTitle": "{remaining, plural, one {Je Organisatie heeft nog # item} other {Je Organisatie heeft nog # items}}",
-    "noneLeft": "Nieuwe pdf's worden geweigerd tot je upgradet. Documenten die al zijn geüpload blijven werken.",
-    "almostOut": "Je hebt 80% van je items gebruikt. Upgrade op tijd, zodat nieuwe pdf's niet worden geweigerd.",
+    "noneLeft": "Nieuwe bestanden worden geweigerd tot je upgradet. Documenten die al zijn geüpload blijven werken.",
+    "almostOut": "Je hebt 80% van je items gebruikt. Upgrade op tijd, zodat nieuwe bestanden niet worden geweigerd.",
     "resetsOn": " Je items vernieuwen op {date}."
   }
 }

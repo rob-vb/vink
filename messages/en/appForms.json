@@ -192,6 +192,8 @@
     "title": "Proposed Fields",
     "from": "From {filename}",
     "failedTitle": "Vink couldn't propose Fields",
+    "failedText": "It tried four times. This is usually a passing outage, so try again. Or start with a blank Form.",
+    "failedUnreadable": "This sample can't be used: it is damaged or of a type Vink doesn't read. Pick another sample or start blank.",
     "retry": "Retry",
     "startBlank": "Start blank",
     "nothingNew": "Nothing new",

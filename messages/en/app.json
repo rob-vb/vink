@@ -121,8 +121,8 @@
     "resets": " · resets {date}",
     "noneLeftTitle": "Your Organisation has no items left",
     "leftTitle": "{remaining, plural, one {Your Organisation has # item left} other {Your Organisation has # items left}}",
-    "noneLeft": "New PDFs are refused until you upgrade. Documents already uploaded keep working.",
-    "almostOut": "You've used 80% of your items. Upgrade in time so new PDFs aren't refused.",
+    "noneLeft": "New files are refused until you upgrade. Documents already uploaded keep working.",
+    "almostOut": "You've used 80% of your items. Upgrade in time so new files aren't refused.",
     "resetsOn": " Your items reset on {date}."
   }
 }

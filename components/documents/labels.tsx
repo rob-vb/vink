@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, type ReactNode } from "react";
+import type { EventInfo, SplitInfo } from "@/convex/lib/eventInfo";
 
 /**
  * The words and date formats of the Documents page and review screen.
@@ -50,6 +51,16 @@ export type DocumentEvent =
 
 function pagesLabel(pages: number[]) {
   return pages.length === 1 ? `page ${pages[0]}` : `pages ${pages.join(", ")}`;
+}
+
+const SPLIT_ANSWERS = {
+  together: "one case",
+  cover_note: "separate papers with the text only a cover note",
+  apart: "separate papers",
+};
+
+function splitReason(split: SplitInfo): string {
+  return `Vink was not sure whether this email is one case or ${split.documents} separate papers (${split.percent}% sure of "${SPLIT_ANSWERS[split.answer]}"), so it made ${split.documents} Documents. Check whether they belong together.`;
 }
 
 export const englishLabels = {
@@ -103,13 +114,15 @@ export const englishLabels = {
       mode === "auto" ? "Automatically" : `By ${by}`,
     noForm: {
       title: "No Form fits this Document",
-      text: "Vink found no Form that fits it, so there is nothing to review yet. Pick a Form to fill, or reject it. Its Items are counted.",
+      text: "Vink found no Form that fits it, so there is nothing to review yet. Use Change Form above to pick a Form to fill, or Reject to turn it away. Its Items are counted.",
       empty: "No Fields yet. They appear when the Document has a Form.",
     },
     split: {
       title: "Vink split this email",
       text: (reason: string) =>
         `Vink wasn't sure whether the parts of this email belong together, so it made separate Documents. Please check them. ${reason}`,
+      /** Why, from Jev's call: the words of an email split Vink was unsure about. */
+      reason: (split: SplitInfo): string => splitReason(split),
     },
     fields: "Fields",
     allFields: "All fields",
@@ -144,6 +157,23 @@ export const englishLabels = {
       entries_unconfirmed: "Entries no longer confirmed",
       approved: "Approved",
     } satisfies Record<DocumentEvent, string>,
+    /** The detail after an event's name, for the events that carry a code (lib/eventInfo.ts). */
+    eventDetail: (info: EventInfo): string => {
+      switch (info.code) {
+        case "routed":
+          return `${info.form} (${info.percent}%)`;
+        case "no_forms":
+          return "The Organisation has no Forms";
+        case "nothing_read":
+          return "Nothing could be read";
+        case "no_fit":
+          return info.form === undefined ? "No Form fits" : `Does not fit ${info.form}`;
+        case "form_changed":
+          return `${info.from ?? "No Form"} → ${info.to}`;
+        case "mail_split":
+          return splitReason(info.split);
+      }
+    },
   },
   panes: {
     email: {

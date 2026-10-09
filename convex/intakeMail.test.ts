@@ -230,7 +230,7 @@ test("complaint + photo to the Organisation address: one Document of 2 Items, an
     filename: "Klacht over levering 4410",
     uploaderEmail: "email from anouk@bakkerij-dewit.example",
   });
-  expect(document.splitReason).toBeUndefined();
+  expect(document.splitInfo).toBeUndefined();
   expect(await used(org)).toBe(2);
   // Jev decided on the split, then the Router picked the Form.
   expect(steps()).toEqual(["split", "read", "route", "match", "fill", "verify"]);
@@ -297,7 +297,7 @@ test("an empty body with 3 PDFs: Jev says apart, 3 Documents, and the Items are 
     ["F-119.pdf", "pdf", 1, org.forms.Invoice],
     ["F-120.pdf", "pdf", 3, org.forms.Invoice],
   ]);
-  expect(created.every((d) => d.splitReason === undefined)).toBe(true);
+  expect(created.every((d) => d.splitInfo === undefined)).toBe(true);
   expect(await used(org)).toBe(6);
   const asked = fakePipeline.calls.find((c) => c.step === "split");
   expect(asked).toMatchObject({
@@ -329,11 +329,16 @@ test("an ambiguous mail is split, and every Document is marked Needs Review with
   ]);
   expect(await used(org)).toBe(4);
   for (const document of created) {
-    expect(document.splitReason).toContain("not sure");
-    expect(document.splitReason).toContain("60%");
+    // A code with its numbers, not English text: the screens write it in the user's language.
+    expect(document.splitReason).toBeUndefined();
+    expect(document.splitInfo).toMatchObject({ percent: 60, documents: 3 });
     const view = await read(org, document._id);
     expect(view.state).toBe("needs_review");
-    expect(view.history.find((h) => h.event === "mail_split")?.detail).toBe(document.splitReason);
+    expect(view.split).toEqual(document.splitInfo);
+    expect(view.history.find((h) => h.event === "mail_split")?.info).toEqual({
+      code: "mail_split",
+      split: document.splitInfo,
+    });
   }
 });
 
@@ -359,7 +364,7 @@ test("a cover note with 3 PDFs: 3 Documents, charged the pages of the PDFs, no D
     ["F-119.pdf", "pdf", 1],
     ["F-120.pdf", "pdf", 3],
   ]);
-  expect(created.every((d) => d.splitReason === undefined)).toBe(true);
+  expect(created.every((d) => d.splitInfo === undefined)).toBe(true);
   expect(await used(org)).toBe(6);
   // Jev was asked once, with the text; the cover note is no Document, and its row says it was not read.
   expect(steps().filter((s) => s === "split")).toHaveLength(1);
@@ -389,7 +394,7 @@ test("a long text is never dropped as a cover note: Jev saw only its first 4000 
   const created = await documents(t);
   expect(created.map((d) => d.kind)).toEqual(["pdf", "pdf", "email", "pdf", "pdf"]);
   // Sure of `apart`: nothing to check by hand, and the text was charged (1 Item) like any text.
-  expect(created.slice(2).every((d) => d.splitReason === undefined)).toBe(true);
+  expect(created.slice(2).every((d) => d.splitInfo === undefined)).toBe(true);
   expect(await used(org)).toBe(2 + 1 + 2);
   const { recentEmails } = await org.cas.query(api.intake.get, { organisationSlug: org.slug, formId: org.forms.Invoice });
   // The text, c.pdf and d.pdf: no "Cover note, not read" row.
@@ -451,7 +456,7 @@ test("a real complaint with 2 photos, apart and its own Document: 3 Documents of
     ["image", "a.jpg"],
     ["image", "b.jpg"],
   ]);
-  expect(created.every((d) => d.splitReason === undefined)).toBe(true);
+  expect(created.every((d) => d.splitInfo === undefined)).toBe(true);
   expect(await used(org)).toBe(3);
 });
 
@@ -478,7 +483,7 @@ test("a cover note Jev is unsure about is not dropped: the text is its own Docum
   ]);
   expect(await used(org)).toBe(4);
   for (const document of created) {
-    expect(document.splitReason).toContain("70%");
+    expect(document.splitInfo).toMatchObject({ percent: 70, documents: 3 });
     expect((await read(org, document._id)).state).toBe("needs_review");
   }
   const { recentEmails } = await org.cas.query(api.intake.get, { organisationSlug: org.slug, formId: org.forms.Invoice });
@@ -517,7 +522,7 @@ test("a sure 'together' is not split, and a sure 'apart' is not flagged; the thr
   await mail(t, token, { body: "Klacht", parts: [{ filename: "b.pdf" }] });
 
   const created = await documents(t);
-  expect(created.map((d) => [d.kind, d.splitReason === undefined])).toEqual([
+  expect(created.map((d) => [d.kind, d.splitInfo === undefined])).toEqual([
     ["email", true],
     ["email", false],
     ["pdf", false],

@@ -1,7 +1,18 @@
 import type { DocumentsLabels } from "@/components/documents/labels";
+import type { SplitInfo } from "@/convex/lib/eventInfo";
 
 function pagesLabel(pages: number[]) {
   return pages.length === 1 ? `pagina ${pages[0]}` : `pagina's ${pages.join(", ")}`;
+}
+
+const SPLIT_ANSWERS = {
+  together: "één zaak",
+  cover_note: "aparte papieren, met de tekst alleen als begeleidende tekst",
+  apart: "aparte papieren",
+};
+
+function splitReason(split: SplitInfo): string {
+  return `Vink wist niet zeker of deze e-mail één zaak is of ${split.documents} aparte papieren (${split.percent}% zeker van "${SPLIT_ANSWERS[split.answer]}"), dus er zijn ${split.documents} Documenten gemaakt. Controleer of ze bij elkaar horen.`;
 }
 
 /**
@@ -15,7 +26,7 @@ export const dutchLabels: DocumentsLabels = {
     subtitle: "Statuswijzigingen verschijnen hier zodra ze gebeuren.",
     tabs: {
       needs_review: "Te controleren",
-      no_form: "Geen formulier",
+      no_form: "Geen Formulier",
       approved: "Goedgekeurd",
       extraction_failed: "Mislukt",
       rejected: "Afgewezen",
@@ -47,7 +58,7 @@ export const dutchLabels: DocumentsLabels = {
       needs_review: "Te controleren",
       approved: "Goedgekeurd",
       extraction_failed: "Extractie mislukt",
-      no_form: "Geen formulier",
+      no_form: "Geen Formulier",
       rejected: "Afgewezen",
       deleted: "Verwijderd",
     },
@@ -58,13 +69,14 @@ export const dutchLabels: DocumentsLabels = {
     approvedBy: (mode, by) => (mode === "auto" ? "Automatisch" : `Door ${by}`),
     noForm: {
       title: "Geen Formulier past bij dit Document",
-      text: "Vink vond geen Formulier dat past, dus er valt nog niets te controleren. Kies een Formulier om in te vullen, of wijs het af. De items zijn wel geteld.",
+      text: "Vink vond geen Formulier dat past, dus er valt nog niets te controleren. Kies hierboven met Formulier wijzigen een Formulier om in te vullen, of wijs het af met Afwijzen. De items zijn wel geteld.",
       empty: "Nog geen velden. Ze verschijnen zodra het Document een Formulier heeft.",
     },
     split: {
       title: "Vink heeft deze e-mail gesplitst",
       text: (reason) =>
         `Vink wist niet zeker of de delen van deze e-mail bij elkaar horen, dus het maakte aparte Documenten. Controleer ze goed. ${reason}`,
+      reason: splitReason,
     },
     fields: "Velden",
     allFields: "Alle velden",
@@ -89,7 +101,7 @@ export const dutchLabels: DocumentsLabels = {
       reopened: "Heropend",
       form_changed: "Formulier gewijzigd",
       routed: "Formulier gekozen",
-      no_form: "Geen formulier past",
+      no_form: "Geen Formulier past",
       mail_split: "E-mail gesplitst",
       data_deleted: "Gegevens verwijderd",
       deleted: "Verwijderd",
@@ -100,6 +112,22 @@ export const dutchLabels: DocumentsLabels = {
       entries_confirmed: "Regels bevestigd als compleet",
       entries_unconfirmed: "Regels niet langer bevestigd",
       approved: "Goedgekeurd",
+    },
+    eventDetail: (info) => {
+      switch (info.code) {
+        case "routed":
+          return `${info.form} (${info.percent}%)`;
+        case "no_forms":
+          return "De Organisatie heeft geen Formulieren";
+        case "nothing_read":
+          return "Er kon niets worden gelezen";
+        case "no_fit":
+          return info.form === undefined ? "Geen Formulier past" : `Past niet bij ${info.form}`;
+        case "form_changed":
+          return `${info.from ?? "Geen Formulier"} → ${info.to}`;
+        case "mail_split":
+          return splitReason(info.split);
+      }
     },
   },
   panes: {

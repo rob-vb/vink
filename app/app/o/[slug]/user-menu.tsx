@@ -4,7 +4,7 @@ import { LogOut, Settings, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,6 +20,17 @@ import { authClient } from "@/lib/auth-client";
 import { LanguageMenu } from "../../language-switcher";
 import { DeleteAccountDialog } from "./delete-account-dialog";
 
+const subscribeNever = () => () => {};
+
+/**
+ * False on the server and during hydration, true after. The session comes from
+ * the browser only, so the first client render may know the user while the
+ * server's HTML does not: the initial in the avatar waits for hydration.
+ */
+function useHydrated() {
+  return useSyncExternalStore(subscribeNever, () => true, () => false);
+}
+
 export function UserMenu({
   organisationSlug,
   isAdmin,
@@ -31,6 +42,7 @@ export function UserMenu({
   const router = useRouter();
   const { data: session } = authClient.useSession();
   const email = session?.user.email ?? "";
+  const hydrated = useHydrated();
   const [deleting, setDeleting] = useState(false);
 
   async function signOut() {
@@ -52,7 +64,7 @@ export function UserMenu({
             >
               <Avatar className="size-8">
                 <AvatarFallback>
-                  {email.slice(0, 1).toUpperCase()}
+                  {hydrated ? email.slice(0, 1).toUpperCase() : ""}
                 </AvatarFallback>
               </Avatar>
             </Button>

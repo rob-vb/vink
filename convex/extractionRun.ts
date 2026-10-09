@@ -58,15 +58,15 @@ export const run = internalAction({
       // Nothing to ask Jev with no Forms, or with a Reading that holds no value.
       const unroutable =
         stored.routableForms.length === 0
-          ? "The Organisation has no Forms"
+          ? ("no_forms" as const)
           : readingLeaves(reading).length === 0
-            ? "Nothing could be read"
+            ? ("nothing_read" as const)
             : null;
       const pick = unroutable === null ? await router.route(reading, stored.routableForms) : { formId: null, probability: 1 };
       if (pick.formId === null) {
         await ctx.runMutation(internal.extraction.noForm, {
           documentId,
-          detail: unroutable ?? "No Form fits",
+          reason: unroutable ?? "no_fit",
         });
         return;
       }

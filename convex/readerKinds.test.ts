@@ -207,9 +207,9 @@ test("an input whose file is missing is a failed Read: Extraction Failed, with n
   const document = await org.user.query(api.documents.get, { organisationSlug: org.slug, documentId });
   expect(document.state).toBe("extraction_failed");
   expect(fakePipeline.reads).toEqual([]);
-  expect(
-    await t.run(async (ctx) => (await ctx.db.get(documentId))!.extractionError),
-  ).toContain(`No file stored under ${org.organisationId}/gone`);
+  // The screen gets a code, never the technical error (that goes to the logs).
+  expect(document.failure).toBe("unreadable");
+  expect(await t.run(async (ctx) => (await ctx.db.get(documentId))!.extractionError)).toBe("unreadable");
 });
 
 /** An email Document whose stored file is `file`, with the extra files in `files`; Extraction settled. */
@@ -224,10 +224,19 @@ async function emailDocumentWith(
   for (const [k, v] of Object.entries(files)) fakePdfStore.objects.set(k, v);
   fakePipeline.replay(complaintRecording);
   const read = vi.spyOn(fakePdfStore, "read");
+  // The technical reason goes to the logs only; the Document keeps a code.
+  const logged = vi.spyOn(console, "error").mockImplementation(() => {});
   const documentId = await documentOf(t, org, { key, kind: "email", mimeType: "application/json", pageCount: 1 });
   await settle(t);
   const document = await org.user.query(api.documents.get, { organisationSlug: org.slug, documentId });
-  const error = await t.run(async (ctx) => (await ctx.db.get(documentId))!.extractionError);
+  const code = await t.run(async (ctx) => (await ctx.db.get(documentId))!.extractionError);
+  const error = logged.mock.calls.map((c) => c.join(" ")).join("\n");
+  logged.mockRestore();
+  if (document.state === "extraction_failed") {
+    expect(code).toBe("unreadable");
+    expect(document.failure).toBe("unreadable");
+    expect(JSON.stringify(document)).not.toContain(error);
+  }
   const calls = read.mock.calls.map(([called]) => called);
   read.mockRestore();
   const readsOf = (k: string) => calls.filter((called) => called === k).length;
@@ -326,7 +335,7 @@ test("an image Document with an unsupported type fails at once", async () => {
 
   const document = await org.user.query(api.documents.get, { organisationSlug: org.slug, documentId });
   expect(document.state).toBe("extraction_failed");
-  expect(await t.run(async (ctx) => (await ctx.db.get(documentId))!.extractionError)).toContain("not supported");
+  expect(await t.run(async (ctx) => (await ctx.db.get(documentId))!.extractionError)).toBe("unreadable");
 });
 
 test("the stored JSON cannot change the kind the Reader gets", async () => {

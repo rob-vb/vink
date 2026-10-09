@@ -350,7 +350,7 @@ test("a description proposes Fields without a sample: no Read, no Items, the edi
   expect(fakePipeline.reads).toEqual([]);
   expect(fakePipeline.proposed).toEqual([]);
   const proposal = await org.read(proposalId);
-  expect(proposal).toMatchObject({ state: "ready", error: null });
+  expect(proposal).toMatchObject({ state: "ready", failure: null });
   // The same shape as a sample's proposal, none required: the proposal editor works unchanged.
   expect(proposal.fields.map((f) => [f.field.key, f.ticked, f.field.required])).toEqual([
     ["subject", true, false],
@@ -468,7 +468,7 @@ test("the cap is rolling: the slots come back 24 hours after each description", 
   await settle(t);
 });
 
-test("a failed description shows its error and a retry proposes again, still without a Read", async () => {
+test("a failed description shows a friendly failure and a retry proposes again, still without a Read", async () => {
   const t = newBackend();
   const org = await klachten(t);
   fakePipeline.replay(complaint);
@@ -478,7 +478,7 @@ test("a failed description shows its error and a retry proposes again, still wit
     description,
   });
   await settle(t);
-  expect(await org.read(proposalId)).toMatchObject({ state: "failed", error: expect.stringContaining("propose is down") });
+  expect(await org.read(proposalId)).toMatchObject({ state: "failed", failure: "failed" });
   fakePipeline.calls = [];
 
   await org.user.mutation(api.formProposals.retry, { organisationSlug: org.slug, proposalId });

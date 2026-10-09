@@ -4,6 +4,7 @@ import { Download, Maximize2, ZoomIn, ZoomOut } from "lucide-react";
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { wheelZoomFactor } from "./image-zoom";
 import { useDocumentsLabels } from "./labels";
 import { isHeic } from "./review-panes";
 
@@ -12,7 +13,8 @@ const MIN_ZOOM = 0.5;
 const MAX_ZOOM = 5;
 const STEP = 1.25;
 
-const clamp = (zoom: number) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, Math.round(zoom * 100) / 100));
+const limit = (zoom: number) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoom));
+const clamp = (zoom: number) => limit(Math.round(zoom * 100) / 100);
 
 /**
  * A photo or scan, zoomable: fit to width at first, then the buttons, Ctrl (or
@@ -55,7 +57,8 @@ export function ImagePaneView({
     const onWheel = (event: WheelEvent) => {
       if (!event.ctrlKey && !event.metaKey) return;
       event.preventDefault();
-      setZoom((z) => clamp(z * Math.exp(-event.deltaY * 0.01)));
+      // Not rounded: a pinch sends many tiny steps that rounding to a percent would swallow.
+      setZoom((z) => limit(z * wheelZoomFactor(event.deltaY, event.deltaMode)));
     };
     element.addEventListener("wheel", onWheel, { passive: false });
     return () => element.removeEventListener("wheel", onWheel);

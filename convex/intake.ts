@@ -36,6 +36,7 @@ import {
   TOO_MANY_ATTACHMENTS,
   UNSUPPORTED_TYPE,
 } from "./lib/inputLimits";
+import { splitInfo } from "./lib/eventInfo";
 import { itemsOfMail, itemsOfPlanned, type MailPart, needsSplitCall, planMail } from "./lib/mailPlan";
 import { pdfStore } from "./lib/pdfStore";
 import { sameSecret } from "./lib/secrets";
@@ -329,7 +330,7 @@ export const accept = internalMutation({
     documents: v.array(planned),
     /** What an out-of-Items refusal calls the input. */
     what: v.string(),
-    splitReason: v.optional(v.string()),
+    split: v.optional(splitInfo),
     uploaderEmail: v.string(),
   },
   handler: async (ctx, { documents, what, ...rest }) => {
@@ -343,7 +344,7 @@ export const accept = internalMutation({
       await createDocument(ctx, {
         organisationId: rest.organisationId,
         formId: rest.formId,
-        splitReason: rest.splitReason,
+        split: rest.split,
         uploadedBy: "email",
         uploaderEmail: rest.uploaderEmail,
         kind: document.kind,
@@ -549,7 +550,7 @@ async function receiveMail(
         formId: target.formId,
         documents,
         what: lone?.kind === "pdf" ? "PDF" : lone?.kind === "image" ? "image" : "email",
-        ...(plan.unsure === null ? {} : { splitReason: plan.unsure }),
+        ...(plan.unsure === null ? {} : { split: plan.unsure }),
         uploaderEmail: `email from ${from}`,
       });
     }

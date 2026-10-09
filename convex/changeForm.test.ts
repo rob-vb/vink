@@ -167,6 +167,11 @@ test("Change Form drops the old values and corrections and runs Match, Fill and 
   ]);
   expect(document.history.map((h) => h.event)).toContain("form_changed");
   expect(document.history.find((h) => h.event === "form_changed")!.detail).toBe("Work order → Invoice");
+  expect(document.history.find((h) => h.event === "form_changed")!.info).toEqual({
+    code: "form_changed",
+    from: "Work order",
+    to: "Invoice",
+  });
 });
 
 test("Change Form from Extraction Failed with no Reading runs a full Extraction", async () => {
@@ -283,6 +288,11 @@ test("a Document in No Form moves to a Form: Match, Fill and Verify run on the s
   ]);
   expect(document.history.map((h) => h.event)).toEqual(["uploaded", "no_form", "form_changed", "extracted"]);
   expect(document.history.find((h) => h.event === "form_changed")!.detail).toBe("No Form → Invoice");
+  expect(document.history.find((h) => h.event === "form_changed")!.info).toEqual({
+    code: "form_changed",
+    from: null,
+    to: "Invoice",
+  });
   expect(await used()).toBe(1);
   const { counts } = await user.query(api.documents.list, { organisationSlug: on.organisationSlug, state: "no_form" });
   expect(counts).toMatchObject({ no_form: 0, needs_review: 1, extracting: 0 });

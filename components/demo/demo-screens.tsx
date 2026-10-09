@@ -93,7 +93,7 @@ export function rowOf(document: DemoDocument, now: number): DocumentRowData {
     pageCount: document.pageCount,
     state: document.state,
     formName: document.formName,
-    formVersion: DEMO_FORM_VERSION,
+    formVersion: document.state === "no_form" ? null : DEMO_FORM_VERSION,
     uploadedBy: document.uploadedBy,
     uploadedAt: uploadedAt(document, now),
     rejection: null,
@@ -227,10 +227,10 @@ export function DemoReviewScreen({
     { event: "uploaded" as const, detail: null, by: document.uploadedBy, at: start },
     ...(document.routed === null
       ? []
-      : [{ event: "routed" as const, detail: document.routed, by: "Vink", at: start + (READ_SECONDS - 6) * 1000 }]),
-    document.noFormDetail === null
+      : [{ event: "routed" as const, detail: null, info: document.routed, by: "Vink", at: start + (READ_SECONDS - 6) * 1000 }]),
+    document.noFormInfo === null
       ? { event: "extracted" as const, detail: null, by: "Vink", at: start + READ_SECONDS * 1000 }
-      : { event: "no_form" as const, detail: document.noFormDetail, by: "Vink", at: start + READ_SECONDS * 1000 },
+      : { event: "no_form" as const, detail: null, info: document.noFormInfo, by: "Vink", at: start + READ_SECONDS * 1000 },
     ...(document.approval?.mode === "auto" && approval
       ? [{ event: "approved" as const, detail: null, by: "Vink", at: approval.at }]
       : []),
@@ -288,7 +288,7 @@ export function DemoReviewScreen({
         filename={document.filename}
         state={document.state}
         formName={document.formName}
-        formVersion={DEMO_FORM_VERSION}
+        formVersion={noForm ? null : DEMO_FORM_VERSION}
         pageCount={document.pageCount}
         kind={pane}
         reviewThreshold={noForm ? null : DEMO_THRESHOLD}
@@ -310,20 +310,7 @@ export function DemoReviewScreen({
       />
 
       {noForm && (
-        <NoFormAlert
-          actions={
-            <>
-              <Button variant="outline" size="sm" onClick={handlers.onNoFormAction}>
-                <ArrowRightLeft />
-                {t("noForm.changeForm")}
-              </Button>
-              <Button variant="outline" size="sm" onClick={handlers.onNoFormAction}>
-                <Ban />
-                {t("noForm.reject")}
-              </Button>
-            </>
-          }
-        />
+        <NoFormAlert />
       )}
 
       {approval && <ApprovalAlert approval={approval} />}

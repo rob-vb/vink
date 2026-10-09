@@ -22,6 +22,7 @@ import {
   type ReviewFilter,
 } from "@/components/documents/review-view";
 import { ImagePaneView } from "@/components/documents/image-pane-view";
+import { splitReasonText } from "@/components/documents/event-detail";
 import { useDocumentsLabels } from "@/components/documents/labels";
 import { paneFor } from "@/components/documents/review-panes";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -108,6 +109,7 @@ export function ReviewScreen({
   const threshold = document.reviewThreshold ?? 0.8;
   const reviewing = document.state === "needs_review";
   const noForm = document.state === "no_form";
+  const splitReason = splitReasonText(document, labels);
   const pane = paneFor(document.kind);
   // The selected value's read text, to mark in an email body when it was read there (page 1).
   const selectedValue = [
@@ -207,28 +209,9 @@ export function ReviewScreen({
         }
       />
 
-      {document.splitReason && <SplitAlert reason={document.splitReason} />}
+      {splitReason && <SplitAlert reason={splitReason} />}
 
-      {noForm && (
-        <NoFormAlert
-          actions={
-            <>
-              <ChangeFormButton
-                organisationSlug={organisationSlug}
-                documentId={documentId}
-                currentFormId={null}
-                size="sm"
-              />
-              <RejectButton
-                organisationSlug={organisationSlug}
-                documentId={documentId}
-                filename={document.filename}
-                size="sm"
-              />
-            </>
-          }
-        />
-      )}
+      {noForm && <NoFormAlert />}
 
       {reviewing && document.doesNotFit && (
         <Alert className="border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
@@ -293,12 +276,7 @@ export function ReviewScreen({
           <CircleAlert />
           <AlertTitle>{t("review.failedTitle")}</AlertTitle>
           <AlertDescription>
-            <p>{t("review.failedText")}</p>
-            {document.extractionError && (
-              <p className="line-clamp-2 font-mono text-xs break-all opacity-80">
-                {document.extractionError}
-              </p>
-            )}
+            <p>{t(document.failure === "unreadable" ? "review.failedUnreadable" : "review.failedText")}</p>
             <Button
               size="sm"
               className="mt-2"

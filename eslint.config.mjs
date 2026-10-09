@@ -20,6 +20,7 @@ const eslintConfig = defineConfig([
     ".next/**",
     ".next-live/**",
     ".next-smoke/**",
+    ".next-e2e/**",
     ".claude/**",
     "workers/**",
     // Its own package (plain CommonJS for Zapier), with its own tests.

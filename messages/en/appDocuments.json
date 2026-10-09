@@ -6,8 +6,8 @@
   "form": "Form",
   "list": {
     "welcome": "Welcome to {organisation}",
-    "adminIntro": "Set up a Form for each kind of document you receive, and Vink will fill it from your PDFs.",
-    "memberIntro": "An Admin first sets up a Form for each kind of document you receive. Then you can upload PDFs here.",
+    "adminIntro": "Set up a Form for each kind of document you receive, and Vink will fill it from what you receive.",
+    "memberIntro": "An Admin first sets up a Form for each kind of document you receive. Then you can upload files here.",
     "goToForms": "Go to Forms",
     "extracting": "Extracting",
     "noSystem": {
@@ -32,6 +32,7 @@
     "notSupported": "Not a file Vink reads. Use a PDF, JPG, PNG, HEIC or .eml.",
     "tooLarge": "Larger than 10 MB. Vink takes files of up to 10 MB.",
     "failed": "We couldn't upload this file. Try again.",
+    "emailFailed": "We couldn't upload this email. Try again.",
     "outOfItems": "You have {remaining} {remaining, plural, one {item} other {items}} left; this needs {needed}.",
     "uploaded": "{count, plural, one {# document uploaded} other {# documents uploaded}}",
     "readingNow": "Vink is reading them now.",
@@ -70,6 +71,7 @@
     "gone": "Its file and data are gone; only this record and its history are kept.",
     "failedTitle": "Vink couldn't read this Document",
     "failedText": "It tried four times. This is usually a passing outage, so try again. When a Reading was stored, the retry picks up from there and doesn't read the file again.",
+    "failedUnreadable": "This file can't be used: it is damaged or of a type Vink doesn't read. Trying again won't help. Upload it again or reject it.",
     "retry": "Retry",
     "dataDeleted": "Data deleted",
     "dataDeletedBy": "Its file, what Vink read and its values were deleted on {date} by {name}. Only this record, its history and its Delivery log are kept.",
@@ -91,7 +93,7 @@
   "reject": {
     "button": "Reject",
     "title": "Reject this Document?",
-    "description": "{filename} will never be approved or sent. It stays in the Rejected list, and you can reopen it while its PDF is kept.",
+    "description": "{filename} will never be approved or sent. It stays in the Rejected list, and you can reopen it while its file is kept.",
     "reason": "Reason (optional)",
     "placeholder": "Blank scan, unreadable, not a work order…",
     "reasonHelp": "Shown to your team next to the Document.",
@@ -102,7 +104,7 @@
   "delete": {
     "button": "Delete now",
     "title": "Delete {filename} for good?",
-    "description": "The PDF, what Vink read, every value and your system's replies are deleted now and can't be brought back. Deliveries that haven't gone out yet are cancelled. Only the filename, who uploaded and approved it, the dates, the history and the Delivery status stay, with a \"Deleted by you\" line.",
+    "description": "The file, what Vink read, every value and your system's replies are deleted now and can't be brought back. Deliveries that haven't gone out yet are cancelled. Only the filename, who uploaded and approved it, the dates, the history and the Delivery status stay, with a \"Deleted by you\" line.",
     "toast": "{filename} is deleted."
   },
   "pdf": {

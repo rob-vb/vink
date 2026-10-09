@@ -15,6 +15,7 @@ import { checkEmail, checkFile, checkIssued, claimUpload, createDocument } from 
 import { extractionPool } from "./extraction";
 import { insertForm, saveVersion } from "./forms";
 import { removeDocumentFiles } from "./lib/documentFiles";
+import { failureCodeOf, failureOf } from "./lib/failure";
 import {
   DESCRIPTION_EMPTY,
   DESCRIPTION_WINDOW_MS,
@@ -62,10 +63,11 @@ export const completed = extractionPool.defineOnComplete<DataModel, typeof compl
     if (result.kind === "success") return;
     const proposal = await ctx.db.get(proposalId);
     if (proposal === null || (proposal.state !== "reading" && proposal.state !== "proposing")) return;
-    await ctx.db.patch(proposalId, {
-      state: "failed",
-      error: result.kind === "failed" ? result.error.slice(0, 300) : "canceled",
-    });
+    // The technical error is for the logs; the proposal keeps a code the screen turns into a friendly message (lib/failure.ts).
+    console.error(
+      `Form Proposal ${proposalId} failed: ${(result.kind === "failed" ? result.error : "canceled").slice(0, 1000)}`,
+    );
+    await ctx.db.patch(proposalId, { state: "failed", error: failureCodeOf(false) });
   },
 });
 
@@ -75,7 +77,8 @@ export const failUnreadable = internalMutation({
   handler: async (ctx, { proposalId, error }) => {
     const proposal = await ctx.db.get(proposalId);
     if (proposal === null || (proposal.state !== "reading" && proposal.state !== "proposing")) return;
-    await ctx.db.patch(proposalId, { state: "failed", error: error.slice(0, 300) });
+    console.error(`Form Proposal ${proposalId} failed: ${error.slice(0, 1000)}`);
+    await ctx.db.patch(proposalId, { state: "failed", error: failureCodeOf(true) });
   },
 });
 
@@ -283,7 +286,8 @@ export const get = orgQuery({
       description: proposal.description ?? null,
       formId: proposal.formId ?? null,
       state: proposal.state,
-      error: proposal.error ?? null,
+      // A code, never the server's error text (lib/failure.ts).
+      failure: failureOf(proposal.error),
       fields: proposal.fields ?? [],
       createdAt: proposal._creationTime,
     };

@@ -13,6 +13,8 @@ import {
 import { deliveriesOf } from "./deliveries";
 import { startExtraction } from "./extraction";
 import { countIn } from "./lib/documentStates";
+import type { SplitInfo } from "./lib/eventInfo";
+import { failureOf } from "./lib/failure";
 import { orgAction, orgMutation, orgQuery } from "./lib/functions";
 import { chargeItems } from "./items";
 import { looksLikeEmail, type ParsedEmail, parseEml } from "./lib/emailParse";
@@ -416,7 +418,7 @@ export async function createDocument(
     reading,
     kind = "pdf",
     mimeType = PDF_MIME_TYPE,
-    splitReason,
+    split,
     ...document
   }: {
     organisationId: Id<"organisations">;
@@ -429,7 +431,7 @@ export async function createDocument(
     /** An email's attachments, stored under `${key}/…` (lib/documentFiles.ts removes them with it). */
     attachmentKeys?: string[];
     /** Why Vink split an email it was unsure about; the Document then waits for a user (never Auto-Send). */
-    splitReason?: string;
+    split?: SplitInfo;
     uploadedBy: string;
     uploaderEmail: string;
     reading?: { json: string; textLayer: Array<{ page: number; text: string }> };
@@ -445,7 +447,7 @@ export async function createDocument(
     mimeType,
     ...(form === null ? {} : { formId: form._id, formVersion: form.version }),
     // `userTouched` rules out Auto-Send: a split Vink was unsure about needs a look.
-    ...(splitReason === undefined ? {} : { splitReason, userTouched: true }),
+    ...(split === undefined ? {} : { splitInfo: split, userTouched: true }),
     state: "extracting",
   });
   await claimUpload(ctx, document.key);
@@ -457,12 +459,12 @@ export async function createDocument(
     byEmail: document.uploaderEmail,
     at: Date.now(),
   });
-  if (splitReason !== undefined) {
+  if (split !== undefined) {
     await ctx.db.insert("documentEvents", {
       organisationId: document.organisationId,
       documentId,
       event: "mail_split",
-      detail: splitReason,
+      info: { code: "mail_split", split },
       by: "vink",
       byEmail: "Vink",
       at: Date.now(),
@@ -565,6 +567,7 @@ export const get = orgQuery({
       mimeType: mimeTypeOf(document),
       // Why Vink split the email this Document came from, when it was unsure.
       splitReason: document.splitReason ?? null,
+      split: document.splitInfo ?? null,
       state: document.state,
       formName: form?.name ?? "",
       formVersion: document.formVersion ?? null,
@@ -573,7 +576,8 @@ export const get = orgQuery({
       doesNotFit: document.doesNotFit ?? false,
       reviewThreshold: document.reviewThreshold ?? null,
       userTouched: document.userTouched ?? false,
-      extractionError: document.extractionError ?? null,
+      // A code, never the server's error text (lib/failure.ts).
+      failure: failureOf(document.extractionError),
       deliveries: await deliveriesOf(ctx, documentId),
       rejection: rejectionOf(document),
       dataDeleted: document.dataDeletedAt !== undefined,
@@ -590,6 +594,7 @@ export const get = orgQuery({
       history: events.map((e) => ({
         event: e.event,
         detail: e.detail ?? null,
+        info: e.info ?? null,
         by: e.byEmail,
         at: e.at,
       })),

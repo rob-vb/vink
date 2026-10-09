@@ -8,6 +8,8 @@ import { internalMutation, internalQuery, type MutationCtx, type QueryCtx } from
 import { confidenceOf, reviewReasonsOf } from "./lib/confidence";
 import { createDeliveries } from "./deliveries";
 import { formOf } from "./lib/documentForm";
+import type { EventInfo } from "./lib/eventInfo";
+import { failureCodeOf } from "./lib/failure";
 import { moveTo } from "./lib/documentStates";
 import { orgMutation } from "./lib/functions";
 import { kindOf, mimeTypeOf } from "./lib/inputLimits";
@@ -39,17 +41,22 @@ export const completed = extractionPool.defineOnComplete<DataModel, typeof compl
   context: completedContext,
   handler: async (ctx, { context: { documentId }, result }) => {
     if (result.kind === "success") return;
-    await markFailed(ctx, documentId, result.kind === "failed" ? result.error : "canceled");
+    await markFailed(ctx, documentId, result.kind === "failed" ? result.error : "canceled", false);
   },
 });
 
-async function markFailed(ctx: MutationCtx, documentId: Id<"documents">, error: string) {
+async function markFailed(
+  ctx: MutationCtx,
+  documentId: Id<"documents">,
+  error: string,
+  unreadable: boolean,
+) {
   const document = await ctx.db.get(documentId);
   if (document === null || document.state !== "extracting") return;
-  await ctx.db.patch(documentId, {
-    // Enough to diagnose; a full stack trace means nothing to a user.
-    extractionError: error.slice(0, 300),
-  });
+  // The technical error is for the logs; the Document keeps a code the review
+  // screen turns into a friendly message (lib/failure.ts).
+  console.error(`Extraction of document ${documentId} failed: ${error.slice(0, 1000)}`);
+  await ctx.db.patch(documentId, { extractionError: failureCodeOf(unreadable) });
   await moveTo(ctx, document, "extraction_failed");
   await ctx.db.insert("documentEvents", {
     organisationId: document.organisationId,
@@ -67,7 +74,7 @@ async function markFailed(ctx: MutationCtx, documentId: Id<"documents">, error: 
  */
 export const failUnreadable = internalMutation({
   args: { documentId: v.id("documents"), error: v.string() },
-  handler: async (ctx, { documentId, error }) => await markFailed(ctx, documentId, error),
+  handler: async (ctx, { documentId, error }) => await markFailed(ctx, documentId, error, true),
 });
 
 /** Starts a failed Extraction again. It resumes at Match when a Reading is stored. */
@@ -178,15 +185,35 @@ export const routedForm = internalQuery({
  * No Form to be moved to a Form or rejected (ADR 0010).
  */
 export const noForm = internalMutation({
-  args: { documentId: v.id("documents"), detail: v.string() },
-  handler: async (ctx, { documentId, detail }) => {
+  args: { documentId: v.id("documents"), reason: v.union(v.literal("no_forms"), v.literal("nothing_read"), v.literal("no_fit")) },
+  handler: async (ctx, { documentId, reason }) => {
     const document = (await ctx.db.get(documentId))!;
     if (document.state !== "extracting") return;
-    await putInNoForm(ctx, document, detail);
+    await putInNoForm(ctx, document, { code: reason });
   },
 });
 
-async function putInNoForm(ctx: MutationCtx, document: Doc<"documents">, detail: string) {
+/** The English text kept beside a routing event's code, for a screen that does not know the code yet. */
+function routingText(info: EventInfo): string {
+  switch (info.code) {
+    case "no_forms":
+      return "The Organisation has no Forms";
+    case "nothing_read":
+      return "Nothing could be read";
+    case "no_fit":
+      return info.form === undefined ? "No Form fits" : `Does not fit ${info.form}`;
+    case "routed":
+      return `${info.form} (${info.percent}%)`;
+    default:
+      return "";
+  }
+}
+
+async function putInNoForm(
+  ctx: MutationCtx,
+  document: Doc<"documents">,
+  info: Extract<EventInfo, { code: "no_forms" | "nothing_read" | "no_fit" }>,
+) {
   await ctx.db.patch(document._id, {
     formId: undefined,
     formVersion: undefined,
@@ -199,7 +226,8 @@ async function putInNoForm(ctx: MutationCtx, document: Doc<"documents">, detail:
     organisationId: document.organisationId,
     documentId: document._id,
     event: "no_form",
-    detail,
+    detail: routingText(info),
+    info,
     by: "vink",
     byEmail: "Vink",
     at: Date.now(),
@@ -286,16 +314,18 @@ export const finish = internalMutation({
       const nothingMatched =
         fieldValues.every((f) => f.sourcePath === null) && lists.every((l) => l.sourcePath === null);
       if (doesNotFit || nothingMatched) {
-        await putInNoForm(ctx, document, `Does not fit ${picked.name}`);
+        await putInNoForm(ctx, document, { code: "no_fit", form: picked.name });
         return;
       }
       await ctx.db.patch(documentId, { formId: routed.formId, formVersion: routed.formVersion });
       document = { ...document, formId: routed.formId, formVersion: routed.formVersion };
+      const routedInfo = { code: "routed" as const, form: picked.name, percent: Math.round(routed.probability * 100) };
       await ctx.db.insert("documentEvents", {
         organisationId: document.organisationId,
         documentId,
         event: "routed",
-        detail: `${picked.name} (${Math.round(routed.probability * 100)}%)`,
+        detail: routingText(routedInfo),
+        info: routedInfo,
         by: "vink",
         byEmail: "Vink",
         at: Date.now(),

@@ -6,8 +6,8 @@
   "form": "Formulier",
   "list": {
     "welcome": "Welkom bij {organisation}",
-    "adminIntro": "Maak een Formulier voor elke soort document die je ontvangt, en Vink vult het in vanuit je pdf's.",
-    "memberIntro": "Een Admin maakt eerst een Formulier voor elke soort document die je ontvangt. Daarna kun je hier pdf's uploaden.",
+    "adminIntro": "Maak een Formulier voor elke soort document die je ontvangt, en Vink vult het in vanuit wat je ontvangt.",
+    "memberIntro": "Een Admin maakt eerst een Formulier voor elke soort document die je ontvangt. Daarna kun je hier bestanden uploaden.",
     "goToForms": "Naar Formulieren",
     "extracting": "Wordt gelezen",
     "noSystem": {
@@ -32,6 +32,7 @@
     "notSupported": "Dit bestand leest Vink niet. Kies een pdf, JPG, PNG, HEIC of .eml.",
     "tooLarge": "Groter dan 10 MB. Vink neemt bestanden tot 10 MB aan.",
     "failed": "We konden dit bestand niet uploaden. Probeer het opnieuw.",
+    "emailFailed": "We konden deze e-mail niet uploaden. Probeer het opnieuw.",
     "outOfItems": "Je hebt nog {remaining} {remaining, plural, one {item} other {items}}; hiervoor zijn er {needed} nodig.",
     "uploaded": "{count, plural, one {# document geüpload} other {# documenten geüpload}}",
     "readingNow": "Vink leest ze nu.",
@@ -70,6 +71,7 @@
     "gone": "Het bestand en de gegevens zijn weg; alleen dit record en de geschiedenis blijven bewaard.",
     "failedTitle": "Vink kon dit Document niet lezen",
     "failedText": "Vink heeft het vier keer geprobeerd. Meestal is dit een tijdelijke storing, dus probeer het opnieuw. Als er al een Reading is opgeslagen, gaat de nieuwe poging daar verder en wordt het bestand niet opnieuw gelezen.",
+    "failedUnreadable": "Dit bestand is niet bruikbaar: het is beschadigd of van een type dat Vink niet leest. Een nieuwe poging helpt niet. Upload het opnieuw of wijs het af.",
     "retry": "Opnieuw proberen",
     "dataDeleted": "Gegevens verwijderd",
     "dataDeletedBy": "Het bestand, wat Vink las en de waarden zijn op {date} verwijderd door {name}. Alleen dit record, de geschiedenis en het leveringslog blijven bewaard.",
@@ -91,7 +93,7 @@
   "reject": {
     "button": "Afwijzen",
     "title": "Dit Document afwijzen?",
-    "description": "{filename} wordt nooit goedgekeurd of verstuurd. Het blijft in de lijst Afgewezen staan, en je kunt het heropenen zolang de pdf bewaard wordt.",
+    "description": "{filename} wordt nooit goedgekeurd of verstuurd. Het blijft in de lijst Afgewezen staan, en je kunt het heropenen zolang het bestand bewaard wordt.",
     "reason": "Reden (optioneel)",
     "placeholder": "Lege scan, onleesbaar, geen werkbon…",
     "reasonHelp": "Je team ziet dit naast het Document.",
@@ -102,7 +104,7 @@
   "delete": {
     "button": "Nu verwijderen",
     "title": "{filename} definitief verwijderen?",
-    "description": "De pdf, wat Vink las, elke waarde en de antwoorden van je systeem worden nu verwijderd en zijn niet terug te halen. Leveringen die nog niet zijn verstuurd, worden geannuleerd. Alleen de bestandsnaam, wie het uploadde en goedkeurde, de datums, de geschiedenis en de leveringsstatus blijven bewaard, met de regel \"Verwijderd door jou\".",
+    "description": "Het bestand, wat Vink las, elke waarde en de antwoorden van je systeem worden nu verwijderd en zijn niet terug te halen. Leveringen die nog niet zijn verstuurd, worden geannuleerd. Alleen de bestandsnaam, wie het uploadde en goedkeurde, de datums, de geschiedenis en de leveringsstatus blijven bewaard, met de regel \"Verwijderd door jou\".",
     "toast": "{filename} is verwijderd."
   },
   "pdf": {

@@ -158,6 +158,7 @@ test("with two Forms, Jev routes each Document to its own Form and the Items are
   const history = (await read(org, first)).history;
   expect(history.map((h) => h.event)).toEqual(["uploaded", "routed", "extracted"]);
   expect(history[1].detail).toBe("Invoice (90%)");
+  expect(history[1].info).toEqual({ code: "routed", form: "Invoice", percent: 90 });
   expect(await used(org)).toBe(2);
 });
 
@@ -171,6 +172,7 @@ test("with two Forms, input that no Form is made for goes to No Form, with its R
   expect(document).toMatchObject({ state: "no_form", formId: null, formVersion: null, formName: "" });
   expect(document.history.map((h) => h.event)).toEqual(["uploaded", "no_form"]);
   expect(document.history[1].detail).toBe("No Form fits");
+  expect(document.history[1].info).toEqual({ code: "no_fit" });
   // Jev found none, so nothing was matched, filled or verified.
   expect(steps()).toEqual(["read", "route"]);
   const stored = await t.run(async (ctx) => await ctx.db.query("readings").collect());
@@ -190,6 +192,7 @@ test("a Form Jev picks that fails the fit check is not kept: the Document goes t
   expect(document).toMatchObject({ state: "no_form", formId: null, doesNotFit: false });
   expect(document.history.map((h) => h.event)).toEqual(["uploaded", "no_form"]);
   expect(document.history[1].detail).toBe("Does not fit Invoice");
+  expect(document.history[1].info).toEqual({ code: "no_fit", form: "Invoice" });
   // Nothing was matched, so there was nothing to fill or verify.
   expect(steps()).toEqual(["read", "route", "match"]);
   const values = await t.run(async (ctx) => await ctx.db.query("fieldValues").collect());
@@ -408,6 +411,7 @@ test("a Reading with no values goes to No Form without asking Jev", async () => 
   const document = await read(org, documentId);
   expect(document).toMatchObject({ state: "no_form", formId: null });
   expect(document.history[1].detail).toBe("Nothing could be read");
+  expect(document.history[1].info).toEqual({ code: "nothing_read" });
   expect(steps()).toEqual(["read"]);
   expect(await used(org)).toBe(1);
 });

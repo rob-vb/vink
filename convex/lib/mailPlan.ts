@@ -2,6 +2,7 @@
 // intake. Jev's call (lib/splitter.ts) comes in as `decision`; this turns it
 // into the Documents to create, and whether a user must look at them.
 import { type CountedInput, itemCountOf } from "./inputLimits";
+import type { SplitInfo } from "./eventInfo";
 
 /** An attachment that passed the checks: a PDF or an image, stored under `key`. */
 export type MailPart = {
@@ -46,7 +47,7 @@ export type MailPlan = {
   /** The text was dropped as a cover note: not a Document, not charged. Only set when Jev was sure. */
   coverNote: boolean;
   /** Set when Vink was unsure: every Document gets this reason and waits for a user. */
-  unsure: string | null;
+  unsure: SplitInfo | null;
 };
 
 function counted(part: MailPart): CountedInput & { kind: "pdf" | "image" } {
@@ -65,12 +66,6 @@ export function itemsOfPlanned(planned: PlannedDocument, body: string): number {
   }
   return itemCountOf(counted(planned.part));
 }
-
-const ANSWER_LABELS: Record<SplitAnswer, string> = {
-  together: "one case",
-  cover_note: "separate papers with the text only a cover note",
-  apart: "separate papers",
-};
 
 /**
  * The Documents of one email.
@@ -112,7 +107,7 @@ export function planMail(body: string, parts: MailPart[], decision: SplitDecisio
     coverNote: false,
     unsure: sure
       ? null
-      : `Vink was not sure whether this email is one case or ${documents.length} separate papers (${Math.round(decision.probability * 100)}% sure of "${ANSWER_LABELS[decision.answer]}"), so it made ${documents.length} Documents. Check whether they belong together.`,
+      : { answer: decision.answer, percent: Math.round(decision.probability * 100), documents: documents.length },
   };
 }
 

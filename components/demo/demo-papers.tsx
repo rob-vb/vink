@@ -471,7 +471,7 @@ function WorkOrderPhoto({ alt }: { alt: string }) {
         {[
           ["Klant", "Café Het Anker", 92],
           ["Datum", "30/9/26", 128],
-          ["Werk", "Tap vervangen", 164],
+          ["Werk", "Kraan vervangen", 164],
           ["Uren", "2,5 u", 200],
           ["Materiaal", "mengkraan + slangen", 236],
         ].map(([label, value, y]) => (

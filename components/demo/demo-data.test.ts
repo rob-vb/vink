@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { findSource } from "@/components/documents/review-panes";
-import { seedDocuments } from "./demo-data";
+import { inLocale, seedDocuments } from "./demo-data";
 import { demoPages, demoPhotos } from "./demo-papers";
 import { initialDocuments, type Locale } from "./demo-state";
 
@@ -16,7 +16,7 @@ describe("the demo's emails and photos", () => {
     for (const seed of emails) {
       for (const locale of locales) {
         for (const field of seed.fields.filter((f) => f.page === 1)) {
-          expect(findSource(seed.email!.body[locale], field.readText), `${seed.id} ${field.key} ${locale}`).not.toBeNull();
+          expect(findSource(seed.email!.body[locale], inLocale(field.readText, locale)), `${seed.id} ${field.key} ${locale}`).not.toBeNull();
         }
       }
     }
@@ -57,7 +57,26 @@ describe("the demo's emails and photos", () => {
       const noForm = initialDocuments(locale).filter((d) => d.state === "no_form");
       expect(noForm.map((d) => d.id)).toEqual(["newsletter"]);
       expect(noForm[0].fieldValues).toEqual([]);
-      expect(noForm[0].noFormDetail).toBeTruthy();
+      expect(noForm[0].noFormInfo).toEqual({ code: "no_fit", form: locale === "nl" ? "Facturen" : "Invoices" });
+    }
+  });
+});
+
+describe("the demo's values follow the language", () => {
+  const valueOf = (locale: Locale, id: string, key: string) =>
+    initialDocuments(locale)
+      .find((d) => d.id === id)!
+      .fieldValues.find((f) => f.key === key)!.value;
+
+  it("writes what Vink saw in a photo in the visitor's language", () => {
+    expect(valueOf("nl", "complaint", "problem")).toBe("Plas water onder de machine");
+    expect(valueOf("en", "complaint", "problem")).toBe("Puddle under the machine");
+  });
+
+  it("keeps the words of the drawn work order, which is Dutch in both languages", () => {
+    for (const locale of locales) {
+      expect(valueOf(locale, "workorder", "work")).toBe("Kraan vervangen");
+      expect(valueOf(locale, "workorder", "materials")).toBe("mengkraan + slangen");
     }
   });
 });

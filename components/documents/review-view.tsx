@@ -8,6 +8,8 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import type { EventInfo } from "@/convex/lib/eventInfo";
+import { eventDetailText } from "./event-detail";
 import { useDocumentsLabels, type DocumentEvent, type DocumentState } from "./labels";
 
 /*
@@ -108,7 +110,7 @@ export function ApprovalAlert({
 }
 
 /** A Document in No Form: no Form fits it. `actions` are Change Form and Reject. */
-export function NoFormAlert({ actions }: { actions?: ReactNode }) {
+export function NoFormAlert() {
   const { labels } = useDocumentsLabels();
   return (
     <Alert className="border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
@@ -116,7 +118,6 @@ export function NoFormAlert({ actions }: { actions?: ReactNode }) {
       <AlertTitle>{labels.review.noForm.title}</AlertTitle>
       <AlertDescription className="text-amber-900/80 dark:text-amber-200/80">
         <p>{labels.review.noForm.text}</p>
-        {actions && <div className="mt-2 flex flex-wrap gap-2">{actions}</div>}
       </AlertDescription>
     </Alert>
   );
@@ -240,7 +241,7 @@ export function DeliveriesSection<D extends DeliveryView & { integrationName: st
 export function HistorySection({
   history,
 }: {
-  history: Array<{ event: DocumentEvent; detail: string | null; by: string; at: number }>;
+  history: Array<{ event: DocumentEvent; detail: string | null; info?: EventInfo | null; by: string; at: number }>;
 }) {
   const { labels, format } = useDocumentsLabels();
   return (
@@ -249,21 +250,24 @@ export function HistorySection({
         {labels.review.history}
       </h2>
       <ol className="grid gap-2 text-sm">
-        {history.map((entry, i) => (
-          <li key={i} className="flex flex-wrap justify-between gap-x-4">
-            <span>
-              {labels.review.events[entry.event]}
-              {entry.detail && <span className="text-muted-foreground"> · {entry.detail}</span>}
-              <span className="text-muted-foreground"> · {entry.by}</span>
-            </span>
-            <time
-              className="text-muted-foreground tabular-nums"
-              dateTime={new Date(entry.at).toISOString()}
-            >
-              {format.dateTime(entry.at)}
-            </time>
-          </li>
-        ))}
+        {history.map((entry, i) => {
+          const detail = eventDetailText(entry, labels);
+          return (
+            <li key={i} className="flex flex-wrap justify-between gap-x-4">
+              <span>
+                {labels.review.events[entry.event]}
+                {detail && <span className="text-muted-foreground"> · {detail}</span>}
+                <span className="text-muted-foreground"> · {entry.by}</span>
+              </span>
+              <time
+                className="text-muted-foreground tabular-nums"
+                dateTime={new Date(entry.at).toISOString()}
+              >
+                {format.dateTime(entry.at)}
+              </time>
+            </li>
+          );
+        })}
       </ol>
     </section>
   );

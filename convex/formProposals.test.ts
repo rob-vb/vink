@@ -115,7 +115,7 @@ test("a sample PDF is read in the background, then every piece of data is propos
   await settle(t);
 
   const proposal = await read();
-  expect(proposal).toMatchObject({ state: "ready", filename: "voorbeeld.pdf", error: null });
+  expect(proposal).toMatchObject({ state: "ready", filename: "voorbeeld.pdf", failure: null });
   expect(proposal.fields.map((f) => [f.field.key, f.ticked, f.field.required])).toEqual([
     ["license_plate", true, false],
     ["mileage_km", true, false],
@@ -176,12 +176,14 @@ test("with \"Also process this sample\" off, the sample's PDF and Reading are de
   expect(left).toEqual({ documents: [], proposals: [] });
 });
 
-test("a failed proposal shows its error and can be retried without reading the sample again", async () => {
+test("a failed proposal shows a friendly failure code, never the server's error, and can be retried without reading the sample again", async () => {
   const t = newBackend();
   fakePipeline.failTimes("propose", 4);
   const { user, organisationSlug, proposalId, read } = await proposed(t);
   await settle(t);
-  expect(await read()).toMatchObject({ state: "failed", error: expect.stringContaining("propose is down") });
+  const failed = await read();
+  expect(failed).toMatchObject({ state: "failed", failure: "failed" });
+  expect(JSON.stringify(failed)).not.toContain("propose is down");
   fakePipeline.calls = [];
 
   await user.mutation(api.formProposals.retry, { organisationSlug, proposalId });

@@ -1,5 +1,6 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
+import { eventInfo, splitInfo } from "./lib/eventInfo";
 
 export const role = v.union(v.literal("admin"), v.literal("member"));
 
@@ -328,7 +329,10 @@ export default defineSchema({
     attachmentKeys: v.optional(v.array(v.string())),
     // Why Vink split an email it was unsure about into this Document and its
     // siblings (convex/intake.ts). It keeps Auto-Send off: a user looks first.
+    // `splitInfo` is the structured reason; `splitReason` is the English text
+    // older Documents were written with.
     splitReason: v.optional(v.string()),
+    splitInfo: v.optional(splitInfo),
     uploadedBy: v.string(),
     // Copied from the uploader at upload time, for the Document list.
     uploaderEmail: v.string(),
@@ -586,8 +590,13 @@ export default defineSchema({
       v.literal("data_deleted"),
       v.literal("deleted"),
     ),
-    // What it was about, e.g. the corrected Field's label.
+    // What it was about, e.g. the corrected Field's label. Events from before
+    // `info` keep their English text here, and Vink's routing events still fill
+    // it as a fallback.
     detail: v.optional(v.string()),
+    // The same as a code with parameters, which the screens write in the
+    // user's language (lib/eventInfo.ts).
+    info: v.optional(eventInfo),
     // The user's id, or `vink` for what Vink did itself.
     by: v.string(),
     // Copied from the user at the time, like `documents.uploaderEmail`.

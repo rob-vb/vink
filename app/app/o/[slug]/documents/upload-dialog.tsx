@@ -211,7 +211,7 @@ export function UploadDialog({
       setEmailError({
         text: outOfItems
           ? t("upload.outOfItems", (error as ConvexError<{ remaining: number; needed: number }>).data)
-          : errorText(error, t("upload.failed")),
+          : errorText(error, t("upload.emailFailed")),
         outOfItems,
       });
     } finally {
