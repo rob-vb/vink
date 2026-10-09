@@ -219,7 +219,7 @@ function Stop({
 /** Stop 2's example tabs, each one of the demo's Documents. */
 const exampleTabs = [
   { tab: "invoice", documentId: "invoice" },
-  { tab: "deliveryNote", documentId: "delivery" },
+  { tab: "claimForm", documentId: "claim" },
   { tab: "handwritten", documentId: "service" },
   { tab: "orderForm", documentId: "order" },
 ] as const satisfies ReadonlyArray<{ tab: string; documentId: DemoDocumentId }>;
@@ -249,7 +249,7 @@ function Journey() {
             }
             visual={
               <div className="light-island rounded-2xl bg-panel p-4 sm:p-6">
-                <PapersRow documentIds={["invoice", "delivery", "service"]} label={t("journey.arrives.title")} />
+                <PapersRow documentIds={["invoice", "claim", "service"]} label={t("journey.arrives.title")} />
               </div>
             }
           />
@@ -289,7 +289,7 @@ function Journey() {
             title={t("journey.check.title")}
             body={t("journey.check.body")}
             visual={
-              <ScreenshotFrame title={<ReviewFrameTitle documentId="delivery" />}>
+              <ScreenshotFrame title={<ReviewFrameTitle documentId="claim" />}>
                 <CheckStill label={t("journey.check.title")} />
               </ScreenshotFrame>
             }
@@ -299,7 +299,7 @@ function Journey() {
             kicker={t("journey.lands.kicker")}
             title={t("journey.lands.title")}
             body={t("journey.lands.body")}
-            visual={<DeliveriesMock files={(["invoice", "delivery", "order"] as const).map(filename)} />}
+            visual={<DeliveriesMock files={(["invoice", "claim", "order"] as const).map(filename)} />}
           />
         </ol>
       </Container>

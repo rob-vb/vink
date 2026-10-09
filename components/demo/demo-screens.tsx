@@ -325,12 +325,20 @@ export function DemoReviewScreen({
                 onPageChange={handlers.onPageChange}
                 highlight={highlight}
                 className="h-full"
-                renderAttachment={(index) => {
+                renderAttachment={(index, localPage, onLocalPage) => {
                   const attachment = document.email!.attachments[index];
-                  const photo = document.attachmentPhotos[index];
-                  return (
-                    <ImagePaneView filename={attachment.filename} mimeType={attachment.mimeType}>
-                      {Photo(photo)}
+                  const view = document.attachmentViews[index];
+                  return "pdf" in view ? (
+                    <DemoPdfPane
+                      key={index}
+                      documentId={view.pdf}
+                      page={localPage}
+                      onPageChange={onLocalPage}
+                      labels={paneLabels}
+                    />
+                  ) : (
+                    <ImagePaneView key={index} filename={attachment.filename} mimeType={attachment.mimeType}>
+                      {Photo(view.photo)}
                     </ImagePaneView>
                   );
                 }}

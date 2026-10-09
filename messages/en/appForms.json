@@ -127,7 +127,7 @@
     "deriveKey": "Derive from label",
     "type": "Type",
     "description": "Description",
-    "descriptionPlaceholder": "Other words the paper may use, e.g. delivery date, Lieferdatum, date de livraison",
+    "descriptionPlaceholder": "Other words the paper may use, e.g. invoice date, Rechnungsdatum, date de facturation",
     "descriptionHelp": "Optional. Synonyms and other languages help Vink find this Field on differently worded documents.",
     "required": "Required",
     "requiredList": "A Document without at least one entry always needs review before it is sent.",
@@ -141,7 +141,7 @@
     "removeOption": "Remove option {number}",
     "addOption": "Add option",
     "subFields": "Sub-Fields",
-    "subFieldsDescription": "A List holds one entry per item on the document, for example per delivery note line or per invoice line. Each entry has these sub-Fields.",
+    "subFieldsDescription": "A List holds one entry per item on the document, for example per order line or per invoice line. Each entry has these sub-Fields.",
     "subFieldsCount": "This List has {count}; select one in the Field list to edit it.",
     "addSubField": "Add sub-Field"
   },
@@ -153,7 +153,7 @@
     "reviewThreshold": "Review Threshold",
     "reviewThresholdDescription": "From 0 to 1. A value whose confidence is below it needs review.",
     "autoSend": "Auto-Send",
-    "autoSendDescription": "Approve and send a Document by itself right after it is read, when nothing on it needs review, Jev has verified it, it fits this Form and nobody has changed it. Applies to Documents read from now on.",
+    "autoSendDescription": "Approve and send a Document by itself right after it is read, when nothing on it needs review, it has been verified, it fits this Form and nobody has changed it. Applies to Documents read from now on.",
     "save": "Save settings"
   },
   "intake": {

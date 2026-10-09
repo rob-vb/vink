@@ -44,7 +44,7 @@ export function ReviewHeader({
   reviewThreshold: number | null;
   backHref?: string;
   onBack?: () => void;
-  /** Next to the state badge, e.g. "Not verified by Jev". */
+  /** Next to the state badge, e.g. "Not verified". */
   badges?: ReactNode;
   actions?: ReactNode;
 }) {

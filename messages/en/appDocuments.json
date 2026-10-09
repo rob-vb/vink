@@ -58,8 +58,8 @@
   },
   "review": {
     "metaTitle": "Review · Vink",
-    "notVerified": "Not verified by Jev",
-    "notVerifiedTip": "Jev couldn't verify this Document, so it is never approved automatically.",
+    "notVerified": "Not verified",
+    "notVerifiedTip": "This Document could not be verified, so it is never approved automatically.",
     "approvedToast": "{filename} is approved.",
     "nothingElse": "Nothing else needs review.",
     "approvalFailed": "Approval didn't work. Try again.",

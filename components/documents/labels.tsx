@@ -169,7 +169,7 @@ export const englishLabels = {
         case "nothing_read":
           return "Nothing could be read";
         case "no_fit":
-          return info.form === undefined ? "Jev picked none of the Forms" : `Does not fit ${info.form}`;
+          return info.form === undefined ? "The system picked none of the Forms" : `Does not fit ${info.form}`;
         case "form_changed":
           return `${info.from ?? "No Form"} → ${info.to}`;
         case "mail_split":
@@ -214,7 +214,7 @@ export const englishLabels = {
       unsure: "Read as unsure",
       conflicting: "Conflicting readings",
     } satisfies Record<ReviewReason, string>,
-    signals: { match: "Match", fit: "Jev fit", support: "Jev support" } satisfies Record<Signal, string>,
+    signals: { match: "Match", fit: "Fit", support: "Support" } satisfies Record<Signal, string>,
     lowestSignal: "lowest signal",
     readOn: (pages: number[]) => `Read on ${pagesLabel(pages)}`,
     notFound: "Not found on the Document",

@@ -1,6 +1,7 @@
 import { Caveat } from "next/font/google";
 import type { ReactNode } from "react";
 import { cn } from "cn";
+import { CLAIM_ITEMS } from "./demo-data";
 
 // Handwriting on the demo's paper pages.
 const hand = Caveat({ subsets: ["latin"], weight: ["500", "600"], preload: false });
@@ -144,55 +145,102 @@ function InvoicePage() {
 
 const scan = "bg-[#F4F4F1] grayscale-[1] contrast-[1.05]";
 
-function DeliveryPage1() {
+/** The damage claim email's PDF: a form the customer filled in on a computer, so typed and sharp. */
+function ClaimFormPage() {
+  const box = (ticked: boolean) => (ticked ? "☒" : "☐");
   return (
-    <Paper className={scan} style={{ transform: "rotate(-0.6deg)" }}>
-      <Head name="Van Dijk Logistiek" lines={["Havenweg 3", "Rotterdam"]} />
-      <Title>PAKBON · DELIVERY NOTE</Title>
-      <Facts
-        rows={[
-          ["No.", "PB-77120"],
-          ["Date", "22-09-2026"],
-          ["Your ref.", "PO 4471"],
-          ["Deliver to", "Kantoor Noord B.V."],
-        ]}
-      />
-      <Lines
-        head={["Item", "Qty"]}
-        rows={[
-          [
-            "Pallets, mixed goods",
-            <span key="q">
-              <s>5</s> <span className={cn(pen, "text-[19px]")}>6</span>
-            </span>,
-          ],
-          ["Returned crates", "12"],
-        ]}
-      />
-      <Foot>Page 1 of 2 · continued overleaf</Foot>
+    <Paper className="p-0 text-[10.5px] leading-[1.4]">
+      <div className="flex items-end justify-between bg-[#1F4E79] px-6 pt-4 pb-3 text-white">
+        <div>
+          <b className="block text-[14px] tracking-wide">Assurantiekantoor De Meerkoet</b>
+          <span className="text-[9.5px] opacity-80">Stationsweg 8, Amersfoort · schade@demeerkoet.nl</span>
+        </div>
+        <span className="text-[9.5px] opacity-80">Formulier SW-3</span>
+      </div>
+      <div className="px-6 pt-3">
+        <div className="mb-2 text-[13px] font-bold">Schademeldingsformulier woonhuis/inboedel</div>
+        <ClaimSection title="1. Verzekerde">
+          <Facts
+            rows={[
+              ["Polisnummer", "WH-2048-7731"],
+              ["Naam verzekerde", "Marieke Bosman"],
+              ["Risicoadres", "Klaprooslaan 14, 3824 XK Amersfoort"],
+              ["IBAN", "NL91 ABNA 0417 1643 00"],
+            ]}
+          />
+        </ClaimSection>
+        <ClaimSection title="2. De schade">
+          <Facts
+            rows={[
+              ["Schadedatum", "27-09-2026"],
+              [
+                "Oorzaak",
+                <span key="cause" className="flex flex-wrap gap-x-3">
+                  {["Lekkage leiding", "Wasmachine of vaatwasser", "Neerslag", "Overig"].map((option) => (
+                    <span key={option}>
+                      {box(false)} {option}
+                    </span>
+                  ))}
+                </span>,
+              ],
+              [
+                "Toelichting",
+                "Zaterdagochtend stond er water onder het aanrecht en in de woonkamer. Het water kwam onder de keukenkast vandaan, mogelijk de afvoer van de vaatwasser.",
+              ],
+            ]}
+          />
+        </ClaimSection>
+        <ClaimSection title="3. Beschadigde zaken">
+          <table className="mb-1 w-full border-collapse tabular-nums">
+            <thead>
+              <tr className="bg-[#EEF3F8] text-left">
+                <th className="px-1.5 py-0.5 font-semibold">Omschrijving</th>
+                <th className="px-1.5 py-0.5 font-semibold">Aanschafjaar</th>
+                <th className="px-1.5 py-0.5 text-right font-semibold">Aanschafwaarde</th>
+                <th className="px-1.5 py-0.5 text-right font-semibold">Geclaimd</th>
+              </tr>
+            </thead>
+            <tbody>
+              {CLAIM_ITEMS.map(([description, year, value, claimed]) => (
+                <tr key={description} className="border-b border-[#D9DDE3]">
+                  <td className="px-1.5 py-0.5">{description}</td>
+                  <td className="px-1.5 py-0.5">{year}</td>
+                  <td className="px-1.5 py-0.5 text-right">{value}</td>
+                  <td className="px-1.5 py-0.5 text-right">{claimed}</td>
+                </tr>
+              ))}
+              <tr>
+                <td colSpan={3} className="px-1.5 py-0.5 text-right font-bold">
+                  Totaal geclaimd
+                </td>
+                <td className="px-1.5 py-0.5 text-right font-bold">1.685,00</td>
+              </tr>
+            </tbody>
+          </table>
+        </ClaimSection>
+        <ClaimSection title="4. Ondertekening">
+          <Facts
+            rows={[
+              ["Foto's bijgevoegd", `${box(true)} Ja  ${box(false)} Nee`],
+              ["Datum", "29-09-2026"],
+              ["Handtekening", <i key="sign" className="text-[13px]">Marieke Bosman</i>],
+            ]}
+          />
+        </ClaimSection>
+      </div>
+      <Foot>{"Stuur dit formulier met foto's naar schade@demeerkoet.nl · Pagina 1 van 1"}</Foot>
     </Paper>
   );
 }
 
-function DeliveryPage2() {
+function ClaimSection({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <Paper className={scan} style={{ transform: "rotate(0.4deg)" }}>
-      <Title>RECEIPT OF GOODS</Title>
-      <p className="mb-4">Goods received in good order, unless noted below.</p>
-      <Line label="Remarks">
-        <span className={cn(pen, "text-[17px]")}>1 pallet corner damaged</span>
-      </Line>
-      <Line label="Received by">
-        <span className={cn(pen, "inline-block -rotate-3 text-[20px]")}>M. Jansen</span>
-      </Line>
-      <Line label="Date / time">
-        <span className={cn(pen, "text-[19px]")}>22/9 · 10:40</span>
-      </Line>
-      <div className="absolute right-6 bottom-12 -rotate-6 border-2 border-[#B91C1C] px-2 py-1 text-[11px] font-bold tracking-[0.1em] text-[#B91C1C] opacity-70">
-        RECEIVED
+    <section>
+      <div className="mb-1 border-b border-[#1F4E79] pb-0.5 text-[10px] font-bold tracking-[0.08em] text-[#1F4E79] uppercase">
+        {title}
       </div>
-      <Foot>Page 2 of 2</Foot>
-    </Paper>
+      {children}
+    </section>
   );
 }
 
@@ -240,7 +288,7 @@ function OrderPage() {
         rows={[
           ["Customer", "Café Het Anker"],
           ["Order date", "28-09-2026"],
-          ["Delivery", "02-10-2026"],
+          ["Phone", "050 311 2040"],
         ]}
       />
       <Lines
@@ -251,7 +299,7 @@ function OrderPage() {
           ["Paper cups 250ml", "1000"],
         ]}
       />
-      <p className={cn(pen, "text-[19px]")}>Please deliver Wed 1/10</p>
+      <p className={cn(pen, "text-[19px]")}>New no. 050 311 2044</p>
       <Foot>Page 1/1</Foot>
     </Paper>
   );
@@ -410,7 +458,7 @@ export const invoicePages = {
 /** Each PDF demo Document's pages, in order. */
 export const demoPages = {
   invoice: [InvoicePage],
-  delivery: [DeliveryPage1, DeliveryPage2],
+  claim: [ClaimFormPage],
   service: [ServiceRequestPage],
   order: [OrderPage],
   receipt: [ReceiptPage],
@@ -420,8 +468,9 @@ export type DemoPdfId = keyof typeof demoPages;
 
 /*
  * The demo's photos, drawn as SVG so they scale with the image pane's zoom: a
- * leaking espresso machine (the complaint email's attachment) and a handwritten work order
- * on a table (a photo Document).
+ * leaking espresso machine (the complaint email's attachment), wet laminate and
+ * a stained kitchen cabinet (the damage claim email's), and a handwritten work
+ * order on a table (a photo Document).
  */
 
 function MachinePhoto({ alt }: { alt: string }) {
@@ -490,12 +539,80 @@ function WorkOrderPhoto({ alt }: { alt: string }) {
   );
 }
 
-/** The photos of the demo's photo Documents and email attachments, by Document. */
-export const demoPhotos = { complaint: MachinePhoto, workorder: WorkOrderPhoto } as const;
+
+function FloorPhoto({ alt }: { alt: string }) {
+  // Laminate seen from above at an angle: planks narrow towards the wall, two seams swollen by water.
+  const rows = [300, 248, 202, 162, 128, 99, 75];
+  return (
+    <svg viewBox="0 0 400 300" role="img" aria-label={alt} className="block h-auto w-full">
+      <rect width="400" height="300" fill="#B08A5E" />
+      <rect width="400" height="62" fill="#E7E2D8" />
+      <rect y="52" width="400" height="14" fill="#F4F1EA" />
+      <rect y="64" width="400" height="3" fill="#C9C1B2" />
+      {rows.slice(0, -1).map((y, i) => (
+        <g key={y}>
+          <rect y={rows[i + 1]} width="400" height={y - rows[i + 1]} fill={i % 2 ? "#B9946A" : "#A98258"} />
+          <path d={`M0 ${rows[i + 1]} H400`} stroke="#7A5A3A" strokeWidth={1 + (6 - i) * 0.15} />
+          <path
+            d={`M${(i * 97) % 300 + 40} ${rows[i + 1]} V${y}`}
+            stroke="#7A5A3A"
+            strokeWidth="1.2"
+          />
+          <path d={`M14 ${rows[i + 1] + (y - rows[i + 1]) * 0.45} q90 -3 180 1 t200 -1`} stroke="#8E6B46" strokeWidth=".8" fill="none" opacity=".6" />
+        </g>
+      ))}
+      <ellipse cx="200" cy="215" rx="175" ry="48" fill="#3E5F75" opacity=".28" />
+      <ellipse cx="170" cy="205" rx="80" ry="12" fill="#DCEAF2" opacity=".45" />
+      <ellipse cx="270" cy="236" rx="40" ry="6" fill="#DCEAF2" opacity=".4" />
+      {[162, 202].map((y) => (
+        <g key={y}>
+          <path d={`M20 ${y} q45 -9 90 -2 q50 -10 100 -1 q55 -9 110 0 q40 -6 70 1`} fill="none" stroke="#6B4A2A" strokeWidth="5" />
+          <path d={`M20 ${y - 3} q45 -9 90 -2 q50 -10 100 -1 q55 -9 110 0 q40 -6 70 1`} fill="none" stroke="#D9B98C" strokeWidth="2" />
+        </g>
+      ))}
+      <path d="M20 128 q60 -4 120 0" stroke="#D9B98C" strokeWidth="1.5" fill="none" opacity=".7" />
+      <path d="M250 99 l14 -2 l14 2" stroke="#D9B98C" strokeWidth="1.5" fill="none" opacity=".7" />
+    </svg>
+  );
+}
+
+function CabinetPhoto({ alt }: { alt: string }) {
+  // The lower part of a white kitchen base cabinet, its plinth swollen and stained by water.
+  return (
+    <svg viewBox="0 0 400 300" role="img" aria-label={alt} className="block h-auto w-full">
+      <rect width="400" height="300" fill="#C9CBC7" />
+      {[0, 80, 160, 240, 320].map((x) => (
+        <rect key={x} x={x} y="236" width="80" height="64" fill="#BFC1BC" stroke="#A9ABA6" />
+      ))}
+      <rect x="30" y="0" width="340" height="206" fill="#F2F1EC" />
+      <path d="M200 0 V206" stroke="#D3D2CC" strokeWidth="3" />
+      <rect x="90" y="40" width="70" height="7" rx="3" fill="#8F9399" />
+      <rect x="240" y="40" width="70" height="7" rx="3" fill="#8F9399" />
+      <rect x="40" y="206" width="320" height="30" fill="#E6E4DD" />
+      <path d="M40 222 q40 -10 80 2 q50 12 90 -2 q50 -12 90 4 q30 8 60 -2 V236 H40 Z" fill="#B49A72" />
+      {/* Water drawn up from the floor: a wavy tide line, darker towards the bottom. */}
+      <path d="M60 206 V190 q8 -14 18 -6 q10 -16 22 -4 q12 -12 22 0 q10 -18 24 -6 q12 -10 22 2 q14 -16 26 -4 q10 -12 22 2 q12 -14 24 -2 q10 -10 20 4 q12 -14 22 0 q10 -8 20 6 q8 -4 12 14 V206 Z" fill="#C9B994" opacity=".7" />
+      <path d="M60 190 q8 -14 18 -6 q10 -16 22 -4 q12 -12 22 0 q10 -18 24 -6 q12 -10 22 2 q14 -16 26 -4 q10 -12 22 2 q12 -14 24 -2 q10 -10 20 4 q12 -14 22 0 q10 -8 20 6 q8 -4 12 14" fill="none" stroke="#8E7448" strokeWidth="2" opacity=".7" />
+      <path d="M70 206 q20 -14 40 -6 q24 -10 50 -2 q26 -8 52 0 q24 -10 48 -2 q20 -6 36 10 Z" fill="#A58E62" opacity=".6" />
+      <path d="M40 236 q60 -6 120 2 q80 8 200 -2" stroke="#6E5A3C" strokeWidth="3" fill="none" />
+      <path d="M120 236 l4 6 M190 238 l-3 7 M260 236 l5 6 M320 236 l-2 6" stroke="#6E5A3C" strokeWidth="2" />
+      <ellipse cx="200" cy="262" rx="150" ry="14" fill="#3E5F75" opacity=".22" />
+      <ellipse cx="170" cy="258" rx="60" ry="4" fill="#E8F1F6" opacity=".6" />
+    </svg>
+  );
+}
+
+/** The photos of the demo's photo Documents and email attachments. */
+export const demoPhotos = {
+  complaint: MachinePhoto,
+  claimFloor: FloorPhoto,
+  claimCabinet: CabinetPhoto,
+  workorder: WorkOrderPhoto,
+} as const;
 
 export type DemoPhotoId = keyof typeof demoPhotos;
 
 /** The demo's Documents that are emails (drawn by the email pane, not here). */
-export type DemoEmailId = "complaint" | "newsletter";
+export type DemoEmailId = "complaint" | "claim" | "newsletter";
 
 export type DemoDocumentId = DemoPdfId | DemoPhotoId | DemoEmailId;

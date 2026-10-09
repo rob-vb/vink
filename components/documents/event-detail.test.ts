@@ -8,7 +8,7 @@ const noFit = { detail: "Does not fit Werkbon", info: { code: "no_fit", form: "W
 test("a routing event is written in the language of the labels, not in the stored English", () => {
   expect(eventDetailText(noFit, dutchLabels)).toBe("Past niet bij Werkbon");
   expect(eventDetailText(noFit, englishLabels)).toBe("Does not fit Werkbon");
-  expect(eventDetailText({ detail: "No Form fits", info: { code: "no_fit" } }, dutchLabels)).toBe("Jev koos geen van de Formulieren");
+  expect(eventDetailText({ detail: "No Form fits", info: { code: "no_fit" } }, dutchLabels)).toBe("Het systeem koos geen van de Formulieren");
   expect(eventDetailText({ detail: null, info: { code: "routed", form: "Factuur", percent: 12 } }, dutchLabels)).toBe(
     "Factuur (12%)",
   );

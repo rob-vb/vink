@@ -44,7 +44,7 @@ const subprocessors = [
   { key: "convex", name: "Convex" },
   { key: "r2", name: "Cloudflare R2" },
   { key: "vertex", name: "Google Cloud Vertex AI" },
-  { key: "typesafe", name: "TypeSafe (Jev)" },
+  { key: "typesafe", name: "TypeSafe" },
   { key: "resend", name: "Resend" },
   { key: "email", name: "Cloudflare Email Routing and Workers" },
   { key: "stripe", name: "Stripe" },

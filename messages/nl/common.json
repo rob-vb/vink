@@ -56,7 +56,7 @@
     "system": "In welk systeem moet het terechtkomen?",
     "systemPlaceholder": "Bijvoorbeeld Exact Online, AFAS, een spreadsheet of je eigen database",
     "documents": "Welke documenten?",
-    "documentsPlaceholder": "Bijvoorbeeld inkoopfacturen en pakbonnen",
+    "documentsPlaceholder": "Bijvoorbeeld inkoopfacturen en schadeformulieren",
     "pagesPerMonth": "Ongeveer hoeveel pagina's per maand?",
     "pagesChoose": "Kies een schatting",
     "pages": {

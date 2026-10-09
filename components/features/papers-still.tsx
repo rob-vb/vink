@@ -3,12 +3,12 @@ import { ScaledStill } from "./scaled-still";
 
 const pages = [
   { Page: demoPages.invoice[0], tilt: "-rotate-2" },
-  { Page: demoPages.delivery[0], tilt: "rotate-1" },
+  { Page: demoPages.claim[0], tilt: "rotate-1" },
   { Page: demoPages.service[0], tilt: "-rotate-1" },
   { Page: demoPages.order[0], tilt: "rotate-2" },
 ];
 
-/** The demo's four kinds of paper side by side: typed, scanned, handwritten, faxed. */
+/** The demo's four kinds of paper side by side: typed, a form filled in on a computer, handwritten, faxed. */
 export function PapersStill({ label }: { label: string }) {
   return (
     <div className="light rounded-2xl bg-[#EDF0F4] p-3 sm:p-5">
