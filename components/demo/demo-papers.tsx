@@ -570,8 +570,8 @@ function FloorPhoto({ alt }: { alt: string }) {
           <path d={`M20 ${y - 3} q45 -9 90 -2 q50 -10 100 -1 q55 -9 110 0 q40 -6 70 1`} fill="none" stroke="#D9B98C" strokeWidth="2" />
         </g>
       ))}
-      <rect x="318" y="88" width="12" height="150" fill="#3B3B3B" />
-      <rect x="312" y="232" width="24" height="7" rx="2" fill="#2A2A2A" />
+      <path d="M20 128 q60 -4 120 0" stroke="#D9B98C" strokeWidth="1.5" fill="none" opacity=".7" />
+      <path d="M250 99 l14 -2 l14 2" stroke="#D9B98C" strokeWidth="1.5" fill="none" opacity=".7" />
     </svg>
   );
 }
@@ -590,12 +590,10 @@ function CabinetPhoto({ alt }: { alt: string }) {
       <rect x="240" y="40" width="70" height="7" rx="3" fill="#8F9399" />
       <rect x="40" y="206" width="320" height="30" fill="#E6E4DD" />
       <path d="M40 222 q40 -10 80 2 q50 12 90 -2 q50 -12 90 4 q30 8 60 -2 V236 H40 Z" fill="#B49A72" />
-      <path
-        d="M70 206 q10 -40 40 -52 q30 -10 50 6 q30 -26 62 -10 q34 -14 56 12 q18 18 30 44 Z"
-        fill="#9C8A6A"
-        opacity=".55"
-      />
-      <path d="M95 206 q14 -30 46 -34 q34 -2 52 10 q26 -18 54 -6 q24 10 34 30 Z" fill="#7E6C4E" opacity=".5" />
+      {/* Water drawn up from the floor: a wavy tide line, darker towards the bottom. */}
+      <path d="M60 206 V190 q8 -14 18 -6 q10 -16 22 -4 q12 -12 22 0 q10 -18 24 -6 q12 -10 22 2 q14 -16 26 -4 q10 -12 22 2 q12 -14 24 -2 q10 -10 20 4 q12 -14 22 0 q10 -8 20 6 q8 -4 12 14 V206 Z" fill="#C9B994" opacity=".7" />
+      <path d="M60 190 q8 -14 18 -6 q10 -16 22 -4 q12 -12 22 0 q10 -18 24 -6 q12 -10 22 2 q14 -16 26 -4 q10 -12 22 2 q12 -14 24 -2 q10 -10 20 4 q12 -14 22 0 q10 -8 20 6 q8 -4 12 14" fill="none" stroke="#8E7448" strokeWidth="2" opacity=".7" />
+      <path d="M70 206 q20 -14 40 -6 q24 -10 50 -2 q26 -8 52 0 q24 -10 48 -2 q20 -6 36 10 Z" fill="#A58E62" opacity=".6" />
       <path d="M40 236 q60 -6 120 2 q80 8 200 -2" stroke="#6E5A3C" strokeWidth="3" fill="none" />
       <path d="M120 236 l4 6 M190 238 l-3 7 M260 236 l5 6 M320 236 l-2 6" stroke="#6E5A3C" strokeWidth="2" />
       <ellipse cx="200" cy="262" rx="150" ry="14" fill="#3E5F75" opacity=".22" />
