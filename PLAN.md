@@ -12,8 +12,7 @@ Goal: Vink takes any input (PDF, email text, photo/scan). A router picks the For
 
 ## Gates (read first)
 
-- **Approved to build (user, 2026-10-08).** Steps 1–12a may be built now, before the employer talk. Start a new session at step 1. No need to ask again.
-- **Employer talk.** The user talks to Heisterkamp in person. Until the user reports the outcome, nothing reaches prod and no marketing copy changes (Q10). This blocks steps 13 and 15 and any deploy.
+- **Approved to build (user, 2026-10-08).** All steps may be built. No need to ask again.
 - **Make app.** It is in review. Step 12b waits until Make approves it.
 - **Real services.** Build on fakes. Test Vertex, R2 and the Worker on the real services once, at the end (step 15).
 - **Branch.** Use `any-input` from `main`. Nothing gets pushed without the user's OK.
@@ -101,8 +100,8 @@ Each step ends green on `npm run typecheck`, `npm run lint` and `npm test`. Each
 - a) Zapier `send-document`: Form optional, more file types. **Proof:** the Zapier tests pass.
 - b) Make: **only after approval.** Publish the change as a new version.
 
-### 13. Marketing copy (gate: employer OK)
-- Includes the new demo document: `.scratch/demo-waterschade/spec.md` (can be built on the branch before the OK; it only goes live after it).
+### 13. Marketing copy
+- Includes the new demo document: `.scratch/demo-waterschade/spec.md` .
 - "Input. Vink. Klaar.", the inputs line, "Zo werkt het" (Form → Systeem → Input), "stuur door naar je Vink-adres", and the Item rule on the pricing page. NL+EN.
 - **Proof:** grep the copy, placeholders and example names for the whole transport domain: transport, logistiek, vracht, vrachtbrief, CMR, chauffeur, rit, koerier, expeditie, fleet, wagenpark, lease, verhuur, garage, banden, kenteken, truck, trailer. Show the hit list to the user before calling this done. Then take e2e screenshots.
 
@@ -154,7 +153,7 @@ Each step ends green on `npm run typecheck`, `npm run lint` and `npm test`. Each
 
 ## Questions for the user
 
-- **Live demo is transport-flavoured (found 10-08, not changed: marketing gate).** The demo and home page use a "pakbon" from "Van Dijk Logistiek" with pallets and "1 pallet corner damaged": `components/demo/demo-data.ts:148-158`, `demo-papers.tsx:147-183,413`, `home-stills.tsx:141-150`, `demo-state.ts:104`, `app/(marketing)/[locale]/page.tsx:222,252,292,302`, `features/page.tsx:166`, `messages/*/home.json` (lines 4, 12, 84, 136), `messages/*/features.json` (alts 75, 106); Orders "Leverdatum"/"Please deliver" (`demo-data.ts:186`, `demo-papers.tsx:243,254`); newsletter "gratis bezorging". **Decided 2026-10-09:** replace it with a waterschade meldformulier at an assurantiekantoor; plan in `.scratch/demo-waterschade/spec.md` (new session). Tests still use tyre/kenteken/Acme Fleet data (not visible to customers).
+- **Live demo is transport-flavoured (found 10-08).** The demo and home page use a "pakbon" from "Van Dijk Logistiek" with pallets and "1 pallet corner damaged": `components/demo/demo-data.ts:148-158`, `demo-papers.tsx:147-183,413`, `home-stills.tsx:141-150`, `demo-state.ts:104`, `app/(marketing)/[locale]/page.tsx:222,252,292,302`, `features/page.tsx:166`, `messages/*/home.json` (lines 4, 12, 84, 136), `messages/*/features.json` (alts 75, 106); Orders "Leverdatum"/"Please deliver" (`demo-data.ts:186`, `demo-papers.tsx:243,254`); newsletter "gratis bezorging". **Decided 2026-10-09:** replace it with a waterschade meldformulier at an assurantiekantoor; plan in `.scratch/demo-waterschade/spec.md` (new session). Tests still use tyre/kenteken/Acme Fleet data (not visible to customers).
 
 
 ## Review follow-ups (from the step 6–10 review)

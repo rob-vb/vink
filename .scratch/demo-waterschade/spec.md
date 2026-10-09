@@ -2,7 +2,7 @@
 
 Status: ready-for-agent
 Branch: build on `any-input` (or a branch from it). Do not push, do not deploy.
-Gate: the marketing-site parts (home page, features page) go live only after the user reports the employer's OK (PLAN.md, step 13).
+Deploy: only with the user's OK, like every deploy.
 
 ## Why
 
@@ -65,7 +65,7 @@ Each step ends green on `npm run typecheck`, `npm run lint` and `npm test`.
 - `components/demo/demo-papers.tsx`: draw the PDF meldformulier and the two photos; remove the pakbon paper (lines ~147-183, ~413).
 - **Proof:** render each SVG to PNG once and look at it (light + dark, phone width).
 
-### 4. Home page and features page (gated: branch only)
+### 4. Home page and features page
 - `components/demo/home-stills.tsx:141-150` (keys `pallets`, `received_by`), `app/(marketing)/[locale]/page.tsx:222,252,292,302` (tab `deliveryNote`, `documentId: "delivery"`), `app/(marketing)/[locale]/features/page.tsx:166`, `messages/*/home.json` (lines 4, 12, 84, 136), `messages/*/features.json` (alts at 75, 106). Rename `deliveryNote` → `claimForm` and rewrite the copy in NL + EN.
 - **Proof:** grep shows no `delivery|pakbon|pallet` left in these files (the Vink term "Delivery" for an Integration send is fine).
 
@@ -81,6 +81,6 @@ Each step ends green on `npm run typecheck`, `npm run lint` and `npm test`.
 ## Out of scope
 
 - The demo film (PLAN.md step 14) is re-recorded later with this document.
-- Any deploy. The live site keeps the pakbon until the employer OK (or until the user says to take it off earlier).
+- Any deploy without the user's OK.
 
 ## Comments
