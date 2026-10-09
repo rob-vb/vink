@@ -114,9 +114,9 @@ Each step ends green on `npm run typecheck`, `npm run lint` and `npm test`. Each
 
 ## Status
 
-- [x] 1 · [x] 2 · [x] 3 · [x] 4 · [x] 5 · [x] 6 · [x] 7 · [~] 8 · [~] 9 · [~] 10 · [x] 11 · [x] 12a · [ ] 12b · [ ] 13 · [ ] 14 · [ ] 15
+- [x] 1 · [x] 2 · [x] 3 · [x] 4 · [x] 5 · [x] 6 · [x] 7 · [x] 8 · [x] 9 · [x] 10 · [x] 11 · [x] 12a · [ ] 12b · [ ] 13 · [ ] 14 · [ ] 15
 
-`[~]` = built and green on fakes; the browser e2e is still open.
+Steps 7–11 passed the browser e2e on Convex dev on 2026-10-09 (report: https://claude.ai/artifact/BKv4D3pr9iDAJHvprhBXrC). Dev has no R2/Vertex/Jev, so real file previews, a successful Describe and real routing/splitting stay for step 15.
 
 ## Decided after the plan (user, 2026-10-09)
 
