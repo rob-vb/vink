@@ -102,6 +102,7 @@ Each step ends green on `npm run typecheck`, `npm run lint` and `npm test`. Each
 - b) Make: **only after approval.** Publish the change as a new version.
 
 ### 13. Marketing copy (gate: employer OK)
+- Includes the new demo document: `.scratch/demo-waterschade/spec.md` (can be built on the branch before the OK; it only goes live after it).
 - "Input. Vink. Klaar.", the inputs line, "Zo werkt het" (Form → Systeem → Input), "stuur door naar je Vink-adres", and the Item rule on the pricing page. NL+EN.
 - **Proof:** grep the copy, placeholders and example names for the whole transport domain: transport, logistiek, vracht, vrachtbrief, CMR, chauffeur, rit, koerier, expeditie, fleet, wagenpark, lease, verhuur, garage, banden, kenteken, truck, trailer. Show the hit list to the user before calling this done. Then take e2e screenshots.
 
@@ -153,7 +154,7 @@ Each step ends green on `npm run typecheck`, `npm run lint` and `npm test`. Each
 
 ## Questions for the user
 
-- **Live demo is transport-flavoured (found 10-08, not changed: marketing gate).** The demo and home page use a "pakbon" from "Van Dijk Logistiek" with pallets and "1 pallet corner damaged": `components/demo/demo-data.ts:148-158`, `demo-papers.tsx:147-183,413`, `home-stills.tsx:141-150`, `demo-state.ts:104`, `app/(marketing)/[locale]/page.tsx:222,252,292,302`, `features/page.tsx:166`, `messages/*/home.json` (lines 4, 12, 84, 136), `messages/*/features.json` (alts 75, 106); Orders "Leverdatum"/"Please deliver" (`demo-data.ts:186`, `demo-papers.tsx:243,254`); newsletter "gratis bezorging". Proposal: replace with a quote or service report in step 13 (or earlier if the user wants it off prod now). Tests still use tyre/kenteken/Acme Fleet data (not visible to customers).
+- **Live demo is transport-flavoured (found 10-08, not changed: marketing gate).** The demo and home page use a "pakbon" from "Van Dijk Logistiek" with pallets and "1 pallet corner damaged": `components/demo/demo-data.ts:148-158`, `demo-papers.tsx:147-183,413`, `home-stills.tsx:141-150`, `demo-state.ts:104`, `app/(marketing)/[locale]/page.tsx:222,252,292,302`, `features/page.tsx:166`, `messages/*/home.json` (lines 4, 12, 84, 136), `messages/*/features.json` (alts 75, 106); Orders "Leverdatum"/"Please deliver" (`demo-data.ts:186`, `demo-papers.tsx:243,254`); newsletter "gratis bezorging". **Decided 2026-10-09:** replace it with a waterschade meldformulier at an assurantiekantoor; plan in `.scratch/demo-waterschade/spec.md` (new session). Tests still use tyre/kenteken/Acme Fleet data (not visible to customers).
 
 
 ## Review follow-ups (from the step 6–10 review)
