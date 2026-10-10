@@ -1,18 +1,18 @@
 {
   "meta": {
     "title": "Features",
-    "description": "How Vink turns any PDF, typed, scanned or handwritten, into clean data for your systems: upload or email it in, AI data extraction into your own fields, you check only what's unsure, and approved data goes out as JSON."
+    "description": "How Vink turns any PDF, email or photo, typed, scanned or handwritten, into clean data for your systems: upload or email it in, AI data extraction into your own fields, you check only what's unsure, and approved data goes out as JSON."
   },
   "hero": {
     "eyebrow": "Features",
-    "title": "Everything between the PDF and your system.",
+    "title": "Everything between the document and your system.",
     "lede": "This is how Vink takes over the retyping. Watch one Submission go through, then open each step.",
     "startFree": "Start free",
     "tryDemo": "Try the demo",
     "note": "20 free items. No credit card."
   },
   "video": {
-    "caption": "One PDF in, clean data out.",
+    "caption": "One document in, clean data out.",
     "label": "A 30-second film: a handwritten work order goes into Vink and comes out as clean data."
   },
   "frames": {
@@ -28,7 +28,7 @@
     "arrives": {
       "label": "It arrives",
       "title": "Getting paperwork in.",
-      "lede": "Upload a stack or email them in. Any PDF, typed, scanned or handwritten."
+      "lede": "Upload a stack or email them in. Any PDF, email or photo, typed, scanned or handwritten."
     },
     "reads": {
       "label": "Vink reads it",
@@ -53,12 +53,12 @@
   },
   "intake": {
     "title": "Upload it or email it in.",
-    "text": "Drag in several PDFs at once, or give a Form its own email address and let suppliers, scanners or other systems send their files straight in.",
+    "text": "Drag in several PDFs, photos and emails at once, or give a Form its own email address and let suppliers, scanners or other systems send their files straight in.",
     "bullets": [
-      "Several PDFs in one go, each with its own progress and errors",
+      "Several files in one go, each with its own progress and errors",
       "One email address per Form, switched on by an Admin",
       "Recent emails shows what came in, and what was refused and why",
-      "PDFs up to 10 MB and 20 pages each"
+      "Files up to 10 MB, PDFs up to 20 pages"
     ],
     "otherSources": "Other sources? Tell us.",
     "alt": "The upload dialog with two PDFs ready to go, next to a Form's email settings and its recent emails. One attachment was refused for having more than 20 pages.",
@@ -76,7 +76,7 @@
   },
   "fields": {
     "title": "Your fields, not a template.",
-    "text": "Describe the fields you need in plain words, or upload one sample PDF and Vink proposes them. You edit them, then save.",
+    "text": "Describe the fields you need in plain words, or upload one sample (PDF, photo or email) and Vink proposes them. You edit them, then save.",
     "bullets": [
       "Text, number, date, yes/no, choice and list fields",
       "A short description per field guides the reading",

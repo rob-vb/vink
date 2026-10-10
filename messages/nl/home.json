@@ -1,14 +1,14 @@
 {
   "meta": {
     "title": "Vink: AI-data-extractie uit documenten voor operationele teams",
-    "description": "Stop met PDF's overtikken. Vink leest facturen, schadeformulieren en werkbonnen, ook handgeschreven, en zet de gegevens in je systeem. 20 items gratis."
+    "description": "Stop met documenten overtikken. Vink leest facturen, schadeformulieren en werkbonnen, ook handgeschreven, en zet de gegevens in je systeem. 20 items gratis."
   },
   "og": {
     "title": "Papier. Vink. Klaar.",
     "alt": "Vink. Papier. Vink. Klaar. Geen papierwerk meer overtikken."
   },
   "hero": {
-    "title": "Niemand hoeft meer PDF's over te tikken.",
+    "title": "Niemand hoeft meer documenten over te tikken.",
     "subtitle": "Vink leest facturen, schadeformulieren en werkbonnen, ook handgeschreven, en zet de gegevens in je systeem. Je team controleert alleen wat Vink niet zeker weet.",
     "watch": "Bekijk 30 seconden",
     "screenLabel": "Het controlescherm van Vink met één waarde die gecontroleerd moet worden"
@@ -43,7 +43,7 @@
     "steps": {
       "form": {
         "title": "Je maakt een formulier.",
-        "body": "Kies de velden die je nodig hebt: tekst, getal, datum of een lijst met regels. Of upload één voorbeeld-PDF. Vink stelt de velden dan voor."
+        "body": "Kies de velden die je nodig hebt: tekst, getal, datum of een lijst met regels. Of upload één voorbeeld: een PDF, foto of e-mail. Vink stelt de velden dan voor."
       },
       "match": {
         "title": "Vink koppelt elke factuur.",
@@ -92,8 +92,8 @@
   "calculator": {
     "title": "Wat overtikken je nu kost.",
     "subtitle": "Vul je eigen cijfers in. Je ziet wat overtikken per maand kost, en wat Vink kost.",
-    "documentsLabel": "PDF's per dag",
-    "minutesLabel": "Minuten overtikken per PDF",
+    "documentsLabel": "Documenten per dag",
+    "minutesLabel": "Minuten overtikken per document",
     "minutesValue": "{count} min",
     "hourlyLabel": "Loonkosten per uur",
     "hoursLabel": "Uren overtikken per maand",
@@ -102,16 +102,16 @@
     "withVink": "Met Vink ({plan})",
     "perMonth": "/mnd",
     "from": "vanaf",
-    "note": "Uitgaande van {days} werkdagen per maand en 1 pagina per PDF. Je team besteedt nog wel tijd aan de waarden die Vink markeert."
+    "note": "Uitgaande van {days} werkdagen per maand en 1 pagina per document. Je team besteedt nog wel tijd aan de waarden die Vink markeert."
   },
   "journey": {
-    "title": "Van PDF tot in je systeem.",
+    "title": "Van document tot in je systeem.",
     "subtitle": "Vink doet het overtikken. Je team doet alleen de controle.",
     "arrives": {
       "kicker": "Het komt binnen",
-      "title": "Mail de PDF door, of sleep hem erin.",
+      "title": "Mail het door, of sleep het erin.",
       "body": "Het werkt met elk soort document, ook gescand of met de hand ingevuld. Je hoeft geen sjablonen te bouwen.",
-      "intake": "Sleep meerdere PDF's tegelijk naar binnen, of geef een formulier een eigen e-mailadres. Leveranciers en collega's mailen hun PDF's dan direct naar Vink. Pdf-bijlagen tot 10 MB en 20 pagina's per stuk."
+      "intake": "Sleep meerdere PDF's, foto's en e-mails tegelijk naar binnen, of geef een formulier een eigen e-mailadres. Leveranciers en collega's mailen hun documenten dan direct naar Vink. Bestanden tot 10 MB, PDF's tot 20 pagina's."
     },
     "reads": {
       "kicker": "Vink leest het",
@@ -193,7 +193,7 @@
     },
     "templates": {
       "q": "Moet ik templates instellen?",
-      "a": "Nee. Beschrijf je velden, of laat Vink ze voorstellen op basis van één voorbeeld. Daarna koppelt Vink elke nieuwe PDF, e-mail of foto zelf aan je velden, welke opmaak die ook heeft. Vink leest PDF's tot 10 MB en 20 pagina's."
+      "a": "Nee. Beschrijf je velden, of laat Vink ze voorstellen op basis van één voorbeeld. Daarna koppelt Vink elke nieuwe PDF, e-mail of foto zelf aan je velden, welke opmaak die ook heeft. Vink leest bestanden tot 10 MB en PDF's tot 20 pagina's."
     }
   }
 }

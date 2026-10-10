@@ -82,13 +82,13 @@ Source of the decisions: [Positioning and messaging](../.scratch/vink-marketing/
 ## Messaging
 Dutch is the default: the marketing site at `/` is Dutch, English lives under `/en`. Write Dutch copy first, then English.
 
-**Hero:** "Niemand hoeft meer PDF's over te tikken." (EN: "Nobody has to retype PDFs anymore."), with the checkmark logo after it. "Document. Vink. Klaar." stays as the OG image title.
+**Hero:** "Niemand hoeft meer documenten over te tikken." (EN: "Nobody has to retype documents anymore."), with the checkmark logo after it. "Document. Vink. Klaar." stays as the OG image title.
 **Core message:** teams stop retyping documents by hand; Vink takes that work over, which saves hours and labour cost. Lead with that outcome, not with what Vink reads.
 **Subtitle:** "Vink leest facturen, pakbonnen en werkbonnen, ook handgeschreven, en zet de gegevens in je systeem. Je team controleert alleen wat Vink niet zeker weet." (EN: "Vink reads invoices, delivery notes and work orders, even handwritten ones, and puts the data in your system. Your team only checks what Vink isn't sure about.")
 **CTA:** "Gratis starten" / "Start free" everywhere, with "20 gratis pagina's. Geen creditcard nodig." / "20 free pages. No credit card." underneath. "Log in" quiet; "Open app" when logged in. Secondary hero link: "Bekijk 30 seconden" / "Watch 30 seconds" (the demo film).
 **Trust row:** "Ook gescand en handgeschreven · Je eigen velden, geen sjablonen · Niets wordt verstuurd zonder jouw akkoord" (EN: "Even scanned and handwritten · Your own fields, no templates · Nothing is sent without your approval"). The EU and 30-day claims moved to the Security section of the Terms page.
 **Cost calculator** ("Wat overtikken je nu kost." / "What retyping costs you now."), right after the film: the reader sets documents per day, minutes of retyping per document and labour cost per hour; it shows hours per month, cost by hand and the fitting Plan. No fixed savings claim in copy: the numbers are always the reader's own.
-**Home journey** ("Van PDF tot in je systeem." / "From PDF to your system."; "Vink doet het overtikken. Je team doet alleen de controle."), four stops:
+**Home journey** ("Van document tot in je systeem." / "From document to your system."; "Vink doet het overtikken. Je team doet alleen de controle."), four stops:
 1. **Mail de PDF door, of sleep hem erin.** / Email the PDF, or drop it in. Any kind of document, even scanned or handwritten. No templates.
 2. **Vink vult je velden in.** / Vink fills in your fields. Most documents ready within a minute; each value shows its page.
 3. **Je team controleert alleen de twijfelgevallen.** / Your team only checks the doubtful values. Nothing is sent without approval.

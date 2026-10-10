@@ -32,7 +32,7 @@
     "logIn": "Inloggen"
   },
   "footer": {
-    "tagline": "Automatische data-invoer voor operationele teams. Elke PDF erin, schone data eruit.",
+    "tagline": "Automatische data-invoer voor operationele teams. Elk document erin, schone data eruit.",
     "product": "Product",
     "company": "Bedrijf",
     "legal": "Juridisch",
@@ -85,8 +85,8 @@
   },
   "og": {
     "features": {
-      "title": "Alles tussen de PDF en jouw systeem.",
-      "alt": "Functies van Vink. Alles tussen de PDF en jouw systeem."
+      "title": "Alles tussen het document en jouw systeem.",
+      "alt": "Functies van Vink. Alles tussen het document en jouw systeem."
     }
   },
   "frame": {

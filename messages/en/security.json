@@ -12,9 +12,9 @@
   "where": {
     "title": "Where your data lives",
     "app": "<b>The app</b> runs in Finland (Hetzner, Helsinki).",
-    "database": "<b>The database</b> is in Ireland (Convex, AWS eu-west-1). It holds everything except the PDFs.",
-    "pdfs": "<b>PDFs</b> are stored in Cloudflare R2 with EU jurisdiction.",
-    "reading": "<b>Reading</b> happens with Gemini on Vertex AI, in Google Cloud's EU multi-region.",
+    "database": "<b>The database</b> is in Ireland (Convex, AWS eu-west-1). It holds everything except the files.",
+    "pdfs": "<b>Files</b> (PDFs, photos and emails with their attachments) are stored in Cloudflare R2 with EU jurisdiction.",
+    "reading": "<b>Reading</b> happens with Vertex AI, in Google Cloud's EU multi-region.",
     "us": "Matching the read text to your Fields happens at TypeSafe in the United States, sign-in emails go through Resend in the United States, and payments go through Stripe in the United States. See <link>Who processes it</link>."
   },
   "retention": {
@@ -22,8 +22,8 @@
     "default": "<b>30 days after sending</b> by default. Your Admin can set anywhere from 1 to 365 days.",
     "neverApproved": "Submissions never approved are deleted 90 days after upload.",
     "rejected": "Rejected Submissions are deleted 30 days after rejection.",
-    "proposals": "Unsaved Form Proposals are deleted after 7 days, with their sample PDF.",
-    "what": "Deletion removes the PDF, what Vink read, all values and the Payload.",
+    "proposals": "Unsaved Form Proposals are deleted after 7 days, with their sample file.",
+    "what": "Deletion removes the file, what Vink read, all values and the Payload.",
     "kept": "We keep a short record (file name, who uploaded and approved it, dates, delivery status), never the file or its values.",
     "now": "An Admin can delete any Submission right away, approved ones included. Pending retries for it are cancelled.",
     "account": "You delete your account yourself from the account menu. An Admin deletes the Organisation under Settings, in the Danger Zone. Everything is then gone at once."
@@ -49,17 +49,17 @@
       "convex": {
         "purpose": "Database and backend",
         "region": "Ireland (EU)",
-        "data": "Everything except PDFs"
+        "data": "Everything except the files"
       },
       "r2": {
-        "purpose": "PDF storage",
+        "purpose": "File storage",
         "region": "EU",
-        "data": "The PDFs"
+        "data": "PDFs, photos and emails with their attachments"
       },
       "vertex": {
-        "purpose": "Reading the PDF",
+        "purpose": "Reading the file",
         "region": "EU",
-        "data": "The PDF"
+        "data": "The file or the email"
       },
       "typesafe": {
         "purpose": "Matching read text to your Fields",
@@ -74,7 +74,7 @@
       "email": {
         "purpose": "Receiving emails sent to an Intake Address",
         "region": "To confirm",
-        "data": "Emails sent to an Intake Address, with their PDF attachments"
+        "data": "Emails sent to an Intake Address, with their attachments"
       },
       "stripe": {
         "purpose": "Payments, subscriptions, invoices and VAT",
@@ -101,7 +101,7 @@
   "transit": {
     "title": "In transit and at rest",
     "https": "HTTPS only, with HSTS.",
-    "links": "Links to a PDF expire after 5 minutes.",
+    "links": "Links to a file expire after 5 minutes.",
     "endpoints": "Integration endpoints must use HTTPS.",
     "secrets": "Integration secrets are encrypted (AES-256-GCM) with a key kept outside the database.",
     "rest": "Data at rest is encrypted by the providers.",
