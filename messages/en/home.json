@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "Vink: AI document data extraction for operations teams",
-    "description": "Stop retyping documents. Vink reads invoices, claim forms and work orders, even handwritten ones, and puts the data in your system. 20 free items."
+    "description": "Stop retyping. Vink reads invoices, claim forms, work orders and other documents, even handwritten ones, and puts the data in your system. 20 free items."
   },
   "og": {
     "title": "Paper. Vink. Done.",
@@ -9,7 +9,7 @@
   },
   "hero": {
     "title": "Nobody has to retype documents anymore.",
-    "subtitle": "Vink reads invoices, claim forms and work orders, even handwritten ones, and puts the data in your system. Your team only checks what Vink isn't sure about.",
+    "subtitle": "Vink reads invoices, claim forms, work orders and other documents, even handwritten ones, and puts the data in your system. Your team only checks what Vink isn't sure about.",
     "watch": "Watch 30 seconds",
     "screenLabel": "The Vink review screen with one value that needs review"
   },
