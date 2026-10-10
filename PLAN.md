@@ -106,7 +106,7 @@ Each step ends green on `npm run typecheck`, `npm run lint` and `npm test`. Each
 - **Proof:** grep the copy, placeholders and example names for the whole transport domain: transport, logistiek, vracht, vrachtbrief, CMR, chauffeur, rit, koerier, expeditie, fleet, wagenpark, lease, verhuur, garage, banden, kenteken, truck, trailer. Show the hit list to the user before calling this done. Then take e2e screenshots.
 
 ### 14. Demo film
-- Re-record it with an email scene and a photo scene, after steps 8 and 13. Project: `/mnt/HC_Volume_105734306/vink-video`.
+- Re-record it with an email scene and a photo scene, after steps 8 and 13. Project: `/mnt/HC_Volume_105734306/videos/vink-film` (HyperFrames; the old Remotion project `vink-video` is no longer used). Plan: `plans/vink-film/PLAN.md`.
 
 ### 15. Real-service checks (end)
 - Vertex with an email and with an image. R2 with image MIME types. The Worker on the real domain. Stripe sandbox with the Item names.
@@ -114,7 +114,7 @@ Each step ends green on `npm run typecheck`, `npm run lint` and `npm test`. Each
 
 ## Status
 
-- [x] 1 · [x] 2 · [x] 3 · [x] 4 · [x] 5 · [x] 6 · [x] 7 · [x] 8 · [x] 9 · [x] 10 · [x] 11 · [x] 12a · [ ] 12b · [ ] 13 · [ ] 14 · [ ] 15
+- [x] 1 · [x] 2 · [x] 3 · [x] 4 · [x] 5 · [x] 6 · [x] 7 · [x] 8 · [x] 9 · [x] 10 · [x] 11 · [x] 12a · [ ] 12b · [ ] 13 · [x] 14 · [ ] 15
 
 Steps 7–11 passed the browser e2e on Convex dev on 2026-10-09 (report: https://claude.ai/artifact/BKv4D3pr9iDAJHvprhBXrC). Dev has no R2/Vertex/Jev, so real file previews, a successful Describe and real routing/splitting stay for step 15.
 
