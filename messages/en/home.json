@@ -14,9 +14,9 @@
     "screenLabel": "The Vink review screen with one value that needs review"
   },
   "video": {
-    "title": "A handwritten work order, without retyping.",
-    "subtitle": "From paper to back office.",
-    "label": "A 30-second film of a handwritten work order going through Vink"
+    "title": "Any document, straight into your system.",
+    "subtitle": "Vink sorts the Inbox, reads a handwritten work order and sends the data on. Your team checks one value.",
+    "label": "A 30-second film: emails, PDFs and photos arrive in the Inbox, Vink picks the Form for each one, reads a handwritten work order, and sends the data to your system after one check"
   },
   "forms": {
     "eyebrow": "Your Forms",
