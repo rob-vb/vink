@@ -97,7 +97,7 @@
     }
   },
   "jsonld": {
-    "description": "Vink leest PDF's, getypt, gescand of handgeschreven, en maakt er schone JSON van voor jouw systemen. Mensen controleren alleen de waarden waar Vink twijfelt.",
+    "description": "Vink leest PDF's, e-mails en foto's, getypt, gescand of handgeschreven, en maakt er schone JSON van voor jouw systemen. Mensen controleren alleen de waarden waar Vink twijfelt.",
     "offer": "{count} items per maand, maandelijks gefactureerd, excl. btw"
   }
 }

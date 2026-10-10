@@ -32,10 +32,10 @@
       "retries": "Ongeveer 8 uur lang opnieuw geprobeerd bij timeouts, 408, 429 en 5xx",
       "atLeastOnce": "At-least-once: ontdubbel op <code>delivery_id</code>"
     },
-    "reading": "Vink leest PDF's met Gemini op Vertex AI, EU-regio.",
+    "reading": "Vink leest PDF's, foto's en e-mails met Vertex AI, EU-regio.",
     "apiReference": "Vink aanroepen vanuit je eigen code? De <link>API-referentie</link> beschrijft de publieke API en de API-sleutels.",
     "inboundTitle": "Bestanden naar binnen krijgen",
-    "inbound": "Bestanden komen vandaag via de app binnen: upload meerdere PDF's en foto's tegelijk, of mail ze in. Geen code? Laat een systeem mailen naar het Intake Address van het formulier. Vink maakt van elke e-mail één of meer inzendingen. Een programma kan PDF's ook via de API insturen: <link>POST /v1/forms/'{form_id}'/documents</link>."
+    "inbound": "Bestanden komen vandaag via de app binnen: upload meerdere PDF's en foto's tegelijk, of mail ze in. Geen code? Laat een systeem mailen naar het Intake Address van het formulier. Vink maakt van elke e-mail één of meer inzendingen. Een programma kan PDF's, foto's en e-mails ook via de API insturen: <link>POST /v1/forms/'{form_id}'/documents</link>."
   },
   "platforms": {
     "title": "Standaard koppelingen",

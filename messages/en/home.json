@@ -1,14 +1,14 @@
 {
   "meta": {
     "title": "Vink: AI document data extraction for operations teams",
-    "description": "Stop retyping PDFs. Vink reads invoices, claim forms and work orders, even handwritten ones, and puts the data in your system. 20 free items."
+    "description": "Stop retyping documents. Vink reads invoices, claim forms and work orders, even handwritten ones, and puts the data in your system. 20 free items."
   },
   "og": {
     "title": "Paper. Vink. Done.",
     "alt": "Vink. Paper. Vink. Done. No more retyping paperwork."
   },
   "hero": {
-    "title": "Nobody has to retype PDFs anymore.",
+    "title": "Nobody has to retype documents anymore.",
     "subtitle": "Vink reads invoices, claim forms and work orders, even handwritten ones, and puts the data in your system. Your team only checks what Vink isn't sure about.",
     "watch": "Watch 30 seconds",
     "screenLabel": "The Vink review screen with one value that needs review"
@@ -43,7 +43,7 @@
     "steps": {
       "form": {
         "title": "You make a Form.",
-        "body": "Pick the fields you need: text, number, date, or a list of lines. Or upload one sample PDF, and Vink proposes the fields."
+        "body": "Pick the fields you need: text, number, date, or a list of lines. Or upload one sample, a PDF, photo or email, and Vink proposes the fields."
       },
       "match": {
         "title": "Vink matches every invoice.",
@@ -92,8 +92,8 @@
   "calculator": {
     "title": "What retyping costs you now.",
     "subtitle": "Fill in your own numbers. You see what retyping costs per month, and what Vink costs.",
-    "documentsLabel": "PDFs per day",
-    "minutesLabel": "Minutes of retyping per PDF",
+    "documentsLabel": "Documents per day",
+    "minutesLabel": "Minutes of retyping per document",
     "minutesValue": "{count} min",
     "hourlyLabel": "Labour cost per hour",
     "hoursLabel": "Hours of retyping per month",
@@ -102,16 +102,16 @@
     "withVink": "With Vink ({plan})",
     "perMonth": "/mo",
     "from": "from",
-    "note": "Based on {days} working days a month and 1 page per PDF. Your team still spends some time on the values Vink flags."
+    "note": "Based on {days} working days a month and 1 page per document. Your team still spends some time on the values Vink flags."
   },
   "journey": {
-    "title": "From PDF to your system.",
+    "title": "From document to your system.",
     "subtitle": "Vink does the retyping. Your team only does the checking.",
     "arrives": {
       "kicker": "It arrives",
-      "title": "Email the PDF, or drop it in.",
+      "title": "Email it in, or drop it in.",
       "body": "It works with any kind of document, even scanned or filled in by hand. You don't build templates.",
-      "intake": "Drop several PDFs at once, or give a Form its own email address. Suppliers and colleagues then email their PDFs straight to Vink. PDF attachments, up to 10 MB and 20 pages each."
+      "intake": "Drop several PDFs, photos and emails at once, or give a Form its own email address. Suppliers and colleagues then email their documents straight to Vink. Files up to 10 MB, PDFs up to 20 pages."
     },
     "reads": {
       "kicker": "Vink reads it",
@@ -193,7 +193,7 @@
     },
     "templates": {
       "q": "Do I need to set up templates?",
-      "a": "No. Describe your fields, or let Vink propose them from one example. After that, Vink matches every new PDF, email or photo to your fields by itself, whatever the layout. It reads PDFs of up to 10 MB and 20 pages."
+      "a": "No. Describe your fields, or let Vink propose them from one example. After that, Vink matches every new PDF, email or photo to your fields by itself, whatever the layout. It reads files of up to 10 MB and PDFs of up to 20 pages."
     }
   }
 }

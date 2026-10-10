@@ -97,7 +97,7 @@
     }
   },
   "jsonld": {
-    "description": "Vink reads PDFs, typed, scanned or handwritten, and turns them into clean JSON for your systems. People only check the values Vink isn't sure about.",
+    "description": "Vink reads PDFs, emails and photos, typed, scanned or handwritten, and turns them into clean JSON for your systems. People only check the values Vink isn't sure about.",
     "offer": "{count} items a month, billed monthly, excl. VAT"
   }
 }

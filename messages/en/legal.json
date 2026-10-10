@@ -185,7 +185,7 @@
         "title": "Who we are and what Vink does",
         "body": [
           "Vink is provided by Vink, a sole proprietorship (eenmanszaak) of {owner}, {address}, the Netherlands. Chamber of Commerce (KvK) number: {kvk}. In these terms that's \"Vink\" or \"we\".",
-          "Vink reads PDFs, typed, scanned or handwritten, and puts the values into the fields of your forms. People check what's uncertain. Then Vink sends the values to the systems you connect.",
+          "Vink reads PDFs, emails and photos, typed, scanned or handwritten, and puts the values into the fields of your forms. People check what's uncertain. Then Vink sends the values to the systems you connect.",
           "\"You\" and \"the customer\" is the organisation that has an account with Vink. Whoever signs up confirms they may represent that organisation."
         ]
       },

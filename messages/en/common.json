@@ -32,7 +32,7 @@
     "logIn": "Log in"
   },
   "footer": {
-    "tagline": "Automated data entry for operations teams. Any PDF in, clean data out.",
+    "tagline": "Automated data entry for operations teams. Any document in, clean data out.",
     "product": "Product",
     "company": "Company",
     "legal": "Legal",
@@ -85,8 +85,8 @@
   },
   "og": {
     "features": {
-      "title": "Everything between the PDF and your system.",
-      "alt": "Vink features. Everything between the PDF and your system."
+      "title": "Everything between the document and your system.",
+      "alt": "Vink features. Everything between the document and your system."
     }
   },
   "frame": {
