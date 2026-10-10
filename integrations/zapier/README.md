@@ -22,7 +22,7 @@ npx zapier-platform-cli validate           # schema + Zapier's integration check
 1. Install the CLI: `npm install -g zapier-platform-cli`.
 2. `zapier login` with the Vink Zapier developer account.
 3. First time only: `zapier register "Vink"`. It writes `.zapierapprc` (the app's id). Commit that file, so every later push goes to the same app.
-4. `zapier push`. It uploads the version in `package.json` (`1.0.0`). Raise the version for every change that is live in Zaps (`npm version minor`), then push again.
+4. `zapier push`. It uploads the version in `package.json` (`1.1.0`). Raise the version for every change that is live in Zaps (`npm version minor`), then push again.
 
 To try it: in Zapier, make a Zap with the trigger "Vink → Submission Approved", connect with an API Key from Vink (Organisation settings → API Keys), pick a Form, and approve a Submission in Vink. Then a Zap with the action "Send in a Submission" and a PDF.
 
